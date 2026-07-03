@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import {
   cities,
@@ -13,6 +13,8 @@ import {
   fmtK,
   City,
 } from "@/lib/dfw-data";
+import { hoodsForCity } from "@/lib/hoods";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
 import Reveals from "@/components/Reveals";
@@ -28,10 +30,31 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const c = bySlug[slug];
-  if (!c) return { title: "Discover DFW" };
+  if (!c) return { title: SITE_NAME };
+  const county = countyById[c.county];
+  const topHoods = c.hoods.slice(0, 3).map((h) => h[0]).join(", ");
+  const description = `${c.name}, TX in ${county.name} County — ${c.tagline}. Neighborhood guides (${topHoods}), market snapshot, ${c.isd} schools, and commute times.`;
   return {
-    title: `${c.name} — Discover DFW`,
-    description: `${c.name}, ${countyById[c.county].name} County — ${c.tagline}. Market, neighborhoods, schools, and commutes.`,
+    title: `${c.name}, TX — Neighborhoods, Homes & Living Guide`,
+    description,
+    keywords: [
+      `${c.name} TX real estate`,
+      `homes for sale in ${c.name} TX`,
+      `${c.name} neighborhoods`,
+      `living in ${c.name} Texas`,
+      `${county.name} County homes`,
+      "DFW real estate",
+    ],
+    alternates: { canonical: `/city/${c.slug}` },
+    openGraph: {
+      title: `${c.name}, TX`,
+      description,
+      url: `/city/${c.slug}`,
+      siteName: SITE_NAME,
+      type: "website",
+      locale: "en_US",
+    },
+    twitter: { card: "summary", title: `${c.name}, TX`, description },
   };
 }
 
@@ -67,7 +90,11 @@ export default async function CityPage({
 }) {
   const { slug } = await params;
   const c = bySlug[slug];
-  if (!c) notFound();
+  if (!c) {
+    const lower = bySlug[slug.toLowerCase()];
+    if (lower) permanentRedirect(`/city/${lower.slug}`);
+    notFound();
+  }
 
   const idx = cities.indexOf(c);
   const prev = cities[(idx - 1 + cities.length) % cities.length];
@@ -92,7 +119,13 @@ export default async function CityPage({
     Math.abs(c.ll[1]).toFixed(3) + "° N · " + Math.abs(c.ll[0]).toFixed(3) + "° W";
   const paceNote = c.dom <= 32 ? "MOVES FAST — COME READY" : "ROOM TO NEGOTIATE";
 
-  const hoods = c.hoods.map((h, i) => ({ num: "N°" + (i + 1), name: h[0], note: h[1] }));
+  const hoods = hoodsForCity(c).map((h, i) => ({
+    num: "N°" + (i + 1),
+    name: h.name,
+    note: h.note,
+    href: `/city/${c.slug}/${h.slug}`,
+    isNewBuild: !!h.newBuild,
+  }));
   const gradeBg = (g: string) => (g.indexOf("A") === 0 ? "#1D1913" : "#FBF7EE");
   const gradeFg = (g: string) => (g.indexOf("A") === 0 ? "#F6F1E6" : "#1D1913");
   const schools = c.schools.map((sc) => ({
@@ -151,8 +184,45 @@ export default async function CityPage({
       return { x: Math.round(q[0]), y: Math.round(q[1]) };
     });
 
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Discover DFW", item: SITE_URL },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: `${c.name}, TX`,
+          item: `${SITE_URL}/city/${c.slug}`,
+        },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Place",
+      name: `${c.name}, Texas`,
+      description: `${c.tagline}. ${c.vibe}`,
+      url: `${SITE_URL}/city/${c.slug}`,
+      geo: { "@type": "GeoCoordinates", latitude: c.ll[1], longitude: c.ll[0] },
+      containedInPlace: {
+        "@type": "AdministrativeArea",
+        name: `${county.name} County, Texas`,
+      },
+      containsPlace: hoods.map((h) => ({
+        "@type": "Place",
+        name: h.name,
+        url: `${SITE_URL}${h.href}`,
+      })),
+    },
+  ];
+
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <CityNav slug={slug} options={options} prevSlug={prev.slug} nextSlug={next.slug} />
 
       {/* Hero */}
@@ -482,19 +552,46 @@ export default async function CityPage({
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 18 }}
           >
             {hoods.map((h) => (
-              <div
+              <Link
                 key={h.name}
+                href={h.href}
                 className="hood-card"
                 style={{
                   border: "2px solid #1D1913",
                   borderRadius: 18,
                   background: "#FBF7EE",
                   padding: "24px 26px",
-                  cursor: "default",
+                  textDecoration: "none",
+                  color: "#1D1913",
+                  display: "block",
                 }}
               >
-                <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".22em", color: "#D9481F", fontWeight: 700 }}>
-                  {h.num}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    gap: 10,
+                  }}
+                >
+                  <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".22em", color: "#D9481F", fontWeight: 700 }}>
+                    {h.num}
+                  </span>
+                  {h.isNewBuild && (
+                    <span
+                      className="font-mono"
+                      style={{
+                        fontSize: 8.5,
+                        letterSpacing: ".18em",
+                        background: "#D9481F",
+                        color: "#F6F1E6",
+                        padding: "4px 9px",
+                        borderRadius: 999,
+                      }}
+                    >
+                      NEW BUILD
+                    </span>
+                  )}
                 </div>
                 <div className="font-serif" style={{ fontWeight: 800, fontSize: 23, marginTop: 10, lineHeight: 1.1 }}>
                   {h.name}
@@ -502,7 +599,13 @@ export default async function CityPage({
                 <div style={{ fontSize: 14, lineHeight: 1.6, color: "rgba(29,25,19,.68)", marginTop: 9 }}>
                   {h.note}
                 </div>
-              </div>
+                <div
+                  className="font-mono"
+                  style={{ fontSize: 9.5, letterSpacing: ".2em", color: "#D9481F", fontWeight: 700, marginTop: 14 }}
+                >
+                  READ THE REPORT →
+                </div>
+              </Link>
             ))}
           </div>
         </div>

@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { cities, counties } from "@/lib/dfw-data";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import Ticker from "@/components/Ticker";
@@ -12,12 +14,29 @@ import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 import Reveals from "@/components/Reveals";
 
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  description:
+    "A living atlas of Dallas–Fort Worth real estate — every city, every county, one clickable map.",
+};
+
 export default function Home() {
   return (
     <div
       id="top"
       style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* masthead bar */}
       <div
         className="font-mono"

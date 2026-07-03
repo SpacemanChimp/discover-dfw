@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Archivo } from "next/font/google";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -18,9 +19,21 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "Discover DFW — A field guide to North Texas real estate",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Discover DFW — A field guide to North Texas real estate",
+    template: `%s | ${SITE_NAME}`,
+  },
   description:
     "A living atlas of Dallas–Fort Worth real estate — every city, every county, one clickable map.",
+  applicationName: SITE_NAME,
+  openGraph: {
+    siteName: SITE_NAME,
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: { card: "summary" },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

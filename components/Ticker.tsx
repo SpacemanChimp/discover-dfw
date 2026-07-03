@@ -18,13 +18,15 @@ export default function Ticker() {
         background: "#F2EBDC",
       }}
     >
+      {/* animation lives on .marquee in globals.css so :hover can pause it —
+          an inline animation shorthand would pin play-state at inline
+          specificity and the hover rule could never override it */}
       <div
         className="marquee"
         style={{
           display: "flex",
           gap: 38,
           width: "max-content",
-          animation: "marqueeMove 60s linear infinite",
         }}
       >
         {list.map((m, i) => (
