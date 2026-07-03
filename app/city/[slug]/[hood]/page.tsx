@@ -153,8 +153,9 @@ export default async function HoodPage({
       return { x: Math.round(q[0]), y: Math.round(q[1]) };
     });
 
-  const canonicalPath = `/city/${canonicalCityForHood(h)}/${h.slug}`;
-  const pageUrl = `${SITE_URL}${canonicalPath}`;
+  // JSON-LD describes THIS page; the <link rel=canonical> (in metadata)
+  // handles consolidation for cross-listed communities.
+  const pageUrl = `${SITE_URL}/city/${c.slug}/${h.slug}`;
 
   /* ---- structured data: breadcrumbs + place + FAQ ---- */
   const jsonLd = [
@@ -536,7 +537,17 @@ export default async function HoodPage({
           >
             <MarketCard label="PRICED FROM" value={nb.from} sub="BASE PRICING · BY PHASE" valColor="#D9481F" />
             <MarketCard label="ACTIVE BUILDERS" value={String(nb.builders)} sub="MODEL HOMES OPEN" />
-            <MarketCard label="SALES STATUS" value={nb.status} sub={nb.note.toUpperCase().slice(0, 44)} />
+            <MarketCard
+              label="SALES STATUS"
+              value={nb.status}
+              sub={
+                nb.status === "FINAL PHASE"
+                  ? "LAST LOTS REMAINING"
+                  : nb.status === "MODELS OPEN"
+                  ? "TOUR THE MODELS"
+                  : "TAKING CONTRACTS NOW"
+              }
+            />
           </div>
 
           <div

@@ -2,7 +2,7 @@
    for /city/[slug]/[hood] pages. A hood is either an established neighborhood
    from City.hoods or an actively-selling community from newBuilds (or both —
    the union is the page set). */
-import { City, cities, newBuilds, NewBuild } from "./dfw-data";
+import { City, cities, countyById, newBuilds, NewBuild } from "./dfw-data";
 import { slugifyHood } from "./slug";
 import contentRaw from "./hood-content.json";
 
@@ -84,10 +84,11 @@ const hoodContent = contentRaw as Record<string, HoodContent>;
 export function contentFor(c: City, h: HoodRef): HoodContent {
   const hit = hoodContent[`${c.slug}/${h.slug}`];
   if (hit) return hit;
+  const countyName = countyById[c.county]?.name ?? c.county;
   return {
     tagline: h.note,
     intro: [
-      `${h.name} sits in ${c.name}, ${c.county} County — ${h.note.toLowerCase().replace(/\.$/, "")}. ${c.tagline}.`,
+      `${h.name} sits in ${c.name}, ${countyName} County — ${h.note.replace(/\.$/, "")}. ${c.tagline}.`,
       c.vibe,
     ],
     homes: `Homes in ${h.name} follow ${c.name}'s broader pattern — ${c.tagline.toLowerCase()}. Schools run through ${c.isd}. Figures on this page are placeholders; verify current listings and pricing before you tour.`,
@@ -95,12 +96,12 @@ export function contentFor(c: City, h: HoodRef): HoodContent {
       { title: "The setting", note: h.note },
       { title: "Schools", note: c.isd },
       { title: "The city", note: c.tagline },
-      { title: "The county", note: `${c.county} County, North Texas` },
+      { title: "The county", note: `${countyName} County, North Texas` },
     ],
     faq: [
       {
         q: `Where is ${h.name}?`,
-        a: `${h.name} is a ${h.newBuild ? "new-build community" : "neighborhood"} in ${c.name}, Texas, in ${c.county} County on the ${c.name} side of the Dallas–Fort Worth metroplex.`,
+        a: `${h.name} is a ${h.newBuild ? "new-build community" : "neighborhood"} in ${c.name}, Texas, in ${countyName} County on the ${c.name} side of the Dallas–Fort Worth metroplex.`,
       },
       {
         q: `What school district serves ${h.name}?`,
