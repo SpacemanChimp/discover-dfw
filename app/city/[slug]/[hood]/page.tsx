@@ -25,6 +25,7 @@ import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
 import Reveals from "@/components/Reveals";
+import TrecLinks from "@/components/TrecLinks";
 
 export function generateStaticParams() {
   return cities.flatMap((c) =>
@@ -923,6 +924,15 @@ export default async function HoodPage({
 
       {/* footer */}
       <footer style={{ background: "#1D1913", color: "#F6F1E6" }}>
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "26px 4vw 0",
+          }}
+        >
+          <TrecLinks />
+        </div>
         <div
           style={{
             maxWidth: 1280,

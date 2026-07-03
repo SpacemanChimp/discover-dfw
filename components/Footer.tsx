@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { counties } from "@/lib/dfw-data";
 import { Wordmark } from "./Logo";
+import TrecLinks from "./TrecLinks";
 
 const MOST_READ = [
   ["frisco", "Frisco"],
@@ -71,6 +72,16 @@ export default function Footer() {
         </div>
 
         <div
+          style={{
+            borderTop: "1px solid rgba(246,241,230,.18)",
+            marginTop: 52,
+            paddingTop: 26,
+          }}
+        >
+          <TrecLinks />
+        </div>
+
+        <div
           className="font-mono"
           style={{
             display: "flex",
@@ -78,7 +89,7 @@ export default function Footer() {
             gap: 14,
             flexWrap: "wrap",
             borderTop: "1px solid rgba(246,241,230,.18)",
-            marginTop: 52,
+            marginTop: 30,
             paddingTop: 22,
             fontSize: 10,
             letterSpacing: ".16em",
