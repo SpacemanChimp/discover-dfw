@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,500;1,600;1,700&amp;family=Archivo:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #F6F1E6; color: #1D1913; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    ::selection { background: #D9481F; color: #F6F1E6; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+    @keyframes riseUp { from { transform: translateY(112%); } to { transform: translateY(0); } }
+    @keyframes ringPulse { 0% { transform: scale(.3); opacity: .95; } 100% { transform: scale(2.1); opacity: 0; } }
+    @keyframes drawIn { from { stroke-dashoffset: 600; } to { stroke-dashoffset: 0; } }
+  </style>
+  <script src="dfw-data.js"></script>
+</helmet>
+
+<div style="font-family:Archivo,'Helvetica Neue',sans-serif;background:#F6F1E6;color:#1D1913;min-height:100vh">
+
+  <!-- ===== Nav ===== -->
+  <nav data-screen-label="City nav" style="position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px 4vw;background:rgba(246,241,230,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(29,25,19,.16);flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:22px;min-width:0">
+      <a href="Discover DFW.dc.html" style="text-decoration:none;color:#1D1913;font-family:'Playfair Display',serif;font-weight:900;font-size:19px;display:inline-flex;align-items:baseline;white-space:nowrap">DISC<svg viewBox="0 0 100 132" style="height:.72em;width:auto;transform:translateY(.05em);margin:0 1px"><path d="M50 4 C25 4 5 24 5 49 c0 33 45 79 45 79 s45 -46 45 -79 C95 24 75 4 50 4 Z" fill="#D9481F"></path><circle cx="50" cy="47" r="16" fill="#F6F1E6"></circle></svg>VER&nbsp;DFW</a>
+      <a href="Discover DFW.dc.html#map" style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.18em;color:rgba(29,25,19,.6);text-decoration:none;transition:color .2s;white-space:nowrap" style-hover="color:#D9481F">← BACK TO THE MAP</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <select value="{{slug}}" onChange="{{onJump}}" style="font-family:Archivo,sans-serif;font-size:12.5px;font-weight:600;letter-spacing:.06em;padding:9px 14px;border-radius:999px;border:2px solid #1D1913;background:#F6F1E6;color:#1D1913;cursor:pointer;outline:none">
+        <sc-for list="{{cityOptions}}" as="o" hint-placeholder-count="5">
+          <option value="{{o.slug}}">{{o.name}}</option>
+        </sc-for>
+      </select>
+      <a href="{{prevHref}}" title="Previous city" style="width:38px;height:38px;border-radius:999px;border:2px solid #1D1913;display:inline-flex;align-items:center;justify-content:center;color:#1D1913;text-decoration:none;font-size:16px;transition:all .2s;background:#F6F1E6" style-hover="background:#1D1913;color:#F6F1E6">←</a>
+      <a href="{{nextHref}}" title="Next city" style="width:38px;height:38px;border-radius:999px;border:2px solid #1D1913;display:inline-flex;align-items:center;justify-content:center;color:#1D1913;text-decoration:none;font-size:16px;transition:all .2s;background:#F6F1E6" style-hover="background:#1D1913;color:#F6F1E6">→</a>
+    </div>
+  </nav>
+
+  <!-- ===== Hero ===== -->
+  <header data-screen-label="City hero" style="max-width:1280px;margin:0 auto;padding:64px 4vw 56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(430px,90vw),1fr));gap:52px;align-items:center">
+    <div>
+      <div style="display:inline-flex;align-items:center;gap:9px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.24em;color:#D9481F;border:1.5px solid rgba(217,72,31,.5);border-radius:999px;padding:7px 14px;animation:fadeUp .6s ease both"><span style="width:7px;height:7px;border-radius:99px;background:#D9481F;display:inline-block"></span>{{countyUpper}} COUNTY · CITY REPORT</div>
+      <h1 style="margin:14px 0 0;font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(52px,7.6vw,108px);line-height:.98;letter-spacing:-.015em"><span style="display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.08em;margin-bottom:-.08em"><span style="display:inline-block;animation:riseUp .8s cubic-bezier(.22,1,.36,1) .1s both">{{name}}</span></span></h1>
+      <p style="margin:16px 0 0;font-family:'Playfair Display',serif;font-style:italic;font-weight:500;font-size:clamp(19px,2.4vw,26px);color:rgba(29,25,19,.75);animation:fadeUp .7s ease .3s both">{{tagline}}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;animation:fadeUp .7s ease .45s both">
+        <div style="border:1.5px solid rgba(29,25,19,.35);border-radius:14px;padding:11px 16px;background:#FBF7EE"><div style="font-family:ui-monospace,Menlo,monospace;font-size:8.5px;letter-spacing:.2em;color:rgba(29,25,19,.5)">MEDIAN</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:22px;color:#D9481F;margin-top:2px">{{price}}</div></div>
+        <div style="border:1.5px solid rgba(29,25,19,.35);border-radius:14px;padding:11px 16px;background:#FBF7EE"><div style="font-family:ui-monospace,Menlo,monospace;font-size:8.5px;letter-spacing:.2em;color:rgba(29,25,19,.5)">$ / SQFT</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:22px;margin-top:2px">{{ppsf}}</div></div>
+        <div style="border:1.5px solid rgba(29,25,19,.35);border-radius:14px;padding:11px 16px;background:#FBF7EE"><div style="font-family:ui-monospace,Menlo,monospace;font-size:8.5px;letter-spacing:.2em;color:rgba(29,25,19,.5)">DAYS ON MKT</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:22px;margin-top:2px">{{dom}}</div></div>
+        <div style="border:1.5px solid rgba(29,25,19,.35);border-radius:14px;padding:11px 16px;background:#FBF7EE"><div style="font-family:ui-monospace,Menlo,monospace;font-size:8.5px;letter-spacing:.2em;color:rgba(29,25,19,.5)">YOY</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:22px;margin-top:2px">{{yoy}}</div></div>
+        <div style="border:1.5px solid rgba(29,25,19,.35);border-radius:14px;padding:11px 16px;background:#FBF7EE"><div style="font-family:ui-monospace,Menlo,monospace;font-size:8.5px;letter-spacing:.2em;color:rgba(29,25,19,.5)">POPULATION</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:22px;margin-top:2px">{{pop}}</div></div>
+      </div>
+    </div>
+    <div style="animation:fadeUp .8s ease .3s both">
+      <div style="border:2px solid #1D1913;border-radius:20px;overflow:hidden;background:#EDE4CF;box-shadow:0 20px 48px rgba(29,25,19,.14)">
+        <div style="display:flex;justify-content:space-between;padding:12px 18px;border-bottom:2px solid #1D1913;font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.22em;color:rgba(29,25,19,.55);background:#F4EDDE"><span>LOCATOR</span><span>N ↑</span></div>
+        <svg viewBox="30 12 1116 903" style="width:100%;display:block;background-image:radial-gradient(rgba(38,32,22,.06) 1px, transparent 1px);background-size:24px 24px">
+          <g style="filter:drop-shadow(0 10px 16px rgba(20,16,10,.18))">
+            <sc-for list="{{mapCounties}}" as="co" hint-placeholder-count="3">
+              <polygon points="{{co.points}}" style="fill:{{co.fill}};stroke:#262016;stroke-width:1.7;stroke-linejoin:round"></polygon>
+            </sc-for>
+          </g>
+          <sc-for list="{{mapLakes}}" as="lk" hint-placeholder-count="2">
+            <polygon points="{{lk.points}}" style="fill:#A9BFC9;stroke:#A9BFC9;stroke-width:11;stroke-linejoin:round;opacity:.9"></polygon>
+          </sc-for>
+          <sc-for list="{{mapDots}}" as="d" hint-placeholder-count="6">
+            <circle cx="{{d.x}}" cy="{{d.y}}" r="2.6" style="fill:rgba(38,32,22,.3)"></circle>
+          </sc-for>
+          <circle cx="{{curX}}" cy="{{curY}}" r="22" style="fill:none;stroke:#D9481F;stroke-width:2.6;transform-box:fill-box;transform-origin:center;animation:ringPulse 1.9s cubic-bezier(.2,.8,.4,1) infinite"></circle>
+          <circle cx="{{curX}}" cy="{{curY}}" r="13" style="fill:rgba(217,72,31,.18)"></circle>
+          <circle cx="{{curX}}" cy="{{curY}}" r="7" style="fill:#D9481F;stroke:#F6F1E6;stroke-width:2.4"></circle>
+        </svg>
+        <div style="display:flex;justify-content:space-between;padding:12px 18px;border-top:2px solid #1D1913;font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.18em;background:#F4EDDE"><span style="color:rgba(29,25,19,.55)">{{coords}}</span><span style="color:#D9481F;font-weight:700">{{nameUpper}}, TX</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== 01 · The vibe ===== -->
+  <section data-screen-label="The vibe" style="border-top:2px solid #1D1913;background:#F2EBDC">
+    <div style="max-width:1280px;margin:0 auto;padding:72px 4vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,90vw),1fr));gap:48px;align-items:start">
+      <div data-reveal="1">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">01 — THE VIBE</div>
+        <h2 style="margin:0 0 18px;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(30px,3.6vw,44px);line-height:1.05">What it feels like to live here.</h2>
+        <p style="margin:0;font-size:17px;line-height:1.85;color:rgba(29,25,19,.82)">{{vibe}}</p>
+      </div>
+      <div data-reveal="1" style="border:2px solid #1D1913;border-radius:18px;background:#FBF7EE;padding:26px 28px">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.26em;color:rgba(29,25,19,.5);margin-bottom:6px">QUICK FACTS</div>
+        <div style="display:flex;justify-content:space-between;gap:14px;align-items:baseline;padding:13px 0;border-bottom:1px solid rgba(29,25,19,.16)"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;color:rgba(29,25,19,.55)">COUNTY</span><span style="font-family:'Playfair Display',serif;font-weight:700;font-size:17px">{{countyName}} County</span></div>
+        <div style="display:flex;justify-content:space-between;gap:14px;align-items:baseline;padding:13px 0;border-bottom:1px solid rgba(29,25,19,.16)"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;color:rgba(29,25,19,.55)">SCHOOLS</span><span style="font-family:'Playfair Display',serif;font-weight:700;font-size:17px;text-align:right">{{isd}}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:14px;align-items:baseline;padding:13px 0;border-bottom:1px solid rgba(29,25,19,.16)"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;color:rgba(29,25,19,.55)">POPULATION</span><span style="font-family:'Playfair Display',serif;font-weight:700;font-size:17px">{{popFull}}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:14px;align-items:baseline;padding:13px 0"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;color:rgba(29,25,19,.55)">DT DALLAS</span><span style="font-family:'Playfair Display',serif;font-weight:700;font-size:17px">{{dtDallas}} min drive</span></div>
+        <div style="margin-top:10px;font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.16em;color:#D9481F">PLACEHOLDER FIGURES — VERIFY BEFORE PUBLISHING</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 02 · Market ===== -->
+  <section data-screen-label="Market snapshot" style="max-width:1280px;margin:0 auto;padding:84px 4vw 72px">
+    <div data-reveal="1" style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:30px">
+      <div>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">02 — MARKET SNAPSHOT</div>
+        <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(30px,3.6vw,44px);line-height:1.05">The numbers, at a glance.</h2>
+      </div>
+      <span style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;color:#D9481F;border:1px dashed rgba(217,72,31,.6);border-radius:999px;padding:7px 13px;margin-bottom:6px">PLACEHOLDER DATA — SWAP FOR MLS FEED</span>
+    </div>
+    <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px">
+      <div style="border:2px solid #1D1913;border-radius:18px;background:#FBF7EE;padding:22px 24px"><div style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;color:rgba(29,25,19,.5)">MEDIAN LIST PRICE</div><div style="font-family:'Playfair Display',serif;font-weight:900;font-size:40px;color:#D9481F;margin-top:8px">{{price}}</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:rgba(29,25,19,.6);margin-top:6px">{{yoy}} YEAR OVER YEAR</div></div>
+      <div style="border:2px solid #1D1913;border-radius:18px;background:#FBF7EE;padding:22px 24px"><div style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;color:rgba(29,25,19,.5)">PRICE PER SQFT</div><div style="font-family:'Playfair Display',serif;font-weight:900;font-size:40px;margin-top:8px">{{ppsf}}</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:rgba(29,25,19,.6);margin-top:6px">METRO AVG ≈ $210</div></div>
+      <div style="border:2px solid #1D1913;border-radius:18px;background:#FBF7EE;padding:22px 24px"><div style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;color:rgba(29,25,19,.5)">DAYS ON MARKET</div><div style="font-family:'Playfair Display',serif;font-weight:900;font-size:40px;margin-top:8px">{{dom}}</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:rgba(29,25,19,.6);margin-top:6px">{{paceNote}}</div></div>
+      <div style="border:2px solid #1D1913;border-radius:18px;background:#1D1913;color:#F6F1E6;padding:22px 24px;grid-column:span 1">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;color:rgba(246,241,230,.6)">12-MO TREND</span><span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#E88D6B;font-weight:700">{{yoy}}</span></div>
+        <svg viewBox="0 0 320 92" style="width:100%;display:block;margin-top:12px">
+          <line x1="10" y1="78" x2="310" y2="78" style="stroke:rgba(246,241,230,.2);stroke-width:1"></line>
+          <line x1="10" y1="44" x2="310" y2="44" style="stroke:rgba(246,241,230,.1);stroke-width:1;stroke-dasharray:3 4"></line>
+          <polyline points="{{spark}}" style="fill:none;stroke:#E8865F;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:600;animation:drawIn 1.6s ease-out both"></polyline>
+          <circle cx="{{sparkX}}" cy="{{sparkY}}" r="4.4" style="fill:#D9481F;stroke:#F6F1E6;stroke-width:2"></circle>
+        </svg>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.16em;color:rgba(246,241,230,.5);margin-top:8px">ILLUSTRATIVE CURVE · PLACEHOLDER</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 03 · Neighborhoods ===== -->
+  <section data-screen-label="Neighborhoods" style="border-top:2px solid #1D1913;background:#F2EBDC">
+    <div style="max-width:1280px;margin:0 auto;padding:84px 4vw">
+      <div data-reveal="1" style="margin-bottom:30px">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">03 — NEIGHBORHOODS</div>
+        <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(30px,3.6vw,44px);line-height:1.05">Where locals tell you to look.</h2>
+      </div>
+      <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px">
+        <sc-for list="{{hoods}}" as="h" hint-placeholder-count="4">
+          <div style="border:2px solid #1D1913;border-radius:18px;background:#FBF7EE;padding:24px 26px;transition:all .25s;cursor:default" style-hover="transform:translateY(-5px);box-shadow:0 16px 32px rgba(29,25,19,.13);border-color:#D9481F">
+            <div style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.22em;color:#D9481F;font-weight:700">{{h.num}}</div>
+            <div style="font-family:'Playfair Display',serif;font-weight:800;font-size:23px;margin-top:10px;line-height:1.1">{{h.name}}</div>
+            <div style="font-size:14px;line-height:1.6;color:rgba(29,25,19,.68);margin-top:9px">{{h.note}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 04 · Schools ===== -->
+  <section data-screen-label="Schools" style="max-width:1280px;margin:0 auto;padding:84px 4vw">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(400px,90vw),1fr));gap:48px;align-items:start">
+      <div data-reveal="1">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">04 — SCHOOLS</div>
+        <h2 style="margin:0 0 16px;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(30px,3.6vw,44px);line-height:1.05">Zoned to {{isd}}.</h2>
+        <p style="margin:0;font-size:15.5px;line-height:1.75;color:rgba(29,25,19,.7)">Boundary lines shift and ratings age fast — treat these as a starting point and verify the exact address with the district before you write an offer.</p>
+        <div style="margin-top:16px;font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.16em;color:#D9481F">RATINGS ARE PLACEHOLDERS</div>
+      </div>
+      <div data-reveal="1" style="border:2px solid #1D1913;border-radius:18px;background:#FBF7EE;overflow:hidden">
+        <sc-for list="{{schools}}" as="s" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:16px;padding:17px 22px;border-bottom:1px solid rgba(29,25,19,.14)">
+            <span style="width:44px;height:44px;border:2px solid #1D1913;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;font-size:16px;background:{{s.bg}};color:{{s.fg}};flex-shrink:0">{{s.grade}}</span>
+            <span style="flex:1;min-width:0"><span style="display:block;font-family:'Playfair Display',serif;font-weight:700;font-size:17px;line-height:1.2">{{s.name}}</span></span>
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.18em;color:rgba(29,25,19,.55)">{{s.level}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 05 · Getting around ===== -->
+  <section data-screen-label="Commutes" style="border-top:2px solid #1D1913;background:#1D1913;color:#F6F1E6">
+    <div style="max-width:1280px;margin:0 auto;padding:84px 4vw">
+      <div data-reveal="1" style="margin-bottom:34px">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#E88D6B;margin-bottom:14px">05 — GETTING AROUND</div>
+        <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(30px,3.6vw,44px);line-height:1.05">Drive times that shape your week.</h2>
+      </div>
+      <div data-reveal="1" style="display:flex;flex-direction:column;gap:4px">
+        <sc-for list="{{commuteRows}}" as="cm" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:minmax(150px,220px) 1fr 84px;gap:18px;align-items:center;padding:15px 0;border-bottom:1px solid rgba(246,241,230,.16)">
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.16em;color:rgba(246,241,230,.7)">{{cm.hub}}</span>
+            <span style="height:12px;border-radius:99px;background:rgba(246,241,230,.1);overflow:hidden;display:block"><span style="display:block;height:100%;width:{{cm.w}};background:linear-gradient(90deg,#E8865F,#D9481F);border-radius:99px;transition:width .8s cubic-bezier(.22,1,.36,1)"></span></span>
+            <span style="font-family:'Playfair Display',serif;font-weight:800;font-size:22px;text-align:right">{{cm.min}}<span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.1em;color:rgba(246,241,230,.55)"> MIN</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div data-reveal="1" style="margin-top:18px;font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.18em;color:rgba(246,241,230,.45)">OFF-PEAK ESTIMATES · PLACEHOLDER — ADD LIVE DRIVE-TIME DATA</div>
+    </div>
+  </section>
+
+  <!-- ===== 06 · The look ===== -->
+  <section data-screen-label="Photo gallery" style="max-width:1280px;margin:0 auto;padding:84px 4vw 72px">
+    <div data-reveal="1" style="margin-bottom:30px">
+      <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">06 — THE LOOK</div>
+      <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(30px,3.6vw,44px);line-height:1.05">Three frames of {{name}}.</h2>
+    </div>
+    <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">
+      <sc-for list="{{gallery}}" as="g" hint-placeholder-count="3">
+        <div style="aspect-ratio:4/3;border:2px solid #1D1913;border-radius:18px;background:repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px);display:flex;align-items:center;justify-content:center;padding:18px;transition:all .25s" style-hover="border-color:#D9481F;transform:translateY(-4px)">
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.16em;color:rgba(29,25,19,.6);background:rgba(246,241,230,.9);padding:8px 12px;border-radius:8px;border:1px dashed rgba(29,25,19,.4);text-align:center;line-height:1.7">DROP PHOTO —<br>{{g.t}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ===== 07 · Listings ===== -->
+  <section data-screen-label="Featured listings" style="border-top:2px solid #1D1913;background:#F2EBDC">
+    <div style="max-width:1280px;margin:0 auto;padding:84px 4vw">
+      <div data-reveal="1" style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:30px">
+        <div>
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">07 — ON THE MARKET</div>
+          <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(30px,3.6vw,44px);line-height:1.05">Three ways to buy {{name}}.</h2>
+        </div>
+        <span style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;color:#D9481F;border:1px dashed rgba(217,72,31,.6);border-radius:999px;padding:7px 13px;margin-bottom:6px">PLACEHOLDER LISTINGS — CONNECT MLS</span>
+      </div>
+      <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px">
+        <sc-for list="{{listings}}" as="li" hint-placeholder-count="3">
+          <div style="border:2px solid #1D1913;border-radius:18px;background:#FBF7EE;overflow:hidden;transition:all .25s" style-hover="transform:translateY(-6px);box-shadow:0 18px 38px rgba(29,25,19,.14);border-color:#D9481F">
+            <div style="aspect-ratio:4/2.6;position:relative;background:repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px);border-bottom:2px solid #1D1913;display:flex;align-items:center;justify-content:center">
+              <span style="position:absolute;top:12px;left:12px;font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.2em;background:#D9481F;color:#F6F1E6;padding:5px 10px;border-radius:999px">{{li.tag}}</span>
+              <span style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.14em;color:rgba(29,25,19,.55);background:rgba(246,241,230,.9);padding:6px 10px;border-radius:6px;border:1px dashed rgba(29,25,19,.4)">LISTING PHOTO</span>
+            </div>
+            <div style="padding:18px 22px 22px">
+              <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:27px">{{li.price}}</div>
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.1em;color:rgba(29,25,19,.6);margin-top:6px">{{li.meta}}</div>
+              <div style="font-size:13.5px;color:rgba(29,25,19,.7);margin-top:9px;border-top:1px solid rgba(29,25,19,.14);padding-top:10px">{{li.hood}} · {{name}}, TX</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Prev / Next ===== -->
+  <section data-screen-label="Prev next nav" style="border-top:2px solid #1D1913">
+    <div style="max-width:1280px;margin:0 auto;padding:64px 4vw;display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:center">
+      <a href="{{prevHref}}" style="text-decoration:none;color:#1D1913;justify-self:start;transition:transform .25s" style-hover="transform:translateX(-6px)">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.24em;color:rgba(29,25,19,.5)">← PREVIOUS STOP</div>
+        <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(24px,3vw,38px);margin-top:6px">{{prevName}}</div>
+      </a>
+      <a href="Discover DFW.dc.html#map" title="Back to the map" style="width:62px;height:62px;border-radius:999px;border:2px solid #1D1913;background:#D9481F;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 12px 26px rgba(217,72,31,.3);transition:all .25s" style-hover="transform:scale(1.08) rotate(-8deg)">
+        <svg viewBox="0 0 100 132" style="height:30px;width:auto"><path d="M50 4 C25 4 5 24 5 49 c0 33 45 79 45 79 s45 -46 45 -79 C95 24 75 4 50 4 Z" fill="#F6F1E6"></path><circle cx="50" cy="47" r="16" fill="#D9481F"></circle></svg>
+      </a>
+      <a href="{{nextHref}}" style="text-decoration:none;color:#1D1913;justify-self:end;text-align:right;transition:transform .25s" style-hover="transform:translateX(6px)">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.24em;color:rgba(29,25,19,.5)">NEXT STOP →</div>
+        <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(24px,3vw,38px);margin-top:6px">{{nextName}}</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer data-screen-label="Footer" style="background:#1D1913;color:#F6F1E6">
+    <div style="max-width:1280px;margin:0 auto;padding:26px 4vw;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center">
+      <a href="Discover DFW.dc.html" style="text-decoration:none;color:#F6F1E6;font-family:'Playfair Display',serif;font-weight:900;font-size:17px;display:inline-flex;align-items:baseline">DISC<svg viewBox="0 0 100 132" style="height:.72em;width:auto;transform:translateY(.05em);margin:0 1px"><path d="M50 4 C25 4 5 24 5 49 c0 33 45 79 45 79 s45 -46 45 -79 C95 24 75 4 50 4 Z" fill="#D9481F"></path><circle cx="50" cy="47" r="16" fill="#1D1913"></circle></svg>VER&nbsp;DFW</a>
+      <span style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.18em;color:rgba(246,241,230,.5)">© MMXXVI · ALL FIGURES ARE PLACEHOLDERS</span>
+      <a href="Discover DFW.dc.html#map" style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.18em;color:#E88D6B;text-decoration:none">OPEN THE MAP ↗</a>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;city&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;auto&quot;, &quot;sanger&quot;, &quot;denton&quot;, &quot;aubrey&quot;, &quot;little-elm&quot;, &quot;the-colony&quot;, &quot;highland-village&quot;, &quot;argyle&quot;, &quot;northlake&quot;, &quot;lantana&quot;, &quot;trophy-club&quot;, &quot;roanoke&quot;, &quot;flower-mound&quot;, &quot;decatur&quot;, &quot;bridgeport&quot;, &quot;rhome&quot;, &quot;boyd&quot;, &quot;aurora&quot;, &quot;celina&quot;, &quot;anna&quot;, &quot;melissa&quot;, &quot;prosper&quot;, &quot;mckinney&quot;, &quot;frisco&quot;, &quot;fairview&quot;, &quot;allen&quot;, &quot;lucas&quot;, &quot;parker&quot;, &quot;st-paul&quot;, &quot;plano&quot;, &quot;murphy&quot;, &quot;wylie&quot;, &quot;fort-worth&quot;, &quot;arlington&quot;, &quot;north-richland-hills&quot;, &quot;lake-worth&quot;, &quot;azle&quot;, &quot;keller&quot;, &quot;southlake&quot;, &quot;grapevine&quot;, &quot;colleyville&quot;, &quot;bedford&quot;, &quot;euless&quot;, &quot;hurst&quot;, &quot;westlake&quot;, &quot;coppell&quot;, &quot;irving&quot;, &quot;dallas&quot;, &quot;sachse&quot;, &quot;rowlett&quot;, &quot;rockwall&quot;, &quot;heath&quot;, &quot;forney&quot;, &quot;midlothian&quot;], &quot;default&quot;: &quot;auto&quot;, &quot;section&quot;: &quot;Preview&quot;, &quot;tsType&quot;: &quot;string&quot; }
+}">
+class Component extends DCLogic {
+  state = { tick: 0 };
+
+  componentDidMount() {
+    this._h = {};
+    this._onHash = () => {
+      window.scrollTo(0, 0);
+      this.setState({ tick: this.state.tick + 1 });
+      this.setTitle();
+    };
+    window.addEventListener('hashchange', this._onHash);
+    if (!window.DFW) {
+      this._poll = setInterval(() => { if (window.DFW) { clearInterval(this._poll); this.forceUpdate(); this.setTitle(); this.reveals(); } }, 40);
+    } else {
+      this.setTitle();
+      setTimeout(() => this.reveals(), 80);
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('hashchange', this._onHash);
+    if (this._poll) clearInterval(this._poll);
+    if (this._io) this._io.disconnect();
+  }
+
+  reveals() {
+    const els = Array.from(document.querySelectorAll('[data-reveal]'));
+    const vh = window.innerHeight;
+    const below = els.filter(el => el.getBoundingClientRect().top > vh * 0.92);
+    below.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(26px)'; });
+    this._io = new IntersectionObserver((es) => {
+      es.forEach(e => {
+        if (e.isIntersecting) {
+          const el = e.target;
+          el.style.transition = 'opacity .85s cubic-bezier(.22,1,.36,1), transform .85s cubic-bezier(.22,1,.36,1)';
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+          this._io.unobserve(el);
+        }
+      });
+    }, { threshold: 0.1 });
+    below.forEach(el => this._io.observe(el));
+  }
+
+  slugNow() {
+    const D = window.DFW;
+    if (!D) return 'frisco';
+    const prop = this.props.city ?? 'auto';
+    if (prop !== 'auto' && D.bySlug[prop]) return prop;
+    const h = decodeURIComponent((location.hash || '').slice(1));
+    return D.bySlug[h] ? h : 'frisco';
+  }
+
+  setTitle() {
+    const D = window.DFW;
+    if (D) document.title = D.bySlug[this.slugNow()].name + ' — Discover DFW';
+  }
+
+  cb(key, fn) { if (!this._h) this._h = {}; if (!this._h[key]) this._h[key] = fn; return this._h[key]; }
+  project(ll) {
+    const b = window.DFW.bounds;
+    return [(ll[0] - b.lonMin) / (b.lonMax - b.lonMin) * 1160, (b.latMax - ll[1]) / (b.latMax - b.latMin) * 927];
+  }
+  pts(arr) { return arr.map(p => this.project(p).map(n => Math.round(n * 10) / 10).join(',')).join(' '); }
+  fmtK(p) { return '$' + Math.round(p / 1000) + 'K'; }
+
+  renderVals() {
+    const D = window.DFW;
+    if (!D) {
+      return { slug: 'frisco', name: '', nameUpper: '', tagline: '', countyName: '', countyUpper: '', vibe: '', isd: '',
+        price: '', ppsf: '', dom: '', yoy: '', pop: '', popFull: '', dtDallas: '', coords: '', paceNote: '',
+        hoods: [], schools: [], commuteRows: [], gallery: [], listings: [], cityOptions: [],
+        mapCounties: [], mapLakes: [], mapDots: [], curX: -50, curY: -50,
+        spark: '', sparkX: -20, sparkY: -20, prevHref: '#', nextHref: '#', prevName: '', nextName: '', onJump: () => {} };
+    }
+
+    const slug = this.slugNow();
+    const c = D.bySlug[slug];
+    const idx = D.cities.indexOf(c);
+    const prev = D.cities[(idx - 1 + D.cities.length) % D.cities.length];
+    const next = D.cities[(idx + 1) % D.cities.length];
+    const county = D.counties.find(x => x.id === c.county);
+
+    // sparkline (seeded, illustrative)
+    let seed = 0;
+    for (let i = 0; i < slug.length; i++) seed += slug.charCodeAt(i) * (i + 7);
+    let s = seed;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const yoyF = parseFloat(c.yoy) / 100;
+    const start = c.price * (1 - yoyF);
+    const vals = [];
+    for (let i = 0; i < 12; i++) {
+      const base = start + (c.price - start) * (i / 11);
+      vals.push(i === 11 ? c.price : base + (rnd() - 0.5) * c.price * 0.022);
+    }
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    const px = (i) => 10 + (i / 11) * 300;
+    const py = (v) => 82 - ((v - mn) / (mx - mn || 1)) * 62;
+    const spark = vals.map((v, i) => Math.round(px(i)) + ',' + Math.round(py(v) * 10) / 10).join(' ');
+
+    const p = this.project(c.ll);
+
+    const factors = [
+      { f: 0.86, tag: 'MOVE-IN READY', bd: 3, ba: 2 },
+      { f: 1.0, tag: 'NEW LISTING', bd: 4, ba: 3 },
+      { f: 1.26, tag: 'THE STRETCH', bd: 5, ba: 4 }
+    ];
+    const listings = factors.map((x, i) => {
+      const pr = Math.round(c.price * x.f / 5000) * 5000;
+      const sq = Math.round((pr / c.ppsf) / 10) * 10;
+      return { tag: x.tag, price: '$' + pr.toLocaleString('en-US'), meta: x.bd + ' BD · ' + x.ba + ' BA · ' + sq.toLocaleString('en-US') + ' SQFT', hood: c.hoods[Math.min(i, c.hoods.length - 1)][0] };
+    });
+
+    const gradeBg = (g) => g.indexOf('A') === 0 ? '#1D1913' : '#FBF7EE';
+    const gradeFg = (g) => g.indexOf('A') === 0 ? '#F6F1E6' : '#1D1913';
+
+    return {
+      slug: slug,
+      name: c.name, nameUpper: c.name.toUpperCase(),
+      tagline: c.tagline, vibe: c.vibe, isd: c.isd,
+      countyName: county.name, countyUpper: county.name.toUpperCase(),
+      price: this.fmtK(c.price), ppsf: '$' + c.ppsf, dom: c.dom, yoy: c.yoy,
+      pop: c.pop >= 1000000 ? (c.pop / 1000000).toFixed(2) + 'M' : Math.round(c.pop / 1000) + 'K',
+      popFull: c.pop.toLocaleString('en-US') + ' (placeholder)',
+      dtDallas: c.commute[0],
+      paceNote: c.dom <= 32 ? 'MOVES FAST — COME READY' : 'ROOM TO NEGOTIATE',
+      coords: Math.abs(c.ll[1]).toFixed(3) + '° N · ' + Math.abs(c.ll[0]).toFixed(3) + '° W',
+      hoods: c.hoods.map((h, i) => ({ num: 'N°' + (i + 1), name: h[0], note: h[1] })),
+      schools: c.schools.map(sc => ({ name: sc[0], level: sc[1].toUpperCase(), grade: sc[2], bg: gradeBg(sc[2]), fg: gradeFg(sc[2]) })),
+      commuteRows: D.hubs.map((h, i) => ({ hub: h.toUpperCase(), min: c.commute[i], w: Math.min(100, Math.round(c.commute[i] / 70 * 100)) + '%' })),
+      gallery: (c.gallery || [c.name + ' signature landmark', 'neighborhood streetscape', 'parks & greenbelt']).map(t => ({ t: t.toUpperCase() })),
+      listings: listings,
+      cityOptions: D.cities.slice().sort((a, b) => a.name.localeCompare(b.name)).map(x => ({ slug: x.slug, name: x.name })),
+      mapCounties: D.counties.map((co, i) => ({ points: this.pts(co.poly), fill: co.id === c.county ? '#F5D0B2' : (co.tone === 2 ? '#EFE5CF' : (co.tone === 1 ? '#F1E9D8' : '#F5EEDF')) })),
+      mapLakes: D.lakes.map(lk => ({ points: this.pts(lk.pts) })),
+      mapDots: D.cities.filter(x => x.slug !== slug).map(x => { const q = this.project(x.ll); return { x: Math.round(q[0]), y: Math.round(q[1]) }; }),
+      curX: Math.round(p[0] * 10) / 10, curY: Math.round(p[1] * 10) / 10,
+      spark: spark, sparkX: Math.round(px(11)), sparkY: Math.round(py(vals[11]) * 10) / 10,
+      prevHref: '#' + prev.slug, nextHref: '#' + next.slug, prevName: prev.name, nextName: next.name,
+      onJump: this.cb('jump', (e) => { location.hash = e.target.value; })
+    };
+  }
+}
+</script>
+</body>
+</html>

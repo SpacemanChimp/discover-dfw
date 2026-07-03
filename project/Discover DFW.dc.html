@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,500;1,600;1,700&amp;family=Archivo:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #F6F1E6; color: #1D1913; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    ::selection { background: #D9481F; color: #F6F1E6; }
+    @keyframes riseUp { from { transform: translateY(112%); } to { transform: translateY(0); } }
+    @keyframes pinDrop { 0% { transform: translateY(-110px); opacity: 0; } 55% { transform: translateY(0); opacity: 1; } 72% { transform: translateY(-16px); } 100% { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+    @keyframes marqueeMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes ringPulse { 0% { transform: scale(.32); opacity: .95; } 100% { transform: scale(2); opacity: 0; } }
+    @keyframes blipPulse { 0% { transform: scale(.3); opacity: .7; } 70% { transform: scale(1.7); opacity: 0; } 100% { transform: scale(1.7); opacity: 0; } }
+    @keyframes caretBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes bobY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+  </style>
+  <script src="dfw-data.js"></script>
+</helmet>
+
+<div id="top" style="font-family:Archivo,'Helvetica Neue',sans-serif;background:#F6F1E6;color:#1D1913;min-height:100vh">
+
+  <!-- ===== Micro masthead bar ===== -->
+  <div data-screen-label="Masthead bar" style="display:flex;justify-content:space-between;gap:16px;align-items:center;padding:9px 4vw;border-bottom:1px solid rgba(29,25,19,.16);font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10px;letter-spacing:.22em;color:rgba(29,25,19,.55)">
+    <span>A FIELD GUIDE TO NORTH TEXAS REAL ESTATE</span>
+    <span style="display:flex;gap:18px;align-items:center"><span>49 CITIES</span><span style="color:#D9481F">✳</span><span>8 COUNTIES</span><span style="color:#D9481F">✳</span><span>EST. MMXXVI</span></span>
+  </div>
+
+  <!-- ===== Nav ===== -->
+  <nav data-screen-label="Navigation" style="position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 4vw;background:rgba(246,241,230,.9);backdrop-filter:blur(14px);border-bottom:1px solid rgba(29,25,19,.16)">
+    <a href="#top" style="text-decoration:none;color:#1D1913;font-family:'Playfair Display',serif;font-weight:900;font-size:21px;letter-spacing:.01em;display:inline-flex;align-items:baseline;white-space:nowrap">DISC<svg viewBox="0 0 100 132" style="height:.72em;width:auto;transform:translateY(.05em);margin:0 1px"><path d="M50 4 C25 4 5 24 5 49 c0 33 45 79 45 79 s45 -46 45 -79 C95 24 75 4 50 4 Z" fill="#D9481F"></path><circle cx="50" cy="47" r="16" fill="#F6F1E6"></circle></svg>VER&nbsp;DFW</a>
+    <div style="display:flex;gap:30px;align-items:center;font-size:12.5px;font-weight:600;letter-spacing:.16em">
+      <a href="#map" style="color:#1D1913;text-decoration:none;padding:6px 2px;border-bottom:{{uMap}};transition:border-color .25s,color .2s" style-hover="color:#D9481F">THE MAP</a>
+      <a href="#cities" style="color:#1D1913;text-decoration:none;padding:6px 2px;border-bottom:{{uCities}};transition:border-color .25s,color .2s" style-hover="color:#D9481F">THE INDEX</a>
+      <a href="#about" style="color:#1D1913;text-decoration:none;padding:6px 2px;border-bottom:{{uAbout}};transition:border-color .25s,color .2s" style-hover="color:#D9481F">ABOUT</a>
+    </div>
+    <a href="#newsletter" style="background:#1D1913;color:#F6F1E6;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.14em;padding:11px 22px;border-radius:999px;border:2px solid #1D1913;transition:all .25s;white-space:nowrap" style-hover="background:#D9481F;border-color:#D9481F;transform:translateY(-1px)">GET THE LETTER</a>
+  </nav>
+
+  <!-- ===== Hero ===== -->
+  <header data-screen-label="Hero" style="position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:78vh;padding:72px 5vw 56px;overflow:hidden">
+    <div style="position:absolute;top:26px;left:4vw;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;color:rgba(29,25,19,.4)">32.7767° N</div>
+    <div style="position:absolute;top:26px;right:4vw;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;color:rgba(29,25,19,.4)">97.3308° W</div>
+
+    <div style="display:flex;align-items:center;gap:20px;width:min(560px,80vw);margin-bottom:18px;animation:fadeUp .7s ease both">
+      
+      
+      <div style="flex:1;height:1px;background:rgba(29,25,19,.3)"></div>
+    </div>
+
+    <h1 style="margin:0;font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(54px,9.4vw,142px);line-height:.98;letter-spacing:0;white-space:nowrap">
+      <span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .05s both">D</span></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .1s both">I</span></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .15s both">S</span></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .2s both">C</span></span><span style="display:inline-block;animation:pinDrop 1s cubic-bezier(.34,1.4,.64,1) .6s both"><svg viewBox="0 0 100 132" style="height:.74em;width:auto;transform:translateY(.06em);margin:0 .015em;filter:drop-shadow(0 10px 16px rgba(217,72,31,.35))"><path d="M50 4 C25 4 5 24 5 49 c0 33 45 79 45 79 s45 -46 45 -79 C95 24 75 4 50 4 Z" fill="#D9481F"></path><circle cx="50" cy="47" r="16" fill="#F6F1E6"></circle></svg></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .25s both">V</span></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .3s both">E</span></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .35s both">R</span></span><span style="display:inline-block;width:.28em"></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .42s both">D</span></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .47s both">F</span></span><span style="display:inline-block;overflow:hidden;vertical-align:bottom"><span style="display:inline-block;animation:riseUp .75s cubic-bezier(.22,1,.36,1) .52s both">W</span></span>
+    </h1>
+
+    <div style="width:min(760px,86vw);margin-top:26px;animation:fadeUp .8s ease .45s both">
+      <div style="height:3px;background:#1D1913"></div>
+      <div style="height:1px;background:#1D1913;margin-top:3px"></div>
+    </div>
+
+    <p style="max-width:640px;margin:28px 0 0;font-family:'Playfair Display',serif;font-style:italic;font-weight:500;font-size:clamp(18px,2.3vw,24px);line-height:1.5;color:rgba(29,25,19,.85);animation:fadeUp .8s ease .6s both">A living atlas of Dallas–Fort Worth real estate — every city, every county, one clickable map.</p>
+
+    <div style="margin-top:18px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;letter-spacing:.2em;color:rgba(29,25,19,.6);animation:fadeUp .8s ease .72s both">WHERE TO NEXT: <span style="color:#D9481F;font-weight:700">{{typed}}</span><span style="display:inline-block;width:9px;height:15px;background:#D9481F;vertical-align:-2px;margin-left:2px;animation:caretBlink 1s steps(1) infinite"></span></div>
+
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:34px;animation:fadeUp .8s ease .85s both">
+      <a href="#map" style="background:#D9481F;color:#F6F1E6;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.03em;padding:17px 32px;border-radius:999px;border:2px solid #D9481F;display:inline-flex;align-items:center;gap:11px;box-shadow:0 12px 26px rgba(217,72,31,.26);transition:all .25s" style-hover="transform:translateY(-3px);box-shadow:0 18px 36px rgba(217,72,31,.34);background:#C13E17;border-color:#C13E17">Explore the map <span style="animation:bobY 1.6s ease-in-out infinite;display:inline-block">↓</span></a>
+      <a href="#cities" style="background:transparent;color:#1D1913;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.03em;padding:17px 32px;border-radius:999px;border:2px solid #1D1913;transition:all .25s" style-hover="background:#1D1913;color:#F6F1E6;transform:translateY(-3px)">Browse the index</a>
+    </div>
+  </header>
+
+  <!-- ===== Ticker ===== -->
+  <div data-screen-label="City ticker" style="border-top:1px solid rgba(29,25,19,.25);border-bottom:1px solid rgba(29,25,19,.25);overflow:hidden;padding:13px 0;background:#F2EBDC">
+    <div style="display:flex;gap:38px;width:max-content;animation:marqueeMove 60s linear infinite" style-hover="animation-play-state:paused">
+      <sc-for list="{{marquee}}" as="m" hint-placeholder-count="6">
+        <a href="{{m.href}}" style="display:inline-flex;align-items:baseline;gap:10px;text-decoration:none;white-space:nowrap" style-hover="transform:translateY(-1px)">
+          <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:#1D1913;letter-spacing:.04em">{{m.t}}</span>
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#D9481F;font-weight:700">{{m.p}}</span>
+          <span style="color:rgba(29,25,19,.3);font-size:13px">·</span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- ===== The Map ===== -->
+  <section id="map" data-screen-label="Interactive map" style="max-width:1380px;margin:0 auto;padding:92px 4vw 60px">
+    <div data-reveal="1" style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:14px">
+      <div>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">01 — THE MAP</div>
+        <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(38px,4.8vw,64px);line-height:1.02;letter-spacing:-.01em">The Metroplex, mapped.</h2>
+      </div>
+      <p style="margin:0 0 6px;max-width:340px;font-size:15px;line-height:1.6;color:rgba(29,25,19,.65)">Hover any city to light it up. Click through for the full report: market, neighborhoods, schools, commutes.</p>
+    </div>
+
+    <div data-reveal="1" style="border:2px solid #1D1913;border-radius:22px;overflow:hidden;display:flex;flex-wrap:wrap;background:{{pal.panel}};box-shadow:0 24px 60px rgba(29,25,19,.14)">
+      <!-- Map canvas -->
+      <div ref="{{setWrap}}" onMouseMove="{{onMapMove}}" style="flex:1.72;min-width:min(620px,92vw);position:relative;padding:20px 8px 12px;background-image:radial-gradient({{pal.grid}} 1px, transparent 1px);background-size:26px 26px">
+        <div style="position:absolute;top:18px;left:26px;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.26em;color:{{pal.faint}}">DALLAS–FORT WORTH METROPLEX</div>
+        <div style="position:absolute;top:18px;right:26px;font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;color:{{pal.faint}}">N ↑</div>
+        <svg viewBox="0 0 1160 927" style="width:100%;display:block">
+          <g style="filter:drop-shadow(0 14px 22px rgba(20,16,10,.22))">
+            <sc-for list="{{counties}}" as="co" hint-placeholder-count="3">
+              <polygon points="{{co.points}}" onMouseEnter="{{co.enter}}" onMouseLeave="{{co.leave}}" onClick="{{co.click}}" style="fill:{{co.fill}};stroke:{{pal.stroke}};stroke-width:1.7;stroke-linejoin:round;cursor:pointer;transition:fill .35s"></polygon>
+            </sc-for>
+          </g>
+          <sc-for list="{{lakes}}" as="lk" hint-placeholder-count="2">
+            <polygon points="{{lk.points}}" style="fill:{{pal.lake}};stroke:{{pal.lake}};stroke-width:11;stroke-linejoin:round;stroke-linecap:round;pointer-events:none;opacity:.92"></polygon>
+          </sc-for>
+          <sc-if value="{{roadsOn}}" hint-placeholder-val="{{true}}">
+            <g>
+              <sc-for list="{{roads}}" as="rd" hint-placeholder-count="3">
+                <polyline points="{{rd.points}}" style="fill:none;stroke:{{pal.road}};stroke-width:{{rd.w}};stroke-dasharray:{{rd.dash}};stroke-linejoin:round;stroke-linecap:round;pointer-events:none"></polyline>
+              </sc-for>
+            </g>
+          </sc-if>
+          <g>{{countyLabelEls}}</g>
+          <g>{{lakeLabelEls}}</g>
+          <g>{{landmarkEls}}</g>
+          <sc-for list="{{cities}}" as="c" hint-placeholder-count="4">
+            <a href="{{c.href}}" onMouseEnter="{{c.enter}}" onMouseLeave="{{c.leave}}" style="cursor:pointer">
+              <sc-if value="{{c.halo}}" hint-placeholder-val="{{false}}">
+                <circle cx="{{c.x}}" cy="{{c.y}}" r="16" style="fill:none;stroke:#D9481F;stroke-width:2.2;transform-box:fill-box;transform-origin:center;animation:ringPulse 1.5s cubic-bezier(.2,.8,.4,1) infinite;pointer-events:none"></circle>
+                <circle cx="{{c.x}}" cy="{{c.y}}" r="10" style="fill:rgba(217,72,31,.16);pointer-events:none"></circle>
+              </sc-if>
+              <sc-if value="{{c.blip}}" hint-placeholder-val="{{false}}">
+                <circle cx="{{c.x}}" cy="{{c.y}}" r="14" style="fill:none;stroke:{{pal.blip}};stroke-width:1.6;transform-box:fill-box;transform-origin:center;animation:blipPulse 2.4s ease-out infinite;pointer-events:none"></circle>
+              </sc-if>
+              <circle cx="{{c.x}}" cy="{{c.y}}" r="{{c.r}}" style="fill:{{c.dotFill}};stroke:{{c.dotRing}};stroke-width:1.4;transition:fill .2s"></circle>
+              {{c.labelEl}}
+              <circle cx="{{c.x}}" cy="{{c.y}}" r="15" style="fill:rgba(0,0,0,0)"></circle>
+            </a>
+          </sc-for>
+        </svg>
+        <!-- cursor tooltip -->
+        <div ref="{{setTip}}" style="position:absolute;left:-300px;top:0;pointer-events:none;z-index:5;transform:translate(16px,-112%);opacity:{{tipOp}};transition:opacity .18s">
+          <div style="background:#1D1913;color:#F6F1E6;border-radius:12px;padding:11px 14px 12px;min-width:158px;box-shadow:0 14px 30px rgba(20,16,10,.35);border:1px solid rgba(246,241,230,.14)">
+            <div style="font-family:ui-monospace,Menlo,monospace;font-size:8.5px;letter-spacing:.22em;color:#E88D6B;margin-bottom:4px">{{tipCounty}} · {{tipPop}} PEOPLE</div>
+            <div style="font-family:'Playfair Display',serif;font-weight:800;font-size:17px;line-height:1.1">{{tipName}}</div>
+            <div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;margin-top:5px;color:rgba(246,241,230,.85)">{{tipPrice}} median · <span style="color:#E88D6B">open report →</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div style="flex:1;min-width:min(320px,92vw);border-left:2px solid #1D1913;display:flex;flex-direction:column;justify-content:center;padding:30px 30px;background:{{pal.side}}">
+        <sc-if value="{{spot.show}}" hint-placeholder-val="{{false}}">
+          <div>
+            <div style="display:inline-flex;align-items:center;gap:8px;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.24em;color:#D9481F;border:1px solid rgba(217,72,31,.45);border-radius:999px;padding:6px 12px;margin-bottom:18px">{{spot.county}} COUNTY</div>
+            <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(34px,3.4vw,46px);line-height:1;letter-spacing:-.01em;color:{{pal.text}}">{{spot.name}}</div>
+            <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:17px;color:{{pal.textSoft}};margin-top:10px">{{spot.tagline}}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:{{pal.hair}};border:1px solid {{pal.hair}};border-radius:14px;overflow:hidden;margin-top:22px">
+              <div style="background:{{pal.side}};padding:13px 15px"><div style="font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.18em;color:{{pal.textFaint}}">MEDIAN</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:23px;color:#D9481F;margin-top:3px">{{spot.price}}</div></div>
+              <div style="background:{{pal.side}};padding:13px 15px"><div style="font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.18em;color:{{pal.textFaint}}">$ / SQFT</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:23px;color:{{pal.text}};margin-top:3px">{{spot.ppsf}}</div></div>
+              <div style="background:{{pal.side}};padding:13px 15px"><div style="font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.18em;color:{{pal.textFaint}}">POPULATION</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:23px;color:{{pal.text}};margin-top:3px">{{spot.pop}}</div></div>
+              <div style="background:{{pal.side}};padding:13px 15px"><div style="font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.18em;color:{{pal.textFaint}}">DAYS ON MKT</div><div style="font-family:'Playfair Display',serif;font-weight:800;font-size:23px;color:{{pal.text}};margin-top:3px">{{spot.dom}}</div></div>
+            </div>
+            <a href="{{spot.href}}" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;background:#D9481F;color:#F6F1E6;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:.04em;padding:15px 20px;border-radius:999px;transition:all .22s;box-shadow:0 10px 22px rgba(217,72,31,.25)" style-hover="background:#C13E17;transform:translateY(-2px)">Read the {{spot.name}} report →</a>
+          </div>
+        </sc-if>
+        <sc-if value="{{cp.show}}" hint-placeholder-val="{{false}}">
+          <div>
+            <button onClick="{{clearCounty}}" style="background:none;border:none;cursor:pointer;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;color:{{pal.textFaint}};padding:0 0 14px" style-hover="color:#D9481F">← ALL COUNTIES</button>
+            <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:34px;line-height:1;color:{{pal.text}}">{{cp.name}} <span style="font-weight:700;font-style:italic;font-size:19px;color:{{pal.textSoft}}">County</span></div>
+            <p style="font-size:13.5px;line-height:1.55;color:{{pal.textSoft}};margin:10px 0 16px">{{cp.blurb}}</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <sc-for list="{{cp.cities}}" as="ci" hint-placeholder-count="4">
+                <a href="{{ci.href}}" onMouseEnter="{{ci.enter}}" onMouseLeave="{{ci.leave}}" style="text-decoration:none;border:1.5px solid {{pal.hair}};border-radius:12px;padding:10px 12px;transition:all .2s;background:{{pal.side}}" style-hover="border-color:#D9481F;transform:translateY(-2px);box-shadow:0 8px 18px rgba(217,72,31,.14)">
+                  <div style="font-family:'Playfair Display',serif;font-weight:800;font-size:15px;color:{{pal.text}};line-height:1.15">{{ci.name}}</div>
+                  <div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#D9481F;margin-top:3px">{{ci.price}}</div>
+                </a>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{listShow}}" hint-placeholder-val="{{true}}">
+          <div>
+            <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.26em;color:{{pal.textFaint}};margin-bottom:16px">THE EIGHT COUNTIES — HOVER TO TINT, CLICK TO OPEN</div>
+            <sc-for list="{{countyRows}}" as="cr" hint-placeholder-count="7">
+              <div onMouseEnter="{{cr.enter}}" onMouseLeave="{{cr.leave}}" onClick="{{cr.click}}" style="display:flex;align-items:baseline;gap:12px;padding:11px 10px;margin:0 -10px;border-bottom:1px solid {{pal.hair}};cursor:pointer;border-radius:10px;transition:background .2s" style-hover="background:rgba(217,72,31,.07)">
+                <span style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;color:#D9481F;font-weight:700">{{cr.num}}</span>
+                <span style="font-family:'Playfair Display',serif;font-weight:800;font-size:19px;color:{{pal.text}}">{{cr.name}}</span>
+                <span style="flex:1;border-bottom:1px dotted {{pal.hair}};transform:translateY(-4px)"></span>
+                <span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:{{pal.textSoft}}">{{cr.count}} CITIES</span>
+                <span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#D9481F;font-weight:700">{{cr.median}}</span>
+              </div>
+            </sc-for>
+            <div style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.14em;color:{{pal.textFaint}};margin-top:16px;line-height:1.8">● CITY — CLICK TO OPEN ITS REPORT<br>◆ LANDMARK &nbsp;·&nbsp; ⬡ COUNTY &nbsp;·&nbsp; 〜 LAKE &nbsp;·&nbsp; ╌ TOLLWAY</div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div data-reveal="1" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:14px;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;color:rgba(29,25,19,.5)">
+      <span>SIMPLIFIED COUNTY GEOMETRY · NOT FOR NAVIGATION</span>
+      <span style="color:#D9481F">ALL FIGURES ARE PLACEHOLDERS — REPLACE WITH LIVE MLS DATA</span>
+    </div>
+  </section>
+
+  <!-- ===== Editor's picks ===== -->
+  <section data-screen-label="Editor's picks" style="max-width:1380px;margin:0 auto;padding:60px 4vw 90px">
+    <div data-reveal="1" style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:34px">
+      <div>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">02 — EDITOR'S PICKS</div>
+        <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(34px,4.2vw,56px);line-height:1.02">Start with these four.</h2>
+      </div>
+      <a href="#cities" style="font-size:13px;font-weight:700;letter-spacing:.12em;color:#1D1913;text-decoration:none;border-bottom:2px solid #D9481F;padding-bottom:4px;margin-bottom:8px;transition:color .2s" style-hover="color:#D9481F">SEE ALL 49 →</a>
+    </div>
+    <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:20px">
+      <a href="City.dc.html#frisco" style="text-decoration:none;color:#1D1913;border:2px solid #1D1913;border-radius:18px;overflow:hidden;background:#FBF7EE;transition:all .28s;display:block" style-hover="transform:translateY(-7px);box-shadow:0 22px 44px rgba(29,25,19,.16);border-color:#D9481F">
+        <div style="aspect-ratio:4/2.9;position:relative;background:repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E8DEC9 12px 24px);border-bottom:2px solid #1D1913;display:flex;align-items:center;justify-content:center">
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.16em;color:rgba(29,25,19,.55);background:rgba(246,241,230,.85);padding:6px 10px;border-radius:6px;border:1px dashed rgba(29,25,19,.35)">PHOTO — THE STAR DISTRICT</span>
+          <span style="position:absolute;top:12px;left:12px;font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;background:#1D1913;color:#F6F1E6;padding:5px 10px;border-radius:999px">COLLIN CO.</span>
+        </div>
+        <div style="padding:20px 22px 22px">
+          <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:29px;line-height:1">Frisco</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:14.5px;color:rgba(29,25,19,.65);margin-top:6px">Sports capital of Texas</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;border-top:1px solid rgba(29,25,19,.16);padding-top:13px">
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#D9481F;font-weight:700">$662K MEDIAN</span>
+            <span style="font-size:13px;font-weight:700;letter-spacing:.08em">EXPLORE →</span>
+          </div>
+        </div>
+      </a>
+      <a href="City.dc.html#mckinney" style="text-decoration:none;color:#1D1913;border:2px solid #1D1913;border-radius:18px;overflow:hidden;background:#FBF7EE;transition:all .28s;display:block" style-hover="transform:translateY(-7px);box-shadow:0 22px 44px rgba(29,25,19,.16);border-color:#D9481F">
+        <div style="aspect-ratio:4/2.9;position:relative;background:repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E8DEC9 12px 24px);border-bottom:2px solid #1D1913;display:flex;align-items:center;justify-content:center">
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.16em;color:rgba(29,25,19,.55);background:rgba(246,241,230,.85);padding:6px 10px;border-radius:6px;border:1px dashed rgba(29,25,19,.35)">PHOTO — THE HISTORIC SQUARE</span>
+          <span style="position:absolute;top:12px;left:12px;font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;background:#1D1913;color:#F6F1E6;padding:5px 10px;border-radius:999px">COLLIN CO.</span>
+        </div>
+        <div style="padding:20px 22px 22px">
+          <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:29px;line-height:1">McKinney</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:14.5px;color:rgba(29,25,19,.65);margin-top:6px">Unique by nature — square included</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;border-top:1px solid rgba(29,25,19,.16);padding-top:13px">
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#D9481F;font-weight:700">$535K MEDIAN</span>
+            <span style="font-size:13px;font-weight:700;letter-spacing:.08em">EXPLORE →</span>
+          </div>
+        </div>
+      </a>
+      <a href="City.dc.html#fort-worth" style="text-decoration:none;color:#1D1913;border:2px solid #1D1913;border-radius:18px;overflow:hidden;background:#FBF7EE;transition:all .28s;display:block" style-hover="transform:translateY(-7px);box-shadow:0 22px 44px rgba(29,25,19,.16);border-color:#D9481F">
+        <div style="aspect-ratio:4/2.9;position:relative;background:repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E8DEC9 12px 24px);border-bottom:2px solid #1D1913;display:flex;align-items:center;justify-content:center">
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.16em;color:rgba(29,25,19,.55);background:rgba(246,241,230,.85);padding:6px 10px;border-radius:6px;border:1px dashed rgba(29,25,19,.35)">PHOTO — THE STOCKYARDS</span>
+          <span style="position:absolute;top:12px;left:12px;font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;background:#1D1913;color:#F6F1E6;padding:5px 10px;border-radius:999px">TARRANT CO.</span>
+        </div>
+        <div style="padding:20px 22px 22px">
+          <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:29px;line-height:1">Fort Worth</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:14.5px;color:rgba(29,25,19,.65);margin-top:6px">Cowtown cool, big-city value</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;border-top:1px solid rgba(29,25,19,.16);padding-top:13px">
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#D9481F;font-weight:700">$368K MEDIAN</span>
+            <span style="font-size:13px;font-weight:700;letter-spacing:.08em">EXPLORE →</span>
+          </div>
+        </div>
+      </a>
+      <a href="City.dc.html#rockwall" style="text-decoration:none;color:#1D1913;border:2px solid #1D1913;border-radius:18px;overflow:hidden;background:#FBF7EE;transition:all .28s;display:block" style-hover="transform:translateY(-7px);box-shadow:0 22px 44px rgba(29,25,19,.16);border-color:#D9481F">
+        <div style="aspect-ratio:4/2.9;position:relative;background:repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E8DEC9 12px 24px);border-bottom:2px solid #1D1913;display:flex;align-items:center;justify-content:center">
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.16em;color:rgba(29,25,19,.55);background:rgba(246,241,230,.85);padding:6px 10px;border-radius:6px;border:1px dashed rgba(29,25,19,.35)">PHOTO — THE HARBOR LIGHTHOUSE</span>
+          <span style="position:absolute;top:12px;left:12px;font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.2em;background:#1D1913;color:#F6F1E6;padding:5px 10px;border-radius:999px">ROCKWALL CO.</span>
+        </div>
+        <div style="padding:20px 22px 22px">
+          <div style="font-family:'Playfair Display',serif;font-weight:900;font-size:29px;line-height:1">Rockwall</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:14.5px;color:rgba(29,25,19,.65);margin-top:6px">Harbor lights east of the lake</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;border-top:1px solid rgba(29,25,19,.16);padding-top:13px">
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#D9481F;font-weight:700">$522K MEDIAN</span>
+            <span style="font-size:13px;font-weight:700;letter-spacing:.08em">EXPLORE →</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== Numbers band ===== -->
+  <section data-screen-label="Stats band" style="background:#1D1913;color:#F6F1E6">
+    <div style="max-width:1380px;margin:0 auto;padding:72px 4vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:36px">
+      <div data-reveal="1"><div style="width:34px;height:4px;background:#D9481F;margin-bottom:18px"></div><div style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(40px,4.4vw,58px);line-height:1">$528K</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;color:rgba(246,241,230,.6);margin-top:10px">METRO MEDIAN LIST · PLACEHOLDER</div></div>
+      <div data-reveal="1"><div style="width:34px;height:4px;background:#D9481F;margin-bottom:18px"></div><div style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(40px,4.4vw,58px);line-height:1">49</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;color:rgba(246,241,230,.6);margin-top:10px">CITIES PROFILED IN FULL</div></div>
+      <div data-reveal="1"><div style="width:34px;height:4px;background:#D9481F;margin-bottom:18px"></div><div style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(40px,4.4vw,58px);line-height:1">8</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;color:rgba(246,241,230,.6);margin-top:10px">COUNTIES ON THE MAP</div></div>
+      <div data-reveal="1"><div style="width:34px;height:4px;background:#D9481F;margin-bottom:18px"></div><div style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(40px,4.4vw,58px);line-height:1">8.4M</div><div style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;color:rgba(246,241,230,.6);margin-top:10px">METRO RESIDENTS · PLACEHOLDER</div></div>
+    </div>
+  </section>
+
+  <!-- ===== The Index ===== -->
+  <section id="cities" data-screen-label="City index" style="max-width:1380px;margin:0 auto;padding:96px 4vw 60px">
+    <div data-reveal="1" style="margin-bottom:44px">
+      <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:14px">03 — THE INDEX</div>
+      <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(34px,4.2vw,56px);line-height:1.02">Every city, county by county.</h2>
+    </div>
+    <sc-for list="{{indexBlocks}}" as="b" hint-placeholder-count="3">
+      <div id="{{b.anchor}}" data-reveal="1" style="margin-bottom:42px">
+        <div style="display:flex;align-items:baseline;gap:16px;border-bottom:2px solid #1D1913;padding-bottom:10px;margin-bottom:6px">
+          <span style="font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:26px">{{b.name}} County</span>
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.18em;color:rgba(29,25,19,.5)">{{b.count}} CITIES</span>
+          <span style="flex:1"></span>
+          <span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.14em;color:#D9481F;font-weight:700">MEDIAN {{b.median}}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:0 30px">
+          <sc-for list="{{b.cities}}" as="ci" hint-placeholder-count="4">
+            <a href="{{ci.href}}" style="display:flex;align-items:baseline;gap:10px;padding:11px 8px;margin:0 -8px;text-decoration:none;color:#1D1913;border-bottom:1px solid rgba(29,25,19,.14);border-radius:8px;transition:all .18s" style-hover="color:#D9481F;background:rgba(217,72,31,.06)">
+              <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:16.5px">{{ci.name}}</span>
+              <span style="flex:1;border-bottom:1px dotted rgba(29,25,19,.28);transform:translateY(-4px)"></span>
+              <span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:rgba(29,25,19,.6)">{{ci.price}}</span>
+              <span style="font-size:13px;color:inherit">→</span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <!-- ===== About ===== -->
+  <section id="about" data-screen-label="About" style="border-top:2px solid #1D1913;background:#F2EBDC">
+    <div style="max-width:1380px;margin:0 auto;padding:96px 4vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:56px">
+      <div data-reveal="1">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:#D9481F;margin-bottom:18px">04 — WHY DISCOVER DFW</div>
+        <p style="margin:0;font-family:'Playfair Display',serif;font-style:italic;font-weight:600;font-size:clamp(26px,3vw,38px);line-height:1.32">“We walk the blocks, drive the commutes, and read the tax rates so your shortlist is actually short.”</p>
+      </div>
+      <div data-reveal="1" style="display:flex;flex-direction:column;justify-content:center;gap:26px">
+        <p style="margin:0;font-size:16px;line-height:1.75;color:rgba(29,25,19,.8)">The metroplex adds a small city’s worth of people every year, and every one of them asks the same question: <em>where, exactly?</em> Discover DFW is the answer machine 49 city reports behind one map, written like a local explains it over coffee, with the numbers to back it up.</p>
+        <div>
+          <div style="display:flex;gap:14px;align-items:baseline;padding:13px 0;border-top:1px solid rgba(29,25,19,.25)"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;color:#D9481F;font-weight:700;min-width:96px">RELOCATING</span><span style="font-size:14.5px;color:rgba(29,25,19,.8)">Compare schools, commutes, and vibe before the house-hunting trip.</span></div>
+          <div style="display:flex;gap:14px;align-items:baseline;padding:13px 0;border-top:1px solid rgba(29,25,19,.25)"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;color:#D9481F;font-weight:700;min-width:96px">LOCAL</span><span style="font-size:14.5px;color:rgba(29,25,19,.8)">Moving up, sizing down, or crossing the county line — see what your money does elsewhere.</span></div>
+          <div style="display:flex;gap:14px;align-items:baseline;padding:13px 0;border-top:1px solid rgba(29,25,19,.25);border-bottom:1px solid rgba(29,25,19,.25)"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;color:#D9481F;font-weight:700;min-width:96px">INVESTING</span><span style="font-size:14.5px;color:rgba(29,25,19,.8)">Growth corridors, days-on-market, and price-per-foot across all 41 markets.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Newsletter ===== -->
+  <section id="newsletter" data-screen-label="Newsletter" style="background:#D9481F;border-top:2px solid #1D1913">
+    <div style="max-width:860px;margin:0 auto;padding:88px 4vw;text-align:center">
+      <div data-reveal="1">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:rgba(246,241,230,.8);margin-bottom:16px">05 — THE NEWSLETTER</div>
+        <h2 style="margin:0;font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(32px,4.4vw,54px);line-height:1.08;color:#F6F1E6">The Sunday letter that knows North Texas.</h2>
+        <p style="margin:16px auto 30px;max-width:520px;font-size:15.5px;line-height:1.65;color:rgba(246,241,230,.9)">One email a week: what listed, what sold, and which city just changed its math. No spam, no listings-blast.</p>
+        <sc-if value="{{notSubscribed}}" hint-placeholder-val="{{true}}">
+          <form onSubmit="{{onSubscribe}}" style="display:flex;gap:12px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center">
+            <input value="{{email}}" onChange="{{onEmail}}" type="email" required="required" placeholder="you@northtexas.com" style="flex:1;min-width:240px;padding:16px 22px;border-radius:999px;border:2px solid #1D1913;background:#F6F1E6;color:#1D1913;font-family:Archivo,sans-serif;font-size:15px;outline:none">
+            <button type="submit" style="background:#1D1913;color:#F6F1E6;border:2px solid #1D1913;border-radius:999px;padding:16px 30px;font-family:Archivo,sans-serif;font-weight:700;font-size:15px;letter-spacing:.03em;cursor:pointer;transition:all .22s" style-hover="transform:translateY(-2px);box-shadow:0 12px 24px rgba(20,16,10,.3)">Sign me up</button>
+          </form>
+        </sc-if>
+        <sc-if value="{{subscribed}}" hint-placeholder-val="{{false}}">
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:24px;color:#F6F1E6">You’re on the list — see you Sunday. ✳</div>
+        </sc-if>
+        <div style="margin-top:18px;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.22em;color:rgba(246,241,230,.7)">FREE · WEEKLY · UNSUBSCRIBE ANYTIME</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer data-screen-label="Footer" style="background:#1D1913;color:#F6F1E6">
+    <div style="max-width:1380px;margin:0 auto;padding:72px 4vw 30px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:44px 32px">
+        <div style="grid-column:span 1;min-width:240px">
+          <span style="font-family:'Playfair Display',serif;font-weight:900;font-size:24px;display:inline-flex;align-items:baseline">DISC<svg viewBox="0 0 100 132" style="height:.72em;width:auto;transform:translateY(.05em);margin:0 1px"><path d="M50 4 C25 4 5 24 5 49 c0 33 45 79 45 79 s45 -46 45 -79 C95 24 75 4 50 4 Z" fill="#D9481F"></path><circle cx="50" cy="47" r="16" fill="#1D1913"></circle></svg>VER&nbsp;DFW</span>
+          <p style="font-size:13.5px;line-height:1.7;color:rgba(246,241,230,.6);margin:14px 0 0;max-width:260px">An editorial field guide to Dallas–Fort Worth real estate. Every city, every county, one map.</p>
+        </div>
+        <div>
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.26em;color:#E88D6B;margin-bottom:14px">EXPLORE</div>
+          <div style="display:flex;flex-direction:column;gap:9px;font-size:14px">
+            <a href="#map" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">The map</a>
+            <a href="#cities" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">The index</a>
+            <a href="#about" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">About</a>
+            <a href="#newsletter" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">The newsletter</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.26em;color:#E88D6B;margin-bottom:14px">COUNTIES</div>
+          <div style="display:flex;flex-direction:column;gap:9px;font-size:14px">
+            <sc-for list="{{footCounties}}" as="fc" hint-placeholder-count="7">
+              <a href="{{fc.href}}" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">{{fc.name}}</a>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.26em;color:#E88D6B;margin-bottom:14px">MOST READ</div>
+          <div style="display:flex;flex-direction:column;gap:9px;font-size:14px">
+            <a href="City.dc.html#frisco" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">Frisco</a>
+            <a href="City.dc.html#plano" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">Plano</a>
+            <a href="City.dc.html#fort-worth" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">Fort Worth</a>
+            <a href="City.dc.html#southlake" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">Southlake</a>
+            <a href="City.dc.html#celina" style="color:rgba(246,241,230,.85);text-decoration:none;transition:color .2s" style-hover="color:#E88D6B">Celina</a>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;border-top:1px solid rgba(246,241,230,.18);margin-top:52px;padding-top:22px;font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.16em;color:rgba(246,241,230,.5)">
+        <span>© MMXXVI DISCOVER DFW</span>
+        <span>ALL MARKET FIGURES ARE PLACEHOLDERS</span>
+        <a href="#top" style="color:#E88D6B;text-decoration:none">BACK TO TOP ↑</a>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;mapTheme&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;parchment&quot;, &quot;midnight&quot;], &quot;default&quot;: &quot;parchment&quot;, &quot;section&quot;: &quot;Map&quot;, &quot;tsType&quot;: &quot;'parchment' | 'midnight'&quot; },
+  &quot;showRoads&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;section&quot;: &quot;Map&quot;, &quot;tsType&quot;: &quot;boolean&quot; },
+  &quot;attractMode&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;section&quot;: &quot;Motion&quot;, &quot;tsType&quot;: &quot;boolean&quot; }
+}">
+class Component extends DCLogic {
+  state = { ready: false, hoverCity: null, hoverSrc: null, hoverCounty: null, selCounty: null, attract: null, typed: '', navSec: '', subscribed: false, email: '' };
+
+  componentDidMount() {
+    this._h = {};
+    this._iv = [];
+    const boot = () => { this.setState({ ready: true }); this.startFx(); };
+    if (window.DFW) { boot(); } else {
+      this._poll = setInterval(() => { if (window.DFW) { clearInterval(this._poll); boot(); } }, 40);
+    }
+  }
+
+  startFx() {
+    const D = window.DFW;
+    this._iv.push(setInterval(() => {
+      if ((this.props.attractMode ?? true) === false) { if (this.state.attract) this.setState({ attract: null }); return; }
+      if (this.state.hoverCity) return;
+      const pick = D.cities[Math.floor(Math.random() * D.cities.length)].slug;
+      this.setState({ attract: pick });
+    }, 2400));
+    const names = ['Frisco', 'McKinney', 'Fort Worth', 'Decatur', 'Southlake', 'Rockwall', 'Grapevine', 'Prosper', 'Wylie', 'Celina', 'Heath'];
+    let i = 0, pos = 0, dir = 1, hold = 6;
+    this._iv.push(setInterval(() => {
+      if (hold > 0) { hold--; return; }
+      const w = names[i];
+      pos += dir;
+      if (pos >= w.length) { pos = w.length; dir = -1; hold = 16; }
+      if (pos <= 0 && dir === -1) { dir = 1; i = (i + 1) % names.length; hold = 3; }
+      this.setState({ typed: w.slice(0, pos) });
+    }, 80));
+    setTimeout(() => this.setupReveals(), 80);
+    const secs = ['map', 'cities', 'about', 'newsletter'];
+    this._io = new IntersectionObserver((es) => {
+      es.forEach(e => { if (e.isIntersecting) this.setState({ navSec: e.target.id }); });
+    }, { rootMargin: '-35% 0px -55% 0px' });
+    secs.forEach(id => { const el = document.getElementById(id); if (el) this._io.observe(el); });
+  }
+
+  setupReveals() {
+    const els = Array.from(document.querySelectorAll('[data-reveal]'));
+    const vh = window.innerHeight;
+    const below = els.filter(el => el.getBoundingClientRect().top > vh * 0.92);
+    below.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(28px)'; });
+    this._io2 = new IntersectionObserver((es) => {
+      es.forEach(e => {
+        if (e.isIntersecting) {
+          const el = e.target;
+          el.style.transition = 'opacity .85s cubic-bezier(.22,1,.36,1), transform .85s cubic-bezier(.22,1,.36,1)';
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+          this._io2.unobserve(el);
+        }
+      });
+    }, { threshold: 0.1 });
+    below.forEach(el => this._io2.observe(el));
+  }
+
+  componentWillUnmount() {
+    (this._iv || []).forEach(clearInterval);
+    if (this._poll) clearInterval(this._poll);
+    if (this._io) this._io.disconnect();
+    if (this._io2) this._io2.disconnect();
+  }
+
+  cb(key, fn) { if (!this._h[key]) this._h[key] = fn; return this._h[key]; }
+  project(ll) {
+    const b = window.DFW.bounds;
+    return [(ll[0] - b.lonMin) / (b.lonMax - b.lonMin) * 1160, (b.latMax - ll[1]) / (b.latMax - b.latMin) * 927];
+  }
+  pts(arr) { return arr.map(p => this.project(p).map(n => Math.round(n * 10) / 10).join(',')).join(' '); }
+  fmtK(p) { return '$' + Math.round(p / 1000) + 'K'; }
+  fmtPop(n) { return n >= 1000000 ? (n / 1000000).toFixed(2) + 'M' : (n >= 10000 ? Math.round(n / 1000) + 'K' : (Math.round(n / 100) / 10) + 'K'); }
+
+  renderVals() {
+    const D = window.DFW;
+    const dark = (this.props.mapTheme ?? 'parchment') === 'midnight';
+    const pal = dark ? {
+      panel: '#171209', side: '#1D1710', grid: 'rgba(246,241,230,.06)', county: '#251E12', county2: '#2B2316', tones: ['#251E12', '#2B2316', '#211A0E'],
+      hi: '#4C2C14', stroke: 'rgba(246,241,230,.55)', label: 'rgba(246,241,230,.72)', dot: '#F6F1E6', dotRing: 'rgba(246,241,230,.0)',
+      lake: '#25333D', road: 'rgba(246,241,230,.16)', cLabel: 'rgba(246,241,230,.22)', lakeText: 'rgba(140,170,190,.85)',
+      lmText: 'rgba(246,241,230,.5)', faint: 'rgba(246,241,230,.4)', text: '#F6F1E6', textSoft: 'rgba(246,241,230,.72)',
+      textFaint: 'rgba(246,241,230,.45)', hair: 'rgba(246,241,230,.18)', blip: 'rgba(246,241,230,.55)', haloStroke: 'rgba(23,18,9,.85)'
+    } : {
+      panel: '#EDE4CF', side: '#F4EDDE', grid: 'rgba(38,32,22,.06)', county: '#F5EEDF', county2: '#F1E9D8', tones: ['#F5EEDF', '#F1E9D8', '#EFE5CF'],
+      hi: '#F5D0B2', stroke: '#262016', label: '#33291C', dot: '#262016', dotRing: 'rgba(246,241,230,.9)',
+      lake: '#A9BFC9', road: 'rgba(38,32,22,.17)', cLabel: 'rgba(38,32,22,.26)', lakeText: 'rgba(74,104,122,.8)',
+      lmText: 'rgba(38,32,22,.55)', faint: 'rgba(38,32,22,.42)', text: '#1D1913', textSoft: 'rgba(29,25,19,.68)',
+      textFaint: 'rgba(29,25,19,.48)', hair: 'rgba(29,25,19,.18)', blip: 'rgba(38,32,22,.4)', haloStroke: 'rgba(245,238,223,.82)'
+    };
+
+    if (!D) {
+      return { pal, counties: [], lakes: [], roads: [], countyLabelEls: [], lakeLabelEls: [], landmarkEls: [], cities: [],
+        marquee: [], countyRows: [], indexBlocks: [], footCounties: [], roadsOn: true, listShow: true,
+        spot: { show: false }, cp: { show: false }, tipOp: 0, typed: this.state.typed,
+        uMap: '2px solid transparent', uCities: '2px solid transparent', uAbout: '2px solid transparent',
+        subscribed: false, notSubscribed: true, email: this.state.email,
+        setWrap: (el) => { this._wrap = el; }, setTip: (el) => { this._tip = el; },
+        onMapMove: () => {}, onSubscribe: (e) => { e.preventDefault(); }, onEmail: () => {}, clearCounty: () => {} };
+    }
+
+    const st = this.state;
+    const hoverObj = st.hoverCity ? D.bySlug[st.hoverCity] : null;
+    const hiCounty = st.hoverCounty || (hoverObj ? hoverObj.county : null) || st.selCounty;
+
+    const counties = D.counties.map((co, i) => ({
+      id: co.id,
+      points: this.pts(co.poly),
+      fill: (hiCounty === co.id) ? pal.hi : pal.tones[co.tone],
+      enter: this.cb('coE' + co.id, () => this.setState({ hoverCounty: co.id })),
+      leave: this.cb('coL', () => this.setState({ hoverCounty: null })),
+      click: this.cb('coC' + co.id, () => this.setState({ selCounty: this.state.selCounty === co.id ? null : co.id }))
+    }));
+
+    const countyLabelEls = D.counties.map(co => {
+      const p = this.project(co.label);
+      return React.createElement('text', {
+        key: co.id, x: Math.round(p[0]), y: Math.round(p[1]),
+        style: { fontFamily: 'Archivo,sans-serif', fontWeight: 800, fontSize: '15px', letterSpacing: '.3em', fill: pal.cLabel, opacity: co.core ? 1 : 0.55, textAnchor: 'middle', pointerEvents: 'none' }
+      }, co.labelText);
+    });
+
+    const lakes = D.lakes.map(lk => ({ points: this.pts(lk.pts) }));
+    const lakeLabelEls = D.lakes.filter(lk => lk.label).map(lk => {
+      const p = this.project(lk.label);
+      return React.createElement('text', {
+        key: lk.name, x: Math.round(p[0]), y: Math.round(p[1]),
+        style: { fontFamily: "'Playfair Display',serif", fontStyle: 'italic', fontSize: '10.5px', letterSpacing: '.06em', fill: pal.lakeText, textAnchor: 'middle', pointerEvents: 'none' }
+      }, lk.name);
+    });
+    const roads = D.roads.map(rd => ({ points: this.pts(rd.pts), w: rd.w || 1.4, dash: rd.dash || 'none' }));
+    const landmarkEls = D.landmarks.map(lm => {
+      const p = this.project(lm.ll);
+      return React.createElement('g', { key: lm.n, style: { pointerEvents: 'none' } },
+        React.createElement('rect', { x: Math.round(p[0] - 3.7), y: Math.round(p[1] - 3.7), width: 7.4, height: 7.4, style: { fill: '#D9481F', transform: 'rotate(45deg)', transformBox: 'fill-box', transformOrigin: 'center' } }),
+        React.createElement('text', { x: Math.round(p[0]), y: Math.round(p[1] + 16), style: { fontFamily: 'ui-monospace,Menlo,monospace', fontSize: '8.4px', letterSpacing: '.12em', fill: pal.lmText, textAnchor: 'middle' } }, lm.n));
+    });
+
+    const cities = D.cities.map(c => {
+      const p = this.project(c.ll);
+      const hovered = st.hoverCity === c.slug;
+      const blip = !st.hoverCity && st.attract === c.slug;
+      const dim = !!st.hoverCity && !hovered;
+      const big = c.fs >= 15;
+      const labelEl = React.createElement('text', {
+        x: Math.round((p[0] + c.dx) * 10) / 10,
+        y: Math.round((p[1] + c.dy) * 10) / 10,
+        style: {
+          fontFamily: 'Archivo,sans-serif', fontWeight: hovered ? 800 : 700, fontSize: c.fs + 'px',
+          letterSpacing: '.07em', textTransform: 'uppercase',
+          fill: hovered ? (dark ? '#FF9B72' : '#C13A12') : pal.label,
+          textAnchor: c.anchor === 'm' ? 'middle' : (c.anchor === 's' ? 'start' : 'end'),
+          opacity: dim ? 0.34 : 1, transition: 'fill .2s,opacity .3s',
+          paintOrder: 'stroke', stroke: pal.haloStroke, strokeWidth: '3px', strokeLinejoin: 'round'
+        }
+      }, c.name);
+      return {
+        slug: c.slug, labelEl: labelEl,
+        x: Math.round(p[0] * 10) / 10, y: Math.round(p[1] * 10) / 10,
+        r: hovered ? 6 : (big ? 5 : 3.8),
+        dotFill: hovered ? '#D9481F' : pal.dot,
+        dotRing: hovered ? 'rgba(217,72,31,.35)' : pal.dotRing,
+        halo: hovered, blip: blip,
+        href: 'City.dc.html#' + c.slug,
+        enter: this.cb('cE' + c.slug, () => this.setState({ hoverCity: c.slug, hoverSrc: 'map', attract: null })),
+        leave: this.cb('cL', () => this.setState({ hoverCity: null, hoverSrc: null }))
+      };
+    });
+
+    const spotObj = (hoverObj && st.hoverSrc === 'map') ? hoverObj : null;
+    const spot = spotObj ? {
+      show: true, name: spotObj.name, tagline: spotObj.tagline,
+      county: D.counties.find(x => x.id === spotObj.county).name.toUpperCase(),
+      price: this.fmtK(spotObj.price), ppsf: '$' + spotObj.ppsf, pop: this.fmtPop(spotObj.pop), dom: spotObj.dom,
+      href: 'City.dc.html#' + spotObj.slug
+    } : { show: false };
+
+    const selObj = (!spotObj && st.selCounty) ? D.counties.find(x => x.id === st.selCounty) : null;
+    const cp = selObj ? {
+      show: true, name: selObj.name, blurb: selObj.blurb,
+      cities: D.cities.filter(c => c.county === selObj.id).map(c => ({
+        name: c.name, price: this.fmtK(c.price), href: 'City.dc.html#' + c.slug,
+        enter: this.cb('pE' + c.slug, () => this.setState({ hoverCity: c.slug, hoverSrc: 'panel', attract: null })),
+        leave: this.cb('pL', () => this.setState({ hoverCity: null, hoverSrc: null }))
+      }))
+    } : { show: false };
+
+    const median = (arr) => { const s = arr.slice().sort((a, b) => a - b); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
+    const countyRows = D.counties.map((co, i) => {
+      const cs = D.cities.filter(c => c.county === co.id);
+      return {
+        num: '0' + (i + 1), name: co.name, count: cs.length, median: this.fmtK(median(cs.map(c => c.price))),
+        enter: this.cb('crE' + co.id, () => this.setState({ hoverCounty: co.id })),
+        leave: this.cb('crL', () => this.setState({ hoverCounty: null })),
+        click: this.cb('crC' + co.id, () => this.setState({ selCounty: co.id }))
+      };
+    });
+
+    const marqueeBase = D.cities.map(c => ({ t: c.name.toUpperCase(), p: this.fmtK(c.price), href: 'City.dc.html#' + c.slug }));
+    const marquee = marqueeBase.concat(marqueeBase.map(m => ({ t: m.t, p: m.p, href: m.href })));
+
+    const indexBlocks = D.counties.map(co => {
+      const cs = D.cities.filter(c => c.county === co.id).sort((a, b) => a.name.localeCompare(b.name));
+      return {
+        anchor: 'idx-' + co.id, name: co.name, count: cs.length,
+        median: this.fmtK(median(cs.map(c => c.price))),
+        cities: cs.map(c => ({ name: c.name, price: this.fmtK(c.price), href: 'City.dc.html#' + c.slug }))
+      };
+    });
+
+    const footCounties = D.counties.map(co => ({ name: co.name + ' County', href: '#idx-' + co.id }));
+
+    const u = (id) => st.navSec === id ? '2px solid #D9481F' : '2px solid transparent';
+
+    return {
+      pal,
+      counties, countyLabelEls, lakes, lakeLabelEls, roads, landmarkEls, cities,
+      roadsOn: (this.props.showRoads ?? true),
+      spot, cp, listShow: !spot.show && !cp.show,
+      countyRows, marquee, indexBlocks, footCounties,
+      tipOp: spot.show ? 1 : 0,
+      tipName: spotObj ? spotObj.name : '', tipPrice: spotObj ? this.fmtK(spotObj.price) : '',
+      tipCounty: spotObj ? D.counties.find(x => x.id === spotObj.county).name.toUpperCase() : '',
+      tipPop: spotObj ? this.fmtPop(spotObj.pop) : '',
+      typed: st.typed,
+      uMap: u('map'), uCities: u('cities'), uAbout: u('about'),
+      subscribed: st.subscribed, notSubscribed: !st.subscribed, email: st.email,
+      setWrap: this.cb('setWrap', (el) => { this._wrap = el; }),
+      setTip: this.cb('setTip', (el) => { this._tip = el; }),
+      onMapMove: this.cb('mapMove', (e) => {
+        if (!this._wrap || !this._tip) return;
+        const r = this._wrap.getBoundingClientRect();
+        const x = Math.min(e.clientX - r.left, r.width - 200);
+        const y = Math.max(e.clientY - r.top, 84);
+        this._tip.style.left = x + 'px';
+        this._tip.style.top = y + 'px';
+      }),
+      clearCounty: this.cb('clearCo', () => this.setState({ selCounty: null, hoverCounty: null })),
+      onEmail: this.cb('onEmail', (e) => this.setState({ email: e.target.value })),
+      onSubscribe: this.cb('onSub', (e) => { e.preventDefault(); this.setState({ subscribed: true }); })
+    };
+  }
+}
+</script>
+</body>
+</html>
