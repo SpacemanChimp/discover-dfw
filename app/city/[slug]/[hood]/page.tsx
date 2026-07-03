@@ -35,7 +35,14 @@ export function generateStaticParams() {
 function resolve(slug: string, hood: string): { c: City; h: HoodRef } | { redirect: string } | null {
   const c = bySlug[slug] || bySlug[slug.toLowerCase()];
   if (!c) return null;
-  const decoded = decodeURIComponent(hood);
+  // Params usually arrive percent-decoded; a stray malformed sequence must
+  // 404, not throw a URIError and 500.
+  let decoded = hood;
+  try {
+    decoded = decodeURIComponent(hood);
+  } catch {
+    /* keep raw segment */
+  }
   const exact = c.slug === slug ? findHood(c, decoded) : undefined;
   if (exact) return { c, h: exact };
   // Wrong case / spacing ("Harvest", "FM 407 Corridor") → 308 to the canonical slug.
