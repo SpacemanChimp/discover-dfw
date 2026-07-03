@@ -4,16 +4,18 @@ import { CSSProperties } from "react";
 /** The DISC⊙VER DFW wordmark with the location-pin "O". */
 export function PinSvg({
   style,
+  fill = "#D9481F",
   holeFill = "#F6F1E6",
 }: {
   style?: CSSProperties;
+  fill?: string;
   holeFill?: string;
 }) {
   return (
     <svg viewBox="0 0 100 132" style={style} aria-hidden="true">
       <path
         d="M50 4 C25 4 5 24 5 49 c0 33 45 79 45 79 s45 -46 45 -79 C95 24 75 4 50 4 Z"
-        fill="#D9481F"
+        fill={fill}
       />
       <circle cx="50" cy="47" r="16" fill={holeFill} />
     </svg>

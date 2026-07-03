@@ -848,7 +848,7 @@ export default async function CityPage({
               boxShadow: "0 12px 26px rgba(217,72,31,.3)",
             }}
           >
-            <PinSvg style={{ height: 30, width: "auto" }} holeFill="#D9481F" />
+            <PinSvg style={{ height: 30, width: "auto" }} fill="#F6F1E6" holeFill="#D9481F" />
           </Link>
           <Link
             href={`/city/${next.slug}`}
