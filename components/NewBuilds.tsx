@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { newBuilds, bySlug, countyById, counties } from "@/lib/dfw-data";
+import { slugifyHood } from "@/lib/slug";
 
 const STATUS_COLOR: Record<string, string> = {
   "NOW SELLING": "#D9481F",
@@ -102,8 +103,8 @@ export default function NewBuilds() {
             }}
           >
             Master-planned communities taking contracts right now — filter by
-            county, then step into the city report. Prices &amp; builder counts
-            are placeholders.
+            county, then step into the community report. Prices &amp; builder
+            counts are placeholders.
           </p>
         </div>
 
@@ -137,7 +138,7 @@ export default function NewBuilds() {
             return (
               <Link
                 key={b.name}
-                href={`/city/${b.city}`}
+                href={`/city/${b.city}/${slugifyHood(b.name)}`}
                 className="nb-card"
                 style={{
                   textDecoration: "none",
