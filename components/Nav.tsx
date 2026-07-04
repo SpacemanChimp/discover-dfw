@@ -76,6 +76,19 @@ export default function Nav() {
             {label}
           </Link>
         ))}
+        <Link
+          href="/homes"
+          className="nav-link"
+          style={{
+            color: "#D9481F",
+            textDecoration: "none",
+            padding: "6px 2px",
+            borderBottom: "2px solid transparent",
+            fontWeight: 700,
+          }}
+        >
+          SEARCH HOMES
+        </Link>
       </div>
       <Link
         href="/#newsletter"
