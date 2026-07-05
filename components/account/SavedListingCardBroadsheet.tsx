@@ -71,6 +71,7 @@ export default function SavedListingCardBroadsheet({
   }
 
   const cut = listing.listPrice < rec.priceAtSave ? rec.priceAtSave - listing.listPrice : 0;
+  const statusChanged = !!rec.lastSeenStatus && rec.lastSeenStatus !== listing.standardStatus;
 
   return (
     <article
@@ -85,7 +86,7 @@ export default function SavedListingCardBroadsheet({
       }}
     >
       <span style={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
-        <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} size={30} />
+        <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} standardStatus={listing.standardStatus} size={30} />
       </span>
       <Link
         href={`/listing/${listing.listingKey}`}
@@ -121,24 +122,54 @@ export default function SavedListingCardBroadsheet({
           >
             {listing.bedsTotal} BD · {listing.bathsTotal} BA · {listing.livingAreaSqft.toLocaleString("en-US")} SQFT
           </div>
-          {cut > 0 && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {cut > 0 && (
+              <span
+                className="font-mono"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "#D9481F",
+                  color: "#F6F1E6",
+                  borderRadius: 99,
+                  fontSize: 7.5,
+                  fontWeight: 700,
+                  letterSpacing: ".1em",
+                  padding: "4px 9px",
+                  marginTop: 5,
+                }}
+              >
+                ▾ PRICE CUT −{fmtK(cut)} SINCE YOU SAVED
+              </span>
+            )}
+            {statusChanged && (
+              <span
+                className="font-mono"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "#1D1913",
+                  color: "#F6F1E6",
+                  borderRadius: 99,
+                  fontSize: 7.5,
+                  fontWeight: 700,
+                  letterSpacing: ".1em",
+                  padding: "4px 9px",
+                  marginTop: 5,
+                }}
+              >
+                STATUS: {rec.lastSeenStatus!.toUpperCase()} → {listing.standardStatus.toUpperCase()}
+              </span>
+            )}
+          </div>
+          {rec.notes && (
             <div
-              className="font-mono"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                background: "#D9481F",
-                color: "#F6F1E6",
-                borderRadius: 99,
-                fontSize: 7.5,
-                fontWeight: 700,
-                letterSpacing: ".1em",
-                padding: "4px 9px",
-                marginTop: 5,
-              }}
+              className="font-serif"
+              style={{ fontStyle: "italic", fontSize: 12, color: "rgba(29,25,19,.6)", marginTop: 5 }}
             >
-              ▾ PRICE CUT −{fmtK(cut)} SINCE YOU SAVED
+              “{rec.notes}”
             </div>
           )}
         </div>

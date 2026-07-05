@@ -6,10 +6,13 @@ import { useShelf } from "@/lib/shelf";
 export default function SaveListingButton({
   listingKey,
   listPrice,
+  standardStatus,
   size = 36,
 }: {
   listingKey: string;
   listPrice: number;
+  /** Current feed status — recorded as last_seen_status on save. */
+  standardStatus?: string;
   size?: number;
 }) {
   const shelf = useShelf();
@@ -22,7 +25,7 @@ export default function SaveListingButton({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        shelf.toggleSave(listingKey, listPrice);
+        shelf.toggleSave(listingKey, listPrice, standardStatus);
       }}
       style={{
         width: size,

@@ -94,7 +94,7 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
         </div>
       )}
       <span style={{ position: "absolute", top: 14, right: 14, zIndex: 2 }}>
-        <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} size={40} />
+        <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} standardStatus={listing.standardStatus} size={40} />
       </span>
     </div>
   );

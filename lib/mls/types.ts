@@ -136,10 +136,21 @@ export interface SearchResult {
 
 /* ---- personal state (localStorage in Phase 1/2, account DB later) ---- */
 
+/** One shelf entry (DB table: saved_listings). Guests carry the same shape
+    in localStorage minus the id. */
 export interface SavedHome {
+  /** DB row id — absent for guest (localStorage) saves. */
+  id?: string;
   listingKey: string;
   savedAt: string;
+  /** Price when saved — anchors "price cut since you saved". */
   priceAtSave: number;
+  /** Path where the save happened, e.g. "/homes" or "/listing/MOCK-2214". */
+  sourcePage?: string;
+  notes?: string;
+  /** What the user last observed — anchors "since you last looked" badges. */
+  lastSeenStatus?: string;
+  lastSeenPrice?: number;
 }
 
 export interface SavedSearchFilter {

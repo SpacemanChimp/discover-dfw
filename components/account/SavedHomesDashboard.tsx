@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import type { Listing, SavedHome } from "@/lib/mls/types";
 import { bySlug, fmtK } from "@/lib/dfw-data";
@@ -37,6 +38,34 @@ export default function SavedHomesDashboard({ allListings }: { allListings: List
   groups.sort((a, b) => (a.citySlug === null ? 1 : 0) - (b.citySlug === null ? 1 : 0));
 
   const total = shelf.savedCount;
+
+  // After the badges render, record what was just observed so next visit's
+  // "since you last looked" comparisons start from today (account mode only).
+  const seenSynced = useRef(false);
+  useEffect(() => {
+    if (!shelf.ready || !shelf.account || seenSynced.current) return;
+    seenSynced.current = true;
+    const seen = entries
+      .filter(
+        (e) =>
+          e.listing &&
+          (e.rec.lastSeenPrice !== e.listing.listPrice ||
+            e.rec.lastSeenStatus !== e.listing.standardStatus)
+      )
+      .map((e) => ({
+        listingKey: e.rec.listingKey,
+        price: e.listing!.listPrice,
+        status: e.listing!.standardStatus,
+      }));
+    if (seen.length) {
+      fetch("/api/saved-listings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seen }),
+      }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shelf.ready, shelf.account]);
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "26px 4vw 100px" }}>

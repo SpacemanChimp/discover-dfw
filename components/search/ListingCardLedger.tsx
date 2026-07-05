@@ -31,7 +31,7 @@ export default function ListingCardLedger({
       {/* heart lives outside the card link — a button inside an anchor is
           invalid HTML and breaks hydration */}
       <span style={{ position: "absolute", top: 10, right: 12, zIndex: 2 }}>
-        <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} />
+        <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} standardStatus={listing.standardStatus} />
       </span>
       <Link
         href={`/listing/${listing.listingKey}`}

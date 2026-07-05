@@ -15,6 +15,7 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 5 | Listing detail pages — Dossier decomposed, gallery, branded 404, sticky mobile CTAs | ✅ |
 | 6 | Guest saved homes — Broadsheet cards, empty state, off-market ("No longer available") handling | ✅ |
 | 7 | Accounts — Supabase Auth (magic link + Google) + Postgres shelf/searches/leads with RLS, guest-shelf merge | ✅ fully live in production — Vercel envs, leads → DB, Google OAuth, and Resend SMTP (signin@discoverdfw.com, delivery verified); site canonical is www.discoverdfw.com |
+| 8 | Persistent saved listings — `saved_listings` schema, API routes, change-detection badges, seen-sync | ✅ |
 | Next | Price-drop/status alerts, The Letter, CRM webhook, compare view | ⬜ |
 | Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
 
@@ -122,6 +123,60 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
   Phase-1 local stub (modal included) — deploys never hard-depend on
   the backend. Free-tier magic-link email is rate-limited (~2/hr per
   address); wire custom SMTP (Resend/Postmark) before real users.
+
+### Phase 8 notes — persistent saved listings
+
+- **Schema** (`supabase/migrations/0002_saved_listings.sql`): the table is
+  now `saved_listings` — `id` (uuid PK), `user_id`, `listing_key`
+  (unique per user), `created_at`, `price_at_save` (kept — anchors
+  "price cut since you saved"), `source_page`, `notes` (nullable),
+  `last_seen_status` / `last_seen_price` (nullable — anchor "since you
+  last looked" badges and future alerts). Owner-scoped RLS recreated as
+  `saved_listings_all_own`; no cross-user reads possible.
+- **API routes** (`/api/saved-listings`): GET list · POST save
+  (idempotent upsert; stamps price/status/source page) · DELETE
+  `?key=` unsave · PATCH bulk seen-updates ·
+  `/api/saved-listings/merge` POST adopts the guest shelf on first
+  sign-in (`ignoreDuplicates` — account rows win). All routes use the
+  cookie-bound server client, so RLS enforces ownership even if a route
+  had a bug; guests get 401 and never call them.
+- **Client**: `ShelfProvider` routes account saves through the API;
+  guests stay pure-localStorage (now also recording `sourcePage`).
+  `SaveListingButton` passes the listing's current status; unsave works
+  from cards, the dossier gallery heart, and the dashboard heart/CLEAR.
+- **Dashboard**: still key-driven (off-market rows degrade to
+  NO LONGER AVAILABLE + CLEAR); adds a STATUS: X → Y chip when
+  `last_seen_status` differs from the feed, shows `notes` when present,
+  and after rendering PATCHes the observed price/status so next visit
+  compares against today.
+
+#### Manual test steps (Phase 8)
+
+1. **Guest save** — fresh browser (or clear the `ddfw.shelf.v1`
+   localStorage key), visit `/homes`, ♡ a card → toast, heart fills;
+   DevTools → Application → localStorage shows the save with
+   `sourcePage: "/homes"`. Network tab shows NO `/api/saved-listings`
+   calls. Reload — the save persists.
+2. **Guest unsave** — ♥ again → toast "Removed", localStorage entry
+   gone. Save one back for step 4.
+3. **Login** — SIGN IN → email link or Google, same browser.
+4. **Migration** — after landing signed-in, `/account/saved-homes`
+   shows the guest-saved home; localStorage `saved` is now empty
+   (adopted); the row exists in `saved_listings` with your `user_id`,
+   `source_page`, and `last_seen_price`.
+5. **Authenticated save/unsave** — ♡ another home: Network shows
+   POST `/api/saved-listings` 200; unsave from (a) the card heart,
+   (b) the listing page gallery heart, (c) the dashboard heart — each
+   fires DELETE and the dashboard/nav counts stay consistent.
+6. **Off-market handling** — with a save whose listing left the feed
+   (or a hand-inserted fake key), the dashboard shows the dashed
+   NO LONGER AVAILABLE row with CLEAR instead of crashing.
+7. **Change badges** — set `last_seen_status` to another value on one
+   row (SQL editor) → dashboard shows STATUS: … → … once, then clears
+   after the seen-sync PATCH on the next reload.
+8. **Isolation** — in a second browser/incognito with a different
+   account, `/account/saved-homes` is empty and GET
+   `/api/saved-listings` returns only that user's rows (RLS).
 
 ## Architecture
 

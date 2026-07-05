@@ -38,7 +38,7 @@ interface ShelfContextValue extends ShelfState {
   authMode: "supabase" | "local";
   savedCount: number;
   isSaved(listingKey: string): boolean;
-  toggleSave(listingKey: string, priceAtSave: number): void;
+  toggleSave(listingKey: string, priceAtSave: number, status?: string): void;
   saveSearch(s: Omit<SavedSearchFilter, "id" | "createdAt">): void;
   removeSearch(id: string): void;
   /** Supabase mode: send the magic link. Resolves to an error message or null. */
@@ -124,20 +124,17 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
   const loadAccountShelf = useCallback(
     async (email: string) => {
       if (!supabase) return;
-      const [homes, searches] = await Promise.all([
-        supabase.from("saved_homes").select("listing_key, saved_at, price_at_save"),
+      const [homesRes, searches] = await Promise.all([
+        // saved listings go through the API routes (RLS-scoped server-side)
+        fetch("/api/saved-listings").then((r) => (r.ok ? r.json() : { saves: [] })).catch(() => ({ saves: [] })),
         supabase
           .from("saved_searches")
           .select("id, name, filters, query_label, query_string, frequency, created_at")
           .order("created_at", { ascending: false }),
       ]);
       const saved: Record<string, SavedHome> = {};
-      for (const r of homes.data ?? []) {
-        saved[r.listing_key] = {
-          listingKey: r.listing_key,
-          savedAt: r.saved_at,
-          priceAtSave: r.price_at_save,
-        };
+      for (const r of (homesRes.saves ?? []) as SavedHome[]) {
+        saved[r.listingKey] = r;
       }
       const list: SavedSearchFilter[] = (searches.data ?? []).map((r) => ({
         id: r.id,
@@ -160,15 +157,11 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
       const guest = loadLocal();
       const homes = Object.values(guest.saved);
       if (homes.length) {
-        await supabase.from("saved_homes").upsert(
-          homes.map((h) => ({
-            user_id: userId,
-            listing_key: h.listingKey,
-            saved_at: h.savedAt,
-            price_at_save: h.priceAtSave,
-          })),
-          { onConflict: "user_id,listing_key", ignoreDuplicates: true }
-        );
+        await fetch("/api/saved-listings/merge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ saves: homes }),
+        }).catch(() => {});
       }
       if (guest.searches.length) {
         await supabase.from("saved_searches").insert(
@@ -250,8 +243,9 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
   /* ---- shelf actions (route to DB or localStorage by session) ---- */
 
   const toggleSave = useCallback(
-    (listingKey: string, priceAtSave: number) => {
+    (listingKey: string, priceAtSave: number, status?: string) => {
       const userId = sessionUserId.current;
+      const sourcePage = typeof window !== "undefined" ? window.location.pathname : undefined;
       let firstGuestSave = false;
 
       setState((prev) => {
@@ -260,30 +254,31 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
         if (saved[listingKey]) {
           delete saved[listingKey];
           next = { ...prev, saved };
-          if (userId && supabase) {
-            supabase
-              .from("saved_homes")
-              .delete()
-              .match({ user_id: userId, listing_key: listingKey })
-              .then(({ error }) => error && showToast("That didn’t stick — try again."));
+          if (userId) {
+            fetch(`/api/saved-listings?key=${encodeURIComponent(listingKey)}`, { method: "DELETE" })
+              .then((r) => !r.ok && showToast("That didn’t stick — try again."))
+              .catch(() => showToast("That didn’t stick — try again."));
           }
         } else {
           const rec: SavedHome = {
             listingKey,
             savedAt: new Date().toISOString(),
             priceAtSave,
+            sourcePage,
+            lastSeenStatus: status,
+            lastSeenPrice: priceAtSave,
           };
           saved[listingKey] = rec;
           firstGuestSave = !userId && !prev.account && !prev.gateShown;
           next = { ...prev, saved, gateShown: prev.gateShown || firstGuestSave };
-          if (userId && supabase) {
-            supabase
-              .from("saved_homes")
-              .upsert(
-                { user_id: userId, listing_key: listingKey, saved_at: rec.savedAt, price_at_save: priceAtSave },
-                { onConflict: "user_id,listing_key", ignoreDuplicates: true }
-              )
-              .then(({ error }) => error && showToast("That didn’t stick — try again."));
+          if (userId) {
+            fetch("/api/saved-listings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ listingKey, price: priceAtSave, status, sourcePage }),
+            })
+              .then((r) => !r.ok && showToast("That didn’t stick — try again."))
+              .catch(() => showToast("That didn’t stick — try again."));
           }
         }
         if (!userId) persistLocal(next);
