@@ -14,7 +14,7 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 4 | City-specific home search pages — dedicated `/city/[slug]/homes` layout | ✅ |
 | 5 | Listing detail pages — Dossier decomposed, gallery, branded 404, sticky mobile CTAs | ✅ |
 | 6 | Guest saved homes — Broadsheet cards, empty state, off-market ("No longer available") handling | ✅ |
-| 7 | Accounts — Supabase Auth (magic link + Google) + Postgres shelf/searches/leads with RLS, guest-shelf merge | ✅ code · ⬜ run migration + Vercel envs |
+| 7 | Accounts — Supabase Auth (magic link + Google) + Postgres shelf/searches/leads with RLS, guest-shelf merge | ✅ live locally (migration applied, first sign-in + merge verified) · ⬜ Vercel envs, secret key, Google provider, custom SMTP |
 | Next | Price-drop/status alerts, The Letter, CRM webhook, compare view | ⬜ |
 | Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
 
