@@ -11,7 +11,8 @@ export default function MLSAttribution({
 }: {
   attributionText: string | null;
   listingBrokerName: string | null;
-  listingId: string;
+  /** Omit for the group-level slot beneath a set of listings. */
+  listingId?: string;
   mlsSource: string;
   compact?: boolean;
 }) {
@@ -19,7 +20,9 @@ export default function MLSAttribution({
     attributionText ??
     (listingBrokerName
       ? `LISTING COURTESY OF ${listingBrokerName.toUpperCase()}`
-      : "LISTING COURTESY OF — IDX ATTRIBUTION RESERVED");
+      : listingId
+      ? "LISTING COURTESY OF — IDX ATTRIBUTION RESERVED"
+      : "LISTINGS COURTESY OF PARTICIPATING BROKERAGES — IDX ATTRIBUTION RESERVED");
   return (
     <div
       className="font-mono"
@@ -35,7 +38,8 @@ export default function MLSAttribution({
     >
       <span>{attributionText ? attributionText.toUpperCase() : line}</span>
       <span>
-        MLS# {listingId} · {mlsSource === "MOCK" ? "PLACEHOLDER" : mlsSource}
+        {listingId ? `MLS# ${listingId} · ` : "SOURCE: "}
+        {mlsSource === "MOCK" ? "PLACEHOLDER — PENDING MLS APPROVAL" : mlsSource}
       </span>
     </div>
   );

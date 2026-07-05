@@ -11,6 +11,7 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 1 | Search product scaffold on mock data — Map Room, Dossier, My Shelf, lead capture | ✅ |
 | 2 | Shared MLS types + mock provider (`lib/mls`, `data/`) | ✅ |
 | 3 | `/homes` search page hardened on the provider — component extraction (rail / map panel / mobile index / empty / loading), baths + status filters, mock-inventory banner | ✅ |
+| 4 | City-specific home search pages — dedicated `/city/[slug]/homes` layout | ✅ |
 | Next | Listing detail polish, real accounts (Auth.js magic link + Google), DB-backed shelf/searches, alerts, CRM wiring for `/api/leads` | ⬜ |
 | Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
 
@@ -31,6 +32,26 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 - A dashed "SAMPLE INVENTORY — FICTIONAL UNTIL MLS APPROVAL" banner sits
   under the toolbar on every search surface, alongside the standing
   compliance footer.
+
+### Phase 4 notes
+
+- `/city/[slug]/homes` is now a dedicated city-first page (the metro Map
+  Room stays at `/homes`): `CityHomesHero` (county eyebrow, active-count
+  chip, READ THE FULL CITY REPORT → `/city/[slug]`, OPEN THE MAP ROOM →
+  `/homes?city=…`), `CityMarketMiniSnapshot` (consumes
+  `getCityMarketSnapshot` — editorial placeholder figures + provider
+  count), `CityHomesList` (Ledger-card grid with the group-level
+  `MLSAttribution` reservation beneath), `CityHomesEmptyState` (suggests
+  same-county cities with inventory, then all of DFW).
+- Editorial city reports (section 07 — On the Market) now link to
+  SEARCH {CITY} HOMES; the homes page links back, so the report ↔ search
+  loop is closed.
+- The city-scoped `SearchToolbar` rides along, so filters + the
+  SAVE THIS SEARCH button work identically here (guest shelf; DB
+  persistence still deferred to the saved-search phase).
+- `MLSAttribution` gained a group mode (no `listingId`) for beneath
+  listing groups: "LISTINGS COURTESY OF PARTICIPATING BROKERAGES — IDX
+  ATTRIBUTION RESERVED · SOURCE: PLACEHOLDER — PENDING MLS APPROVAL".
 
 ## Architecture
 
