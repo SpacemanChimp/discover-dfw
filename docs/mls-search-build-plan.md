@@ -8,10 +8,29 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 
 | Phase | Scope | State |
 | --- | --- | --- |
-| 1 | Search product on mock data — Map Room, Dossier, My Shelf, lead capture | ✅ shipped to `mls-search-phase-1` |
-| 2 | Shared MLS types + mock provider (`lib/mls`, `data/`) | ✅ this change |
-| 3 | Real accounts (Auth.js magic link + Google), DB-backed shelf/searches, alerts, CRM wiring for `/api/leads` | ⬜ |
-| 4 | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
+| 1 | Search product scaffold on mock data — Map Room, Dossier, My Shelf, lead capture | ✅ |
+| 2 | Shared MLS types + mock provider (`lib/mls`, `data/`) | ✅ |
+| 3 | `/homes` search page hardened on the provider — component extraction (rail / map panel / mobile index / empty / loading), baths + status filters, mock-inventory banner | ✅ |
+| Next | Listing detail polish, real accounts (Auth.js magic link + Google), DB-backed shelf/searches, alerts, CRM wiring for `/api/leads` | ⬜ |
+| Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
+
+### Phase 3 notes
+
+- `/homes` (and `/city/[slug]/homes`) compose `SearchToolbar`,
+  `CitySearchHeader`, `ListingResultsRail`, `ListingCardLedger`,
+  `SearchMapPanel` (illustrated placeholder for the IDX parcel map — pins on
+  city centroids), `MobileCitySearchIndex`, `EmptyResultsState`,
+  `LoadingState` (route-level `loading.tsx`), `MLSAttribution`.
+- Query params: `city, min, max, beds, baths, type, status, new, sort, page`
+  — parsed and serialized by one shared module (`lib/mls/url.ts`, client-safe)
+  so toolbar URLs and server parsing can never drift.
+- Mobile defaults to the city index; the map is never the required first
+  interaction.
+- Save buttons remain fully functional (guest localStorage shelf shipped in
+  Phase 1) — no persistence beyond the device, no auth.
+- A dashed "SAMPLE INVENTORY — FICTIONAL UNTIL MLS APPROVAL" banner sits
+  under the toolbar on every search surface, alongside the standing
+  compliance footer.
 
 ## Architecture
 

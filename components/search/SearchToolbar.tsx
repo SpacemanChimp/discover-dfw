@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { cities } from "@/lib/dfw-data";
-import type { PropertyType, SearchFilters } from "@/lib/mls/types";
+import type { ListingStatus, PropertyType, SearchFilters } from "@/lib/mls/types";
+import { searchFiltersToQueryString, SLUG_BY_STATUS, STATUS_BY_SLUG } from "@/lib/mls/url";
 import { useShelf } from "@/lib/shelf";
 
 const PRICE_BANDS: { label: string; min?: number; max?: number }[] = [
@@ -43,14 +44,8 @@ export default function SearchToolbar({
   const navigate = (patch: Partial<SearchFilters>) => {
     const q = { ...query, ...patch };
     const target = q.citySlug && q.citySlug !== citySlug ? q.citySlug : citySlug;
-    const params = new URLSearchParams();
-    if (!target && q.citySlug) params.set("city", q.citySlug);
-    if (q.minPrice) params.set("min", String(q.minPrice));
-    if (q.maxPrice) params.set("max", String(q.maxPrice));
-    if (q.minBeds) params.set("beds", String(q.minBeds));
-    if (q.propertyType) params.set("type", q.propertyType);
-    if (q.newBuildsOnly) params.set("new", "1");
-    const qs = params.toString();
+    // one canonical serializer shared with the server-side parser
+    const qs = searchFiltersToQueryString(q, !!target);
     const path = target ? `/city/${target}/homes` : "/homes";
     router.push(qs ? `${path}?${qs}` : path);
   };
@@ -67,19 +62,14 @@ export default function SearchToolbar({
   const currentCityName = cities.find((c) => c.slug === (citySlug || query.citySlug))?.name || "";
 
   const saveThisSearch = () => {
-    const params = new URLSearchParams();
     const effCity = citySlug || query.citySlug;
-    if (effCity) params.set("city", effCity);
-    if (query.minPrice) params.set("min", String(query.minPrice));
-    if (query.maxPrice) params.set("max", String(query.maxPrice));
-    if (query.minBeds) params.set("beds", String(query.minBeds));
-    if (query.propertyType) params.set("type", query.propertyType);
-    if (query.newBuildsOnly) params.set("new", "1");
     const bits = [
       currentCityName || "All of DFW",
       query.minBeds ? `${query.minBeds}+ bd` : null,
+      query.minBaths ? `${query.minBaths}+ ba` : null,
       priceIdx > 0 ? PRICE_BANDS[priceIdx].label.toLowerCase() : null,
       query.propertyType || null,
+      query.statuses?.[0] ? SLUG_BY_STATUS[query.statuses[0]].replace(/-/g, " ") : null,
       query.newBuildsOnly ? "new construction" : null,
     ].filter(Boolean);
     shelf.saveSearch({
@@ -87,7 +77,7 @@ export default function SearchToolbar({
       // structured filters make the standing order replayable against any provider
       filters: { ...query, citySlug: effCity },
       queryLabel: bits.join(" · "),
-      queryString: params.toString(),
+      queryString: searchFiltersToQueryString({ ...query, citySlug: effCity }),
       frequency: "Daily digest",
     });
   };
@@ -180,6 +170,21 @@ export default function SearchToolbar({
       </select>
 
       <select
+        aria-label="Minimum bathrooms"
+        value={query.minBaths ?? 0}
+        onChange={(e) => navigate({ minBaths: Number(e.target.value) || undefined })}
+        className="font-mono"
+        style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
+      >
+        <option value={0}>ANY BATHS</option>
+        {[2, 3, 4].map((n) => (
+          <option key={n} value={n}>
+            {n}+ BATHS
+          </option>
+        ))}
+      </select>
+
+      <select
         aria-label="Home type"
         value={query.propertyType ?? ""}
         onChange={(e) => navigate({ propertyType: (e.target.value as PropertyType) || undefined })}
@@ -192,6 +197,22 @@ export default function SearchToolbar({
             {t.toUpperCase()}
           </option>
         ))}
+      </select>
+
+      <select
+        aria-label="Listing status"
+        value={query.statuses?.[0] ? SLUG_BY_STATUS[query.statuses[0]] : ""}
+        onChange={(e) => {
+          const status: ListingStatus | undefined = STATUS_BY_SLUG[e.target.value];
+          navigate({ statuses: status ? [status] : undefined });
+        }}
+        className="font-mono"
+        style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
+      >
+        <option value="">ANY STATUS</option>
+        <option value="active">ACTIVE</option>
+        <option value="coming-soon">COMING SOON</option>
+        <option value="pending">PENDING</option>
       </select>
 
       <button

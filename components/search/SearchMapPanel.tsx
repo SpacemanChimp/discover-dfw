@@ -8,8 +8,10 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 
 /* The Map Room's right pane: the illustrated metroplex with $-price pins.
    Orange pin = in the viewed city, ink pin = on your shelf, cream = elsewhere.
-   Clicking a pin opens the listing; clicking a city dot scopes the search. */
-export default function SearchMap({
+   Clicking a pin opens the listing; clicking a city dot scopes the search.
+   ILLUSTRATED PLACEHOLDER for the IDX parcel map — pins sit on city
+   centroids until live coordinates arrive with the Trestle feed. */
+export default function SearchMapPanel({
   listings,
   activeCitySlug,
   total,
