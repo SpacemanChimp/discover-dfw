@@ -1,0 +1,116 @@
+import type { Listing } from "@/lib/mls/types";
+import type { City } from "@/lib/dfw-data";
+import { badgeStyle, money } from "./format";
+import MLSAttribution from "./MLSAttribution";
+import ListingPhotoGallery from "@/components/listing/ListingPhotoGallery";
+import ListingFactsLedger from "@/components/listing/ListingFactsLedger";
+import ListingCityContext from "@/components/listing/ListingCityContext";
+import ListingLeadCTA from "@/components/listing/ListingLeadCTA";
+
+/* "The Dossier" — editorial listing detail: gallery hero, serif price,
+   facts ledger, know-the-city module, compliance reservations, and the
+   lead CTAs (sticky bar on mobile). Server component; interactivity lives
+   in the gallery heart and the CTA island. */
+export default function ListingDetailDossier({
+  listing,
+  city,
+  countyName,
+}: {
+  listing: Listing;
+  city: City;
+  countyName: string;
+}) {
+  const b = badgeStyle(listing);
+  const ppsf = Math.round(listing.listPrice / listing.livingAreaSqft);
+  const updated = new Date(listing.mlsLastUpdated).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Chicago",
+  });
+
+  return (
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 4vw 60px" }}>
+      <ListingPhotoGallery listing={listing} />
+
+      {/* headline block */}
+      <div style={{ marginTop: 22 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <span
+            className="font-mono"
+            style={{
+              background: b.bg,
+              color: b.fg,
+              border: `1.5px solid ${b.border}`,
+              fontSize: 8.5,
+              fontWeight: 700,
+              letterSpacing: ".14em",
+              borderRadius: 99,
+              padding: "5px 10px",
+            }}
+          >
+            {b.label}
+          </span>
+          <span className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)" }}>
+            {listing.propertyType.toUpperCase()} · {listing.neighborhood.toUpperCase()}
+          </span>
+        </div>
+        <h1
+          className="font-serif"
+          style={{ margin: "10px 0 0", fontWeight: 900, fontSize: "clamp(34px,5vw,48px)", color: "#D9481F", lineHeight: 1 }}
+        >
+          {money(listing.listPrice)}
+        </h1>
+        <div style={{ fontSize: 17, fontWeight: 600, marginTop: 6 }}>
+          {listing.unparsedAddress}, {city.name}, TX{listing.postalCode ? ` ${listing.postalCode}` : ""}
+        </div>
+        <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".14em", color: "rgba(29,25,19,.5)", marginTop: 6 }}>
+          {listing.bedsTotal} BD · {listing.bathsTotal} BA · {listing.livingAreaSqft.toLocaleString("en-US")} SQFT ·
+          BUILT {listing.yearBuilt} · ${ppsf}/SQFT
+        </div>
+        <p
+          className="font-serif"
+          style={{
+            margin: "16px 0 0",
+            fontStyle: "italic",
+            fontSize: 16,
+            lineHeight: 1.65,
+            color: "rgba(29,25,19,.78)",
+            borderTop: "1px solid rgba(29,25,19,.16)",
+            paddingTop: 14,
+          }}
+        >
+          {listing.editorialNote}
+        </p>
+        {listing.publicRemarks && (
+          <p style={{ margin: "12px 0 0", fontSize: 14.5, lineHeight: 1.75, color: "rgba(29,25,19,.75)" }}>
+            {listing.publicRemarks}
+          </p>
+        )}
+      </div>
+
+      <ListingFactsLedger listing={listing} />
+      <ListingCityContext listing={listing} city={city} countyName={countyName} />
+
+      {/* compliance reservations: attribution, source, last updated, disclaimer */}
+      <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 6 }}>
+        <MLSAttribution
+          attributionText={listing.attributionText}
+          listingBrokerName={listing.listingBrokerName}
+          listingId={listing.listingId}
+          mlsSource={listing.mlsSource}
+        />
+        <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".14em", color: "rgba(29,25,19,.45)" }}>
+          LAST UPDATED {updated.toUpperCase()} CT ·{" "}
+          {listing.disclaimerText
+            ? listing.disclaimerText.toUpperCase()
+            : "DISCLAIMER RESERVED — DEEMED RELIABLE, NOT GUARANTEED (LIVE FEED)"}
+        </div>
+      </div>
+
+      <ListingLeadCTA listing={listing} cityName={city.name} />
+    </div>
+  );
+}

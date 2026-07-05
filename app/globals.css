@@ -184,3 +184,50 @@ body {
 
 /* map city label lift its parent link cursor */
 .map-city { cursor: pointer; }
+
+/* ---------- the map room (/homes) ---------- */
+.homes-split { display: flex; align-items: stretch; }
+.homes-rail {
+  width: 520px;
+  flex-shrink: 0;
+  border-right: 2px solid #1d1913;
+  padding: 22px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #f6f1e6;
+  min-height: 60vh;
+}
+.homes-map {
+  flex: 1;
+  position: sticky;
+  top: 63px;
+  height: calc(100vh - 63px);
+  min-height: 480px;
+}
+.mobile-only { display: none; }
+@media (max-width: 940px) {
+  .homes-map { display: none; }
+  .homes-rail { width: 100%; border-right: none; }
+  .desktop-only-flex { display: none; }
+  .mobile-only { display: block; }
+}
+
+/* ---------- listing dossier ---------- */
+.dossier-ctas {
+  display: flex;
+  gap: 10px;
+  padding: 14px 0 0;
+  margin-top: 18px;
+}
+@media (max-width: 700px) {
+  /* sticky lead bar on mobile — always a tap away while reading the dossier */
+  .dossier-ctas {
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    padding: 12px 0 14px;
+    background: linear-gradient(to top, #f6f1e6 78%, rgba(246, 241, 230, 0));
+  }
+}
+

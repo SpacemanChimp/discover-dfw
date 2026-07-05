@@ -18,6 +18,7 @@ import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
 import Reveals from "@/components/Reveals";
+import TrecLinks from "@/components/TrecLinks";
 
 export function generateStaticParams() {
   return cities.map((c) => ({ slug: c.slug }));
@@ -813,20 +814,38 @@ export default async function CityPage({
               <Eyebrow>07 — ON THE MARKET</Eyebrow>
               <SectionH2>Three ways to buy {c.name}.</SectionH2>
             </div>
-            <span
-              className="font-mono"
-              style={{
-                fontSize: 9.5,
-                letterSpacing: ".2em",
-                color: "#D9481F",
-                border: "1px dashed rgba(217,72,31,.6)",
-                borderRadius: 999,
-                padding: "7px 13px",
-                marginBottom: 6,
-              }}
-            >
-              PLACEHOLDER LISTINGS — CONNECT MLS
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
+              <span
+                className="font-mono"
+                style={{
+                  fontSize: 9.5,
+                  letterSpacing: ".2em",
+                  color: "#D9481F",
+                  border: "1px dashed rgba(217,72,31,.6)",
+                  borderRadius: 999,
+                  padding: "7px 13px",
+                }}
+              >
+                PLACEHOLDER LISTINGS — CONNECT MLS
+              </span>
+              <Link
+                href={`/city/${c.slug}/homes`}
+                className="btn-primary font-mono"
+                style={{
+                  background: "#D9481F",
+                  color: "#F6F1E6",
+                  borderRadius: 999,
+                  padding: "10px 18px",
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  letterSpacing: ".14em",
+                  textDecoration: "none",
+                  border: "2px solid #D9481F",
+                }}
+              >
+                SEARCH {c.name.toUpperCase()} HOMES →
+              </Link>
+            </div>
           </div>
           <div
             data-reveal="1"
@@ -970,6 +989,15 @@ export default async function CityPage({
 
       {/* footer */}
       <footer style={{ background: "#1D1913", color: "#F6F1E6" }}>
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "26px 4vw 0",
+          }}
+        >
+          <TrecLinks />
+        </div>
         <div
           style={{
             maxWidth: 1280,
