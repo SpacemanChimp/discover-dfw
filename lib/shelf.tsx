@@ -193,6 +193,13 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
   /* ---- boot: local first, then session ---- */
   useEffect(() => {
     const local = loadLocal();
+    if (supabase && local.account) {
+      // Stale Phase-1 stub account written before the backend existed.
+      // In supabase mode only a real session may set `account` — otherwise
+      // the UI claims "synced" with no session and SIGN IN never shows.
+      local.account = null;
+      persistLocal(local);
+    }
     setState(local);
     if (!supabase) {
       setReady(true);
