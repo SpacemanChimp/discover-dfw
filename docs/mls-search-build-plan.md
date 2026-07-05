@@ -14,7 +14,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 4 | City-specific home search pages — dedicated `/city/[slug]/homes` layout | ✅ |
 | 5 | Listing detail pages — Dossier decomposed, gallery, branded 404, sticky mobile CTAs | ✅ |
 | 6 | Guest saved homes — Broadsheet cards, empty state, off-market ("No longer available") handling | ✅ |
-| Next | Real accounts (Auth.js magic link + Google), DB-backed shelf/searches, alerts, CRM wiring for `/api/leads` | ⬜ |
+| 7 | Accounts — Supabase Auth (magic link + Google) + Postgres shelf/searches/leads with RLS, guest-shelf merge | ✅ code · ⬜ run migration + Vercel envs |
+| Next | Price-drop/status alerts, The Letter, CRM webhook, compare view | ⬜ |
 | Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
 
 ### Phase 3 notes
@@ -91,6 +92,36 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 - `SavedHomesEmptyState` extracted as the named first-run state.
 - Still guest-only by design: no real auth, no DB. The membership modal
   remains the Phase-1 email stub.
+
+### Phase 7 notes — accounts
+
+- **Stack**: Supabase Auth + Postgres via `@supabase/supabase-js` +
+  `@supabase/ssr`. New-style keys: publishable (public-by-design, RLS is
+  the boundary) in `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; secret key in
+  server-only `SUPABASE_SECRET_KEY` (leads intake only, guarded by the
+  `server-only` package in `lib/db/admin.ts`). `.env*` gitignored;
+  `.env.example` documents the shape. Same three vars go into Vercel
+  before this deploys.
+- **Schema**: `supabase/migrations/0001_accounts.sql` — `profiles`
+  (trigger-created on signup), `saved_homes` (PK user+listing, keeps
+  `price_at_save`), `saved_searches` (replayable `filters` jsonb),
+  `leads` (no client policies; secret-key inserts only). RLS on
+  everything, owner-scoped.
+- **Flows**: AuthModal sends a magic link (`signInWithOtp`) with a
+  "the key is in the post" sent-state; Google OAuth enabled (needs the
+  provider switched on in the dashboard); `/auth/callback` exchanges the
+  code; `middleware.ts` refreshes session cookies. No hard-protected
+  routes — guest-first stands; dashboards render guest/member variants
+  and gain SIGN OUT.
+- **Guest merge**: on first SIGNED_IN, the localStorage shelf upserts
+  into Postgres with `ignoreDuplicates` (existing account rows win, so
+  price-cut math keeps the earliest `price_at_save`), searches insert,
+  then the local copy clears (gate memory kept). Signed-in reads/writes
+  go straight to the DB; signed-out returns to a fresh guest shelf.
+- **Degradation**: without env vars the whole stack falls back to the
+  Phase-1 local stub (modal included) — deploys never hard-depend on
+  the backend. Free-tier magic-link email is rate-limited (~2/hr per
+  address); wire custom SMTP (Resend/Postmark) before real users.
 
 ## Architecture
 

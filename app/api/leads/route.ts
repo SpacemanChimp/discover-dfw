@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/db/admin";
+import { getSupabaseServer } from "@/lib/db/server";
 
-/* Lead intake — showing requests, listing questions, and Phase-1 account
-   signups. Phase 2 wires this to the CRM/agent-routing webhook and durable
-   storage; until then leads are validated and logged server-side so the
-   contract with the client is stable. */
+/* Lead intake — showing requests, listing questions, and account signups.
+   Persists to the Supabase `leads` table via the secret-key client (the
+   table has no client RLS policies, so this route is the only door in).
+   Falls back to server logging when the secret key isn't configured.
+   CRM/agent-routing webhook remains a follow-up. */
 
 const TYPES = new Set(["showing", "question", "account"]);
 
@@ -61,8 +64,30 @@ export async function POST(req: Request) {
     replyPref: body.replyPref || null,
   };
 
-  // TODO(phase-2): persist + forward to CRM / the assigned local guide.
-  console.log("[lead]", JSON.stringify(lead));
+  const admin = getSupabaseAdmin();
+  if (admin) {
+    // attach the signed-in user when there is one (guests stay null)
+    let userId: string | null = null;
+    try {
+      const session = await getSupabaseServer();
+      userId = (await session?.auth.getUser())?.data.user?.id ?? null;
+    } catch {
+      /* no session — guest lead */
+    }
+    const { error } = await admin.from("leads").insert({
+      user_id: userId,
+      type: lead.type,
+      listing_key: lead.listingKey,
+      payload: lead,
+    });
+    if (error) {
+      console.error("[lead] db insert failed, logging instead:", error.message);
+      console.log("[lead]", JSON.stringify(lead));
+    }
+  } else {
+    // secret key not configured — keep the paper trail in the logs
+    console.log("[lead]", JSON.stringify(lead));
+  }
 
   return NextResponse.json({ ok: true });
 }

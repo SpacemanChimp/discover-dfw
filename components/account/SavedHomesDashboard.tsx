@@ -44,8 +44,20 @@ export default function SavedHomesDashboard({ allListings }: { allListings: List
         <h1 className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(30px,5vw,40px)" }}>
           Your shelf.
         </h1>
-        <span className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)" }}>
+        <span
+          className="font-mono"
+          style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", display: "inline-flex", gap: 12, alignItems: "baseline" }}
+        >
           {shelf.account ? `SYNCED ✓ · ${shelf.account.email.toUpperCase()}` : "GUEST SHELF"}
+          {shelf.account && shelf.authMode === "supabase" && (
+            <button
+              type="button"
+              onClick={shelf.signOut}
+              style={{ font: "inherit", letterSpacing: "inherit", color: "#D9481F", background: "none", border: "none", cursor: "pointer", fontWeight: 700 }}
+            >
+              SIGN OUT
+            </button>
+          )}
         </span>
       </div>
 

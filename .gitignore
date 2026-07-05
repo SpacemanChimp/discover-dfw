@@ -5,3 +5,8 @@
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+
+# local secrets — never commit
+.env
+.env.*
+!.env.example
