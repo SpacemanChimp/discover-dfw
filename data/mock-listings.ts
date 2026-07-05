@@ -1,7 +1,7 @@
 /* FAKE mock inventory — fictional addresses and prices ported from the
    design bundle's dfw-listings.js, upgraded to the full Listing shape.
    Replaced wholesale by the Trestle provider; nothing here is real. */
-import type { Listing, ListingBadge, ListingMedia, PropertyType } from "@/lib/mls/types";
+import type { Listing, ListingBadge, ListingMedia, OpenHouse, PropertyType } from "@/lib/mls/types";
 
 /* Frozen "feed refresh" moment for the whole mock feed. */
 export const MOCK_MLS_LAST_UPDATED = "2026-07-01T06:00:00-05:00";
@@ -37,6 +37,7 @@ interface Spec {
   photoCount: number;
   note: string;
   featured?: boolean;
+  openHouses?: OpenHouse[];
 }
 
 function listing(s: Spec): Listing {
@@ -65,6 +66,7 @@ function listing(s: Spec): Listing {
     photoLabel: s.photos[0].caption,
     editorialNote: s.note,
     featured: s.featured,
+    openHouses: s.openHouses,
     listingBrokerName: null,
     listingOfficeName: null,
     mlsSource: MOCK_SOURCE,
@@ -87,6 +89,7 @@ export const mockListings: Listing[] = [
     key: "2189", badge: "OPEN SAT", price: 486000, beds: 4, baths: 3, sqft: 2610, lot: 0.21,
     yr: 2022, type: "Single family", dom: 12, listDate: "2026-06-19", addr: "3405 Ranchman Blvd",
     slug: "denton", cityName: "Denton", hood: "Rayzor Ranch", zip: "76207",
+    openHouses: [{ date: "2026-07-11", window: "1–3 PM" }],
     photos: media("brick elevation, corner lot", "three-car tandem", "open kitchen"),
     photoCount: 31,
     note: "Corner-lot new build with a three-car tandem and a 12-minute walk to the H-E-B.",
@@ -111,6 +114,7 @@ export const mockListings: Listing[] = [
     key: "2233", badge: "NEW", price: 789000, beds: 3, baths: 2, sqft: 2260, lot: 0.19,
     yr: 1934, type: "Tudor", dom: 2, listDate: "2026-06-29", addr: "6923 Lakeshore Dr",
     slug: "dallas", cityName: "Dallas", hood: "Lakewood", zip: "75214",
+    openHouses: [{ date: "2026-07-12", window: "2–4 PM" }],
     photos: media("brick tudor, arched door", "original hardware", "white rock trail nearby"),
     photoCount: 24, featured: true,
     note: "Storybook Tudor on the White Rock side of Lakewood, unrenovated and honest.",
@@ -151,6 +155,7 @@ export const mockListings: Listing[] = [
     key: "2226", badge: "OPEN SUN", price: 429000, beds: 2, baths: 2, sqft: 1310,
     yr: 2018, type: "High-rise condo", dom: 15, listDate: "2026-06-16",
     addr: "722 Lake Carolyn Pkwy #1104", slug: "irving", cityName: "Irving", hood: "Las Colinas", zip: "75039",
+    openHouses: [{ date: "2026-07-12", window: "12–2 PM" }],
     photos: media("canal view, floor 11", "gondolas below", "amenity deck pool"),
     photoCount: 21,
     note: "Eleventh-floor canal view; gondolas below, DFW Airport ten minutes out.",

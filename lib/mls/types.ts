@@ -39,6 +39,14 @@ export interface ListingMedia {
   isPrimary?: boolean;
 }
 
+/** Scheduled open house (RESO OpenHouse, simplified). */
+export interface OpenHouse {
+  /** ISO date, e.g. "2026-07-11". */
+  date: string;
+  /** Display window, e.g. "1–3 PM". */
+  window: string;
+}
+
 export interface Listing {
   /* identity */
   listingKey: string;
@@ -81,6 +89,8 @@ export interface Listing {
   /** The field-guide voice — one line, ours, not the feed's. */
   editorialNote: string;
   featured?: boolean;
+  /** Upcoming open houses, soonest first. */
+  openHouses?: OpenHouse[];
 
   /* compliance — required display slots under IDX rules */
   listingBrokerName: string | null;

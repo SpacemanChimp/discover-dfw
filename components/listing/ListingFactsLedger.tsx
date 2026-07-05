@@ -17,6 +17,15 @@ export default function ListingFactsLedger({ listing }: { listing: Listing }) {
     { label: "LISTED", value: listed.toUpperCase() },
   ];
   if (listing.lotSizeAcres) facts.push({ label: "LOT", value: `${listing.lotSizeAcres} AC` });
+  const oh = listing.openHouses?.[0];
+  if (oh)
+    facts.push({
+      label: "OPEN HOUSE",
+      value: `${new Date(oh.date + "T12:00:00Z")
+        .toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" })
+        .toUpperCase()} ${oh.window}`,
+      color: "#D9481F",
+    });
   if (listing.originalListPrice && listing.originalListPrice > listing.listPrice)
     facts.push({
       label: "ORIGINAL PRICE",

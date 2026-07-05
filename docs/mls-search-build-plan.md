@@ -16,7 +16,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 6 | Guest saved homes — Broadsheet cards, empty state, off-market ("No longer available") handling | ✅ |
 | 7 | Accounts — Supabase Auth (magic link + Google) + Postgres shelf/searches/leads with RLS, guest-shelf merge | ✅ fully live in production — Vercel envs, leads → DB, Google OAuth, and Resend SMTP (signin@discoverdfw.com, delivery verified); site canonical is www.discoverdfw.com |
 | 8 | Persistent saved listings — `saved_listings` schema, API routes, change-detection badges, seen-sync | ✅ |
-| Next | Price-drop/status alerts, The Letter, CRM webhook, compare view | ⬜ |
+| 9 | Alerts — price-drop / status-change / open-house digests via Vercel Cron + Resend | ✅ |
+| Next | The Letter, CRM webhook, compare view, alert preferences UI | ⬜ |
 | Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
 
 ### Phase 3 notes
@@ -177,6 +178,36 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 8. **Isolation** — in a second browser/incognito with a different
    account, `/account/saved-homes` is empty and GET
    `/api/saved-listings` returns only that user's rows (RLS).
+
+### Phase 9 notes — alerts
+
+- **Detection**: `/api/alerts/run` (guarded by `CRON_SECRET`; Vercel
+  Cron daily at 13:00 UTC / 8am CT per `vercel.json`) sweeps every
+  `saved_listings` row on the admin client (system job — RLS still
+  guards all client surfaces), compares against the provider, and
+  advances the `last_seen_*` baselines so nothing double-fires:
+  price drop (below `last_seen_price`; increases move the baseline
+  silently), status change (vs `last_seen_status`, including
+  left-the-feed → OffMarket), open house (next upcoming signature
+  `date|window` vs `last_seen_open_house` — migration 0003). Null
+  baselines are seeded silently on first sweep, so pre-existing saves
+  never spam.
+- **Log**: every alert lands in the `alerts` table (RLS: owner
+  SELECT only; system-only writes) with `emailed_at` — the future
+  in-app feed reads from here.
+- **Email**: one digest per user per run via the Resend API
+  (`lib/email/resend.ts`, `RESEND_API_KEY`, from
+  `alerts@discoverdfw.com`), field-guide styled, one row per alert,
+  linking to the listing and the shelf. `profiles.alerts_opt_out` is
+  the kill switch. No key → logs instead of sending.
+- **Feed**: `Listing.openHouses` added (RESO OpenHouse simplified);
+  mock data carries open houses on the OPEN SAT/SUN listings and the
+  Lakewood Tudor; the dossier facts ledger shows an OPEN HOUSE tile.
+- **Test**: seed a baseline above/behind the feed in SQL (e.g.
+  `update saved_listings set last_seen_price = 999999, last_seen_status = 'Pending', last_seen_open_house = null`)
+  then `curl -H "Authorization: Bearer $CRON_SECRET" .../api/alerts/run`
+  → response counts, `alerts` rows, one digest in the inbox; a second
+  run returns zero (baselines advanced).
 
 ## Architecture
 
