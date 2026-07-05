@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import type { Listing } from "@/lib/listings/types";
+import type { Listing } from "@/lib/mls/types";
 import { fmtK, type City } from "@/lib/dfw-data";
 import SaveListingButton from "./SaveListingButton";
 import MLSAttribution from "./MLSAttribution";
@@ -192,7 +192,12 @@ export default function ListingDetailDossier({
       </div>
 
       <div style={{ marginTop: 22 }}>
-        <MLSAttribution courtesyOf={listing.courtesyOf} listingKey={listing.listingKey} />
+        <MLSAttribution
+          attributionText={listing.attributionText}
+          listingBrokerName={listing.listingBrokerName}
+          listingId={listing.listingId}
+          mlsSource={listing.mlsSource}
+        />
       </div>
 
       {/* CTAs — sticky on small screens */}

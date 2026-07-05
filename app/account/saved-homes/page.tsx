@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import SearchNav from "@/components/search/SearchNav";
 import SavedHomesDashboard from "@/components/account/SavedHomesDashboard";
-import { allMockListings } from "@/lib/listings/mock-provider";
+import { mockListings } from "@/data/mock-listings";
 
 export const metadata: Metadata = {
   title: "Your Shelf — Saved Homes",
@@ -12,7 +12,7 @@ export default function SavedHomesPage() {
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
       <SearchNav />
-      <SavedHomesDashboard allListings={allMockListings} />
+      <SavedHomesDashboard allListings={mockListings} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { cities } from "@/lib/dfw-data";
-import type { SearchQuery } from "@/lib/listings/types";
+import type { PropertyType, SearchFilters } from "@/lib/mls/types";
 import { useShelf } from "@/lib/shelf";
 
 const PRICE_BANDS: { label: string; min?: number; max?: number }[] = [
@@ -32,7 +32,7 @@ export default function SearchToolbar({
   citySlug,
   propertyTypes,
 }: {
-  query: SearchQuery;
+  query: SearchFilters;
   /** When set, we're on /city/[slug]/homes and city is fixed by the path. */
   citySlug?: string;
   propertyTypes: string[];
@@ -40,7 +40,7 @@ export default function SearchToolbar({
   const router = useRouter();
   const shelf = useShelf();
 
-  const navigate = (patch: Partial<SearchQuery>) => {
+  const navigate = (patch: Partial<SearchFilters>) => {
     const q = { ...query, ...patch };
     const target = q.citySlug && q.citySlug !== citySlug ? q.citySlug : citySlug;
     const params = new URLSearchParams();
@@ -84,6 +84,8 @@ export default function SearchToolbar({
     ].filter(Boolean);
     shelf.saveSearch({
       name: bits.join(" · "),
+      // structured filters make the standing order replayable against any provider
+      filters: { ...query, citySlug: effCity },
       queryLabel: bits.join(" · "),
       queryString: params.toString(),
       frequency: "Daily digest",
@@ -180,7 +182,7 @@ export default function SearchToolbar({
       <select
         aria-label="Home type"
         value={query.propertyType ?? ""}
-        onChange={(e) => navigate({ propertyType: e.target.value || undefined })}
+        onChange={(e) => navigate({ propertyType: (e.target.value as PropertyType) || undefined })}
         className="font-mono"
         style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
       >

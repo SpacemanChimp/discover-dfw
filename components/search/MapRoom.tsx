@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { bySlug, countyById, cities, fmtK } from "@/lib/dfw-data";
-import { getListingProvider } from "@/lib/listings";
-import type { SearchQuery } from "@/lib/listings/types";
+import { getMlsProvider } from "@/lib/mls";
+import type { SearchFilters } from "@/lib/mls/types";
 import SearchNav from "./SearchNav";
 import SearchToolbar from "./SearchToolbar";
 import CitySearchHeader from "./CitySearchHeader";
 import ListingCardLedger from "./ListingCardLedger";
 import SearchMap from "./SearchMap";
 import MLSComplianceFooter from "./MLSComplianceFooter";
-import { allMockListings } from "@/lib/listings/mock-provider";
 
 /* "The Map Room" — desktop: listing rail + city-aware map. Mobile: the
    index (cities first) until a city is chosen, then the rail full-width. */
@@ -16,21 +15,24 @@ export default async function MapRoom({
   query,
   citySlug,
 }: {
-  query: SearchQuery;
+  query: SearchFilters;
   /** Set when rendered from /city/[slug]/homes — city fixed by the path. */
   citySlug?: string;
 }) {
-  const provider = getListingProvider();
-  const effective: SearchQuery = { ...query, citySlug: citySlug || query.citySlug };
-  const [result, counts, totalResult] = await Promise.all([
-    provider.search(effective),
-    provider.cityCounts(),
-    provider.search({}),
+  const provider = getMlsProvider();
+  const effective: SearchFilters = { ...query, citySlug: citySlug || query.citySlug };
+  const [result, totalResult] = await Promise.all([
+    provider.searchListings(effective),
+    // unfiltered page for map context, index counts, and the type filter list
+    provider.searchListings({ pageSize: 500 }),
   ]);
+
+  const counts: Record<string, number> = {};
+  for (const l of totalResult.listings) counts[l.citySlug] = (counts[l.citySlug] || 0) + 1;
 
   const city = effective.citySlug ? bySlug[effective.citySlug] : undefined;
   const county = city ? countyById[city.county] : undefined;
-  const propertyTypes = Array.from(new Set(allMockListings.map((l) => l.propertyType))).sort();
+  const propertyTypes = Array.from(new Set(totalResult.listings.map((l) => l.propertyType))).sort();
 
   const indexRows = cities
     .filter((c) => counts[c.slug])
@@ -173,7 +175,7 @@ export default async function MapRoom({
         )}
       </div>
 
-      <MLSComplianceFooter asOf={result.asOf} />
+      <MLSComplianceFooter asOf={result.mlsLastUpdated} />
     </div>
   );
 }

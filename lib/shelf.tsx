@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { SavedHome, SavedSearch } from "./listings/types";
+import type { SavedHome, SavedSearchFilter } from "./mls/types";
 
 const LS_KEY = "ddfw.shelf.v1";
 
@@ -21,7 +21,7 @@ export interface ShelfAccount {
 
 interface ShelfState {
   saved: Record<string, SavedHome>;
-  searches: SavedSearch[];
+  searches: SavedSearchFilter[];
   account: ShelfAccount | null;
   gateShown: boolean;
 }
@@ -32,7 +32,7 @@ interface ShelfContextValue extends ShelfState {
   savedCount: number;
   isSaved(listingKey: string): boolean;
   toggleSave(listingKey: string, priceAtSave: number): void;
-  saveSearch(s: Omit<SavedSearch, "id" | "createdAt">): void;
+  saveSearch(s: Omit<SavedSearchFilter, "id" | "createdAt">): void;
   removeSearch(id: string): void;
   createAccount(email: string): void;
   /** Soft gate sheet visibility (asked once, after the first guest save). */
@@ -152,7 +152,7 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
   );
 
   const saveSearch = useCallback(
-    (s: Omit<SavedSearch, "id" | "createdAt">) => {
+    (s: Omit<SavedSearchFilter, "id" | "createdAt">) => {
       update((prev) => ({
         ...prev,
         searches: [

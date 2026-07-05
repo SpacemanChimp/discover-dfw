@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { bySlug, countyById } from "@/lib/dfw-data";
-import { getListingProvider } from "@/lib/listings";
-import { allMockListings } from "@/lib/listings/mock-provider";
+import { getMlsProvider } from "@/lib/mls";
+import { mockListings } from "@/data/mock-listings";
 import ListingDetailDossier from "@/components/search/ListingDetailDossier";
 import SearchNav from "@/components/search/SearchNav";
 import MLSComplianceFooter from "@/components/search/MLSComplianceFooter";
 
 export function generateStaticParams() {
-  return allMockListings.map((l) => ({ listingKey: l.listingKey }));
+  return mockListings.map((l) => ({ listingKey: l.listingKey }));
 }
 
 export async function generateMetadata({
@@ -18,7 +18,7 @@ export async function generateMetadata({
   params: Promise<{ listingKey: string }>;
 }): Promise<Metadata> {
   const { listingKey } = await params;
-  const l = await getListingProvider().getByKey(listingKey);
+  const l = await getMlsProvider().getListingByKey(listingKey);
   if (!l) return { title: "Listing" };
   const city = bySlug[l.citySlug];
   return {
@@ -35,7 +35,7 @@ export default async function ListingPage({
   params: Promise<{ listingKey: string }>;
 }) {
   const { listingKey } = await params;
-  const listing = await getListingProvider().getByKey(listingKey);
+  const listing = await getMlsProvider().getListingByKey(listingKey);
   if (!listing) notFound();
   const city = bySlug[listing.citySlug];
   if (!city) notFound();
@@ -54,7 +54,7 @@ export default async function ListingPage({
         </Link>
       </div>
       <ListingDetailDossier listing={listing} city={city} countyName={county.name} />
-      <MLSComplianceFooter asOf={new Date().toISOString()} />
+      <MLSComplianceFooter asOf={listing.mlsLastUpdated} />
     </div>
   );
 }

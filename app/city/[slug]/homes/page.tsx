@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cities, bySlug, countyById } from "@/lib/dfw-data";
-import { parseSearchQuery } from "@/lib/listings";
+import { parseSearchFilters } from "@/lib/mls";
 import MapRoom from "@/components/search/MapRoom";
 
 export function generateStaticParams() {
@@ -34,5 +34,5 @@ export default async function CityHomesPage({
 }) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   if (!bySlug[slug]) notFound();
-  return <MapRoom query={parseSearchQuery(sp)} citySlug={slug} />;
+  return <MapRoom query={parseSearchFilters(sp)} citySlug={slug} />;
 }

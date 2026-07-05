@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import type { Listing } from "@/lib/listings/types";
+import type { Listing } from "@/lib/mls/types";
 
 const chip = (active: boolean): React.CSSProperties => ({
   flex: 1,

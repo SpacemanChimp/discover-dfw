@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import type { Listing } from "@/lib/listings/types";
+import type { Listing } from "@/lib/mls/types";
 import SaveListingButton from "./SaveListingButton";
 import MLSAttribution from "./MLSAttribution";
 
@@ -131,7 +131,13 @@ export default function ListingCardLedger({
           {listing.editorialNote}
         </div>
         <div style={{ padding: "0 18px 14px" }}>
-          <MLSAttribution courtesyOf={listing.courtesyOf} listingKey={listing.listingKey} compact />
+          <MLSAttribution
+            attributionText={listing.attributionText}
+            listingBrokerName={listing.listingBrokerName}
+            listingId={listing.listingId}
+            mlsSource={listing.mlsSource}
+            compact
+          />
         </div>
       </Link>
     </article>

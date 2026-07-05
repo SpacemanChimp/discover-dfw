@@ -1,15 +1,25 @@
 /* Reserved IDX attribution slot. MLS rules (NTREIS) require the listing
-   brokerage's name displayed with each listing; the mock feed has none, so
-   the reservation itself is shown until Trestle supplies courtesyOf. */
+   brokerage's name displayed with each listing; the mock feed carries none,
+   so the reservation itself is shown until Trestle supplies attributionText
+   (or listingBrokerName / listingOfficeName). */
 export default function MLSAttribution({
-  courtesyOf,
-  listingKey,
+  attributionText,
+  listingBrokerName,
+  listingId,
+  mlsSource,
   compact,
 }: {
-  courtesyOf: string | null;
-  listingKey: string;
+  attributionText: string | null;
+  listingBrokerName: string | null;
+  listingId: string;
+  mlsSource: string;
   compact?: boolean;
 }) {
+  const line =
+    attributionText ??
+    (listingBrokerName
+      ? `LISTING COURTESY OF ${listingBrokerName.toUpperCase()}`
+      : "LISTING COURTESY OF — IDX ATTRIBUTION RESERVED");
   return (
     <div
       className="font-mono"
@@ -23,12 +33,10 @@ export default function MLSAttribution({
         flexWrap: "wrap",
       }}
     >
+      <span>{attributionText ? attributionText.toUpperCase() : line}</span>
       <span>
-        {courtesyOf
-          ? `LISTING COURTESY OF ${courtesyOf.toUpperCase()}`
-          : "LISTING COURTESY OF — IDX ATTRIBUTION RESERVED"}
+        MLS# {listingId} · {mlsSource === "MOCK" ? "PLACEHOLDER" : mlsSource}
       </span>
-      <span>MLS# {listingKey.replace("MOCK-", "")} · PLACEHOLDER</span>
     </div>
   );
 }

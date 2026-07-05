@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import type { Listing } from "@/lib/listings/types";
+import type { Listing } from "@/lib/mls/types";
 
 const QUICK = [
   "Is it still available?",

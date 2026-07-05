@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { parseSearchQuery } from "@/lib/listings";
+import { parseSearchFilters } from "@/lib/mls";
 import MapRoom from "@/components/search/MapRoom";
 
 /* NOINDEX until the live IDX feed replaces mock inventory — fake listings
@@ -17,5 +17,5 @@ export default async function HomesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  return <MapRoom query={parseSearchQuery(params)} />;
+  return <MapRoom query={parseSearchFilters(params)} />;
 }

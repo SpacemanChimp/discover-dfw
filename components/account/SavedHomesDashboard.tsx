@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import type { Listing } from "@/lib/listings/types";
+import type { Listing } from "@/lib/mls/types";
 import { bySlug, fmtK } from "@/lib/dfw-data";
 import { useShelf } from "@/lib/shelf";
 import { money } from "@/components/search/ListingCardLedger";

@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { cities, counties, lakes, project, pts, bySlug } from "@/lib/dfw-data";
-import type { Listing } from "@/lib/listings/types";
+import type { Listing } from "@/lib/mls/types";
 import { useShelf } from "@/lib/shelf";
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
