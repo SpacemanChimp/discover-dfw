@@ -40,6 +40,25 @@ export default function SearchNav() {
         </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {shelf.ready && !shelf.account && (
+          <button
+            type="button"
+            onClick={shelf.openAuth}
+            className="font-mono city-back"
+            style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: ".16em",
+              color: "#D9481F",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            SIGN IN
+          </button>
+        )}
         <Link
           href="/account/saved-homes"
           className="font-mono"

@@ -17,5 +17,6 @@ export default async function HomesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  return <MapRoom query={parseSearchFilters(params)} />;
+  const authFailed = (Array.isArray(params.auth) ? params.auth[0] : params.auth) === "failed";
+  return <MapRoom query={parseSearchFilters(params)} authFailed={authFailed} />;
 }

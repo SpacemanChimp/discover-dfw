@@ -15,10 +15,13 @@ import MLSComplianceFooter from "./MLSComplianceFooter";
 export default async function MapRoom({
   query,
   citySlug,
+  authFailed,
 }: {
   query: SearchFilters;
   /** Set when rendered from /city/[slug]/homes — city fixed by the path. */
   citySlug?: string;
+  /** True when /auth/callback bounced here after a failed link exchange. */
+  authFailed?: boolean;
 }) {
   const provider = getMlsProvider();
   const effective: SearchFilters = { ...query, citySlug: citySlug || query.citySlug };
@@ -60,6 +63,25 @@ export default async function MapRoom({
       </div>
 
       <SearchToolbar query={effective} citySlug={citySlug} propertyTypes={propertyTypes} />
+
+      {authFailed && (
+        <div
+          className="font-mono"
+          role="alert"
+          style={{
+            textAlign: "center",
+            padding: "10px 4vw",
+            background: "#1D1913",
+            color: "#E88D6B",
+            fontSize: 9.5,
+            fontWeight: 700,
+            letterSpacing: ".18em",
+          }}
+        >
+          THAT SIGN-IN LINK DIDN&rsquo;T TAKE — LINKS ARE ONE-USE AND MUST OPEN IN THE SAME BROWSER
+          THAT REQUESTED THEM. HIT SIGN IN (TOP RIGHT) FOR A FRESH ONE.
+        </div>
+      )}
 
       {/* mock-data notice — stays until the live feed is approved and wired */}
       <div
