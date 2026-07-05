@@ -12,7 +12,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 2 | Shared MLS types + mock provider (`lib/mls`, `data/`) | ✅ |
 | 3 | `/homes` search page hardened on the provider — component extraction (rail / map panel / mobile index / empty / loading), baths + status filters, mock-inventory banner | ✅ |
 | 4 | City-specific home search pages — dedicated `/city/[slug]/homes` layout | ✅ |
-| Next | Listing detail polish, real accounts (Auth.js magic link + Google), DB-backed shelf/searches, alerts, CRM wiring for `/api/leads` | ⬜ |
+| 5 | Listing detail pages — Dossier decomposed, gallery, branded 404, sticky mobile CTAs | ✅ |
+| Next | Real accounts (Auth.js magic link + Google), DB-backed shelf/searches, alerts, CRM wiring for `/api/leads` | ⬜ |
 | Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
 
 ### Phase 3 notes
@@ -52,6 +53,27 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 - `MLSAttribution` gained a group mode (no `listingId`) for beneath
   listing groups: "LISTINGS COURTESY OF PARTICIPATING BROKERAGES — IDX
   ATTRIBUTION RESERVED · SOURCE: PLACEHOLDER — PENDING MLS APPROVAL".
+
+### Phase 5 notes
+
+- `ListingDetailDossier` is now a server component composed of:
+  `ListingPhotoGallery` (collage placeholder from `media[]` captions —
+  primary + two secondary slots + "+N" chip; heart overlay),
+  `ListingFactsLedger` (DOM, $/sqft, type, year, status, list date, lot,
+  original price when cut), `ListingCityContext` (vs-median bar, city
+  report + city homes links), `ListingLeadCTA` (client island holding
+  the sheets).
+- Compliance reservations on every dossier: per-listing attribution,
+  MLS source, LAST UPDATED timestamp, and a DISCLAIMER RESERVED line
+  (renders `disclaimerText` verbatim when the live feed supplies it).
+- Branded 404 at `app/listing/[listingKey]/not-found.tsx` ("OFF THE
+  LEDGER") with routes back to the search and the shelf.
+- Mobile: the Request a Showing / Ask a Question bar is sticky at the
+  viewport bottom (`.dossier-ctas`). The sheets remain fully wired to
+  `/api/leads` from Phase 1 — kept functional rather than regressed to
+  placeholder modals.
+- `badgeStyle`/`money` moved to directive-free
+  `components/search/format.ts` so server components can share them.
 
 ## Architecture
 

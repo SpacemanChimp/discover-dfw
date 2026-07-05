@@ -1,16 +1,16 @@
-"use client";
-import { useState } from "react";
-import Link from "next/link";
 import type { Listing } from "@/lib/mls/types";
-import { fmtK, type City } from "@/lib/dfw-data";
-import SaveListingButton from "./SaveListingButton";
+import type { City } from "@/lib/dfw-data";
+import { badgeStyle, money } from "./format";
 import MLSAttribution from "./MLSAttribution";
-import RequestShowingSheet from "./RequestShowingSheet";
-import AskQuestionSheet from "./AskQuestionSheet";
-import { badgeStyle, money } from "./ListingCardLedger";
+import ListingPhotoGallery from "@/components/listing/ListingPhotoGallery";
+import ListingFactsLedger from "@/components/listing/ListingFactsLedger";
+import ListingCityContext from "@/components/listing/ListingCityContext";
+import ListingLeadCTA from "@/components/listing/ListingLeadCTA";
 
-/* "The Dossier" — editorial listing detail: hero photo band, serif price,
-   know-the-city median bar, ledger stats, and the two lead CTAs. */
+/* "The Dossier" — editorial listing detail: gallery hero, serif price,
+   facts ledger, know-the-city module, compliance reservations, and the
+   lead CTAs (sticky bar on mobile). Server component; interactivity lives
+   in the gallery heart and the CTA island. */
 export default function ListingDetailDossier({
   listing,
   city,
@@ -20,53 +20,20 @@ export default function ListingDetailDossier({
   city: City;
   countyName: string;
 }) {
-  const [sheet, setSheet] = useState<"showing" | "question" | null>(null);
   const b = badgeStyle(listing);
   const ppsf = Math.round(listing.listPrice / listing.livingAreaSqft);
-  const ratio = listing.listPrice / city.price;
-  const barW = Math.max(18, Math.min(92, Math.round(50 * ratio)));
-  const deltaPct = Math.round((ratio - 1) * 100);
+  const updated = new Date(listing.mlsLastUpdated).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Chicago",
+  });
 
   return (
-    <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 4vw 120px" }}>
-      {/* hero photo band */}
-      <div
-        style={{
-          position: "relative",
-          height: "clamp(260px, 42vw, 420px)",
-          background: "repeating-linear-gradient(45deg,#EAE0C9 0 12px,#E2D6B9 12px 24px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "2px solid #1D1913",
-          borderRadius: 20,
-          marginTop: 22,
-          overflow: "hidden",
-        }}
-      >
-        <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)" }}>
-          MLS PHOTO 1 OF {listing.photoCount} — {listing.photoLabel.toUpperCase()}
-        </span>
-        <span style={{ position: "absolute", top: 14, right: 14 }}>
-          <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} size={40} />
-        </span>
-        <span
-          className="font-mono"
-          style={{
-            position: "absolute",
-            bottom: 12,
-            right: 12,
-            background: "#1D1913",
-            color: "#F6F1E6",
-            fontSize: 8.5,
-            letterSpacing: ".14em",
-            borderRadius: 99,
-            padding: "5px 10px",
-          }}
-        >
-          ◧ {listing.photoCount} PHOTOS
-        </span>
-      </div>
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 4vw 60px" }}>
+      <ListingPhotoGallery listing={listing} />
 
       {/* headline block */}
       <div style={{ marginTop: 22 }}>
@@ -97,7 +64,7 @@ export default function ListingDetailDossier({
           {money(listing.listPrice)}
         </h1>
         <div style={{ fontSize: 17, fontWeight: 600, marginTop: 6 }}>
-          {listing.unparsedAddress}, {city.name}, TX
+          {listing.unparsedAddress}, {city.name}, TX{listing.postalCode ? ` ${listing.postalCode}` : ""}
         </div>
         <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".14em", color: "rgba(29,25,19,.5)", marginTop: 6 }}>
           {listing.bedsTotal} BD · {listing.bathsTotal} BA · {listing.livingAreaSqft.toLocaleString("en-US")} SQFT ·
@@ -117,153 +84,33 @@ export default function ListingDetailDossier({
         >
           {listing.editorialNote}
         </p>
-      </div>
-
-      {/* ledger stats */}
-      <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F", marginTop: 26 }}>
-        01 — THE NUMBERS
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10, marginTop: 10 }}>
-        {[
-          ["DAYS ON MARKET", String(listing.daysOnMarket), undefined],
-          ["$ / SQFT", `$${ppsf}`, "#D9481F"],
-          ["PROPERTY TYPE", listing.propertyType, undefined],
-          ["YEAR BUILT", String(listing.yearBuilt), undefined],
-        ].map(([k, v, color]) => (
-          <div
-            key={k}
-            style={{ border: "1.5px solid rgba(29,25,19,.35)", borderRadius: 12, background: "#FBF7EE", padding: "12px 15px" }}
-          >
-            <div className="font-mono" style={{ fontSize: 7.5, letterSpacing: ".18em", color: "rgba(29,25,19,.5)" }}>
-              {k}
-            </div>
-            <div className="font-serif" style={{ fontWeight: 800, fontSize: 20, marginTop: 2, color: color || "#1D1913" }}>
-              {v}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* know the city */}
-      <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F", marginTop: 26 }}>
-        02 — KNOW THE CITY
-      </div>
-      <div style={{ border: "2px solid #1D1913", borderRadius: 14, background: "#F2EBDC", padding: "16px 18px", marginTop: 10 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-          <span className="font-serif" style={{ fontWeight: 800, fontSize: 20 }}>
-            {city.name}
-          </span>
-          <Link
-            href={`/city/${city.slug}`}
-            className="font-mono"
-            style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".14em", color: "#D9481F", textDecoration: "none" }}
-          >
-            FULL CITY REPORT →
-          </Link>
-        </div>
-        <div className="font-mono" style={{ marginTop: 12, fontSize: 8.5, letterSpacing: ".12em", color: "rgba(29,25,19,.55)" }}>
-          THIS HOME VS CITY MEDIAN ({fmtK(city.price)} · PLACEHOLDER)
-        </div>
-        <div style={{ position: "relative", height: 8, borderRadius: 99, background: "rgba(29,25,19,.14)", marginTop: 8 }}>
-          <span
-            style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${barW}%`, borderRadius: 99, background: "#1D1913" }}
-          />
-          <span style={{ position: "absolute", left: "50%", top: -3, width: 3, height: 14, background: "#D9481F", borderRadius: 2 }} />
-        </div>
-        <div
-          className="font-mono"
-          style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 6, fontSize: 8, letterSpacing: ".1em", color: "rgba(29,25,19,.5)", flexWrap: "wrap" }}
-        >
-          <span>
-            {deltaPct >= 0 ? "+" : ""}
-            {deltaPct}% VS MEDIAN
-          </span>
-          <span>
-            {city.isd.toUpperCase()} · {countyName.toUpperCase()} COUNTY · {city.commute[0]} MIN TO DT DALLAS
-          </span>
-        </div>
-        {listing.neighborhood && (
-          <div className="font-mono" style={{ marginTop: 10, fontSize: 8.5, letterSpacing: ".12em" }}>
-            <Link href={`/city/${city.slug}`} style={{ color: "rgba(29,25,19,.55)", textDecoration: "none" }}>
-              MORE IN {city.name.toUpperCase()} →
-            </Link>
-          </div>
+        {listing.publicRemarks && (
+          <p style={{ margin: "12px 0 0", fontSize: 14.5, lineHeight: 1.75, color: "rgba(29,25,19,.75)" }}>
+            {listing.publicRemarks}
+          </p>
         )}
       </div>
 
-      <div style={{ marginTop: 22 }}>
+      <ListingFactsLedger listing={listing} />
+      <ListingCityContext listing={listing} city={city} countyName={countyName} />
+
+      {/* compliance reservations: attribution, source, last updated, disclaimer */}
+      <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 6 }}>
         <MLSAttribution
           attributionText={listing.attributionText}
           listingBrokerName={listing.listingBrokerName}
           listingId={listing.listingId}
           mlsSource={listing.mlsSource}
         />
+        <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".14em", color: "rgba(29,25,19,.45)" }}>
+          LAST UPDATED {updated.toUpperCase()} CT ·{" "}
+          {listing.disclaimerText
+            ? listing.disclaimerText.toUpperCase()
+            : "DISCLAIMER RESERVED — DEEMED RELIABLE, NOT GUARANTEED (LIVE FEED)"}
+        </div>
       </div>
 
-      {/* CTAs — sticky on small screens */}
-      <div
-        className="dossier-ctas"
-        style={{
-          display: "flex",
-          gap: 10,
-          padding: "14px 0 0",
-          marginTop: 18,
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setSheet("showing")}
-          className="btn-primary"
-          style={{
-            flex: 1.4,
-            background: "#D9481F",
-            color: "#F6F1E6",
-            borderRadius: 999,
-            padding: "15px 0",
-            textAlign: "center",
-            fontWeight: 700,
-            fontSize: 14,
-            border: "2px solid #D9481F",
-            boxShadow: "0 10px 22px rgba(217,72,31,.28)",
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          Request a showing
-        </button>
-        <button
-          type="button"
-          onClick={() => setSheet("question")}
-          style={{
-            flex: 1,
-            border: "2px solid #1D1913",
-            borderRadius: 999,
-            padding: "15px 0",
-            textAlign: "center",
-            fontWeight: 700,
-            fontSize: 14,
-            background: "#F6F1E6",
-            color: "#1D1913",
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          Ask a question
-        </button>
-      </div>
-
-      <RequestShowingSheet
-        listing={listing}
-        cityName={city.name}
-        open={sheet === "showing"}
-        onClose={() => setSheet(null)}
-      />
-      <AskQuestionSheet
-        listing={listing}
-        cityName={city.name}
-        open={sheet === "question"}
-        onClose={() => setSheet(null)}
-      />
+      <ListingLeadCTA listing={listing} cityName={city.name} />
     </div>
   );
 }

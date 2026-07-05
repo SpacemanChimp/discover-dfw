@@ -213,3 +213,21 @@ body {
   .mobile-only { display: block; }
 }
 
+/* ---------- listing dossier ---------- */
+.dossier-ctas {
+  display: flex;
+  gap: 10px;
+  padding: 14px 0 0;
+  margin-top: 18px;
+}
+@media (max-width: 700px) {
+  /* sticky lead bar on mobile — always a tap away while reading the dossier */
+  .dossier-ctas {
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    padding: 12px 0 14px;
+    background: linear-gradient(to top, #f6f1e6 78%, rgba(246, 241, 230, 0));
+  }
+}
+

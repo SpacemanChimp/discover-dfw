@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Listing } from "@/lib/mls/types";
 import { bySlug, fmtK } from "@/lib/dfw-data";
 import { useShelf } from "@/lib/shelf";
-import { money } from "@/components/search/ListingCardLedger";
+import { money } from "@/components/search/format";
 import SaveListingButton from "@/components/search/SaveListingButton";
 
 /* "Your shelf." — saved homes grouped by city, with price-cut-since-you-saved
