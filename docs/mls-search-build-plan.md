@@ -17,7 +17,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 7 | Accounts — Supabase Auth (magic link + Google) + Postgres shelf/searches/leads with RLS, guest-shelf merge | ✅ fully live in production — Vercel envs, leads → DB, Google OAuth, and Resend SMTP (signin@discoverdfw.com, delivery verified); site canonical is www.discoverdfw.com |
 | 8 | Persistent saved listings — `saved_listings` schema, API routes, change-detection badges, seen-sync | ✅ |
 | 9 | Alerts — price-drop / status-change / open-house digests via Vercel Cron + Resend | ✅ |
-| Next | The Letter, CRM webhook, compare view, alert preferences UI | ⬜ |
+| 10 | Saved searches — full schema, API routes, standing-orders cards with cadence + email controls, guest gating | ✅ |
+| Next | The Letter, search-alert emails (wire saved_searches into the sweep), CRM webhook, compare view | ⬜ |
 | Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
 
 ### Phase 3 notes
@@ -178,6 +179,28 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 8. **Isolation** — in a second browser/incognito with a different
    account, `/account/saved-homes` is empty and GET
    `/api/saved-listings` returns only that user's rows (RLS).
+
+### Phase 10 notes — saved searches
+
+- **Schema** (`0004_saved_searches.sql`): `saved_searches` gains
+  `city_slug`, `email_enabled` (default true), `updated_at`,
+  `last_notified_at`; `frequency` normalized + constrained to
+  `instant | daily | weekly | off`. Owner-scoped RLS from 0001 stands.
+- **API** (`/api/saved-searches`): GET list · POST create · PATCH
+  (name/frequency/emailEnabled, bumps `updated_at`) · DELETE `?id=` ·
+  `/merge` adopts legacy pre-gate guest searches on first sign-in.
+  Cookie session + RLS; guests get 401.
+- **Gating**: standing orders are server-side only now —
+  `SaveSearchButton` sends guests to the account gate instead of
+  saving locally (legacy guest searches still merge on login). The
+  button also shows ✓ SEARCH SAVED when the current query string is
+  already saved.
+- **Dashboard**: `SavedSearchCard` (name, city chip, query line,
+  `SavedSearchFrequencySelector` pills, ✉ EMAIL ON/OFF toggle,
+  RUN → `/homes?<queryString>`, REMOVE) with member and guest empty
+  states. Preferences are stored only — search alert emails are the
+  next phase (the alerts sweep will read `frequency`/`email_enabled`/
+  `last_notified_at`).
 
 ### Phase 9 notes — alerts
 

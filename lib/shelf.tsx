@@ -40,6 +40,10 @@ interface ShelfContextValue extends ShelfState {
   isSaved(listingKey: string): boolean;
   toggleSave(listingKey: string, priceAtSave: number, status?: string): void;
   saveSearch(s: Omit<SavedSearchFilter, "id" | "createdAt">): void;
+  updateSearch(
+    id: string,
+    patch: Partial<Pick<SavedSearchFilter, "name" | "frequency" | "emailEnabled">>
+  ): void;
   removeSearch(id: string): void;
   /** Supabase mode: send the magic link. Resolves to an error message or null. */
   requestMagicLink(email: string): Promise<string | null>;
@@ -124,27 +128,16 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
   const loadAccountShelf = useCallback(
     async (email: string) => {
       if (!supabase) return;
-      const [homesRes, searches] = await Promise.all([
-        // saved listings go through the API routes (RLS-scoped server-side)
+      const [homesRes, searchesRes] = await Promise.all([
+        // both stores go through the API routes (RLS-scoped server-side)
         fetch("/api/saved-listings").then((r) => (r.ok ? r.json() : { saves: [] })).catch(() => ({ saves: [] })),
-        supabase
-          .from("saved_searches")
-          .select("id, name, filters, query_label, query_string, frequency, created_at")
-          .order("created_at", { ascending: false }),
+        fetch("/api/saved-searches").then((r) => (r.ok ? r.json() : { searches: [] })).catch(() => ({ searches: [] })),
       ]);
       const saved: Record<string, SavedHome> = {};
       for (const r of (homesRes.saves ?? []) as SavedHome[]) {
         saved[r.listingKey] = r;
       }
-      const list: SavedSearchFilter[] = (searches.data ?? []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        filters: r.filters ?? undefined,
-        queryLabel: r.query_label,
-        queryString: r.query_string,
-        frequency: r.frequency,
-        createdAt: r.created_at,
-      }));
+      const list: SavedSearchFilter[] = searchesRes.searches ?? [];
       setState((prev) => ({ ...prev, saved, searches: list, account: { email } }));
     },
     [supabase]
@@ -164,18 +157,12 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => {});
       }
       if (guest.searches.length) {
-        await supabase.from("saved_searches").insert(
-          guest.searches.map((s) => ({
-            id: s.id.startsWith("ss-") ? undefined : s.id,
-            user_id: userId,
-            name: s.name,
-            filters: s.filters ?? null,
-            query_label: s.queryLabel,
-            query_string: s.queryString,
-            frequency: s.frequency,
-            created_at: s.createdAt,
-          }))
-        );
+        // legacy pre-gate guest searches — the merge route normalizes shapes
+        await fetch("/api/saved-searches/merge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ searches: guest.searches }),
+        }).catch(() => {});
       }
       // the guest copy has been adopted — clear it (keep the gate memory)
       persistLocal({ saved: {}, searches: [], account: null, gateShown: guest.gateShown });
@@ -307,37 +294,56 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
   const saveSearch = useCallback(
     (s: Omit<SavedSearchFilter, "id" | "createdAt">) => {
       const userId = sessionUserId.current;
+      if (!userId) {
+        // standing orders need an account — send guests to the gate
+        setGateOpen(true);
+        return;
+      }
       const rec: SavedSearchFilter = {
         ...s,
         id:
-          userId && typeof crypto !== "undefined" && crypto.randomUUID
+          typeof crypto !== "undefined" && crypto.randomUUID
             ? crypto.randomUUID()
             : "ss-" + Date.now().toString(36),
         createdAt: new Date().toISOString(),
       };
+      setState((prev) => ({ ...prev, searches: [rec, ...prev.searches] }));
+      fetch("/api/saved-searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rec),
+      })
+        .then((r) => !r.ok && showToast("That didn’t stick — try again."))
+        .catch(() => showToast("That didn’t stick — try again."));
+      showToast("Standing order placed — we’ll watch the market.");
+    },
+    [showToast]
+  );
+
+  const updateSearch = useCallback(
+    (id: string, patch: Partial<Pick<SavedSearchFilter, "name" | "frequency" | "emailEnabled">>) => {
+      const userId = sessionUserId.current;
       setState((prev) => {
-        const next = { ...prev, searches: [rec, ...prev.searches] };
+        const next = {
+          ...prev,
+          searches: prev.searches.map((x) =>
+            x.id === id ? { ...x, ...patch, updatedAt: new Date().toISOString() } : x
+          ),
+        };
         if (!userId) persistLocal(next);
         return next;
       });
-      if (userId && supabase) {
-        supabase
-          .from("saved_searches")
-          .insert({
-            id: rec.id,
-            user_id: userId,
-            name: rec.name,
-            filters: rec.filters ?? null,
-            query_label: rec.queryLabel,
-            query_string: rec.queryString,
-            frequency: rec.frequency,
-            created_at: rec.createdAt,
-          })
-          .then(({ error }) => error && showToast("That didn’t stick — try again."));
+      if (userId) {
+        fetch("/api/saved-searches", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, ...patch }),
+        })
+          .then((r) => !r.ok && showToast("That didn’t stick — try again."))
+          .catch(() => showToast("That didn’t stick — try again."));
       }
-      showToast("Standing order placed — we’ll watch the market.");
     },
-    [supabase, showToast]
+    [showToast]
   );
 
   const removeSearch = useCallback(
@@ -348,11 +354,13 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
         if (!userId) persistLocal(next);
         return next;
       });
-      if (userId && supabase) {
-        supabase.from("saved_searches").delete().eq("id", id).then(() => {});
+      if (userId) {
+        fetch(`/api/saved-searches?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(
+          () => {}
+        );
       }
     },
-    [supabase]
+    []
   );
 
   /* ---- auth actions ---- */
@@ -411,6 +419,7 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
     isSaved: (k) => !!state.saved[k],
     toggleSave,
     saveSearch,
+    updateSearch,
     removeSearch,
     requestMagicLink,
     signInWithGoogle,

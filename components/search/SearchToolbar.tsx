@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { cities } from "@/lib/dfw-data";
 import type { ListingStatus, PropertyType, SearchFilters } from "@/lib/mls/types";
 import { searchFiltersToQueryString, SLUG_BY_STATUS, STATUS_BY_SLUG } from "@/lib/mls/url";
-import { useShelf } from "@/lib/shelf";
+import SaveSearchButton from "./SaveSearchButton";
 
 const PRICE_BANDS: { label: string; min?: number; max?: number }[] = [
   { label: "ANY PRICE" },
@@ -39,7 +39,6 @@ export default function SearchToolbar({
   propertyTypes: string[];
 }) {
   const router = useRouter();
-  const shelf = useShelf();
 
   const navigate = (patch: Partial<SearchFilters>) => {
     const q = { ...query, ...patch };
@@ -61,25 +60,25 @@ export default function SearchToolbar({
   );
   const currentCityName = cities.find((c) => c.slug === (citySlug || query.citySlug))?.name || "";
 
-  const saveThisSearch = () => {
-    const effCity = citySlug || query.citySlug;
-    const bits = [
-      currentCityName || "All of DFW",
-      query.minBeds ? `${query.minBeds}+ bd` : null,
-      query.minBaths ? `${query.minBaths}+ ba` : null,
-      priceIdx > 0 ? PRICE_BANDS[priceIdx].label.toLowerCase() : null,
-      query.propertyType || null,
-      query.statuses?.[0] ? SLUG_BY_STATUS[query.statuses[0]].replace(/-/g, " ") : null,
-      query.newBuildsOnly ? "new construction" : null,
-    ].filter(Boolean);
-    shelf.saveSearch({
-      name: bits.join(" · "),
-      // structured filters make the standing order replayable against any provider
-      filters: { ...query, citySlug: effCity },
-      queryLabel: bits.join(" · "),
-      queryString: searchFiltersToQueryString({ ...query, citySlug: effCity }),
-      frequency: "Daily digest",
-    });
+  const effCity = citySlug || query.citySlug;
+  const bits = [
+    currentCityName || "All of DFW",
+    query.minBeds ? `${query.minBeds}+ bd` : null,
+    query.minBaths ? `${query.minBaths}+ ba` : null,
+    priceIdx > 0 ? PRICE_BANDS[priceIdx].label.toLowerCase() : null,
+    query.propertyType || null,
+    query.statuses?.[0] ? SLUG_BY_STATUS[query.statuses[0]].replace(/-/g, " ") : null,
+    query.newBuildsOnly ? "new construction" : null,
+  ].filter(Boolean);
+  const savePayload = {
+    name: bits.join(" · "),
+    // structured filters make the standing order replayable against any provider
+    filters: { ...query, citySlug: effCity },
+    citySlug: effCity,
+    queryLabel: bits.join(" · "),
+    queryString: searchFiltersToQueryString({ ...query, citySlug: effCity }),
+    frequency: "daily" as const,
+    emailEnabled: true,
   };
 
   return (
@@ -232,25 +231,7 @@ export default function SearchToolbar({
         NEW BUILDS
       </button>
 
-      <button
-        type="button"
-        onClick={saveThisSearch}
-        className="btn-primary font-mono"
-        style={{
-          background: "#D9481F",
-          color: "#F6F1E6",
-          borderRadius: 999,
-          padding: "11px 20px",
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: ".08em",
-          border: "2px solid #D9481F",
-          cursor: "pointer",
-          marginLeft: "auto",
-        }}
-      >
-        ♡ SAVE THIS SEARCH
-      </button>
+      <SaveSearchButton payload={savePayload} />
     </div>
   );
 }

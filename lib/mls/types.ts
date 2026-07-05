@@ -163,15 +163,23 @@ export interface SavedHome {
   lastSeenPrice?: number;
 }
 
+export type SavedSearchFrequency = "instant" | "daily" | "weekly" | "off";
+
 export interface SavedSearchFilter {
   id: string;
   name: string;
   /** Structured filters — replayable against any provider. */
   filters?: SearchFilters;
+  /** City scope when the search is city-bound (mirrors filters.citySlug). */
+  citySlug?: string;
   /** Human-readable line, e.g. "Denton · 3+ bd · ≤ $550,000". */
   queryLabel: string;
   /** Serialized query string for /homes, e.g. "city=denton&beds=3". */
   queryString: string;
-  frequency: "Instant" | "Daily digest" | "Weekly letter";
+  frequency: SavedSearchFrequency;
+  /** Master switch for search alert emails (cadence lives in frequency). */
+  emailEnabled: boolean;
   createdAt: string;
+  updatedAt?: string;
+  lastNotifiedAt?: string;
 }
