@@ -27,8 +27,9 @@ export async function generateMetadata({
   return {
     title: `Homes for Sale in ${c.name}, TX — Search Listings`,
     description: `Browse active listings in ${c.name}, TX (${county.name} County) — market snapshot, editorial listing cards, and the full ${c.name} city report one click away.`,
-    /* NOINDEX until live IDX data replaces the mock feed. */
-    robots: { index: false, follow: true },
+    alternates: { canonical: `/city/${c.slug}/homes` },
+    /* Indexable only on the live NTREIS feed — never for mock inventory. */
+    robots: { index: isLiveMls, follow: true },
   };
 }
 

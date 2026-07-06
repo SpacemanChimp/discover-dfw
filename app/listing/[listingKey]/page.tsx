@@ -28,8 +28,9 @@ export async function generateMetadata({
   return {
     title: `${l.unparsedAddress}, ${city?.name || l.citySlug}, TX — $${l.listPrice.toLocaleString("en-US")}`,
     description: `${l.bedsTotal} bed, ${l.bathsTotal} bath, ${l.livingAreaSqft.toLocaleString("en-US")} sqft ${l.propertyType.toLowerCase()} in ${l.neighborhood}. ${l.editorialNote}`,
-    /* NOINDEX — mock listing with a fictional address; flip with live IDX. */
-    robots: { index: false, follow: true },
+    alternates: { canonical: `/listing/${l.listingKey}` },
+    /* Indexable only on the live NTREIS feed — mock addresses are fiction. */
+    robots: { index: isLiveMls, follow: true },
   };
 }
 
