@@ -25,7 +25,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 15 | **Saved-search digests + unsubscribe** — standing orders email new inventory on their cadence via the daily sweep; HMAC one-click unsubscribe + List-Unsubscribe headers | ✅ |
 | 16 | **Compliance display components centralized** — all MLS/IDX copy in `lib/compliance.ts` (marked PENDING BROKER/NTREIS/LEGAL REVIEW), extracted `ListingBrokerAttribution` / `LastUpdatedStamp` / `DataDisclaimer` | ✅ |
 | 17 | **Local listings schema + sync bookkeeping** — `listings` / `listing_media` / `mls_sync_runs` / `mls_sync_errors` / `city_market_snapshots` tables (migration 0006), row types in `lib/mls/db-rows.ts` | ✅ schema |
-| Next | Sync job (Trestle → local tables) + local provider, ⚠ compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
+| 18 | **MLS sync job + local provider** — `/api/mls/sync` (keyset-paginated Trestle replication, backfill→incremental, daily cron), `MLS_PROVIDER=local` reads Postgres; production stays on `trestle` | ✅ |
+| Next | Consider flipping to `local` (needs >daily sync cadence — Vercel Pro cron or external trigger), ⚠ compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
 
 ### Phase 3 notes
 
@@ -483,6 +484,45 @@ lands, these become unit tests over `searchListings` filter mechanics.
   ModificationTimestamp-cursor replication from Trestle with
   per-run bookkeeping in `mls_sync_runs`, then a `local` MLS_PROVIDER
   implementation over these tables.
+
+### Phase 18 notes — MLS sync job + local provider
+
+- **`GET /api/mls/sync`** (CRON_SECRET-guarded, daily Vercel cron at
+  12:30 UTC before the 13:00 alerts sweep): replicates the feed into the
+  0006 tables. Self-detected modes — BACKFILL walks on-market inventory
+  (Active/AUC/ComingSoon/Pending, 53 cities, for-sale types) by
+  modification order and marks `backfill-complete` in `mls_sync_runs`;
+  INCREMENTAL then walks WITHOUT the status filter so Pending→Closed
+  flips and withdrawals reach the local rows.
+- **Keyset pagination on (ModificationTimestamp, ListingKey)** — a plain
+  timestamp cursor measurably dropped ~4% of records because NTREIS bulk
+  jobs stamp identical millisecond timestamps across page boundaries.
+  Cursor resumes from the newest (ts, key) already stored, so every
+  invocation makes durable progress inside its ~42s budget.
+- Manual params: `?full=1` (repair re-walk from epoch) and `?budget=ms`
+  (long budgets allowed only off-Vercel — full repairs run from a dev
+  machine; Vercel invocations stay capped).
+- **Per-run bookkeeping** in `mls_sync_runs` (seen/upserted/failed) with
+  page-level failures in `mls_sync_errors` (stage fetch/upsert/media);
+  a poisoned batch upsert retries row-by-row so one bad record can't
+  sink a page. Media replaced wholesale per listing (feed order is
+  authoritative). `raw` stores the selected-field payload, nulls
+  stripped. `city_market_snapshots` upserted per city once caught up —
+  REAL medians now (e.g. Denton $417K median, $203/sqft).
+- **Backfill measured**: ~28k listings + ~325k media rows in 14
+  invocations (~10 min), zero failures; incremental runs pick up only
+  the delta (6 records minutes later) in ~15s.
+- **`MLS_PROVIDER=local`** (`lib/mls/local.ts`): full MlsProvider over
+  the replicated store via the service-role client — filters/sorts as
+  SQL, media embedded, snapshots/counts from `city_market_snapshots`,
+  domain mapping derives scalars from `raw` (DOM) but never exposes the
+  payload. Known gaps vs trestle: no open-house data, no
+  originalListPrice (no PRICE CUT badge), "newest" via replicated DOM.
+- **Production stays `MLS_PROVIDER=trestle`**: Hobby-plan crons run once
+  daily, so the local store is up to 24h stale vs trestle's 15-min ISR.
+  Flip to `local` when sync cadence improves (Vercel Pro cron / external
+  scheduler) or when local-only features (full-text, radius) justify it.
+  `isLiveMls` already treats `local` as live NTREIS data.
 
 ## Compliance guardrails (standing)
 

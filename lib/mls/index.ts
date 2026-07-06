@@ -10,6 +10,7 @@ import type { MlsProvider } from "./provider";
 import type { PropertyType } from "./types";
 import { mockProvider } from "./mock-provider";
 import { trestleProvider } from "./trestle";
+import { localProvider } from "./local";
 
 export type * from "./types";
 export type { MlsProvider } from "./provider";
@@ -21,8 +22,9 @@ export {
   SLUG_BY_STATUS,
 } from "./url";
 
-/** True when the site is serving live NTREIS inventory via Trestle. */
-export const isLiveMls = process.env.MLS_PROVIDER === "trestle";
+/** True when the site is serving real NTREIS inventory (live API or the
+    replicated local store) — gates indexing, banners, compliance copy. */
+export const isLiveMls = process.env.MLS_PROVIDER === "trestle" || process.env.MLS_PROVIDER === "local";
 
 /** Toolbar HOME TYPE options — the buckets the live feed can filter on. */
 export const PROPERTY_TYPE_OPTIONS: PropertyType[] = [
@@ -37,6 +39,8 @@ export function getMlsProvider(): MlsProvider {
   switch (process.env.MLS_PROVIDER) {
     case "trestle":
       return trestleProvider;
+    case "local":
+      return localProvider;
     case "mock":
     default:
       return mockProvider;

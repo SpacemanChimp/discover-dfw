@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/mls/sync",
+      "schedule": "30 12 * * *"
+    },
+    {
       "path": "/api/alerts/run",
       "schedule": "0 13 * * *"
     }
