@@ -28,9 +28,15 @@ import {
    timestamp cursor drops records at page boundaries (measured ~4% drift).
 
    Manual params (secret still required):
-   - ?full=1     one-shot repair walk from epoch (status-filtered), for
-                 drift repair; run locally/manually — needs a big budget.
-   - ?budget=ms  extend the time budget; capped at 42s on Vercel. */
+   - ?full=1       one-shot repair walk from epoch (status-filtered), for
+                   drift repair; run locally/manually — needs a big budget.
+   - ?budget=ms    extend the time budget (capped on Vercel).
+   - ?dryrun=1     fetch + map + count, write NOTHING (no listings, media,
+                   snapshots, or mode markers) — safe testing.
+   - ?limit=N      stop after ~N records — small first runs.
+   - ?reconcile=1  no paging; diff feed on-market keys vs local rows and
+                   mark local-only ones OffMarket (hard-deleted records
+                   never emit a status flip). Composes with dryrun. */
 
 export const maxDuration = 300; // Vercel Pro
 
@@ -146,12 +152,79 @@ export async function GET(req: Request) {
 
   const reqUrl = new URL(req.url);
   const fullWalk = reqUrl.searchParams.get("full") === "1";
+  const dryRun = reqUrl.searchParams.get("dryrun") === "1";
+  const limit = Math.max(0, Number(reqUrl.searchParams.get("limit")) || 0);
+  const reconcile = reqUrl.searchParams.get("reconcile") === "1";
   const budgetParam = Number(reqUrl.searchParams.get("budget")) || TIME_BUDGET_MS;
   // Vercel serverless caps at maxDuration; only local/manual runs may go long
   const timeBudget = process.env.VERCEL ? Math.min(budgetParam, TIME_BUDGET_MS) : budgetParam;
 
   try {
     const token = await getToken();
+
+    /* ---- reconcile mode: catch hard-deleted feed records ---- */
+    if (reconcile) {
+      const cityClause = `City in (${dfwCities.map((c) => q(c.name)).join(",")})`;
+      const feedKeys = new Set<string>();
+      let lastKey = "";
+      // walk all on-market keys, keyset on ListingKey
+      for (;;) {
+        const filter =
+          `${cityClause} and PropertyType in ('Residential','ResidentialIncome','Land')` +
+          ` and StandardStatus in (${ONMARKET.map(q).join(",")})` +
+          (lastKey ? ` and ListingKey gt ${q(lastKey)}` : "");
+        const res = await fetch(
+          `${API_BASE}/Property?$filter=${encodeURIComponent(filter)}&$orderby=ListingKey asc&$top=1000&$select=ListingKey`,
+          { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }, cache: "no-store" }
+        );
+        if (!res.ok) throw new Error(`reconcile fetch: ${res.status}`);
+        const rows = (await res.json()).value as { ListingKey: string }[];
+        for (const r of rows) feedKeys.add(String(r.ListingKey));
+        if (!rows.length || rows.length < 1000) break;
+        lastKey = String(rows[rows.length - 1].ListingKey);
+      }
+      // local on-market keys, paged
+      const localKeys: string[] = [];
+      for (let page = 0; ; page++) {
+        const { data } = await db
+          .from("listings")
+          .select("listing_key")
+          .in("standard_status", ONMARKET)
+          .order("listing_key")
+          .range(page * 1000, page * 1000 + 999);
+        for (const r of data ?? []) localKeys.push(r.listing_key);
+        if (!data?.length || data.length < 1000) break;
+      }
+      const zombies = localKeys.filter((k) => !feedKeys.has(k));
+      if (!dryRun) {
+        for (let i = 0; i < zombies.length; i += 200) {
+          await db
+            .from("listings")
+            .update({ standard_status: "OffMarket" })
+            .in("listing_key", zombies.slice(i, i + 200));
+        }
+      }
+      await db
+        .from("mls_sync_runs")
+        .update({
+          finished_at: new Date().toISOString(),
+          status: "success",
+          records_seen: feedKeys.size,
+          records_upserted: dryRun ? 0 : zombies.length,
+          error_summary: dryRun ? "reconcile dry-run" : "reconcile",
+        })
+        .eq("id", runId);
+      return NextResponse.json({
+        ok: true,
+        mode: "reconcile",
+        dryRun,
+        feedOnMarket: feedKeys.size,
+        localOnMarket: localKeys.length,
+        markedOffMarket: dryRun ? 0 : zombies.length,
+        wouldMarkOffMarket: zombies.length,
+        ms: Date.now() - started,
+      });
+    }
 
     // mode: incremental once any run carries the backfill-complete marker
     const { data: marker } = await db
@@ -237,6 +310,17 @@ export async function GET(req: Request) {
         }
         return m;
       });
+      if (dryRun) {
+        // count + advance the in-memory cursor only; nothing is written
+        upserted += mapped.length;
+        const lastDry = rows[rows.length - 1];
+        cursorTs = lastDry.ModificationTimestamp;
+        cursorKey = String(lastDry.ListingKey);
+        if (rows.length < PAGE_SIZE) { if (!incremental) backfillComplete = true; break; }
+        if (limit && seen >= limit) break;
+        continue;
+      }
+
       const { error: upErr } = await db.from("listings").upsert(mapped, { onConflict: "listing_key" });
       if (upErr) {
         // one bad row can poison a batch upsert — retry row-by-row so the rest land
@@ -283,11 +367,12 @@ export async function GET(req: Request) {
         if (!incremental) backfillComplete = true;
         break;
       }
+      if (limit && seen >= limit) break;
     }
 
     // snapshots: only once the local store is a complete picture
     let snapshotsWritten = 0;
-    if ((incremental || backfillComplete) && Date.now() - started < timeBudget + 10_000) {
+    if (!dryRun && (incremental || backfillComplete) && Date.now() - started < timeBudget + 10_000) {
       for (const c of dfwCities) {
         const { data: rows } = await db
           .from("listings")
@@ -317,7 +402,8 @@ export async function GET(req: Request) {
     }
 
     if (failed > 0 && status === "success") status = "partial";
-    errorSummary = backfillComplete ? "backfill-complete" : errorSummary;
+    // NEVER persist the backfill-complete mode marker from a dry run
+    errorSummary = dryRun ? "dry-run" : backfillComplete ? "backfill-complete" : errorSummary;
 
     await db
       .from("mls_sync_runs")
@@ -334,6 +420,8 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       mode: incremental ? "incremental" : fullWalk ? "full-repair" : "backfill",
+      dryRun,
+      ...(limit ? { limit } : {}),
       pages,
       seen,
       upserted,

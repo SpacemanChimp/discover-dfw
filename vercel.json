@@ -5,6 +5,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/mls/sync?reconcile=1",
+      "schedule": "0 12 * * 0"
+    },
+    {
       "path": "/api/alerts/run",
       "schedule": "0 13 * * *"
     }

@@ -555,6 +555,42 @@ and satisfies it:
 | Server-only test utility | `node scripts/trestle-smoke.mjs [city]` — verified: lists 3 actives w/ media; without creds prints guidance and exits 2, fetching nothing |
 | Graceful when env missing | Smoke script exits cleanly; provider throws a clear config error (loud by design — a misconfigured live site should not silently serve nothing); `getOpenHouses` degrades to `[]` |
 
+### Sync job spec audit + manual runbook (post-Phase 20)
+
+Audited against the original "MLS sync job and provider switch" spec.
+Already built in Phases 17–19: the sync job, keyset incremental
+replication, listing/media upserts, run/error bookkeeping, the
+database-backed provider, mock mode, secret-free logs, and
+manual-before-scheduled verification order. Closed by this audit:
+
+- **`MLS_PROVIDER=database`** accepted as an alias of `local` (flag now
+  reads `mock | local/database | trestle`); `isLiveMls` recognizes it.
+- **`?dryrun=1`** — fetch + map + count, write NOTHING (no listings,
+  media, snapshots, cursor markers). Verified: row counts identical
+  before/after.
+- **`?limit=N`** — stop after ~N records for small first runs.
+- **`?reconcile=1`** — the "mark stale" gap: hard-deleted feed records
+  never emit a status flip, so incremental sync can strand zombie
+  on-market rows. Reconcile diffs all feed on-market ListingKeys against
+  local rows and marks local-only ones `OffMarket`. First real run found
+  and cleaned **77 zombies**; a weekly cron (Sun 12:00 UTC) now keeps it
+  bounded. Composes with `dryrun`.
+
+**Running the sync manually** (CRON_SECRET required; from repo root with
+a dev server on :3111, or against production):
+
+    SECRET=$(grep '^CRON_SECRET=' .env.local | cut -d= -f2- | tr -d '\r')
+    BASE=http://localhost:3111        # or https://www.discoverdfw.com
+
+    curl -H "Authorization: Bearer $SECRET" "$BASE/api/mls/sync?dryrun=1&limit=200"   # safe test
+    curl -H "Authorization: Bearer $SECRET" "$BASE/api/mls/sync"                      # one normal run
+    curl -H "Authorization: Bearer $SECRET" "$BASE/api/mls/sync?reconcile=1&dryrun=1" # zombie count
+    curl -H "Authorization: Bearer $SECRET" "$BASE/api/mls/sync?reconcile=1"          # mark zombies
+    # full repair re-walk (dev only — needs a long budget):
+    curl --max-time 3600 -H "Authorization: Bearer $SECRET" "$BASE/api/mls/sync?full=1&budget=3400000"
+
+    node scripts/trestle-smoke.mjs [city]    # credentials/endpoint smoke test
+
 ### Phase 20 notes — live market band, lightbox, keyword search
 
 - **Market band is honest now**: sync snapshots compute median

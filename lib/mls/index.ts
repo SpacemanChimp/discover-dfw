@@ -24,7 +24,7 @@ export {
 
 /** True when the site is serving real NTREIS inventory (live API or the
     replicated local store) — gates indexing, banners, compliance copy. */
-export const isLiveMls = process.env.MLS_PROVIDER === "trestle" || process.env.MLS_PROVIDER === "local";
+export const isLiveMls = ["trestle", "local", "database"].includes(process.env.MLS_PROVIDER ?? "");
 
 /** Toolbar HOME TYPE options — the buckets the live feed can filter on. */
 export const PROPERTY_TYPE_OPTIONS: PropertyType[] = [
@@ -40,6 +40,7 @@ export function getMlsProvider(): MlsProvider {
     case "trestle":
       return trestleProvider;
     case "local":
+    case "database": // alias — reads the replicated Postgres store
       return localProvider;
     case "mock":
     default:
