@@ -154,10 +154,11 @@ function applySort(query: any, sort: SortKey | undefined) {
       return query.order("living_area", { ascending: false, nullsFirst: false });
     case "newest":
     default:
-      // replicated DOM lives in raw; jsonb numeric ordering is by value
-      return query
-        .order("raw->CumulativeDaysOnMarket", { ascending: true, nullsFirst: false })
-        .order("modification_timestamp", { ascending: false });
+      // HOTFIX: ordering by raw->CumulativeDaysOnMarket detoasts every
+      // matching row's jsonb and blew the statement timeout at ~30k rows.
+      // modification_timestamp is indexed; a proper days_on_market column
+      // lands in migration 0007.
+      return query.order("modification_timestamp", { ascending: false });
   }
 }
 
