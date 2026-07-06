@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { dfwCities } from "@/data/dfw-cities";
+import {
+  TRESTLE_ODATA_BASE_URL as API_BASE,
+  TRESTLE_TOKEN_URL as TOKEN_URL,
+  trestleCredentials,
+} from "@/lib/mls/trestle-env";
 
 /* MLS replication sync — Trestle/NTREIS → local Postgres (migration 0006).
    Invoked by Vercel Cron (daily) or manually with the CRON_SECRET; safe to
@@ -29,8 +34,6 @@ import { dfwCities } from "@/data/dfw-cities";
 
 export const maxDuration = 300; // Vercel Pro
 
-const TOKEN_URL = "https://api-trestle.corelogic.com/trestle/oidc/connect/token";
-const API_BASE = "https://api-trestle.corelogic.com/trestle/odata";
 const PAGE_SIZE = 200;
 const TIME_BUDGET_MS = 240_000; // leave room for snapshots + bookkeeping
 const ONMARKET = ["Active", "ActiveUnderContract", "ComingSoon", "Pending"];
@@ -48,13 +51,12 @@ const SELECT = [
 const q = (s: string) => `'${s.replace(/'/g, "''")}'`;
 
 async function getToken(): Promise<string> {
-  const id = process.env.TRESTLE_API_ID;
-  const secret = process.env.TRESTLE_API_PASSWORD;
-  if (!id || !secret) throw new Error("Trestle credentials missing");
+  const creds = trestleCredentials();
+  if (!creds) throw new Error("Trestle credentials missing");
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret, scope: "api" }),
+    body: new URLSearchParams({ grant_type: "client_credentials", client_id: creds.id, client_secret: creds.secret, scope: "api" }),
   });
   if (!res.ok) throw new Error(`Trestle token failed: ${res.status}`);
   return (await res.json()).access_token as string;

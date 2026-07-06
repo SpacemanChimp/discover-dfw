@@ -28,8 +28,10 @@ import type {
 } from "./types";
 import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
 
-const TOKEN_URL = "https://api-trestle.corelogic.com/trestle/oidc/connect/token";
-const API_BASE = "https://api-trestle.corelogic.com/trestle/odata";
+import { TRESTLE_ODATA_BASE_URL, TRESTLE_TOKEN_URL, trestleCredentials } from "./trestle-env";
+
+const TOKEN_URL = TRESTLE_TOKEN_URL;
+const API_BASE = TRESTLE_ODATA_BASE_URL;
 const DEFAULT_PAGE_SIZE = 24;
 
 /* Cache windows (seconds). NTREIS IDX rules require data no staler than
@@ -61,15 +63,17 @@ let tokenCache: { token: string; exp: number } | null = null;
 
 async function getToken(): Promise<string> {
   if (tokenCache && Date.now() < tokenCache.exp - 60_000) return tokenCache.token;
-  const id = process.env.TRESTLE_API_ID;
-  const secret = process.env.TRESTLE_API_PASSWORD;
-  if (!id || !secret) throw new Error("Trestle credentials missing: set TRESTLE_API_ID and TRESTLE_API_PASSWORD");
+  const creds = trestleCredentials();
+  if (!creds)
+    throw new Error(
+      "Trestle credentials missing: set TRESTLE_API_ID/TRESTLE_API_PASSWORD (or TRESTLE_CLIENT_ID/TRESTLE_CLIENT_SECRET)"
+    );
   // no explicit cache option: POSTs are never data-cached, and `no-store`
   // would force dynamic rendering — which 500s ISR listing pages
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret, scope: "api" }),
+    body: new URLSearchParams({ grant_type: "client_credentials", client_id: creds.id, client_secret: creds.secret, scope: "api" }),
   });
   if (!res.ok) throw new Error(`Trestle token request failed: ${res.status}`);
   const j = (await res.json()) as { access_token: string; expires_in?: number };

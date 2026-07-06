@@ -536,6 +536,25 @@ lands, these become unit tests over `searchListings` filter mechanics.
   The trestle provider remains one env var away as a fallback.
   `isLiveMls` treats `local` as live NTREIS data.
 
+### Trestle provider spec audit (post-Phase 20)
+
+Audited against the original "server-side Trestle provider" spec — the
+implementation lives in `lib/mls/trestle.ts` (not `trestle-provider.ts`)
+and satisfies it:
+
+| Spec item | Where |
+| --- | --- |
+| Server-side only | `import "server-only"` — client bundling is a build error |
+| Env-driven credentials, none hard-coded | `lib/mls/trestle-env.ts` — accepts `TRESTLE_API_ID`/`TRESTLE_API_PASSWORD` and the `TRESTLE_CLIENT_ID`/`TRESTLE_CLIENT_SECRET` aliases |
+| `TRESTLE_TOKEN_URL` / `TRESTLE_ODATA_BASE_URL` | Optional overrides in `trestle-env.ts`; Cotality production defaults |
+| OAuth client-credentials + token cache | `getToken()` — module cache until `expires_in` minus 60s |
+| Safe Property/Media query helpers | `odata()` + `q()` quote-escaping + `encodeURIComponent` on every filter |
+| Map to internal `Listing` | `toListing()` (RESO → domain, compliance strings from `lib/compliance`) |
+| Error handling, no credentials in logs | Errors carry status + truncated body only; token failures log status only |
+| Token never reaches the client | server-only module; pages pass plain `Listing` objects down |
+| Server-only test utility | `node scripts/trestle-smoke.mjs [city]` — verified: lists 3 actives w/ media; without creds prints guidance and exits 2, fetching nothing |
+| Graceful when env missing | Smoke script exits cleanly; provider throws a clear config error (loud by design — a misconfigured live site should not silently serve nothing); `getOpenHouses` degrades to `[]` |
+
 ### Phase 20 notes — live market band, lightbox, keyword search
 
 - **Market band is honest now**: sync snapshots compute median
