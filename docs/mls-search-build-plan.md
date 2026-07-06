@@ -18,8 +18,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 8 | Persistent saved listings — `saved_listings` schema, API routes, change-detection badges, seen-sync | ✅ |
 | 9 | Alerts — price-drop / status-change / open-house digests via Vercel Cron + Resend | ✅ |
 | 10 | Saved searches — full schema, API routes, standing-orders cards with cadence + email controls, guest gating | ✅ |
-| Next | The Letter, search-alert emails (wire saved_searches into the sweep), CRM webhook, compare view | ⬜ |
-| Final | Trestle IDX Plus provider, photo CDN, ISR, flip search surfaces to indexable | ⬜ |
+| 11 | **Trestle IDX Plus provider — live NTREIS inventory** (`lib/mls/trestle.ts`), real photos, real coordinates on the map, live market snapshots, ISR | ✅ |
+| Next | Flip search surfaces to indexable + sitemap (after production eyeball), The Letter, search-alert emails (wire saved_searches into the sweep), CRM webhook, compare view | ⬜ |
 
 ### Phase 3 notes
 
@@ -301,13 +301,41 @@ lands, these become unit tests over `searchListings` filter mechanics.
 - Reserved NTREIS text blocks live in `MLSComplianceFooter`; TREC IABS +
   Consumer Protection Notice links ride along on every search surface.
 
-## Trestle notes for Phase 4
+## Phase 11 notes — Trestle IDX Plus provider (live NTREIS)
 
-- RESO Web API (OData): `Property` resource filtered to the IDX-permitted
-  set; map `Media` expansion into `ListingMedia[]`.
-- OAuth2 client-credentials token cached server-side; requests only from
-  the provider module (route handlers / server components).
-- Swap SSG listing pages to ISR (`revalidate` ~15 min) and honor
-  `mlsLastUpdated` from `ModificationTimestamp`.
-- Fill `attributionText`/`disclaimerText` exactly as NTREIS display rules
-  dictate before removing the "reserved" placeholders.
+- `lib/mls/trestle.ts` (server-only): OAuth2 client-credentials token cached
+  in module scope (8 h expiry), OData queries against
+  `api-trestle.corelogic.com/trestle/odata` with Next fetch-cache
+  revalidation (search 15 min, city counts 30 min, snapshots 60 min — well
+  inside the 12 h IDX staleness ceiling). Credentials: `TRESTLE_API_ID` /
+  `TRESTLE_API_PASSWORD`, switched on with `MLS_PROVIDER=trestle`.
+- Feed facts (probed 2026-07-06): ~47k active for-sale Residential across
+  the feed; DOM lives in `CumulativeDaysOnMarket` (`DaysOnMarket`,
+  `ListingContractDate`, `OnMarketDate` are withheld); rentals share
+  `Property` as `PropertyType eq 'ResidentialLease'` (always excluded);
+  photo `MediaURL`s are public CDN links; `$apply` aggregation unsupported;
+  `$top` max ≥1000; `in (…)` filters work; `ComingSoon` unused by NTREIS.
+- Every query is scoped to the curated 53 cities (`City in (…)`), so each
+  listing always maps to a real `/city/[slug]` page.
+- Type buckets: toolbar offers Single family / Townhome / Condo /
+  Multi-family / Land (`PROPERTY_TYPE_OPTIONS`); mapped to
+  `PropertySubType` / `PropertyType` clauses.
+- `getActiveCountsByCity()` added to the provider contract — 53 tiny
+  `$count` queries (chunked 12 at a time) replace the old 500-listing pull
+  in MapRoom and city pages; mock provider counts in memory.
+- City snapshots compute real `medianListPrice`, `pricePerSqft`, and
+  `medianDaysOnMarket` from up to 1,000 actives; editorial tagline/ISD/YoY
+  stay from the dataset.
+- Open houses fetched per listing detail (date-bounded — the feed contains
+  garbage dates like year 7025); OPEN SAT/SUN badge when the next one lands
+  within 7 days.
+- UI: Ledger cards + Dossier gallery render real `<img>` photos
+  (plain img, not next/image — optimization quota can't cover 47k
+  listings), map pins sit on real listing coordinates, NTREIS attribution
+  ("Listing courtesy of …") + IDX disclaimer replace the reserved
+  placeholders, mock-inventory banners hidden when `isLiveMls`.
+- Listing detail: `generateStaticParams` empty in live mode; pages render
+  on demand with `revalidate = 900`. `getListingByKey` rejects non-numeric
+  (mock) keys so stale shelf rows can't hit the feed.
+- Search surfaces remain `noindex` until production is eyeballed — flipping
+  indexing + sitemap is the explicit next step.

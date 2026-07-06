@@ -1,4 +1,5 @@
 import { bySlug, type City } from "@/lib/dfw-data";
+import { isLiveMls } from "@/lib/mls";
 import type { SearchResult } from "@/lib/mls/types";
 import CitySearchHeader from "./CitySearchHeader";
 import ListingCardLedger from "./ListingCardLedger";
@@ -53,8 +54,10 @@ export default function ListingResultsRail({
         }}
       >
         {city
-          ? `▾ ${result.total} IN ${city.name.toUpperCase()} · MOCK FEED`
-          : "▾ MORE INVENTORY ARRIVES WITH THE LIVE FEED"}
+          ? `▾ ${result.total} IN ${city.name.toUpperCase()} · ${isLiveMls ? "NTREIS IDX" : "MOCK FEED"}`
+          : isLiveMls
+            ? `▾ ${result.total} ACTIVE ACROSS THE METROPLEX · NTREIS IDX`
+            : "▾ MORE INVENTORY ARRIVES WITH THE LIVE FEED"}
       </div>
     </>
   );

@@ -16,7 +16,8 @@ export default function ListingCardLedger({
   cityName: string;
 }) {
   const b = badgeStyle(listing);
-  const ppsf = Math.round(listing.listPrice / listing.livingAreaSqft);
+  const ppsf = listing.livingAreaSqft > 0 ? Math.round(listing.listPrice / listing.livingAreaSqft) : null;
+  const photo = listing.media.find((m) => m.isPrimary)?.url ?? listing.media[0]?.url ?? null;
   return (
     <article
       className="listing-card"
@@ -47,12 +48,24 @@ export default function ListingCardLedger({
             justifyContent: "center",
           }}
         >
-          <span
-            className="font-mono"
-            style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)" }}
-          >
-            MLS PHOTO — {listing.photoLabel.toUpperCase()}
-          </span>
+          {photo ? (
+            // plain <img>: the CDN already serves sized JPEGs, and next/image
+            // optimization quota can't cover a 47k-listing inventory
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photo}
+              alt={`${listing.unparsedAddress}, ${cityName}`}
+              loading="lazy"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <span
+              className="font-mono"
+              style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)" }}
+            >
+              MLS PHOTO — {listing.photoLabel.toUpperCase()}
+            </span>
+          )}
           <span
             className="font-mono"
             style={{
@@ -77,9 +90,11 @@ export default function ListingCardLedger({
             <span className="font-serif" style={{ fontWeight: 900, fontSize: 27, color: "#D9481F" }}>
               {money(listing.listPrice)}
             </span>
-            <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "rgba(29,25,19,.55)" }}>
-              ${ppsf} / SQFT
-            </span>
+            {ppsf !== null && (
+              <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "rgba(29,25,19,.55)" }}>
+                ${ppsf} / SQFT
+              </span>
+            )}
           </div>
           <div style={{ fontSize: 15.5, fontWeight: 600, marginTop: 5 }}>{listing.unparsedAddress}</div>
           <div

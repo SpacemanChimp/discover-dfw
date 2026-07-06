@@ -88,6 +88,12 @@ export const mockProvider: MlsProvider = {
     return [...flagged, ...rest].slice(0, limit);
   },
 
+  async getActiveCountsByCity(): Promise<Record<string, number>> {
+    const out: Record<string, number> = {};
+    for (const l of mockListings) out[l.citySlug] = (out[l.citySlug] || 0) + 1;
+    return out;
+  },
+
   async getCityMarketSnapshot(citySlug: string) {
     const active = mockListings.filter(
       (l) => l.citySlug === citySlug && l.standardStatus === "Active"

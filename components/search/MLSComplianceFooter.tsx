@@ -1,8 +1,9 @@
 import TrecLinks from "@/components/TrecLinks";
+import { isLiveMls } from "@/lib/mls";
 
-/* Reserved MLS/IDX compliance block for every search + listing surface.
-   When Trestle IDX Plus lands, this carries the NTREIS-required broker
-   identification, IDX disclaimer, and data-refresh timestamp. */
+/* MLS/IDX compliance block for every search + listing surface — NTREIS
+   IDX disclaimer + data-refresh timestamp in live mode, the reserved
+   placeholder in mock mode. */
 export default function MLSComplianceFooter({ asOf }: { asOf: string }) {
   const stamp = new Date(asOf).toLocaleString("en-US", {
     month: "short",
@@ -19,28 +20,47 @@ export default function MLSComplianceFooter({ asOf }: { asOf: string }) {
           className="font-mono"
           style={{ fontSize: 10, letterSpacing: ".26em", color: "#E88D6B", marginBottom: 12 }}
         >
-          MLS DISCLOSURES — RESERVED
+          MLS DISCLOSURES
         </div>
-        <p
-          style={{
-            margin: 0,
-            maxWidth: 860,
-            fontSize: 12.5,
-            lineHeight: 1.7,
-            color: "rgba(246,241,230,.65)",
-          }}
-        >
-          All listings shown are <b style={{ color: "#E88D6B" }}>fictional placeholders</b> pending
-          the live IDX feed. [Reserved: broker identification · “Listings courtesy of the North
-          Texas Real Estate Information Systems (NTREIS) IDX program” · information is deemed
-          reliable but not guaranteed and should be independently verified · listings marked with
-          the IDX logo are held by brokerage firms other than the site owner.]
-        </p>
+        {isLiveMls ? (
+          <p
+            style={{
+              margin: 0,
+              maxWidth: 860,
+              fontSize: 12.5,
+              lineHeight: 1.7,
+              color: "rgba(246,241,230,.65)",
+            }}
+          >
+            Listing information is provided through the Internet Data Exchange (IDX) program of
+            North Texas Real Estate Information Systems, Inc. (NTREIS). Real estate listings held
+            by brokerage firms other than the site owner are identified with the name of the
+            listing brokerage. Information is deemed reliable but is not guaranteed and should be
+            independently verified. Data may not reflect all real estate activity in the market.
+            Copyright NTREIS. All rights reserved.
+          </p>
+        ) : (
+          <p
+            style={{
+              margin: 0,
+              maxWidth: 860,
+              fontSize: 12.5,
+              lineHeight: 1.7,
+              color: "rgba(246,241,230,.65)",
+            }}
+          >
+            All listings shown are <b style={{ color: "#E88D6B" }}>fictional placeholders</b> pending
+            the live IDX feed. [Reserved: broker identification · “Listings courtesy of the North
+            Texas Real Estate Information Systems (NTREIS) IDX program” · information is deemed
+            reliable but not guaranteed and should be independently verified · listings marked with
+            the IDX logo are held by brokerage firms other than the site owner.]
+          </p>
+        )}
         <div
           className="font-mono"
           style={{ marginTop: 12, fontSize: 9.5, letterSpacing: ".16em", color: "rgba(246,241,230,.45)" }}
         >
-          DATA LAST REFRESHED {stamp.toUpperCase()} CT · MOCK FEED
+          DATA LAST REFRESHED {stamp.toUpperCase()} CT · {isLiveMls ? "NTREIS IDX" : "MOCK FEED"}
         </div>
         <div
           style={{

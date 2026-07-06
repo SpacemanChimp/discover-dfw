@@ -1,5 +1,5 @@
 import { bySlug, countyById, cities } from "@/lib/dfw-data";
-import { getMlsProvider } from "@/lib/mls";
+import { getMlsProvider, isLiveMls, PROPERTY_TYPE_OPTIONS } from "@/lib/mls";
 import type { SearchFilters } from "@/lib/mls/types";
 import SearchNav from "./SearchNav";
 import SearchToolbar from "./SearchToolbar";
@@ -25,18 +25,16 @@ export default async function MapRoom({
 }) {
   const provider = getMlsProvider();
   const effective: SearchFilters = { ...query, citySlug: citySlug || query.citySlug };
-  const [result, totalResult] = await Promise.all([
+  const [result, counts] = await Promise.all([
     provider.searchListings(effective),
-    // unfiltered page for map context, index counts, and the type filter list
-    provider.searchListings({ pageSize: 500 }),
+    // per-city active counts for map context + the mobile index
+    provider.getActiveCountsByCity(),
   ]);
-
-  const counts: Record<string, number> = {};
-  for (const l of totalResult.listings) counts[l.citySlug] = (counts[l.citySlug] || 0) + 1;
+  const metroTotal = Object.values(counts).reduce((a, b) => a + b, 0);
 
   const city = effective.citySlug ? bySlug[effective.citySlug] : undefined;
   const county = city ? countyById[city.county] : undefined;
-  const propertyTypes = Array.from(new Set(totalResult.listings.map((l) => l.propertyType))).sort();
+  const propertyTypes = PROPERTY_TYPE_OPTIONS;
 
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
@@ -58,7 +56,7 @@ export default async function MapRoom({
         <span style={{ display: "flex", gap: 16 }}>
           <span>{cities.length} CITIES</span>
           <span style={{ color: "#D9481F" }}>✳</span>
-          <span>LIVE MLS FEED — PLACEHOLDER</span>
+          <span>{isLiveMls ? "LIVE MLS FEED — NTREIS" : "LIVE MLS FEED — PLACEHOLDER"}</span>
         </span>
       </div>
 
@@ -83,23 +81,25 @@ export default async function MapRoom({
         </div>
       )}
 
-      {/* mock-data notice — stays until the live feed is approved and wired */}
-      <div
-        className="font-mono"
-        role="note"
-        style={{
-          textAlign: "center",
-          padding: "9px 4vw",
-          background: "rgba(217,72,31,.08)",
-          borderBottom: "1.5px dashed rgba(217,72,31,.5)",
-          fontSize: 9.5,
-          fontWeight: 700,
-          letterSpacing: ".2em",
-          color: "#D9481F",
-        }}
-      >
-        SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED
-      </div>
+      {/* mock-data notice — only when the live feed isn't wired */}
+      {!isLiveMls && (
+        <div
+          className="font-mono"
+          role="note"
+          style={{
+            textAlign: "center",
+            padding: "9px 4vw",
+            background: "rgba(217,72,31,.08)",
+            borderBottom: "1.5px dashed rgba(217,72,31,.5)",
+            fontSize: 9.5,
+            fontWeight: 700,
+            letterSpacing: ".2em",
+            color: "#D9481F",
+          }}
+        >
+          SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED
+        </div>
+      )}
 
       <div className="homes-split">
         <div className={`homes-rail${!city ? " desktop-only-flex" : ""}`}>
@@ -110,7 +110,7 @@ export default async function MapRoom({
           <SearchMapPanel
             listings={result.listings}
             activeCitySlug={effective.citySlug}
-            total={totalResult.total}
+            total={metroTotal}
           />
         </div>
 

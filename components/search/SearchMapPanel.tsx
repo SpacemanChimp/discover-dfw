@@ -9,8 +9,8 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 /* The Map Room's right pane: the illustrated metroplex with $-price pins.
    Orange pin = in the viewed city, ink pin = on your shelf, cream = elsewhere.
    Clicking a pin opens the listing; clicking a city dot scopes the search.
-   ILLUSTRATED PLACEHOLDER for the IDX parcel map — pins sit on city
-   centroids until live coordinates arrive with the Trestle feed. */
+   Pins sit on real feed coordinates when a listing carries them (Trestle
+   does); mock listings without coordinates stack on the city centroid. */
 export default function SearchMapPanel({
   listings,
   activeCitySlug,
@@ -39,24 +39,33 @@ export default function SearchMapPanel({
   const active = activeCitySlug ? bySlug[activeCitySlug] : undefined;
   const activeXY = active ? project(active.ll).map(r1) : null;
 
-  // stack multiple pins in the same city vertically, like the prototype
+  // real coordinates pin exactly; coordinate-less (mock) listings stack
+  // vertically on their city centroid, like the prototype
   const seen: Record<string, number> = {};
-  const pins = listings.map((l) => {
+  const pins = listings.flatMap((l) => {
     const c = bySlug[l.citySlug];
-    const n = seen[l.citySlug] || 0;
-    seen[l.citySlug] = n + 1;
-    const [x, y] = project(c.ll);
+    let x: number, y: number;
+    if (l.lonLat) {
+      [x, y] = project(l.lonLat);
+    } else if (c) {
+      const n = seen[l.citySlug] || 0;
+      seen[l.citySlug] = n + 1;
+      const [cx, cy] = project(c.ll);
+      [x, y] = [cx, cy + n * 38];
+    } else {
+      return [];
+    }
     const saved = shelf.ready && shelf.isSaved(l.listingKey);
     const inCity = l.citySlug === activeCitySlug;
-    return {
+    return [{
       key: l.listingKey,
       x: r1(x),
-      y: r1(y + n * 38),
+      y: r1(y),
       label: "$" + Math.round(l.listPrice / 1000) + "K",
       bg: inCity ? "#D9481F" : saved ? "#1D1913" : "#FBF7EE",
       fg: inCity || saved ? "#F6F1E6" : "#1D1913",
       ring: inCity ? "#F6F1E6" : "#1D1913",
-    };
+    }];
   });
 
   return (

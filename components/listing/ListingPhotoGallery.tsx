@@ -1,9 +1,9 @@
 import type { Listing } from "@/lib/mls/types";
 import SaveListingButton from "@/components/search/SaveListingButton";
 
-/* Gallery collage PLACEHOLDER — primary slot + two secondary slots from the
-   media captions, with the +N chip. Real photos arrive with the IDX CDN;
-   every slot renders its caption until then. */
+/* Gallery collage — primary slot + two secondary slots, with the +N chip.
+   Slots render the real MLS photo when the feed supplies a URL and fall
+   back to the striped caption placeholder when it doesn't. */
 export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
   const [primary, ...rest] = listing.media;
   const side = rest.slice(0, 2);
@@ -17,6 +17,16 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
     position: "relative",
     minHeight: 0,
   });
+
+  const img = (url: string, alt: string) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt={alt}
+      loading="lazy"
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+    />
+  );
 
   return (
     <div
@@ -35,12 +45,16 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
       }}
     >
       <div style={{ ...slot(primary?.caption ?? listing.photoLabel, "#EAE0C9"), gridRow: "span 2" }}>
-        <span
-          className="font-mono"
-          style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 12 }}
-        >
-          MLS PHOTO 1 OF {listing.photoCount} — {(primary?.caption ?? listing.photoLabel).toUpperCase()}
-        </span>
+        {primary?.url ? (
+          img(primary.url, `${listing.unparsedAddress} — photo 1 of ${listing.photoCount}`)
+        ) : (
+          <span
+            className="font-mono"
+            style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 12 }}
+          >
+            MLS PHOTO 1 OF {listing.photoCount} — {(primary?.caption ?? listing.photoLabel).toUpperCase()}
+          </span>
+        )}
         <span
           className="font-mono"
           style={{
@@ -60,12 +74,16 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
       </div>
       {side.map((m, i) => (
         <div key={m.order} style={slot(m.caption, "#E6DBC2")}>
-          <span
-            className="font-mono"
-            style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 10 }}
-          >
-            {m.caption.toUpperCase()}
-          </span>
+          {m.url ? (
+            img(m.url, `${listing.unparsedAddress} — photo ${i + 2}`)
+          ) : (
+            <span
+              className="font-mono"
+              style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 10 }}
+            >
+              {m.caption.toUpperCase()}
+            </span>
+          )}
           {i === side.length - 1 && remaining > 0 && (
             <span
               className="font-mono"

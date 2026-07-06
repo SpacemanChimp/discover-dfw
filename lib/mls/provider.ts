@@ -19,4 +19,6 @@ export interface MlsProvider {
   getFeaturedListings(citySlug?: string, limit?: number): Promise<Listing[]>;
   /** Market stats for a city page/header; null for unknown slugs. */
   getCityMarketSnapshot(citySlug: string): Promise<CityMarketSnapshot | null>;
+  /** Active-listing counts per curated city slug — the map + mobile index. */
+  getActiveCountsByCity(): Promise<Record<string, number>>;
 }

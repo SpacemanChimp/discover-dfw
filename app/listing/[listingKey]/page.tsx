@@ -2,14 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { bySlug, countyById } from "@/lib/dfw-data";
-import { getMlsProvider } from "@/lib/mls";
+import { getMlsProvider, isLiveMls } from "@/lib/mls";
 import { mockListings } from "@/data/mock-listings";
 import ListingDetailDossier from "@/components/search/ListingDetailDossier";
 import SearchNav from "@/components/search/SearchNav";
 import MLSComplianceFooter from "@/components/search/MLSComplianceFooter";
 
+/* Live mode: tens of thousands of listings — render on demand, refresh
+   every 15 minutes (well inside the 12-hour IDX staleness ceiling). */
+export const revalidate = 900;
+
 export function generateStaticParams() {
-  return mockListings.map((l) => ({ listingKey: l.listingKey }));
+  return isLiveMls ? [] : mockListings.map((l) => ({ listingKey: l.listingKey }));
 }
 
 export async function generateMetadata({

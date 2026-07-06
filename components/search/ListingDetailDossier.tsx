@@ -21,7 +21,7 @@ export default function ListingDetailDossier({
   countyName: string;
 }) {
   const b = badgeStyle(listing);
-  const ppsf = Math.round(listing.listPrice / listing.livingAreaSqft);
+  const ppsf = listing.livingAreaSqft > 0 ? Math.round(listing.listPrice / listing.livingAreaSqft) : null;
   const updated = new Date(listing.mlsLastUpdated).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
@@ -67,8 +67,8 @@ export default function ListingDetailDossier({
           {listing.unparsedAddress}, {city.name}, TX{listing.postalCode ? ` ${listing.postalCode}` : ""}
         </div>
         <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".14em", color: "rgba(29,25,19,.5)", marginTop: 6 }}>
-          {listing.bedsTotal} BD · {listing.bathsTotal} BA · {listing.livingAreaSqft.toLocaleString("en-US")} SQFT ·
-          BUILT {listing.yearBuilt} · ${ppsf}/SQFT
+          {listing.bedsTotal} BD · {listing.bathsTotal} BA · {listing.livingAreaSqft.toLocaleString("en-US")} SQFT
+          {listing.yearBuilt ? ` · BUILT ${listing.yearBuilt}` : ""}{ppsf !== null ? ` · $${ppsf}/SQFT` : ""}
         </div>
         <p
           className="font-serif"

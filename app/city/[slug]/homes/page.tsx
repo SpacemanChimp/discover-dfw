@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cities, bySlug, countyById } from "@/lib/dfw-data";
-import { getMlsProvider, parseSearchFilters } from "@/lib/mls";
+import { getMlsProvider, isLiveMls, parseSearchFilters, PROPERTY_TYPE_OPTIONS } from "@/lib/mls";
 import type { SearchFilters } from "@/lib/mls/types";
 import SearchNav from "@/components/search/SearchNav";
 import SearchToolbar from "@/components/search/SearchToolbar";
@@ -48,16 +48,14 @@ export default async function CityHomesPage({
 
   const provider = getMlsProvider();
   const filters: SearchFilters = { ...parseSearchFilters(sp), citySlug: slug };
-  const [result, snapshot, allResult] = await Promise.all([
+  const [result, snapshot, countsBySlug] = await Promise.all([
     provider.searchListings(filters),
     provider.getCityMarketSnapshot(slug),
-    provider.searchListings({ pageSize: 500 }),
+    provider.getActiveCountsByCity(),
   ]);
   if (!snapshot) notFound();
 
-  const propertyTypes = Array.from(new Set(allResult.listings.map((l) => l.propertyType))).sort();
-  const countsBySlug: Record<string, number> = {};
-  for (const l of allResult.listings) countsBySlug[l.citySlug] = (countsBySlug[l.citySlug] || 0) + 1;
+  const propertyTypes = PROPERTY_TYPE_OPTIONS;
   const nearby: NearbyCityCount[] = cities
     .filter((c) => c.county === city.county && c.slug !== slug && countsBySlug[c.slug])
     .map((c) => ({ slug: c.slug, name: c.name, count: countsBySlug[c.slug] }))
@@ -68,22 +66,24 @@ export default async function CityHomesPage({
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
       <SearchNav />
       <SearchToolbar query={filters} citySlug={slug} propertyTypes={propertyTypes} />
-      <div
-        className="font-mono"
-        role="note"
-        style={{
-          textAlign: "center",
-          padding: "9px 4vw",
-          background: "rgba(217,72,31,.08)",
-          borderBottom: "1.5px dashed rgba(217,72,31,.5)",
-          fontSize: 9.5,
-          fontWeight: 700,
-          letterSpacing: ".2em",
-          color: "#D9481F",
-        }}
-      >
-        SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED
-      </div>
+      {!isLiveMls && (
+        <div
+          className="font-mono"
+          role="note"
+          style={{
+            textAlign: "center",
+            padding: "9px 4vw",
+            background: "rgba(217,72,31,.08)",
+            borderBottom: "1.5px dashed rgba(217,72,31,.5)",
+            fontSize: 9.5,
+            fontWeight: 700,
+            letterSpacing: ".2em",
+            color: "#D9481F",
+          }}
+        >
+          SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED
+        </div>
+      )}
 
       <CityHomesHero snapshot={{ ...snapshot, activeListings: result.total }} />
       <CityMarketMiniSnapshot snapshot={snapshot} />
@@ -91,7 +91,7 @@ export default async function CityHomesPage({
         listings={result.listings}
         cityName={city.name}
         countyName={county.name}
-        mlsSource={result.listings[0]?.mlsSource ?? "MOCK"}
+        mlsSource={result.listings[0]?.mlsSource ?? (isLiveMls ? "NTREIS" : "MOCK")}
         nearby={nearby}
       />
 
