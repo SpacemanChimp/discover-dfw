@@ -22,6 +22,7 @@ import type {
 } from "./types";
 import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
 import { getSupabaseAdmin } from "@/lib/db/admin";
+import { getOpenHouses, openHouseBadge } from "./trestle";
 
 const DEFAULT_PAGE_SIZE = 24;
 const DEFAULT_STATUSES: ListingStatus[] = ["Active", "ActiveUnderContract", "ComingSoon", "Pending"];
@@ -50,7 +51,9 @@ function toListing(r: any): Listing {
     .slice()
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     .map((m, i) => ({ url: m.media_url as string, caption: "", order: m.order ?? i, isPrimary: i === 0 }));
-  const priceCut = false; // original list price is not replicated — badge from DOM only
+  // feed withholds OriginalListPrice; PreviousListPrice is our own history
+  const original = Number(r.raw?.OriginalListPrice ?? r.raw?.PreviousListPrice ?? 0);
+  const priceCut = original > 0 && Number(r.list_price) > 0 && original > Number(r.list_price);
   const badge: ListingBadge = priceCut ? "PRICE CUT" : dom <= 7 ? "NEW" : "ACTIVE";
   const hood: string = r.subdivision || cityName;
 
@@ -62,7 +65,7 @@ function toListing(r: any): Listing {
     daysOnMarket: dom,
     listDate: new Date(Date.now() - dom * 86_400_000).toISOString().slice(0, 10),
     listPrice: Number(r.list_price ?? 0),
-    originalListPrice: undefined,
+    originalListPrice: priceCut ? original : undefined,
     bedsTotal: r.beds ?? 0,
     bathsTotal: Number(r.baths ?? 0),
     livingAreaSqft: r.living_area ?? 0,
@@ -182,7 +185,17 @@ export const localProvider: MlsProvider = {
     const db = getSupabaseAdmin();
     if (!db) return null;
     const { data } = await db.from("listings").select(SELECT).eq("listing_key", listingKey).maybeSingle();
-    return data ? toListing(data) : null;
+    if (!data) return null;
+    const listing = toListing(data);
+    // open houses aren't replicated — fetch live (detail views + alert
+    // sweep only; never fails the listing)
+    try {
+      listing.openHouses = await getOpenHouses(listingKey);
+      if (listing.badge === "ACTIVE") listing.badge = openHouseBadge(listing.openHouses) ?? listing.badge;
+    } catch {
+      listing.openHouses = [];
+    }
+    return listing;
   },
 
   async getListingsByCity(citySlug: string): Promise<Listing[]> {

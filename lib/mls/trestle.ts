@@ -254,7 +254,9 @@ const fmtPeriod = (d: Date) =>
     .formatToParts(d)
     .find((x) => x.type === "dayPeriod")?.value ?? "";
 
-async function getOpenHouses(listingKey: string): Promise<OpenHouse[]> {
+/** Exported for the local provider — open houses aren't replicated, so
+    detail views fetch them live regardless of the serving provider. */
+export async function getOpenHouses(listingKey: string): Promise<OpenHouse[]> {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const horizon = new Date(Date.now() + 120 * 86_400_000).toISOString().slice(0, 10);
@@ -281,7 +283,7 @@ async function getOpenHouses(listingKey: string): Promise<OpenHouse[]> {
 }
 
 /** OPEN SAT/SUN badge when the next open house lands this weekend. */
-function openHouseBadge(openHouses: OpenHouse[]): ListingBadge | null {
+export function openHouseBadge(openHouses: OpenHouse[]): ListingBadge | null {
   const next = openHouses[0];
   if (!next) return null;
   const diff = (Date.parse(next.date) - Date.now()) / 86_400_000;

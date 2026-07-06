@@ -27,22 +27,22 @@ import { dfwCities } from "@/data/dfw-cities";
                  drift repair; run locally/manually — needs a big budget.
    - ?budget=ms  extend the time budget; capped at 42s on Vercel. */
 
-export const maxDuration = 60;
+export const maxDuration = 300; // Vercel Pro
 
 const TOKEN_URL = "https://api-trestle.corelogic.com/trestle/oidc/connect/token";
 const API_BASE = "https://api-trestle.corelogic.com/trestle/odata";
 const PAGE_SIZE = 200;
-const TIME_BUDGET_MS = 42_000; // leave room for snapshots + bookkeeping
+const TIME_BUDGET_MS = 240_000; // leave room for snapshots + bookkeeping
 const ONMARKET = ["Active", "ActiveUnderContract", "ComingSoon", "Pending"];
 
 const SELECT = [
-  "ListingKey", "ListingId", "StandardStatus", "ListPrice", "ClosePrice", "CloseDate",
-  "BedroomsTotal", "BathroomsTotalInteger", "BathroomsFull", "BathroomsHalf", "LivingArea",
-  "LotSizeAcres", "YearBuilt", "PropertyType", "PropertySubType", "StreetNumber", "StreetName",
-  "UnparsedAddress", "City", "StateOrProvince", "PostalCode", "CountyOrParish", "SubdivisionName",
-  "Latitude", "Longitude", "PublicRemarks", "ListOfficeName", "OriginatingSystemName",
-  "ModificationTimestamp", "PhotosCount", "CumulativeDaysOnMarket", "NewConstructionYN",
-  "ArchitecturalStyle",
+  "ListingKey", "ListingId", "StandardStatus", "ListPrice", "OriginalListPrice", "ClosePrice",
+  "CloseDate", "BedroomsTotal", "BathroomsTotalInteger", "BathroomsFull", "BathroomsHalf",
+  "LivingArea", "LotSizeAcres", "YearBuilt", "PropertyType", "PropertySubType", "StreetNumber",
+  "StreetName", "UnparsedAddress", "City", "StateOrProvince", "PostalCode", "CountyOrParish",
+  "SubdivisionName", "Latitude", "Longitude", "PublicRemarks", "ListOfficeName",
+  "OriginatingSystemName", "ModificationTimestamp", "PhotosCount", "CumulativeDaysOnMarket",
+  "NewConstructionYN", "ArchitecturalStyle",
 ].join(",");
 
 const q = (s: string) => `'${s.replace(/'/g, "''")}'`;
@@ -208,7 +208,29 @@ export async function GET(req: Request) {
       pages++;
       seen += rows.length;
 
-      const mapped = rows.map(mapRow);
+      const keys = rows.map((p: any) => String(p.ListingKey));
+      // the feed withholds OriginalListPrice (null on every record), so we
+      // track price history ourselves: one select per page, carry forward
+      const { data: prevRows } = await db
+        .from("listings")
+        .select('listing_key, list_price, prev:raw->PreviousListPrice')
+        .in("listing_key", keys);
+      const prevByKey = new Map((prevRows ?? []).map((r: any) => [r.listing_key, r]));
+
+      const mapped = rows.map((p: any) => {
+        const m = mapRow(p);
+        const before = prevByKey.get(m.listing_key);
+        if (before) {
+          const oldPrice = Number(before.list_price);
+          const newPrice = Number(m.list_price);
+          if (oldPrice > 0 && newPrice > 0 && oldPrice !== newPrice) {
+            (m.raw as any).PreviousListPrice = oldPrice; // price moved — remember where from
+          } else if (before.prev != null) {
+            (m.raw as any).PreviousListPrice = Number(before.prev); // no move — keep history
+          }
+        }
+        return m;
+      });
       const { error: upErr } = await db.from("listings").upsert(mapped, { onConflict: "listing_key" });
       if (upErr) {
         // one bad row can poison a batch upsert — retry row-by-row so the rest land
@@ -224,7 +246,6 @@ export async function GET(req: Request) {
       }
 
       // media: replace wholesale per listing (feed order is authoritative)
-      const keys = mapped.map((m) => m.listing_key);
       const media = rows.flatMap((p: any) =>
         (Array.isArray(p.Media) ? p.Media : [])
           .filter((m: any) => m.MediaURL)

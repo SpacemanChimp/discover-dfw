@@ -25,8 +25,9 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 15 | **Saved-search digests + unsubscribe** — standing orders email new inventory on their cadence via the daily sweep; HMAC one-click unsubscribe + List-Unsubscribe headers | ✅ |
 | 16 | **Compliance display components centralized** — all MLS/IDX copy in `lib/compliance.ts` (marked PENDING BROKER/NTREIS/LEGAL REVIEW), extracted `ListingBrokerAttribution` / `LastUpdatedStamp` / `DataDisclaimer` | ✅ |
 | 17 | **Local listings schema + sync bookkeeping** — `listings` / `listing_media` / `mls_sync_runs` / `mls_sync_errors` / `city_market_snapshots` tables (migration 0006), row types in `lib/mls/db-rows.ts` | ✅ schema |
-| 18 | **MLS sync job + local provider** — `/api/mls/sync` (keyset-paginated Trestle replication, backfill→incremental, daily cron), `MLS_PROVIDER=local` reads Postgres; production stays on `trestle` | ✅ |
-| Next | Consider flipping to `local` (needs >daily sync cadence — Vercel Pro cron or external trigger), ⚠ compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
+| 18 | **MLS sync job + local provider** — `/api/mls/sync` (keyset-paginated Trestle replication, backfill→incremental), `MLS_PROVIDER=local` reads Postgres | ✅ |
+| 19 | **Production on the local store** — Vercel Pro: sync cron every 15 min (maxDuration 300), PRICE CUT via self-tracked price history (feed withholds OriginalListPrice), open houses fetched live per detail view, `MLS_PROVIDER=local` in production | ✅ |
+| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), full-text/radius search on the local store, The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
 
 ### Phase 3 notes
 
@@ -518,11 +519,21 @@ lands, these become unit tests over `searchListings` filter mechanics.
   domain mapping derives scalars from `raw` (DOM) but never exposes the
   payload. Known gaps vs trestle: no open-house data, no
   originalListPrice (no PRICE CUT badge), "newest" via replicated DOM.
-- **Production stays `MLS_PROVIDER=trestle`**: Hobby-plan crons run once
-  daily, so the local store is up to 24h stale vs trestle's 15-min ISR.
-  Flip to `local` when sync cadence improves (Vercel Pro cron / external
-  scheduler) or when local-only features (full-text, radius) justify it.
-  `isLiveMls` already treats `local` as live NTREIS data.
+- ~~Production stays trestle~~ **Superseded by Phase 19** (Vercel Pro):
+  sync cron runs every 15 minutes (`*/15 * * * *`, maxDuration 300 /
+  240s budget), matching the old trestle ISR freshness, and production
+  runs `MLS_PROVIDER=local`. Feature gaps closed:
+  - PRICE CUT: the IDX feed withholds `OriginalListPrice` (verified null
+    on every record — the trestle provider's badge never fired either),
+    so the sync now SELF-TRACKS price history: one select per page
+    compares incoming vs stored `list_price`, records
+    `raw.PreviousListPrice` on movement, and carries history forward on
+    no-change upserts. Badges accumulate as prices move from now on —
+    something the live API could never provide.
+  - Open houses fetch live from Trestle inside `getListingByKey` only
+    (detail views + alert sweep — low volume, never fails the listing).
+  The trestle provider remains one env var away as a fallback.
+  `isLiveMls` treats `local` as live NTREIS data.
 
 ## Compliance guardrails (standing)
 
