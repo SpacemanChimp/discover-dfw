@@ -21,6 +21,7 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 11 | **Trestle IDX Plus provider — live NTREIS inventory** (`lib/mls/trestle.ts`), real photos, real coordinates on the map, live market snapshots, ISR; SEO flip + sitemap + Search Console followed | ✅ |
 | 12 | **Lead capture** — `lead_events` / `showing_requests` / `listing_questions` tables, dedicated API routes, sheets wired for real, prefill for members, honeypot + dwell-time spam guard | ✅ |
 | 13 | **Lead notification emails** — branded guide heads-up + submitter confirmation per lead, attempt logging to `lead_events`, dev dry-run gating, env docs (`.env.example`) | ✅ |
+| 14 | **Lead Desk** — `/admin/leads` behind an `ADMIN_EMAILS` allowlist; filterable lead list, detail drawer with status pills, event timeline, shelf-engagement counts | ✅ |
 | Next | Saved-search alert digests (wire saved_searches frequency/email_enabled/last_notified_at into the sweep), unsubscribe/preference links, The Letter, CRM webhook, compare view | ⬜ |
 
 ### Phase 3 notes
@@ -296,7 +297,33 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
   no real delivery; production verified via Resend dashboard logs after
   deploy. Validation/spam paths never reach the email layer.
 
-### Phase 14 plan — saved-search digests + preferences (not yet built)
+### Phase 14 notes — the Lead Desk (/admin/leads)
+
+- **Authorization**: no role system exists yet, so the gate is an env
+  allowlist — `ADMIN_EMAILS` (comma-separated, case-insensitive),
+  checked server-side in `lib/admin.ts` against the cookie session.
+  Non-admins (including signed-in members) get a plain **404**, never a
+  login hint; unset list = 404 for everyone. The status API returns 404
+  unauthenticated for the same reason. **Upgrade path** when more
+  humans need access: `role` column on `profiles` (migration), check
+  role instead of the env list, manage via the desk itself.
+- **Route**: `app/admin/leads/page.tsx` — `force-dynamic`,
+  `noindex,nofollow`, absent from sitemap and public nav. Service-role
+  reads happen strictly AFTER the gate: latest 200 showing requests +
+  200 questions, last 100 lead_events, shelf counts, and
+  `auth.admin.listUsers` for the email map.
+- **UI**: `AdminLeadList` (filters: type / status / city / listing key /
+  date range — client-side over the fetched set), `LeadDetailDrawer`
+  (contact links, status pills, listing + city-report links, per-listing
+  event trail), `LeadEventTimeline` (submissions + email sends/failures,
+  color-coded). City comes from the lead_events trail — the lead tables
+  don't carry it.
+- **Status flow**: new → contacted → scheduled → closed via
+  `PATCH /api/admin/leads` (admin gate + whitelist of statuses),
+  optimistic UI with rollback.
+- Plain, functional styling — the editorial theatrics stay public.
+
+### Phase 15 plan — saved-search digests + preferences (not yet built)
 
 - **Digest job**: extend the daily sweep (or a second cron) to run each
   `saved_searches` row with `email_enabled` and frequency due
