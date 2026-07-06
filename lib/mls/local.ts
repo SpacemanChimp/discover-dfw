@@ -261,12 +261,29 @@ export const localProvider: MlsProvider = {
       .maybeSingle();
     const snap = base(data?.active_listings ?? 0, data?.created_at ?? new Date().toISOString());
     if (!snap) return null;
+    // on-market status counts (never sold data) — two cheap head-counts,
+    // ISR caches the page so these don't run per visitor
+    const cityName = cityBySlug[citySlug].name;
+    const countOf = async (status: string) => {
+      const { count: n } = await db
+        .from("listings")
+        .select("listing_key", { count: "exact", head: true })
+        .eq("city", cityName)
+        .eq("standard_status", status);
+      return n ?? 0;
+    };
+    const [auc, pending] = await Promise.all([countOf("ActiveUnderContract"), countOf("Pending")]);
     return {
       ...snap,
       medianListPrice: data?.median_list_price != null ? Number(data.median_list_price) : snap.medianListPrice,
       pricePerSqft: data?.price_per_sqft != null ? Number(data.price_per_sqft) : snap.pricePerSqft,
       medianDaysOnMarket:
         data?.median_days_on_market != null ? Number(data.median_days_on_market) : snap.medianDaysOnMarket,
+      statusCounts: {
+        Active: data?.active_listings ?? 0,
+        ActiveUnderContract: auc,
+        Pending: pending,
+      },
     };
   },
 

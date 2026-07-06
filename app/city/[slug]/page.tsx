@@ -114,8 +114,23 @@ export default async function CityPage({
 
   const nameUpper = c.name.toUpperCase();
   const countyUpper = county.name.toUpperCase();
-  const price = fmtK(c.price);
-  const ppsf = "$" + c.ppsf;
+
+  /* Live market numbers where the store has them; editorial figures stay
+     the fallback (and YoY/trend stay editorial estimates — computing real
+     YoY needs a year of snapshot history). ⚠ Public market-stat display
+     must be verified with the broker/NTREIS before launch is considered
+     compliant — noted in the build plan. No sold-data stats are shown. */
+  let liveSnap = null;
+  if (isLiveMls) {
+    try {
+      liveSnap = await getMlsProvider().getCityMarketSnapshot(c.slug);
+    } catch {
+      liveSnap = null; // editorial fallback — a feed hiccup never breaks the page
+    }
+  }
+  const price = fmtK(liveSnap?.medianListPrice ?? c.price);
+  const ppsf = "$" + (liveSnap?.pricePerSqft ?? c.ppsf);
+  const domDays = liveSnap?.medianDaysOnMarket ?? c.dom;
   const popShort =
     c.pop >= 1000000
       ? (c.pop / 1000000).toFixed(2) + "M"
@@ -123,7 +138,7 @@ export default async function CityPage({
   const popFull = c.pop.toLocaleString("en-US") + " (placeholder)";
   const coords =
     Math.abs(c.ll[1]).toFixed(3) + "° N · " + Math.abs(c.ll[0]).toFixed(3) + "° W";
-  const paceNote = c.dom <= 32 ? "MOVES FAST — COME READY" : "ROOM TO NEGOTIATE";
+  const paceNote = domDays <= 32 ? "MOVES FAST — COME READY" : "ROOM TO NEGOTIATE";
 
   const hoods = hoodsForCity(c).map((h, i) => ({
     num: "N°" + (i + 1),
@@ -352,8 +367,8 @@ export default async function CityPage({
           >
             <HeroStat label="MEDIAN" value={price} color="#D9481F" />
             <HeroStat label="$ / SQFT" value={ppsf} />
-            <HeroStat label="DAYS ON MKT" value={String(c.dom)} />
-            <HeroStat label="YOY" value={c.yoy} />
+            <HeroStat label="DAYS ON MKT" value={String(domDays)} />
+            <HeroStat label={liveSnap ? "YOY (EST.)" : "YOY"} value={c.yoy} />
             <HeroStat label="POPULATION" value={popShort} />
           </div>
         </div>
@@ -521,16 +536,18 @@ export default async function CityPage({
               marginBottom: 6,
             }}
           >
-            PLACEHOLDER DATA — SWAP FOR MLS FEED
+            {liveSnap
+              ? "LIVE NTREIS DATA · YOY & TREND ARE EDITORIAL ESTIMATES"
+              : "PLACEHOLDER DATA — SWAP FOR MLS FEED"}
           </span>
         </div>
         <div
           data-reveal="1"
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 18 }}
         >
-          <MarketCard label="MEDIAN LIST PRICE" value={price} sub={`${c.yoy} YEAR OVER YEAR`} valColor="#D9481F" />
+          <MarketCard label="MEDIAN LIST PRICE" value={price} sub={`${c.yoy} YEAR OVER YEAR (EST.)`} valColor="#D9481F" />
           <MarketCard label="PRICE PER SQFT" value={ppsf} sub="METRO AVG ≈ $210" />
-          <MarketCard label="DAYS ON MARKET" value={String(c.dom)} sub={paceNote} />
+          <MarketCard label="DAYS ON MARKET" value={String(domDays)} sub={paceNote} />
           <div
             style={{
               border: "2px solid #1D1913",
@@ -545,7 +562,7 @@ export default async function CityPage({
                 className="font-mono"
                 style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(246,241,230,.6)" }}
               >
-                12-MO TREND
+                12-MO TREND{liveSnap ? " (EST.)" : ""}
               </span>
               <span className="font-mono" style={{ fontSize: 10.5, color: "#E88D6B", fontWeight: 700 }}>
                 {c.yoy}

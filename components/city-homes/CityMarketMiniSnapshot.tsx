@@ -6,10 +6,15 @@ import { isLiveMls } from "@/lib/mls";
    computed from the replicated store (YoY stays an editorial estimate —
    no year-old baseline yet). Mock mode keeps the placeholder chip. */
 export default function CityMarketMiniSnapshot({ snapshot }: { snapshot: CityMarketSnapshot }) {
+  const sc = snapshot.statusCounts;
   const stats: { label: string; value: string; color?: string }[] = [
     { label: "MEDIAN LIST", value: fmtK(snapshot.medianListPrice), color: "#D9481F" },
     { label: "$ / SQFT", value: `$${snapshot.pricePerSqft}` },
     { label: "DAYS ON MKT", value: String(snapshot.medianDaysOnMarket) },
+    // on-market status counts only — sold stats are NOT published
+    ...(sc
+      ? [{ label: "PENDING / UNDER K", value: `${sc.Pending ?? 0} / ${sc.ActiveUnderContract ?? 0}` }]
+      : []),
     { label: "YOY (EST.)", value: snapshot.yoyChange },
     { label: "SCHOOLS", value: snapshot.isd },
   ];

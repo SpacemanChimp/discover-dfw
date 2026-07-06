@@ -591,6 +591,38 @@ a dev server on :3111, or against production):
 
     node scripts/trestle-smoke.mjs [city]    # credentials/endpoint smoke test
 
+### Market snapshots spec audit (post-Phase 20)
+
+Audited against the "city market snapshots powered by listings database"
+spec. Already built (Phases 18–20): the `city_market_snapshots`
+generation step in the sync (active count, median list price, median
+$/sqft, median DOM, as_of/updated stamp), featured/curated tier cards on
+city reports, the homes-page mini-snapshot on live data. Closed by this
+audit:
+
+- **Status counts** — `CityMarketSnapshot.statusCounts` (Active /
+  ActiveUnderContract / Pending), computed by the local provider from
+  the store (ISR-cached; no migration needed) and shown as a
+  "PENDING / UNDER K" card in the mini-snapshot. On-market statuses only.
+- **City REPORT page numbers went live** — the hero pills and the
+  "numbers at a glance" market cards on `/city/[slug]` now use the
+  snapshot's median/psf/DOM (editorial figures remain the fallback and
+  all editorial CONTENT — taglines, vibe, hoods — is untouched). YoY and
+  the 12-month trend sparkline are labeled **(EST.)** — editorial
+  estimates until a year of snapshot history exists to compute them.
+- **Homepage/map metric hooks**: deliberately deferred — the homepage is
+  fully static editorial; wiring live numbers there means ISR-ing the
+  homepage for marginal value. Revisit with a concrete design.
+
+**Sold-data position (explicit):** `close_price`/`CloseDate` exist in
+the schema but **no sold-data statistics are computed or published
+anywhere** — no sold charts, no closed-price medians. IDX Plus includes
+sold records, but publishing sold-market stats has its own display
+rules. ⚠ **Before launch marketing leans on ANY public market stats
+(including the list-price medians now shown), verify permitted use with
+the sponsoring broker / NTREIS** — same review track as the compliance
+copy in `lib/compliance.ts`.
+
 ### Media handling plan + display audit (post-Phase 20)
 
 **Recommendations (the plan half of the media spec):**

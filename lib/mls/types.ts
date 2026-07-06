@@ -112,8 +112,11 @@ export interface CityMarketSnapshot {
   medianListPrice: number;
   pricePerSqft: number;
   medianDaysOnMarket: number;
+  /** EDITORIAL ESTIMATE until a year of snapshot history exists. */
   yoyChange: string;
   activeListings: number;
+  /** Live-provider extra: counts by on-market status (no sold data). */
+  statusCounts?: Record<string, number>;
   asOf: string;
 }
 
