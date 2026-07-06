@@ -14,6 +14,8 @@ import {
   City,
 } from "@/lib/dfw-data";
 import { hoodsForCity } from "@/lib/hoods";
+import { getMlsProvider, isLiveMls } from "@/lib/mls";
+import type { Listing } from "@/lib/mls/types";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
@@ -23,6 +25,9 @@ import TrecLinks from "@/components/TrecLinks";
 export function generateStaticParams() {
   return cities.map((c) => ({ slug: c.slug }));
 }
+
+/* ISR keeps the "On the Market" tier cards fresh against the live feed. */
+export const revalidate = 900;
 
 export async function generateMetadata({
   params,
@@ -160,6 +165,44 @@ export default async function CityPage({
       hood: c.hoods[Math.min(i, c.hoods.length - 1)][0],
     };
   });
+
+  /* Live tier picks — the entry point, the freshest arrival, the stretch.
+     minBeds keeps land parcels out of "move-in ready"; a feed hiccup just
+     falls back to the section's empty note, never a broken page. */
+  let livePicks: { tag: string; l: Listing }[] = [];
+  if (isLiveMls) {
+    try {
+      const provider = getMlsProvider();
+      const base = { citySlug: c.slug, statuses: ["Active" as const], minBeds: 1, pageSize: 12 };
+      const [asc, fresh, desc] = await Promise.all([
+        provider.searchListings({ ...base, sort: "price-asc" }),
+        provider.searchListings({ ...base, sort: "newest" }),
+        provider.searchListings({ ...base, sort: "price-desc" }),
+      ]);
+      const used = new Set<string>();
+      const pick = (pool: Listing[]) => {
+        const hit =
+          pool.find((x) => !used.has(x.listingKey) && x.media[0]?.url) ??
+          pool.find((x) => !used.has(x.listingKey));
+        if (hit) used.add(hit.listingKey);
+        return hit;
+      };
+      // claim order: entry price, then top of market, then freshest of the
+      // rest — so "the stretch" is never outbid by "new listing"
+      const entry = pick(asc.listings);
+      const stretch = pick(desc.listings);
+      const newest = pick(fresh.listings);
+      livePicks = (
+        [
+          ["MOVE-IN READY", entry],
+          ["NEW LISTING", newest],
+          ["THE STRETCH", stretch],
+        ] as const
+      ).flatMap(([tag, l]) => (l ? [{ tag, l }] : []));
+    } catch {
+      livePicks = [];
+    }
+  }
 
   const options = cities
     .slice()
@@ -821,12 +864,12 @@ export default async function CityPage({
                   fontSize: 9.5,
                   letterSpacing: ".2em",
                   color: "#D9481F",
-                  border: "1px dashed rgba(217,72,31,.6)",
+                  border: isLiveMls ? "1px solid rgba(217,72,31,.6)" : "1px dashed rgba(217,72,31,.6)",
                   borderRadius: 999,
                   padding: "7px 13px",
                 }}
               >
-                PLACEHOLDER LISTINGS — CONNECT MLS
+                {isLiveMls ? "LIVE FROM THE NTREIS FEED" : "PLACEHOLDER LISTINGS — CONNECT MLS"}
               </span>
               <Link
                 href={`/city/${c.slug}/homes`}
@@ -847,88 +890,193 @@ export default async function CityPage({
               </Link>
             </div>
           </div>
-          <div
-            data-reveal="1"
-            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: 18 }}
-          >
-            {listings.map((li) => (
-              <div
-                key={li.tag}
-                className="listing-card"
-                style={{
-                  border: "2px solid #1D1913",
-                  borderRadius: 18,
-                  background: "#FBF7EE",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    aspectRatio: "4 / 2.6",
-                    position: "relative",
-                    background: "repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
-                    borderBottom: "2px solid #1D1913",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <span
-                    className="font-mono"
-                    style={{
-                      position: "absolute",
-                      top: 12,
-                      left: 12,
-                      fontSize: 9,
-                      letterSpacing: ".2em",
-                      background: "#D9481F",
-                      color: "#F6F1E6",
-                      padding: "5px 10px",
-                      borderRadius: 999,
-                    }}
-                  >
-                    {li.tag}
-                  </span>
-                  <span
-                    className="font-mono"
-                    style={{
-                      fontSize: 9.5,
-                      letterSpacing: ".14em",
-                      color: "rgba(29,25,19,.55)",
-                      background: "rgba(246,241,230,.9)",
-                      padding: "6px 10px",
-                      borderRadius: 6,
-                      border: "1px dashed rgba(29,25,19,.4)",
-                    }}
-                  >
-                    LISTING PHOTO
-                  </span>
-                </div>
-                <div style={{ padding: "18px 22px 22px" }}>
-                  <div className="font-serif" style={{ fontWeight: 900, fontSize: 27 }}>
-                    {li.price}
-                  </div>
-                  <div
-                    className="font-mono"
-                    style={{ fontSize: 10.5, letterSpacing: ".1em", color: "rgba(29,25,19,.6)", marginTop: 6 }}
-                  >
-                    {li.meta}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 13.5,
-                      color: "rgba(29,25,19,.7)",
-                      marginTop: 9,
-                      borderTop: "1px solid rgba(29,25,19,.14)",
-                      paddingTop: 10,
-                    }}
-                  >
-                    {li.hood} · {c.name}, TX
-                  </div>
-                </div>
+          {isLiveMls && livePicks.length === 0 ? (
+            <div
+              data-reveal="1"
+              style={{
+                border: "2px dashed rgba(29,25,19,.35)",
+                borderRadius: 18,
+                padding: "44px 24px",
+                textAlign: "center",
+              }}
+            >
+              <div className="font-serif" style={{ fontStyle: "italic", fontWeight: 600, fontSize: 20, color: "rgba(29,25,19,.7)" }}>
+                A quiet week on the {c.name} market.
               </div>
-            ))}
-          </div>
+              <p style={{ margin: "8px auto 0", maxWidth: 420, fontSize: 14, lineHeight: 1.6, color: "rgba(29,25,19,.6)" }}>
+                Nothing active in the feed right this minute — new listings land daily, and the
+                search page watches the whole county.
+              </p>
+            </div>
+          ) : (
+            <div
+              data-reveal="1"
+              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: 18 }}
+            >
+              {livePicks.length > 0
+                ? livePicks.map(({ tag, l }) => (
+                    <Link
+                      key={tag}
+                      href={`/listing/${l.listingKey}`}
+                      className="listing-card"
+                      style={{
+                        border: "2px solid #1D1913",
+                        borderRadius: 18,
+                        background: "#FBF7EE",
+                        overflow: "hidden",
+                        textDecoration: "none",
+                        color: "#1D1913",
+                        display: "block",
+                      }}
+                    >
+                      <div
+                        style={{
+                          aspectRatio: "4 / 2.6",
+                          position: "relative",
+                          background: "repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
+                          borderBottom: "2px solid #1D1913",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {l.media[0]?.url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={l.media[0].url}
+                            alt={`${l.unparsedAddress}, ${c.name}`}
+                            loading="lazy"
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        )}
+                        <span
+                          className="font-mono"
+                          style={{
+                            position: "absolute",
+                            top: 12,
+                            left: 12,
+                            fontSize: 9,
+                            letterSpacing: ".2em",
+                            background: "#D9481F",
+                            color: "#F6F1E6",
+                            padding: "5px 10px",
+                            borderRadius: 999,
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      </div>
+                      <div style={{ padding: "18px 22px 22px" }}>
+                        <div className="font-serif" style={{ fontWeight: 900, fontSize: 27 }}>
+                          ${l.listPrice.toLocaleString("en-US")}
+                        </div>
+                        <div
+                          className="font-mono"
+                          style={{ fontSize: 10.5, letterSpacing: ".1em", color: "rgba(29,25,19,.6)", marginTop: 6 }}
+                        >
+                          {l.bedsTotal} BD · {l.bathsTotal} BA · {l.livingAreaSqft.toLocaleString("en-US")} SQFT
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 13.5,
+                            color: "rgba(29,25,19,.7)",
+                            marginTop: 9,
+                            borderTop: "1px solid rgba(29,25,19,.14)",
+                            paddingTop: 10,
+                          }}
+                        >
+                          {l.unparsedAddress} · {l.neighborhood} · {c.name}, TX
+                        </div>
+                        {l.attributionText && (
+                          <div
+                            className="font-mono"
+                            style={{ fontSize: 8.5, letterSpacing: ".12em", color: "rgba(29,25,19,.45)", marginTop: 8 }}
+                          >
+                            {l.attributionText.toUpperCase()} · MLS# {l.listingId}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  ))
+                : listings.map((li) => (
+                    <div
+                      key={li.tag}
+                      className="listing-card"
+                      style={{
+                        border: "2px solid #1D1913",
+                        borderRadius: 18,
+                        background: "#FBF7EE",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          aspectRatio: "4 / 2.6",
+                          position: "relative",
+                          background: "repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
+                          borderBottom: "2px solid #1D1913",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <span
+                          className="font-mono"
+                          style={{
+                            position: "absolute",
+                            top: 12,
+                            left: 12,
+                            fontSize: 9,
+                            letterSpacing: ".2em",
+                            background: "#D9481F",
+                            color: "#F6F1E6",
+                            padding: "5px 10px",
+                            borderRadius: 999,
+                          }}
+                        >
+                          {li.tag}
+                        </span>
+                        <span
+                          className="font-mono"
+                          style={{
+                            fontSize: 9.5,
+                            letterSpacing: ".14em",
+                            color: "rgba(29,25,19,.55)",
+                            background: "rgba(246,241,230,.9)",
+                            padding: "6px 10px",
+                            borderRadius: 6,
+                            border: "1px dashed rgba(29,25,19,.4)",
+                          }}
+                        >
+                          LISTING PHOTO
+                        </span>
+                      </div>
+                      <div style={{ padding: "18px 22px 22px" }}>
+                        <div className="font-serif" style={{ fontWeight: 900, fontSize: 27 }}>
+                          {li.price}
+                        </div>
+                        <div
+                          className="font-mono"
+                          style={{ fontSize: 10.5, letterSpacing: ".1em", color: "rgba(29,25,19,.6)", marginTop: 6 }}
+                        >
+                          {li.meta}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 13.5,
+                            color: "rgba(29,25,19,.7)",
+                            marginTop: 9,
+                            borderTop: "1px solid rgba(29,25,19,.14)",
+                            paddingTop: 10,
+                          }}
+                        >
+                          {li.hood} · {c.name}, TX
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+            </div>
+          )}
         </div>
       </section>
 
