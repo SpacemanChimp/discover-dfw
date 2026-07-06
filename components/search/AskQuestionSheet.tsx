@@ -1,6 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Listing } from "@/lib/mls/types";
+import { useShelf } from "@/lib/shelf";
+import { getSessionId } from "@/lib/session-id";
+import LeadSuccessState from "./LeadSuccessState";
 
 const QUICK = [
   "Is it still available?",
@@ -34,11 +37,26 @@ export default function AskQuestionSheet({
   open: boolean;
   onClose: () => void;
 }) {
+  const shelf = useShelf();
   const [q, setQ] = useState("");
   const [pref, setPref] = useState<"text" | "email">("text");
-  const [contact, setContact] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [hp, setHp] = useState(""); // honeypot — humans never see it
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
+  const openedAt = useRef(Date.now());
+
+  // each open: fresh spam clock + prefill from the signed-in account
+  useEffect(() => {
+    if (!open) return;
+    openedAt.current = Date.now();
+    if (shelf.account) {
+      setName((n) => n || shelf.account?.name || "");
+      setEmail((e) => e || shelf.account?.email || "");
+    }
+  }, [open, shelf.account]);
 
   if (!open) return null;
 
@@ -47,24 +65,36 @@ export default function AskQuestionSheet({
       setErr("Ask something first — anything.");
       return;
     }
-    if (!contact.trim()) {
-      setErr(pref === "text" ? "Add the number to text you back at." : "Add the email to reply to.");
+    if (!name.trim()) {
+      setErr("Add your name so the guide knows who's asking.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErr("Add the email your guide can reply to.");
+      return;
+    }
+    if (pref === "text" && !phone.trim()) {
+      setErr("Add the number to text you back at.");
       return;
     }
     setState("sending");
     try {
-      const res = await fetch("/api/leads", {
+      const res = await fetch("/api/listing-questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "question",
           listingKey: listing.listingKey,
-          address: `${listing.unparsedAddress}, ${cityName}`,
           citySlug: listing.citySlug,
-          message: q,
+          address: `${listing.unparsedAddress}, ${cityName}`,
+          question: q,
+          name,
+          email,
+          phone,
           replyPref: pref,
-          email: pref === "email" ? contact : "",
-          phone: pref === "text" ? contact : "",
+          sourcePage: window.location.pathname,
+          sessionId: getSessionId(),
+          hp,
+          openedAt: openedAt.current,
         }),
       });
       if (!res.ok) throw new Error();
@@ -109,21 +139,12 @@ export default function AskQuestionSheet({
       >
         <div style={{ width: 44, height: 5, borderRadius: 99, background: "rgba(29,25,19,.25)", margin: "0 auto" }} />
         {state === "sent" ? (
-          <div style={{ textAlign: "center", padding: "34px 0 22px" }}>
-            <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F" }}>
-              SENT TO YOUR GUIDE
-            </div>
-            <div className="font-serif" style={{ fontWeight: 900, fontSize: 28, marginTop: 10 }}>
-              Good question.
-            </div>
-            <p style={{ margin: "12px auto 0", maxWidth: 380, fontSize: 14, lineHeight: 1.6, color: "rgba(29,25,19,.75)" }}>
-              Your {cityName} guide will {pref === "text" ? "text" : "email"} you back — usually inside
-              ten minutes during the day.
-            </p>
-            <button type="button" onClick={onClose} style={{ ...input, borderRadius: 999, marginTop: 20, cursor: "pointer", fontWeight: 700 }}>
-              Done
-            </button>
-          </div>
+          <LeadSuccessState
+            eyebrow="SENT TO YOUR GUIDE"
+            headline="Good question."
+            body={`Your ${cityName} guide will ${pref === "text" ? "text" : "email"} you back — one guide, not a lead list, usually inside ten minutes during the day.`}
+            onClose={onClose}
+          />
         ) : (
           <>
             <div
@@ -229,15 +250,40 @@ export default function AskQuestionSheet({
                 </button>
               ))}
             </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <input
+                value={name}
+                onChange={(e) => { setName(e.target.value); setErr(null); }}
+                placeholder="Your name"
+                style={{ ...input, flex: 1 }}
+              />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setErr(null); }}
+                placeholder="Your email"
+                style={{ ...input, flex: 1 }}
+              />
+            </div>
+            {pref === "text" && (
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setErr(null); }}
+                placeholder="The number to text you back at"
+                style={{ ...input, marginTop: 8 }}
+              />
+            )}
+            {/* honeypot — visually hidden, tabbed past, bots fill it anyway */}
             <input
-              type={pref === "email" ? "email" : "tel"}
-              value={contact}
-              onChange={(e) => {
-                setContact(e.target.value);
-                setErr(null);
-              }}
-              placeholder={pref === "text" ? "Your phone number" : "Your email"}
-              style={{ ...input, marginTop: 8 }}
+              type="text"
+              value={hp}
+              onChange={(e) => setHp(e.target.value)}
+              name="company"
+              autoComplete="off"
+              tabIndex={-1}
+              aria-hidden="true"
+              style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
             />
             {err && (
               <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".1em", color: "#D9481F", marginTop: 8 }}>

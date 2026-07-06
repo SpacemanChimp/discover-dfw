@@ -18,8 +18,9 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 8 | Persistent saved listings — `saved_listings` schema, API routes, change-detection badges, seen-sync | ✅ |
 | 9 | Alerts — price-drop / status-change / open-house digests via Vercel Cron + Resend | ✅ |
 | 10 | Saved searches — full schema, API routes, standing-orders cards with cadence + email controls, guest gating | ✅ |
-| 11 | **Trestle IDX Plus provider — live NTREIS inventory** (`lib/mls/trestle.ts`), real photos, real coordinates on the map, live market snapshots, ISR | ✅ |
-| Next | Flip search surfaces to indexable + sitemap (after production eyeball), The Letter, search-alert emails (wire saved_searches into the sweep), CRM webhook, compare view | ⬜ |
+| 11 | **Trestle IDX Plus provider — live NTREIS inventory** (`lib/mls/trestle.ts`), real photos, real coordinates on the map, live market snapshots, ISR; SEO flip + sitemap + Search Console followed | ✅ |
+| 12 | **Lead capture** — `lead_events` / `showing_requests` / `listing_questions` tables, dedicated API routes, sheets wired for real, prefill for members, honeypot + dwell-time spam guard | ✅ |
+| Next | The Letter, search-alert emails (wire saved_searches into the sweep), CRM webhook, compare view | ⬜ |
 
 ### Phase 3 notes
 
@@ -231,6 +232,36 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
   then `curl -H "Authorization: Bearer $CRON_SECRET" .../api/alerts/run`
   → response counts, `alerts` rows, one digest in the inbox; a second
   run returns zero (baselines advanced).
+
+### Phase 12 notes — lead capture
+
+- **Tables** (migration `0005_lead_capture.sql`): `lead_events`
+  (user_id nullable / session_id nullable / event_type / listing_key /
+  city_slug / source_page / metadata jsonb / created_at),
+  `showing_requests` (requested_day date, requested_time_window,
+  showing_mode `in_person|live_video`, name, email, phone?, message?,
+  status default `new`), `listing_questions` (question, name, email,
+  phone?, status default `new`). All three: RLS enabled, NO policies —
+  service-role writes only (same posture as `leads`); anon can neither
+  read nor write.
+- **Routes**: `POST /api/showing-requests`, `POST /api/listing-questions`
+  — validate, resolve optional session user (guests stay null), insert
+  via `getSupabaseAdmin()`, then `recordLeadEvent()` (event_type
+  `showing_request` / `listing_question`). Shared helpers in `lib/leads.ts`.
+- **Spam guard, deliberately simple**: hidden honeypot field + minimum
+  3-second dwell between sheet open and submit. Bots get `{ok:true}` and
+  nothing stored — no CAPTCHA, no third-party script.
+- **Sheets**: `RequestShowingSheet` (day picker → request, "A local guide
+  will confirm."), `AskQuestionSheet` ("one guide, not a lead list" —
+  name/email always, phone when TEXT ME). Both prefill name/email from
+  the shelf account (Google `full_name` now carried on `ShelfAccount`),
+  share `LeadSuccessState`, and send `sessionId` (`lib/session-id.ts`,
+  localStorage uuid) + `sourcePage` for the event trail.
+- **Email**: no new sends by default. `notifyGuide()` emails a heads-up
+  through the existing Resend helper ONLY when `LEAD_NOTIFY_EMAIL` is set.
+- **Showing request ≠ booking** — wording throughout is request/confirm.
+- Legacy `POST /api/leads` stays for the account-signup event; the sheets
+  no longer use it.
 
 ## Architecture
 

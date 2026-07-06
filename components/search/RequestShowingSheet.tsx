@@ -1,6 +1,9 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Listing } from "@/lib/mls/types";
+import { useShelf } from "@/lib/shelf";
+import { getSessionId } from "@/lib/session-id";
+import LeadSuccessState from "./LeadSuccessState";
 
 const chip = (active: boolean): React.CSSProperties => ({
   flex: 1,
@@ -55,6 +58,7 @@ export default function RequestShowingSheet({
     return out;
   }, []);
 
+  const shelf = useShelf();
   const [day, setDay] = useState(1);
   const [time, setTime] = useState("Midday");
   const [mode, setMode] = useState("In person");
@@ -62,33 +66,52 @@ export default function RequestShowingSheet({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [hp, setHp] = useState(""); // honeypot — humans never see it
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
+  const openedAt = useRef(Date.now());
+
+  // each open: fresh spam clock + prefill from the signed-in account
+  useEffect(() => {
+    if (!open) return;
+    openedAt.current = Date.now();
+    if (shelf.account) {
+      setName((n) => n || shelf.account?.name || "");
+      setEmail((e) => e || shelf.account?.email || "");
+    }
+  }, [open, shelf.account]);
 
   if (!open) return null;
 
   const submit = async () => {
-    if (!email.trim() && !phone.trim()) {
-      setErr("Leave an email or a phone number so your guide can confirm.");
+    if (!name.trim()) {
+      setErr("Add your name so the guide knows who's coming.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErr("Add an email so your guide can confirm.");
       return;
     }
     setState("sending");
     try {
-      const res = await fetch("/api/leads", {
+      const res = await fetch("/api/showing-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "showing",
           listingKey: listing.listingKey,
-          address: `${listing.unparsedAddress}, ${cityName}`,
           citySlug: listing.citySlug,
+          address: `${listing.unparsedAddress}, ${cityName}`,
+          requestedDay: days[day].key,
+          timeWindow: time,
+          mode: mode === "Live video" ? "live_video" : "in_person",
           name,
           email,
           phone,
           message: note,
-          day: days[day].key,
-          timeOfDay: time,
-          tourMode: mode,
+          sourcePage: window.location.pathname,
+          sessionId: getSessionId(),
+          hp,
+          openedAt: openedAt.current,
         }),
       });
       if (!res.ok) throw new Error();
@@ -133,21 +156,12 @@ export default function RequestShowingSheet({
       >
         <div style={{ width: 44, height: 5, borderRadius: 99, background: "rgba(29,25,19,.25)", margin: "0 auto" }} />
         {state === "sent" ? (
-          <div style={{ textAlign: "center", padding: "34px 0 22px" }}>
-            <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F" }}>
-              REQUEST SENT
-            </div>
-            <div className="font-serif" style={{ fontWeight: 900, fontSize: 28, marginTop: 10 }}>
-              Consider it on the books.
-            </div>
-            <p style={{ margin: "12px auto 0", maxWidth: 380, fontSize: 14, lineHeight: 1.6, color: "rgba(29,25,19,.75)" }}>
-              A local guide confirms {days[day].dow} {days[day].dom}, {time.toLowerCase()} — within the hour, never a
-              call center.
-            </p>
-            <button type="button" onClick={onClose} style={{ ...input, borderRadius: 999, marginTop: 20, cursor: "pointer", fontWeight: 700 }}>
-              Done
-            </button>
-          </div>
+          <LeadSuccessState
+            eyebrow="REQUEST SENT"
+            headline="Consider it requested."
+            body={`A local guide will confirm. You asked for ${days[day].dow} ${days[day].dom}, ${time.toLowerCase()} — expect a reply within the hour, never a call center.`}
+            onClose={onClose}
+          />
         ) : (
           <>
             <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F", marginTop: 16 }}>
@@ -214,8 +228,8 @@ export default function RequestShowingSheet({
               ))}
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" style={{ ...input, flex: 1 }} />
-              <input value={phone} onChange={(e) => { setPhone(e.target.value); setErr(null); }} placeholder="Phone" style={{ ...input, flex: 1 }} />
+              <input value={name} onChange={(e) => { setName(e.target.value); setErr(null); }} placeholder="Your name" style={{ ...input, flex: 1 }} />
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (optional)" style={{ ...input, flex: 1 }} />
             </div>
             <input
               type="email"
@@ -223,6 +237,17 @@ export default function RequestShowingSheet({
               onChange={(e) => { setEmail(e.target.value); setErr(null); }}
               placeholder="Email"
               style={{ ...input, marginTop: 8 }}
+            />
+            {/* honeypot — visually hidden, tabbed past, bots fill it anyway */}
+            <input
+              type="text"
+              value={hp}
+              onChange={(e) => setHp(e.target.value)}
+              name="company"
+              autoComplete="off"
+              tabIndex={-1}
+              aria-hidden="true"
+              style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
             />
             <textarea
               value={note}

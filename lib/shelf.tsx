@@ -22,6 +22,8 @@ const LS_KEY = "ddfw.shelf.v1";
 
 export interface ShelfAccount {
   email: string;
+  /** Display name from the auth provider (Google), when it supplied one. */
+  name?: string;
 }
 
 interface ShelfState {
@@ -126,7 +128,7 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
   /* ---- account shelf: DB reads/writes (RLS scopes to the session user) ---- */
 
   const loadAccountShelf = useCallback(
-    async (email: string) => {
+    async (email: string, name?: string) => {
       if (!supabase) return;
       const [homesRes, searchesRes] = await Promise.all([
         // both stores go through the API routes (RLS-scoped server-side)
@@ -138,7 +140,7 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
         saved[r.listingKey] = r;
       }
       const list: SavedSearchFilter[] = searchesRes.searches ?? [];
-      setState((prev) => ({ ...prev, saved, searches: list, account: { email } }));
+      setState((prev) => ({ ...prev, saved, searches: list, account: { email, name } }));
     },
     [supabase]
   );
@@ -192,7 +194,7 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
       const user = data.session?.user;
       if (user?.email) {
         sessionUserId.current = user.id;
-        await loadAccountShelf(user.email);
+        await loadAccountShelf(user.email, user.user_metadata?.full_name);
       }
       setReady(true);
     });
@@ -205,7 +207,7 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
           mergedThisSession.current = true;
           await mergeGuestShelf(user.id);
         }
-        await loadAccountShelf(user.email);
+        await loadAccountShelf(user.email, user.user_metadata?.full_name);
         setAuthOpen(false);
         setGateOpen(false);
         showToast("Welcome — your shelf now travels with you.");
