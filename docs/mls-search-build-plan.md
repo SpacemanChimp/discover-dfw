@@ -24,7 +24,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 14 | **Lead Desk** — `/admin/leads` behind an `ADMIN_EMAILS` allowlist; filterable lead list, detail drawer with status pills, event timeline, shelf-engagement counts | ✅ |
 | 15 | **Saved-search digests + unsubscribe** — standing orders email new inventory on their cadence via the daily sweep; HMAC one-click unsubscribe + List-Unsubscribe headers | ✅ |
 | 16 | **Compliance display components centralized** — all MLS/IDX copy in `lib/compliance.ts` (marked PENDING BROKER/NTREIS/LEGAL REVIEW), extracted `ListingBrokerAttribution` / `LastUpdatedStamp` / `DataDisclaimer` | ✅ |
-| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
+| 17 | **Local listings schema + sync bookkeeping** — `listings` / `listing_media` / `mls_sync_runs` / `mls_sync_errors` / `city_market_snapshots` tables (migration 0006), row types in `lib/mls/db-rows.ts` | ✅ schema |
+| Next | Sync job (Trestle → local tables) + local provider, ⚠ compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
 
 ### Phase 3 notes
 
@@ -444,6 +445,44 @@ lands, these become unit tests over `searchListings` filter mechanics.
   ListingDetailDossier (attribution + stamp + per-listing disclaimer),
   `/homes` and `/city/[slug]/homes` (MLSComplianceFooter with TREC links
   at ≥10pt). City-report tier cards carry the courtesy line + MLS#.
+
+### Phase 17 notes — local listings schema + sync bookkeeping
+
+- **Why**: groundwork for a replication-based provider. Today every
+  search hits Trestle live (ISR-cached 15 min); once a sync job upserts
+  the feed into `listings`/`listing_media`, a "local" provider can serve
+  reads from Postgres — faster pages, no per-request quota exposure,
+  full-text/geo queries become possible. Nothing reads these tables yet;
+  the trestle provider is untouched.
+- **Tables** (migration `0006_mls_listings_schema.sql`, all RLS-enabled
+  with NO policies — service-role only, the browser never touches them):
+  - `listings` — keyed by RESO `listing_key`; status/price/close_price,
+    beds/baths/living_area/lot_size/year_built, type + sub_type, full
+    address split (street_number/street_name/unparsed_address/city/
+    state/postal_code/county/subdivision), lat/lon, public_remarks,
+    list_office_name, list_agent_name (only if IDX rules permit),
+    originating_system_name, modification_timestamp, photos_count, and a
+    server-only `raw` jsonb of the unmodified feed payload for
+    debugging. `updated_at` maintained by trigger. Indexes on status,
+    (city, status, price), modification desc, type, postal_code.
+  - `listing_media` — ordered photos per listing_key (cascade delete),
+    media_key/media_url/"order"/media_type/modification_timestamp.
+  - `mls_sync_runs` — one row per sync invocation: provider, started/
+    finished, status (running|success|partial|failed), records_seen/
+    upserted/failed, error_summary.
+  - `mls_sync_errors` — per-record failures: run_id (cascade),
+    listing_key, stage (fetch|map|upsert|media), message, detail jsonb.
+  - `city_market_snapshots` — daily computed stats per city:
+    active_listings, median_list_price, price_per_sqft, median_dom,
+    unique (city_slug, as_of).
+- **Raw payloads are never public**: RLS-no-policy posture means anon/
+  authenticated PostgREST access returns nothing; any future
+  client-facing read path must select explicit columns, never `raw`
+  (contract restated in `lib/mls/db-rows.ts`).
+- **Next step** (separate phase): the sync job — cron-driven
+  ModificationTimestamp-cursor replication from Trestle with
+  per-run bookkeeping in `mls_sync_runs`, then a `local` MLS_PROVIDER
+  implementation over these tables.
 
 ## Compliance guardrails (standing)
 
