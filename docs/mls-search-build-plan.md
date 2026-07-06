@@ -22,7 +22,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 12 | **Lead capture** — `lead_events` / `showing_requests` / `listing_questions` tables, dedicated API routes, sheets wired for real, prefill for members, honeypot + dwell-time spam guard | ✅ |
 | 13 | **Lead notification emails** — branded guide heads-up + submitter confirmation per lead, attempt logging to `lead_events`, dev dry-run gating, env docs (`.env.example`) | ✅ |
 | 14 | **Lead Desk** — `/admin/leads` behind an `ADMIN_EMAILS` allowlist; filterable lead list, detail drawer with status pills, event timeline, shelf-engagement counts | ✅ |
-| Next | Saved-search alert digests (wire saved_searches frequency/email_enabled/last_notified_at into the sweep), unsubscribe/preference links, The Letter, CRM webhook, compare view | ⬜ |
+| 15 | **Saved-search digests + unsubscribe** — standing orders email new inventory on their cadence via the daily sweep; HMAC one-click unsubscribe + List-Unsubscribe headers | ✅ |
+| Next | The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
 
 ### Phase 3 notes
 
@@ -323,21 +324,36 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
   optimistic UI with rollback.
 - Plain, functional styling — the editorial theatrics stay public.
 
-### Phase 15 plan — saved-search digests + preferences (not yet built)
+### Phase 15 notes — saved-search digests + unsubscribe
 
-- **Digest job**: extend the daily sweep (or a second cron) to run each
-  `saved_searches` row with `email_enabled` and frequency due
-  (`instant` → future webhook tier; `daily`/`weekly` → compare
-  `last_notified_at`), query the provider for listings newer than the
-  last run (`listDate`/first-seen), send a Ledger-style digest through
-  the same brand shell, then advance `last_notified_at`.
-- **Unsubscribe/preferences**: signed one-click token link in every
-  digest footer (`/api/email/unsubscribe?token=…` flipping
-  `email_enabled` off + a `/account/saved-searches` deep link for finer
-  control); `List-Unsubscribe` header for Gmail/Yahoo one-click
-  compliance. Required before any recurring send.
-- **Sender split**: keep `alerts@` for account-triggered mail; add
-  `letter@` for editorial sends when The Letter ships.
+- **Digest pass** rides the existing daily sweep (`/api/alerts/run`,
+  pass 2): every `saved_searches` row with `email_enabled` and a
+  frequency other than `off` is checked; due when
+  `now − (last_notified_at ?? created_at)` exceeds ~20 h (daily — and
+  `instant`, until a realtime tier exists) or ~6.8 d (weekly). The
+  provider runs the stored `filters` (Active, newest, top 50); listings
+  with `listDate` after the baseline are "fresh"; up to 8 render in the
+  digest with a "+N more" line and a Run-the-search button.
+  `last_notified_at` advances ONLY after a successful send — a failed
+  send retries naturally on the next sweep; a broken saved search is
+  caught per-row and never sinks the sweep. `profiles.alerts_opt_out`
+  is honored as the account-wide kill switch.
+- **Unsubscribe** (`lib/email/unsubscribe.ts`): token =
+  `searchId.HMAC-SHA256(searchId, CRON_SECRET)` — stateless,
+  timing-safe verify, no table. `/api/email/unsubscribe?token=…`
+  supports GET (branded confirmation page) and POST (RFC 8058
+  one-click); both flip that one search's `email_enabled` off, the
+  search stays saved. Every digest carries the footer link plus
+  `List-Unsubscribe` / `List-Unsubscribe-Post` headers (Gmail/Yahoo
+  bulk-sender rules).
+- **Template** (`lib/email/search-digest.ts`): brand shell, thumbnail +
+  badge/price/address/facts rows, footer states why the mail arrived +
+  CHANGE CADENCE deep link.
+- **Verified**: due search → `digestsSent: 1` with dry-run log; rerun →
+  0 (idempotent); valid token 200 + `email_enabled=false` (GET and
+  POST); tampered/missing token 400.
+- **Sender split** (future): keep `alerts@` for account-triggered mail;
+  add `letter@` for editorial sends when The Letter ships.
 
 ## Architecture
 

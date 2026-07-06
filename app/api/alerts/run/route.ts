@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { getMlsProvider } from "@/lib/mls";
+import type { SearchFilters } from "@/lib/mls/types";
 import { sendEmail } from "@/lib/email/resend";
 import { buildAlertEmail, type AlertItem } from "@/lib/email/alert-email";
+import { buildSearchDigestEmail } from "@/lib/email/search-digest";
+import { signUnsubscribeToken } from "@/lib/email/unsubscribe";
+import { SITE_URL } from "@/lib/site";
 
 /* The alert sweep — invoked by Vercel Cron (daily) or manually with the
-   secret. Compares every saved listing against the feed, logs alerts,
-   advances the last_seen_* baselines so nothing repeats, and sends one
-   digest email per user. Runs on the admin client by design: it is a
-   system job spanning all users; RLS still guards every client surface. */
+   secret. Two passes, both idempotent:
+   1. saved LISTINGS: price/status/open-house alerts, one digest per user,
+      last_seen_* baselines advance so nothing repeats.
+   2. saved SEARCHES ("standing orders"): new-inventory digests per due
+      frequency; last_notified_at advances only after a successful send.
+   Runs on the admin client by design: it is a system job spanning all
+   users; RLS still guards every client surface. */
 
 export const maxDuration = 60;
 
@@ -147,11 +154,84 @@ export async function GET(req: Request) {
     }
   }
 
+  /* ---- pass 2: saved-search digests ("standing orders") ---- */
+
+  const { data: searchRows } = await admin
+    .from("saved_searches")
+    .select("id, user_id, name, filters, query_label, query_string, frequency, email_enabled, created_at, last_notified_at")
+    .eq("email_enabled", true)
+    .neq("frequency", "off");
+
+  let searchesChecked = 0;
+  let digestsSent = 0;
+  const nowMs = Date.now();
+  // daily (and instant, until a realtime tier exists) ≈ 20h; weekly ≈ 6d19h
+  const dueMs = (freq: string) => (freq === "weekly" ? 6.8 * 86_400_000 : 0.83 * 86_400_000);
+
+  for (const row of searchRows ?? []) {
+    searchesChecked++;
+    const profile = profileById.get(row.user_id);
+    if (!profile?.email || profile.alerts_opt_out) continue;
+
+    // baseline: last digest, or the moment the order was placed
+    const baselineMs = Date.parse(row.last_notified_at ?? row.created_at);
+    if (nowMs - baselineMs < dueMs(row.frequency)) continue;
+
+    let fresh;
+    try {
+      const filters = (row.filters ?? {}) as SearchFilters;
+      const result = await provider.searchListings({
+        ...filters,
+        statuses: ["Active"],
+        sort: "newest",
+        pageSize: 50,
+        page: 1,
+      });
+      fresh = result.listings.filter((l) => Date.parse(l.listDate) > baselineMs);
+    } catch (e) {
+      console.error("[sweep] search digest query failed:", row.id, e);
+      continue; // one broken search never sinks the sweep
+    }
+    if (!fresh.length) continue;
+
+    const token = signUnsubscribeToken(row.id);
+    const unsubscribeUrl = token ? `${SITE_URL}/api/email/unsubscribe?token=${token}` : null;
+    const { subject, html } = buildSearchDigestEmail({
+      searchName: row.name,
+      queryLabel: row.query_label ?? row.name,
+      queryString: row.query_string ?? "",
+      listings: fresh.slice(0, 8),
+      totalNew: fresh.length,
+      unsubscribeUrl,
+    });
+    const sent = await sendEmail({
+      to: profile.email,
+      subject,
+      html,
+      // Gmail/Yahoo bulk-sender rules: one-click unsubscribe on recurring mail
+      headers: unsubscribeUrl
+        ? {
+            "List-Unsubscribe": `<${unsubscribeUrl}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          }
+        : undefined,
+    });
+    if (sent.ok) {
+      digestsSent++;
+      await admin
+        .from("saved_searches")
+        .update({ last_notified_at: new Date().toISOString() })
+        .eq("id", row.id);
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     savesChecked: saves?.length ?? 0,
     alertsCreated,
     usersEmailed,
     baselinesSeeded,
+    searchesChecked,
+    digestsSent,
   });
 }

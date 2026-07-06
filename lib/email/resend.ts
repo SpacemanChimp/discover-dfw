@@ -16,6 +16,8 @@ export async function sendEmail(opts: {
   html: string;
   /** Reply-To — set to the lead's address on internal notifications. */
   replyTo?: string;
+  /** Extra SMTP headers — e.g. List-Unsubscribe on recurring digests. */
+  headers?: Record<string, string>;
 }): Promise<{ ok: boolean; error?: string; dryRun?: boolean }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -39,6 +41,7 @@ export async function sendEmail(opts: {
         subject: opts.subject,
         html: opts.html,
         ...(opts.replyTo ? { reply_to: [opts.replyTo] } : {}),
+        ...(opts.headers ? { headers: opts.headers } : {}),
       }),
     });
     if (!res.ok) {

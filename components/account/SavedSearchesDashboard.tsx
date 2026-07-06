@@ -101,7 +101,7 @@ export default function SavedSearchesDashboard() {
           ＋ START A SEARCH TO SAVE
         </Link>
         <div className="font-mono" style={{ textAlign: "center", fontSize: 8, letterSpacing: ".16em", color: "rgba(29,25,19,.45)", paddingBottom: 6 }}>
-          ALERT EMAILS FOR SEARCHES ARRIVE IN A LATER PHASE — PREFERENCES ARE SAVED NOW
+          DIGESTS RIDE THE DAILY SWEEP — FLIP ✉ EMAIL OR THE CADENCE ANY TIME
         </div>
       </div>
     </div>
