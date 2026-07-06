@@ -113,14 +113,12 @@ function applyFilters(query: any, f: SearchFilters) {
   if (f.maxSqft != null) query = query.lte("living_area", f.maxSqft);
   if (f.newBuildsOnly) query = query.gte("year_built", 2024);
   if (f.q) {
-    // keyword search across remarks/address/subdivision; strip PostgREST
-    // or()-syntax metacharacters from user input
-    const term = f.q.replace(/[,()"'\\%]/g, " ").trim();
-    if (term) {
-      query = query.or(
-        `public_remarks.ilike.%${term}%,unparsed_address.ilike.%${term}%,subdivision.ilike.%${term}%`
-      );
-    }
+    // full-text search over the generated search_tsv column (0008) —
+    // the old 3-column ilike detoasted every row's remarks and rode the
+    // statement-timeout line. websearch syntax: plain words, quoted
+    // phrases, OR, minus-exclusion.
+    const term = f.q.replace(/[():|&!*<>\\]/g, " ").trim();
+    if (term) query = query.textSearch("search_tsv", term, { type: "websearch" });
   }
 
   switch (f.propertyType) {
@@ -170,11 +168,41 @@ async function search(filters: SearchFilters): Promise<SearchResult> {
   const pageSize = filters.pageSize && filters.pageSize > 0 ? filters.pageSize : DEFAULT_PAGE_SIZE;
   const page = filters.page && filters.page > 0 ? filters.page : 1;
 
-  let query = db.from("listings").select(SELECT, { count: "exact" });
-  query = applyFilters(query, filters);
-  query = applySort(query, filters.sort);
-  const { data, count, error } = await query.range((page - 1) * pageSize, page * pageSize - 1);
-  if (error) throw new Error(`local provider: ${error.message}`);
+  let data: any[] | null;
+  let count: number | null;
+
+  if (filters.q) {
+    /* Keyword searches go two-phase: a wide select riding the FTS bitmap
+       scan detoasts thousands of matched rows and blows the statement
+       timeout on broad terms ("pool" ≈ 10k matches). Phase 1 pages slim
+       keys under the GIN index; phase 2 fetches full rows for just this
+       page by key. */
+    let slim = db.from("listings").select("listing_key", { count: "exact" });
+    slim = applyFilters(slim, filters);
+    slim = applySort(slim, filters.sort);
+    const phase1 = await slim.range((page - 1) * pageSize, page * pageSize - 1);
+    if (phase1.error) throw new Error(`local provider (q keys): ${phase1.error.message}`);
+    const keys: string[] = (phase1.data ?? []).map((r: any) => r.listing_key);
+    count = phase1.count;
+    if (!keys.length) {
+      data = [];
+    } else {
+      const phase2 = await db.from("listings").select(SELECT).in("listing_key", keys);
+      if (phase2.error) throw new Error(`local provider (q rows): ${phase2.error.message}`);
+      const rank = new Map(keys.map((k, i) => [k, i]));
+      data = (phase2.data ?? []).sort(
+        (a: any, b: any) => (rank.get(a.listing_key) ?? 0) - (rank.get(b.listing_key) ?? 0)
+      );
+    }
+  } else {
+    let query = db.from("listings").select(SELECT, { count: "exact" });
+    query = applyFilters(query, filters);
+    query = applySort(query, filters.sort);
+    const res = await query.range((page - 1) * pageSize, page * pageSize - 1);
+    if (res.error) throw new Error(`local provider: ${res.error.message}`);
+    data = res.data;
+    count = res.count;
+  }
 
   const listings = (data ?? []).map(toListing);
   return {
