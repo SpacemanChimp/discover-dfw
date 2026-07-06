@@ -20,7 +20,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 10 | Saved searches — full schema, API routes, standing-orders cards with cadence + email controls, guest gating | ✅ |
 | 11 | **Trestle IDX Plus provider — live NTREIS inventory** (`lib/mls/trestle.ts`), real photos, real coordinates on the map, live market snapshots, ISR; SEO flip + sitemap + Search Console followed | ✅ |
 | 12 | **Lead capture** — `lead_events` / `showing_requests` / `listing_questions` tables, dedicated API routes, sheets wired for real, prefill for members, honeypot + dwell-time spam guard | ✅ |
-| Next | The Letter, search-alert emails (wire saved_searches into the sweep), CRM webhook, compare view | ⬜ |
+| 13 | **Lead notification emails** — branded guide heads-up + submitter confirmation per lead, attempt logging to `lead_events`, dev dry-run gating, env docs (`.env.example`) | ✅ |
+| Next | Saved-search alert digests (wire saved_searches frequency/email_enabled/last_notified_at into the sweep), unsubscribe/preference links, The Letter, CRM webhook, compare view | ⬜ |
 
 ### Phase 3 notes
 
@@ -262,6 +263,54 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 - **Showing request ≠ booking** — wording throughout is request/confirm.
 - Legacy `POST /api/leads` stays for the account-signup event; the sheets
   no longer use it.
+
+### Phase 13 notes — lead notification emails
+
+- **Provider**: Resend (already live for auth SMTP + alert digests) —
+  no new vendor. All mail from `alerts@discoverdfw.com` on the verified
+  discoverdfw.com domain.
+- **Env** (documented in `.env.example`): `RESEND_API_KEY` (server-only
+  sending key), `LEAD_NOTIFY_EMAIL` (owner/broker/team inbox — unset
+  skips guide notifications, user confirmations still send),
+  `EMAIL_SEND_IN_DEV` (outside production ALL emails dry-run — logged,
+  not sent — unless this is `1`; keeps tests from emailing real people).
+- **Module**: `lib/email/lead-emails.ts` — brand shell shared with the
+  alert digest (cream/ink/orange, serif headline, mono eyebrow, inline
+  styles only), four templates: guide showing / guide question (with
+  `Reply-To` set to the lead so replying reaches them directly) and the
+  two submitter confirmations ("Consider it requested — a local guide
+  will confirm" / "Good question — one guide, not a lead list").
+- **Ordering contract**: lead row stores FIRST, then emails; the send
+  path never throws, so a dead mailbox can't fail the form.
+- **Failure logging**: every attempt lands in `lead_events` as
+  `email_sent` / `email_failed` with `{category, to, subject, dryRun,
+  error}` metadata — "did the guide hear about lead X?" is a SQL query.
+  No new table needed.
+- **Compliance**: both emails are transactional (direct response to a
+  user-initiated request) — no unsubscribe link required under
+  CAN-SPAM; footers state exactly why the recipient got the note.
+  Marketing-adjacent sends (saved-search digests, The Letter) WILL need
+  the preference/unsubscribe layer below before shipping.
+- **Test strategy**: dev submits run the full path with dry-run sends —
+  assert `lead_events` gains `email_sent` rows with `dryRun: true` and
+  no real delivery; production verified via Resend dashboard logs after
+  deploy. Validation/spam paths never reach the email layer.
+
+### Phase 14 plan — saved-search digests + preferences (not yet built)
+
+- **Digest job**: extend the daily sweep (or a second cron) to run each
+  `saved_searches` row with `email_enabled` and frequency due
+  (`instant` → future webhook tier; `daily`/`weekly` → compare
+  `last_notified_at`), query the provider for listings newer than the
+  last run (`listDate`/first-seen), send a Ledger-style digest through
+  the same brand shell, then advance `last_notified_at`.
+- **Unsubscribe/preferences**: signed one-click token link in every
+  digest footer (`/api/email/unsubscribe?token=…` flipping
+  `email_enabled` off + a `/account/saved-searches` deep link for finer
+  control); `List-Unsubscribe` header for Gmail/Yahoo one-click
+  compliance. Required before any recurring send.
+- **Sender split**: keep `alerts@` for account-triggered mail; add
+  `letter@` for editorial sends when The Letter ships.
 
 ## Architecture
 

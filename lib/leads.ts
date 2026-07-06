@@ -5,7 +5,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseServer } from "@/lib/db/server";
-import { sendEmail } from "@/lib/email/resend";
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -60,14 +59,5 @@ export async function recordLeadEvent(
   if (error) console.error("[lead-event] insert failed:", error.message);
 }
 
-/* Internal heads-up to the guide's inbox. Sends only when LEAD_NOTIFY_EMAIL
-   is set — the email infrastructure (Resend) already exists, but routing
-   stays opt-in until a CRM lands. Fire-and-forget. */
-export async function notifyGuide(subject: string, lines: string[]): Promise<void> {
-  const to = process.env.LEAD_NOTIFY_EMAIL;
-  if (!to) return;
-  const html = `<div style="font-family:Georgia,serif;font-size:15px;line-height:1.7;color:#1D1913">${lines
-    .map((l) => `<p style="margin:0 0 8px">${l}</p>`)
-    .join("")}</div>`;
-  await sendEmail({ to, subject, html }).catch(() => {});
-}
+/* Lead notification emails live in lib/email/lead-emails.ts — branded
+   templates, guide heads-up + submitter confirmation, attempt logging. */

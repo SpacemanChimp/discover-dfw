@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
-import { currentUserId, EMAIL_RE, looksLikeSpam, notifyGuide, recordLeadEvent } from "@/lib/leads";
+import { currentUserId, EMAIL_RE, looksLikeSpam, recordLeadEvent } from "@/lib/leads";
+import { sendListingQuestionEmails } from "@/lib/email/lead-emails";
 
 /* Listing questions — routed to one local guide, never a lead list.
    Guests submit with name/email; signed-in users get attached by session. */
@@ -71,11 +72,16 @@ export async function POST(req: Request) {
     metadata: { replyPref: body.replyPref ?? null, address: body.address ?? null },
   });
 
-  await notifyGuide(`Question — ${body.address || body.listingKey}`, [
-    `<b>${name}</b> asked about <b>${body.address || body.listingKey}</b>:`,
-    `“${question}”`,
-    `Reply to: ${email}${row.phone ? ` · ${row.phone}` : ""}${body.replyPref ? ` (prefers ${body.replyPref})` : ""}`,
-  ]);
+  // row is stored — email failures can only cost the heads-up, never the lead
+  await sendListingQuestionEmails(admin, {
+    listingKey: body.listingKey,
+    address: body.address || body.listingKey,
+    question,
+    name,
+    email,
+    phone: row.phone,
+    replyPref: (body.replyPref || "").trim() || null,
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
-import { currentUserId, EMAIL_RE, looksLikeSpam, notifyGuide, recordLeadEvent } from "@/lib/leads";
+import { currentUserId, EMAIL_RE, looksLikeSpam, recordLeadEvent } from "@/lib/leads";
+import { sendShowingRequestEmails } from "@/lib/email/lead-emails";
 
 /* Showing requests — a REQUEST, not a confirmed booking; a local guide
    confirms. Guests submit with name/email; signed-in users get attached
@@ -90,12 +91,18 @@ export async function POST(req: Request) {
     metadata: { day, timeWindow: body.timeWindow, mode: body.mode, address: body.address ?? null },
   });
 
-  await notifyGuide(`Showing request — ${body.address || body.listingKey}`, [
-    `<b>${name}</b> asked to see <b>${body.address || body.listingKey}</b>.`,
-    `${day}, ${body.timeWindow} — ${body.mode === "live_video" ? "live video" : "in person"}.`,
-    `Reply to: ${email}${row.phone ? ` · ${row.phone}` : ""}`,
-    row.message ? `Note: ${row.message}` : "",
-  ].filter(Boolean));
+  // row is stored — email failures can only cost the heads-up, never the lead
+  await sendShowingRequestEmails(admin, {
+    listingKey: body.listingKey,
+    address: body.address || body.listingKey,
+    requestedDay: day,
+    timeWindow: body.timeWindow!,
+    mode: body.mode as "in_person" | "live_video",
+    name,
+    email,
+    phone: row.phone,
+    message: row.message,
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -90,7 +90,7 @@ export function buildAlertEmail(alerts: AlertItem[]): { subject: string; html: s
         </tr>
       </table>
       <div style="font-family:Menlo,Consolas,monospace;font-size:9px;letter-spacing:.16em;color:rgba(29,25,19,.5);text-align:center;margin-top:16px;">
-        SAMPLE DATA UNTIL MLS APPROVAL · YOU GET THESE BECAUSE YOU SAVED THESE HOMES
+        LIVE NTREIS DATA · YOU GET THESE BECAUSE YOU SAVED THESE HOMES
       </div>
     </div>
   </div>`;
