@@ -66,11 +66,12 @@ async function getToken(): Promise<string> {
   const id = process.env.TRESTLE_API_ID;
   const secret = process.env.TRESTLE_API_PASSWORD;
   if (!id || !secret) throw new Error("Trestle credentials missing: set TRESTLE_API_ID and TRESTLE_API_PASSWORD");
+  // no explicit cache option: POSTs are never data-cached, and `no-store`
+  // would force dynamic rendering — which 500s ISR listing pages
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret, scope: "api" }),
-    cache: "no-store",
   });
   if (!res.ok) throw new Error(`Trestle token request failed: ${res.status}`);
   const j = (await res.json()) as { access_token: string; expires_in?: number };
