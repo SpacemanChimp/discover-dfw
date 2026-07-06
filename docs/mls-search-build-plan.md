@@ -23,7 +23,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 13 | **Lead notification emails** — branded guide heads-up + submitter confirmation per lead, attempt logging to `lead_events`, dev dry-run gating, env docs (`.env.example`) | ✅ |
 | 14 | **Lead Desk** — `/admin/leads` behind an `ADMIN_EMAILS` allowlist; filterable lead list, detail drawer with status pills, event timeline, shelf-engagement counts | ✅ |
 | 15 | **Saved-search digests + unsubscribe** — standing orders email new inventory on their cadence via the daily sweep; HMAC one-click unsubscribe + List-Unsubscribe headers | ✅ |
-| Next | The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
+| 16 | **Compliance display components centralized** — all MLS/IDX copy in `lib/compliance.ts` (marked PENDING BROKER/NTREIS/LEGAL REVIEW), extracted `ListingBrokerAttribution` / `LastUpdatedStamp` / `DataDisclaimer` | ✅ |
+| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
 
 ### Phase 3 notes
 
@@ -415,6 +416,34 @@ module load (unique keys, known city slugs, positive figures, primary media,
 PRICE CUT ⇒ originalListPrice, parseable dates) and **throws during
 `next build`** on violations — the build is the test. When a test runner
 lands, these become unit tests over `searchListings` filter mechanics.
+
+### Phase 16 notes — compliance display components
+
+- **`lib/compliance.ts` is the single source of truth** for every MLS/IDX
+  string on the site: source labels, the "Listing courtesy of …"
+  attribution form, both disclaimers ("deemed reliable" per-listing +
+  the data-source/IDX-program paragraph), the mock-mode footer text, the
+  reserved-slot placeholders, and the last-updated formatter.
+- ⚠ **EVERY STRING THERE IS PLACEHOLDER COPY drafted in-house** — marked
+  `PENDING BROKER / NTREIS / LEGAL REVIEW` in the file header and via the
+  grep-able `COMPLIANCE_COPY_STATUS` constant. The sponsoring broker and
+  NTREIS/Cotality must supply or approve final required wording before
+  launch is considered compliant; update it in that one file and every
+  card, dossier, and footer follows. The single exception: TREC link
+  labels (`components/TrecLinks.tsx`) are regulator-mandated verbatim
+  (22 TAC §531.18/§531.20) and are final.
+- **Components** (`components/compliance/`):
+  `ListingBrokerAttribution` (courtesy line with reserved-slot fallback —
+  the space never silently disappears), `LastUpdatedStamp` (CT-formatted
+  refresh time + source, light/dark variants), `DataDisclaimer`
+  (live vs mock paragraph). `MLSAttribution` (per-card row) and
+  `MLSComplianceFooter` (disclaimer + stamp + `TrecLinks`) now compose
+  them; the Trestle provider takes `attributionText`/`disclaimerText`/
+  `mlsSource` from the same module.
+- **Coverage**: ListingCardLedger (compact attribution row),
+  ListingDetailDossier (attribution + stamp + per-listing disclaimer),
+  `/homes` and `/city/[slug]/homes` (MLSComplianceFooter with TREC links
+  at ≥10pt). City-report tier cards carry the courtesy line + MLS#.
 
 ## Compliance guardrails (standing)
 

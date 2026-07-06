@@ -1,7 +1,9 @@
 import type { Listing } from "@/lib/mls/types";
 import type { City } from "@/lib/dfw-data";
+import { DISCLAIMER_RESERVED } from "@/lib/compliance";
 import { badgeStyle, money } from "./format";
 import MLSAttribution from "./MLSAttribution";
+import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
 import ListingPhotoGallery from "@/components/listing/ListingPhotoGallery";
 import ListingFactsLedger from "@/components/listing/ListingFactsLedger";
 import ListingCityContext from "@/components/listing/ListingCityContext";
@@ -22,14 +24,6 @@ export default function ListingDetailDossier({
 }) {
   const b = badgeStyle(listing);
   const ppsf = listing.livingAreaSqft > 0 ? Math.round(listing.listPrice / listing.livingAreaSqft) : null;
-  const updated = new Date(listing.mlsLastUpdated).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/Chicago",
-  });
 
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 4vw 60px" }}>
@@ -103,10 +97,9 @@ export default function ListingDetailDossier({
           mlsSource={listing.mlsSource}
         />
         <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".14em", color: "rgba(29,25,19,.45)" }}>
-          LAST UPDATED {updated.toUpperCase()} CT ·{" "}
-          {listing.disclaimerText
-            ? listing.disclaimerText.toUpperCase()
-            : "DISCLAIMER RESERVED — DEEMED RELIABLE, NOT GUARANTEED (LIVE FEED)"}
+          <LastUpdatedStamp asOf={listing.mlsLastUpdated} prefix="LAST UPDATED" />
+          {" · "}
+          {(listing.disclaimerText ?? DISCLAIMER_RESERVED).toUpperCase()}
         </div>
       </div>
 

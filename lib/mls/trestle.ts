@@ -12,6 +12,8 @@
    Every query is scoped to the curated 53-city dataset so each listing maps
    to a real /city/[slug] page — the feed itself covers all of North Texas. */
 import "server-only";
+// Compliance copy — single source of truth, PENDING BROKER/NTREIS/LEGAL REVIEW
+import { attributionLine, DEEMED_RELIABLE_DISCLAIMER, MLS_SOURCE } from "@/lib/compliance";
 import type { MlsProvider } from "./provider";
 import type {
   Listing,
@@ -36,10 +38,6 @@ const REVALIDATE_SEARCH = 900;
 const REVALIDATE_COUNTS = 1800;
 const REVALIDATE_SNAPSHOT = 3600;
 
-const NTREIS_DISCLAIMER =
-  "Listing information provided by North Texas Real Estate Information Systems, Inc. (NTREIS). " +
-  "Information is deemed reliable but is not guaranteed and should be independently verified. " +
-  "Data may not reflect all real estate activity in the market. Copyright NTREIS. All rights reserved.";
 
 /* Statuses shown when the visitor doesn't filter — everything except sold.
    (NTREIS doesn't populate ComingSoon in this feed; harmless to include.) */
@@ -230,10 +228,10 @@ function toListing(p: any): Listing {
     editorialNote: editorialNote(p, badge, cityName, hood),
     listingBrokerName: null,
     listingOfficeName: p.ListOfficeName ?? null,
-    mlsSource: "NTREIS",
+    mlsSource: MLS_SOURCE.live,
     mlsLastUpdated: p.ModificationTimestamp ?? new Date().toISOString(),
-    attributionText: p.ListOfficeName ? `Listing courtesy of ${p.ListOfficeName}` : null,
-    disclaimerText: NTREIS_DISCLAIMER,
+    attributionText: p.ListOfficeName ? attributionLine(p.ListOfficeName) : null,
+    disclaimerText: DEEMED_RELIABLE_DISCLAIMER,
   };
 }
 

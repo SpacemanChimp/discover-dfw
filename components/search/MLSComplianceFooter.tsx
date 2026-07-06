@@ -1,18 +1,12 @@
 import TrecLinks from "@/components/TrecLinks";
-import { isLiveMls } from "@/lib/mls";
+import DataDisclaimer from "@/components/compliance/DataDisclaimer";
+import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
 
-/* MLS/IDX compliance block for every search + listing surface — NTREIS
-   IDX disclaimer + data-refresh timestamp in live mode, the reserved
-   placeholder in mock mode. */
+/* MLS/IDX compliance block for every search + listing surface: data-source
+   disclaimer, refresh stamp, and the TREC disclosure links. Copy flows from
+   lib/compliance (PENDING BROKER/NTREIS/LEGAL REVIEW) except the TREC link
+   labels, which are regulator-mandated and final. */
 export default function MLSComplianceFooter({ asOf }: { asOf: string }) {
-  const stamp = new Date(asOf).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/Chicago",
-  });
   return (
     <footer style={{ background: "#1D1913", color: "#F6F1E6" }}>
       <div style={{ maxWidth: 1380, margin: "0 auto", padding: "34px 4vw 30px" }}>
@@ -22,45 +16,9 @@ export default function MLSComplianceFooter({ asOf }: { asOf: string }) {
         >
           MLS DISCLOSURES
         </div>
-        {isLiveMls ? (
-          <p
-            style={{
-              margin: 0,
-              maxWidth: 860,
-              fontSize: 12.5,
-              lineHeight: 1.7,
-              color: "rgba(246,241,230,.65)",
-            }}
-          >
-            Listing information is provided through the Internet Data Exchange (IDX) program of
-            North Texas Real Estate Information Systems, Inc. (NTREIS). Real estate listings held
-            by brokerage firms other than the site owner are identified with the name of the
-            listing brokerage. Information is deemed reliable but is not guaranteed and should be
-            independently verified. Data may not reflect all real estate activity in the market.
-            Copyright NTREIS. All rights reserved.
-          </p>
-        ) : (
-          <p
-            style={{
-              margin: 0,
-              maxWidth: 860,
-              fontSize: 12.5,
-              lineHeight: 1.7,
-              color: "rgba(246,241,230,.65)",
-            }}
-          >
-            All listings shown are <b style={{ color: "#E88D6B" }}>fictional placeholders</b> pending
-            the live IDX feed. [Reserved: broker identification · “Listings courtesy of the North
-            Texas Real Estate Information Systems (NTREIS) IDX program” · information is deemed
-            reliable but not guaranteed and should be independently verified · listings marked with
-            the IDX logo are held by brokerage firms other than the site owner.]
-          </p>
-        )}
-        <div
-          className="font-mono"
-          style={{ marginTop: 12, fontSize: 9.5, letterSpacing: ".16em", color: "rgba(246,241,230,.45)" }}
-        >
-          DATA LAST REFRESHED {stamp.toUpperCase()} CT · {isLiveMls ? "NTREIS IDX" : "MOCK FEED"}
+        <DataDisclaimer light />
+        <div style={{ marginTop: 12 }}>
+          <LastUpdatedStamp asOf={asOf} light />
         </div>
         <div
           style={{

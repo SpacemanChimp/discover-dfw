@@ -1,7 +1,10 @@
-/* Reserved IDX attribution slot. MLS rules (NTREIS) require the listing
-   brokerage's name displayed with each listing; the mock feed carries none,
-   so the reservation itself is shown until Trestle supplies attributionText
-   (or listingBrokerName / listingOfficeName). */
+/* Per-listing IDX attribution row: broker courtesy line (left) + MLS number
+   and source (right). All copy flows from lib/compliance — PENDING
+   BROKER/NTREIS/LEGAL REVIEW — so the required wording lands in one file.
+   Client-safe: used inside the Ledger card's client boundary. */
+import ListingBrokerAttribution from "@/components/compliance/ListingBrokerAttribution";
+import { MLS_SOURCE } from "@/lib/compliance";
+
 export default function MLSAttribution({
   attributionText,
   listingBrokerName,
@@ -16,13 +19,6 @@ export default function MLSAttribution({
   mlsSource: string;
   compact?: boolean;
 }) {
-  const line =
-    attributionText ??
-    (listingBrokerName
-      ? `LISTING COURTESY OF ${listingBrokerName.toUpperCase()}`
-      : listingId
-      ? "LISTING COURTESY OF — IDX ATTRIBUTION RESERVED"
-      : "LISTINGS COURTESY OF PARTICIPATING BROKERAGES — IDX ATTRIBUTION RESERVED");
   return (
     <div
       className="font-mono"
@@ -36,10 +32,14 @@ export default function MLSAttribution({
         flexWrap: "wrap",
       }}
     >
-      <span>{attributionText ? attributionText.toUpperCase() : line}</span>
+      <ListingBrokerAttribution
+        attributionText={attributionText}
+        listingBrokerName={listingBrokerName}
+        group={!listingId}
+      />
       <span>
         {listingId ? `MLS# ${listingId} · ` : "SOURCE: "}
-        {mlsSource === "MOCK" ? "PLACEHOLDER — PENDING MLS APPROVAL" : mlsSource}
+        {mlsSource === "MOCK" ? MLS_SOURCE.mock : mlsSource}
       </span>
     </div>
   );
