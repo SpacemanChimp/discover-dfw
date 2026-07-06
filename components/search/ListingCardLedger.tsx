@@ -48,7 +48,15 @@ export default function ListingCardLedger({
             justifyContent: "center",
           }}
         >
-          {photo ? (
+          {/* placeholder always renders underneath; a broken CDN URL just
+              hides itself (onError) and the striped slot shows through */}
+          <span
+            className="font-mono"
+            style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)", padding: "0 14px", textAlign: "center" }}
+          >
+            MLS PHOTO — {listing.photoLabel.toUpperCase()}
+          </span>
+          {photo && (
             // plain <img>: the CDN already serves sized JPEGs, and next/image
             // optimization quota can't cover a 47k-listing inventory
             // eslint-disable-next-line @next/next/no-img-element
@@ -56,15 +64,10 @@ export default function ListingCardLedger({
               src={photo}
               alt={`${listing.unparsedAddress}, ${cityName}`}
               loading="lazy"
+              decoding="async"
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
               style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
             />
-          ) : (
-            <span
-              className="font-mono"
-              style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)" }}
-            >
-              MLS PHOTO — {listing.photoLabel.toUpperCase()}
-            </span>
           )}
           <span
             className="font-mono"

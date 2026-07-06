@@ -14,6 +14,8 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
   const side = rest.slice(0, 2);
   const remaining = Math.max(0, photos.length - 1 - side.length);
   const [open, setOpen] = useState<number | null>(null);
+  const [broken, setBroken] = useState<ReadonlySet<number>>(new Set());
+  const markBroken = (i: number) => setBroken((prev) => new Set(prev).add(i));
 
   const step = useCallback(
     (dir: 1 | -1) =>
@@ -50,12 +52,15 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
     color: "#1D1913",
   });
 
-  const img = (url: string, alt: string) => (
+  const img = (url: string, alt: string, eager = false) => (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={url}
       alt={alt}
-      loading="lazy"
+      loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : undefined}
+      decoding="async"
+      onError={(e) => { e.currentTarget.style.display = "none"; }}
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
     />
   );
@@ -80,16 +85,15 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
         }}
       >
         <button type="button" aria-label="Open photo gallery" onClick={() => openAt(0)} style={{ ...slot("#EAE0C9"), gridRow: "span 2" }}>
-          {primary?.url ? (
-            img(primary.url, `${listing.unparsedAddress} — photo 1 of ${photos.length}`)
-          ) : (
-            <span
-              className="font-mono"
-              style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 12 }}
-            >
-              MLS PHOTO 1 OF {listing.photoCount} — {(primary?.caption ?? listing.photoLabel).toUpperCase()}
-            </span>
-          )}
+          {/* placeholder always underneath; broken URLs hide themselves */}
+          <span
+            className="font-mono"
+            style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 12 }}
+          >
+            MLS PHOTO 1 OF {listing.photoCount} — {(primary?.caption ?? listing.photoLabel).toUpperCase()}
+          </span>
+          {/* the dossier hero is the page's LCP — load it eagerly */}
+          {primary?.url && img(primary.url, `${listing.unparsedAddress} — photo 1 of ${photos.length}`, true)}
           <span
             className="font-mono"
             style={{
@@ -109,16 +113,13 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
         </button>
         {side.map((m, i) => (
           <button type="button" key={m.order} aria-label={`Open photo ${i + 2}`} onClick={() => openAt(i + 1)} style={slot("#E6DBC2")}>
-            {m.url ? (
-              img(m.url, `${listing.unparsedAddress} — photo ${i + 2}`)
-            ) : (
-              <span
-                className="font-mono"
-                style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 10 }}
-              >
-                {m.caption.toUpperCase()}
-              </span>
-            )}
+            <span
+              className="font-mono"
+              style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 10 }}
+            >
+              {(m.caption || "MLS PHOTO").toUpperCase()}
+            </span>
+            {m.url && img(m.url, `${listing.unparsedAddress} — photo ${i + 2}`)}
             {i === side.length - 1 && remaining > 0 && (
               <span
                 className="font-mono"
@@ -168,13 +169,32 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
             justifyContent: "center",
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photos[open].url!}
-            alt={`${listing.unparsedAddress} — photo ${open + 1} of ${photos.length}`}
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "94vw", maxHeight: "86vh", objectFit: "contain", borderRadius: 8 }}
-          />
+          {broken.has(open) ? (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="font-mono"
+              style={{
+                border: "2px dashed rgba(246,241,230,.4)",
+                borderRadius: 12,
+                padding: "60px 40px",
+                color: "rgba(246,241,230,.7)",
+                fontSize: 10,
+                letterSpacing: ".2em",
+              }}
+            >
+              PHOTO UNAVAILABLE — THE MLS SOURCE DID NOT LOAD
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photos[open].url!}
+              alt={`${listing.unparsedAddress} — photo ${open + 1} of ${photos.length}`}
+              decoding="async"
+              onClick={(e) => e.stopPropagation()}
+              onError={() => markBroken(open)}
+              style={{ maxWidth: "94vw", maxHeight: "86vh", objectFit: "contain", borderRadius: 8 }}
+            />
+          )}
           <button
             type="button"
             aria-label="Close gallery"
@@ -246,15 +266,23 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
             className="font-mono"
             style={{
               position: "absolute",
-              bottom: 20,
+              bottom: 16,
               left: "50%",
               transform: "translateX(-50%)",
               color: "rgba(246,241,230,.85)",
               fontSize: 10,
               letterSpacing: ".22em",
+              textAlign: "center",
+              width: "94vw",
             }}
           >
             {open + 1} / {photos.length} — {listing.unparsedAddress.toUpperCase()}
+            {/* IDX photo attribution rides along in the viewer too */}
+            {listing.attributionText && (
+              <span style={{ display: "block", marginTop: 5, fontSize: 8.5, color: "rgba(246,241,230,.55)" }}>
+                {listing.attributionText.toUpperCase()} · {listing.mlsSource}
+              </span>
+            )}
           </span>
         </div>
       )}

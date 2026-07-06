@@ -591,6 +591,44 @@ a dev server on :3111, or against production):
 
     node scripts/trestle-smoke.mjs [city]    # credentials/endpoint smoke test
 
+### Media handling plan + display audit (post-Phase 20)
+
+**Recommendations (the plan half of the media spec):**
+- **Serve MLS CDN URLs directly — do NOT cache/rehost images.** The
+  Cotality media URLs are public, signed, already CDN-backed (verified
+  fast), and photos_count-complete at our 50/listing replication cap.
+  ⚠ Rehosting, caching, or transforming MLS photos may exceed what the
+  IDX/Trestle data agreement allows — BROKER/MLS/COTALITY REVIEW
+  REQUIRED before any image proxy or cache is built. None is built.
+- **No image proxy/CDN layer for now**: next/image optimization quota
+  can't cover a ~31k-listing inventory and a proxy inherits the
+  agreement question above. Revisit only with (a) written approval and
+  (b) a concrete perf need the direct CDN doesn't meet.
+- **Placeholder**: the striped cream slot with the mono caption is the
+  brand fallback — it now renders UNDER every image, so a missing URL
+  or a mid-flight CDN failure degrades to it automatically.
+- **Ordering**: feed `Order` is authoritative — replicated into
+  `listing_media."order"`, sorted everywhere, primary = lowest order.
+- **Gallery behavior**: collage (hero + two) → full-screen lightbox over
+  all replicated photos; arrows, ←/→/Esc, counter, scroll lock,
+  per-photo attribution line.
+- **Performance**: dossier hero is the LCP — `loading=eager` +
+  `fetchpriority=high`; everything else lazy + `decoding=async`. True
+  `srcset` responsiveness is impossible without an image proxy (single
+  rendition per CDN URL) — noted for the post-approval revisit.
+- **Expired removal**: media cascade-deletes with listings; sync
+  replaces media wholesale per touched listing; weekly reconcile
+  off-markets zombie rows. No orphan process needed.
+
+**Display audit closures** (rest existed in Phases 18–20):
+- `onError` fallbacks everywhere — a broken CDN URL hides itself and
+  the branded placeholder shows through (cards, collage) or a "PHOTO
+  UNAVAILABLE" tile renders (lightbox). Broken media can no longer
+  paint browser broken-image icons.
+- Lightbox footer now carries the listing-broker attribution + MLS
+  source alongside the counter.
+- LCP eager-load on the dossier hero; `decoding=async` on all media.
+
 ### Phase 20 notes — live market band, lightbox, keyword search
 
 - **Market band is honest now**: sync snapshots compute median
