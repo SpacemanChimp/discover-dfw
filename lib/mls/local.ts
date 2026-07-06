@@ -46,7 +46,7 @@ function mapPropertyType(r: any): PropertyType {
 function toListing(r: any): Listing {
   const cityName: string = r.city || "";
   const known = CITY_BY_NAME.get(cityName.toLowerCase());
-  const dom: number = Number(r.raw?.CumulativeDaysOnMarket ?? 0);
+  const dom: number = Math.max(0, r.days_on_market ?? Number(r.raw?.CumulativeDaysOnMarket ?? 0));
   const media = ((r.listing_media as any[]) ?? [])
     .slice()
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
@@ -154,11 +154,11 @@ function applySort(query: any, sort: SortKey | undefined) {
       return query.order("living_area", { ascending: false, nullsFirst: false });
     case "newest":
     default:
-      // HOTFIX: ordering by raw->CumulativeDaysOnMarket detoasts every
-      // matching row's jsonb and blew the statement timeout at ~30k rows.
-      // modification_timestamp is indexed; a proper days_on_market column
-      // lands in migration 0007.
-      return query.order("modification_timestamp", { ascending: false });
+      // days_on_market is a real indexed column (0007) — never sort by a
+      // jsonb path here; that detoasts every row and blows the timeout
+      return query
+        .order("days_on_market", { ascending: true, nullsFirst: false })
+        .order("modification_timestamp", { ascending: false });
   }
 }
 

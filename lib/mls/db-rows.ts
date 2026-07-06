@@ -37,6 +37,8 @@ export interface ListingRow {
   originating_system_name: string | null;
   modification_timestamp: string;
   photos_count: number | null;
+  /** RESO CumulativeDaysOnMarket, promoted to a column for indexed sorting. */
+  days_on_market: number | null;
   /** SERVER-ONLY debugging payload — never expose publicly. */
   raw: Record<string, unknown> | null;
   created_at: string;

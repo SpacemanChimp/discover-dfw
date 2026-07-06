@@ -94,6 +94,10 @@ function mapRow(p: any) {
     originating_system_name: p.OriginatingSystemName ?? null,
     modification_timestamp: p.ModificationTimestamp,
     photos_count: p.PhotosCount ?? null,
+    // the feed contains garbage negatives (e.g. -208) — null them so they
+    // sort last on "newest" instead of first
+    days_on_market:
+      p.CumulativeDaysOnMarket != null && p.CumulativeDaysOnMarket >= 0 ? p.CumulativeDaysOnMarket : null,
     raw: stripNulls(p), // selected fields only, nulls dropped — server-only
   };
 }
