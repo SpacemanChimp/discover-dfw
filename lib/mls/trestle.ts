@@ -136,6 +136,13 @@ function buildFilter(f: SearchFilters): string {
   if (f.minSqft != null) parts.push(`LivingArea ge ${f.minSqft}`);
   if (f.maxSqft != null) parts.push(`LivingArea le ${f.maxSqft}`);
   if (f.newBuildsOnly) parts.push("(NewConstructionYN eq true or YearBuilt ge 2024)");
+  if (f.q) {
+    const term = f.q.trim(); // q() handles quote escaping
+    if (term)
+      parts.push(
+        `(contains(PublicRemarks,${q(term)}) or contains(UnparsedAddress,${q(term)}) or contains(SubdivisionName,${q(term)}))`
+      );
+  }
 
   return parts.join(" and ");
 }

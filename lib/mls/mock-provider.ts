@@ -41,6 +41,10 @@ function matches(l: Listing, f: SearchFilters): boolean {
   if (f.propertyType && l.propertyType !== f.propertyType) return false;
   if (f.statuses?.length && !f.statuses.includes(l.standardStatus)) return false;
   if (f.newBuildsOnly && l.yearBuilt < 2020) return false;
+  if (f.q) {
+    const hay = `${l.publicRemarks ?? ""} ${l.unparsedAddress} ${l.neighborhood}`.toLowerCase();
+    if (!hay.includes(f.q.toLowerCase())) return false;
+  }
   return true;
 }
 

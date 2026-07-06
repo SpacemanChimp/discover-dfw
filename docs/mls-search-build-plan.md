@@ -27,7 +27,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 17 | **Local listings schema + sync bookkeeping** — `listings` / `listing_media` / `mls_sync_runs` / `mls_sync_errors` / `city_market_snapshots` tables (migration 0006), row types in `lib/mls/db-rows.ts` | ✅ schema |
 | 18 | **MLS sync job + local provider** — `/api/mls/sync` (keyset-paginated Trestle replication, backfill→incremental), `MLS_PROVIDER=local` reads Postgres | ✅ |
 | 19 | **Production on the local store** — Vercel Pro: sync cron every 15 min (maxDuration 300), PRICE CUT via self-tracked price history (feed withholds OriginalListPrice), open houses fetched live per detail view, `MLS_PROVIDER=local` in production | ✅ |
-| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), full-text/radius search on the local store, The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
+| 20 | **Live market band + photo lightbox + keyword search** — snapshots gain median DOM, city pages declare live data, gallery opens a full lightbox (media cap 12→50), `q` keyword filter across all providers | ✅ |
+| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), radius search, The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
 
 ### Phase 3 notes
 
@@ -534,6 +535,27 @@ lands, these become unit tests over `searchListings` filter mechanics.
     (detail views + alert sweep — low volume, never fails the listing).
   The trestle provider remains one env var away as a fallback.
   `isLiveMls` treats `local` as live NTREIS data.
+
+### Phase 20 notes — live market band, lightbox, keyword search
+
+- **Market band is honest now**: sync snapshots compute median
+  days-on-market from the replicated `raw.CumulativeDaysOnMarket`; the
+  local provider surfaces it, so median/psf/DOM on city pages are all
+  live-computed. The chip flips from "PLACEHOLDER FIGURES" to
+  "LIVE NTREIS MARKET DATA · YOY IS AN EDITORIAL ESTIMATE" — YoY keeps
+  the editorial figure (labeled EST.) until a year of snapshot history
+  exists to compute it from.
+- **Photo lightbox**: `ListingPhotoGallery` is a client component — every
+  collage slot and both count chips open a full-screen viewer (arrows,
+  ←/→/Escape keys, counter, body-scroll lock). Sync media cap raised
+  12→50 per listing; full repair walk re-replicated media (~1M rows).
+- **Keyword search (`q` param)**: the toolbar search box submits non-city
+  text on Enter — remarks/address/subdivision, ilike on the local store,
+  `contains()` on trestle, includes() on mock. Serialized in the shared
+  url module so saved searches / digests replay it like any filter.
+  PostgREST or()-metacharacters are stripped from user input.
+- Radius search deferred (needs PostGIS or an earthdistance index —
+  planned against the local store).
 
 ## Compliance guardrails (standing)
 

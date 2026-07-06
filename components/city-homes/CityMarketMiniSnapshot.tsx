@@ -1,14 +1,16 @@
 import type { CityMarketSnapshot } from "@/lib/mls/types";
 import { fmtK } from "@/lib/dfw-data";
+import { isLiveMls } from "@/lib/mls";
 
-/* Compact market band under the city homes hero — editorial placeholder
-   figures from the city dataset plus the live-count from the provider. */
+/* Compact market band under the city homes hero. Live mode: median/psf/DOM
+   computed from the replicated store (YoY stays an editorial estimate —
+   no year-old baseline yet). Mock mode keeps the placeholder chip. */
 export default function CityMarketMiniSnapshot({ snapshot }: { snapshot: CityMarketSnapshot }) {
   const stats: { label: string; value: string; color?: string }[] = [
     { label: "MEDIAN LIST", value: fmtK(snapshot.medianListPrice), color: "#D9481F" },
     { label: "$ / SQFT", value: `$${snapshot.pricePerSqft}` },
     { label: "DAYS ON MKT", value: String(snapshot.medianDaysOnMarket) },
-    { label: "YOY", value: snapshot.yoyChange },
+    { label: "YOY (EST.)", value: snapshot.yoyChange },
     { label: "SCHOOLS", value: snapshot.isd },
   ];
   return (
@@ -43,12 +45,14 @@ export default function CityMarketMiniSnapshot({ snapshot }: { snapshot: CityMar
             fontSize: 9,
             letterSpacing: ".16em",
             color: "#D9481F",
-            border: "1px dashed rgba(217,72,31,.6)",
+            border: isLiveMls ? "1px solid rgba(217,72,31,.6)" : "1px dashed rgba(217,72,31,.6)",
             borderRadius: 999,
             padding: "7px 13px",
           }}
         >
-          PLACEHOLDER FIGURES — SWAP FOR LIVE MARKET DATA
+          {isLiveMls
+            ? "LIVE NTREIS MARKET DATA · YOY IS AN EDITORIAL ESTIMATE"
+            : "PLACEHOLDER FIGURES — SWAP FOR LIVE MARKET DATA"}
         </div>
       </div>
     </section>

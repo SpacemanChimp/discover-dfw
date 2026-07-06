@@ -130,6 +130,8 @@ export interface SearchFilters {
   propertyType?: PropertyType;
   statuses?: ListingStatus[];
   newBuildsOnly?: boolean;
+  /** Free-text keywords — remarks, address, subdivision. */
+  q?: string;
   sort?: SortKey;
   page?: number;
   pageSize?: number;

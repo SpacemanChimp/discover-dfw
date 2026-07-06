@@ -189,7 +189,7 @@ export async function GET(req: Request) {
       const url =
         `${API_BASE}/Property?$filter=${encodeURIComponent(filter)}` +
         `&$orderby=${encodeURIComponent("ModificationTimestamp asc,ListingKey asc")}&$top=${PAGE_SIZE}` +
-        `&$select=${SELECT}&$expand=${encodeURIComponent("Media($orderby=Order;$top=12)")}`;
+        `&$select=${SELECT}&$expand=${encodeURIComponent("Media($orderby=Order;$top=50)")}`;
 
       let rows: any[];
       try {
@@ -285,14 +285,15 @@ export async function GET(req: Request) {
       for (const c of dfwCities) {
         const { data: rows } = await db
           .from("listings")
-          .select("list_price, living_area")
+          .select("list_price, living_area, dom:raw->CumulativeDaysOnMarket")
           .eq("city", c.name)
           .eq("standard_status", "Active")
           .limit(2000);
-        const prices = (rows ?? []).map((r) => Number(r.list_price)).filter((x) => x > 0);
+        const prices = (rows ?? []).map((r: any) => Number(r.list_price)).filter((x) => x > 0);
         const ppsf = (rows ?? [])
-          .filter((r) => Number(r.list_price) > 0 && Number(r.living_area) > 0)
-          .map((r) => Number(r.list_price) / Number(r.living_area));
+          .filter((r: any) => Number(r.list_price) > 0 && Number(r.living_area) > 0)
+          .map((r: any) => Number(r.list_price) / Number(r.living_area));
+        const doms = (rows ?? []).map((r: any) => Number(r.dom)).filter((x) => Number.isFinite(x) && x >= 0);
         const { error } = await db.from("city_market_snapshots").upsert(
           {
             city_slug: c.slug,
@@ -300,7 +301,7 @@ export async function GET(req: Request) {
             active_listings: rows?.length ?? 0,
             median_list_price: median(prices),
             price_per_sqft: ppsf.length ? Math.round(median(ppsf)!) : null,
-            median_days_on_market: null, // DOM not replicated as a column
+            median_days_on_market: doms.length ? Math.round(median(doms)!) : null,
             source: "trestle",
           },
           { onConflict: "city_slug,as_of" }

@@ -51,8 +51,17 @@ export default function SearchToolbar({
 
   const onCityInput = (value: string) => {
     const hit = cities.find((c) => c.name.toLowerCase() === value.toLowerCase());
-    if (hit) navigate({ citySlug: hit.slug });
-    else if (value === "") navigate({ citySlug: undefined });
+    if (hit) navigate({ citySlug: hit.slug, q: undefined });
+    else if (value === "") navigate({ citySlug: undefined, q: undefined });
+  };
+
+  /** Enter on text that isn't a city name = keyword search (remarks,
+      address, subdivision — "pool", "granite", a street name…). */
+  const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    const value = (e.target as HTMLInputElement).value.trim();
+    const isCity = cities.some((c) => c.name.toLowerCase() === value.toLowerCase());
+    if (value && !isCity) navigate({ q: value });
   };
 
   const priceIdx = PRICE_BANDS.findIndex(
@@ -112,11 +121,12 @@ export default function SearchToolbar({
         </svg>
         <input
           list="ddfw-cities"
-          defaultValue={currentCityName}
-          key={currentCityName}
+          defaultValue={query.q || currentCityName}
+          key={query.q || currentCityName}
           onChange={(e) => onCityInput(e.target.value)}
-          placeholder="City, ISD, neighborhood, address…"
-          aria-label="Search by city"
+          onKeyDown={onSearchKeyDown}
+          placeholder="City, neighborhood, address, or keywords…"
+          aria-label="Search by city or keywords"
           style={{
             flex: 1,
             minWidth: 0,

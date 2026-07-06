@@ -1,7 +1,7 @@
 /* URL query string <-> SearchFilters. Dependency-free and client-safe —
    the toolbar and server pages share one serialization so a URL always
    means the same search. Params: city, min, max, beds, baths, minsqft,
-   maxsqft, type, status, new, sort, page. */
+   maxsqft, type, status, new, sort, page, q (keywords). */
 import type { ListingStatus, PropertyType, SearchFilters, SortKey } from "./types";
 
 const SORT_KEYS: SortKey[] = ["newest", "price-asc", "price-desc", "sqft-desc"];
@@ -47,6 +47,7 @@ export function parseSearchFilters(
     newBuildsOnly: one("new") === "1" || undefined,
     sort: sort && SORT_KEYS.includes(sort) ? sort : undefined,
     page: num("page"),
+    q: (one("q") || "").trim().slice(0, 120) || undefined,
   };
 }
 
@@ -63,6 +64,7 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
   if (f.statuses?.[0]) params.set("status", SLUG_BY_STATUS[f.statuses[0]]);
   if (f.newBuildsOnly) params.set("new", "1");
   if (f.sort) params.set("sort", f.sort);
+  if (f.q) params.set("q", f.q);
   return params.toString();
 }
 
@@ -77,5 +79,6 @@ export function searchFiltersLabel(f: SearchFilters, cityName?: string): string 
   if (f.propertyType) parts.push(f.propertyType);
   if (f.statuses?.[0]) parts.push(f.statuses[0].replace(/([A-Z])/g, " $1").trim().toLowerCase());
   if (f.newBuildsOnly) parts.push("new construction");
+  if (f.q) parts.push(`“${f.q}”`);
   return parts.join(" · ");
 }

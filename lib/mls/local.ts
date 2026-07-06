@@ -112,6 +112,16 @@ function applyFilters(query: any, f: SearchFilters) {
   if (f.minSqft != null) query = query.gte("living_area", f.minSqft);
   if (f.maxSqft != null) query = query.lte("living_area", f.maxSqft);
   if (f.newBuildsOnly) query = query.gte("year_built", 2024);
+  if (f.q) {
+    // keyword search across remarks/address/subdivision; strip PostgREST
+    // or()-syntax metacharacters from user input
+    const term = f.q.replace(/[,()"'\\%]/g, " ").trim();
+    if (term) {
+      query = query.or(
+        `public_remarks.ilike.%${term}%,unparsed_address.ilike.%${term}%,subdivision.ilike.%${term}%`
+      );
+    }
+  }
 
   switch (f.propertyType) {
     case "Land":
@@ -226,6 +236,8 @@ export const localProvider: MlsProvider = {
       ...snap,
       medianListPrice: data?.median_list_price != null ? Number(data.median_list_price) : snap.medianListPrice,
       pricePerSqft: data?.price_per_sqft != null ? Number(data.price_per_sqft) : snap.pricePerSqft,
+      medianDaysOnMarket:
+        data?.median_days_on_market != null ? Number(data.median_days_on_market) : snap.medianDaysOnMarket,
     };
   },
 
