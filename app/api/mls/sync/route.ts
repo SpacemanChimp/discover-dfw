@@ -250,11 +250,14 @@ export async function GET(req: Request) {
     // walk instead of restarting from epoch. Strictly validated: both parts
     // are interpolated into the OData filter.
     const cursorParam = reqUrl.searchParams.get("cursor") ?? "";
+    let cursorResumed = false;
     if (fullWalk && cursorParam.includes("|")) {
       const [ts, key] = cursorParam.split("|");
-      if (/^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/.test(ts) && /^\d*$/.test(key)) {
+      // feed timestamps carry an explicit offset ("…-00:00"), not just Z
+      if (/^\d{4}-\d{2}-\d{2}T[\d:.]+(Z|[+-]\d{2}:\d{2})?$/.test(ts) && /^\d*$/.test(key)) {
         cursorTs = ts;
         cursorKey = key;
+        cursorResumed = true;
       }
     }
     if (!fullWalk) {
@@ -447,6 +450,9 @@ export async function GET(req: Request) {
       upserted,
       failed,
       backfillComplete,
+      // callers MUST check this when threading cursors — a rejected cursor
+      // silently restarts the walk from epoch
+      cursorResumed,
       cursor: `${cursorTs}|${cursorKey}`,
       snapshotsWritten,
       ms: Date.now() - started,
