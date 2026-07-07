@@ -5,7 +5,7 @@ import type { MlsProvider } from "./provider";
 import type { Listing, SearchFilters, SearchResult } from "./types";
 import { mockListings, MOCK_MLS_LAST_UPDATED } from "@/data/mock-listings";
 import { cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
-import { milesBetween, type LonLat } from "./geo";
+import { milesBetween, pointInPolygon, type LonLat } from "./geo";
 
 const DEFAULT_PAGE_SIZE = 24;
 
@@ -34,7 +34,10 @@ validate(mockListings);
 function matches(l: Listing, f: SearchFilters): boolean {
   const center: LonLat | undefined =
     f.center ?? (f.radiusMiles && f.citySlug ? (cityBySlug[f.citySlug]?.ll as LonLat) : undefined);
-  if (f.radiusMiles && center) {
+  if (f.polygon && f.polygon.length >= 3) {
+    // drawn boundary takes precedence over radius/city, like local
+    if (!l.lonLat || !pointInPolygon(l.lonLat, f.polygon)) return false;
+  } else if (f.radiusMiles && center) {
     // radius replaces the city clause (mock lonLats sit on centroids)
     if (!l.lonLat || milesBetween(center, l.lonLat) > f.radiusMiles) return false;
   } else if (f.citySlug && l.citySlug !== f.citySlug) return false;

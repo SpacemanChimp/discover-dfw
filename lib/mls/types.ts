@@ -139,6 +139,9 @@ export interface SearchFilters {
   radiusMiles?: number;
   /** Explicit radius center [lon, lat] (e.g. "nearby this listing"). */
   center?: [number, number];
+  /** Drawn map boundary — [lon, lat] pairs (3..40 points, URL param "poly").
+      Takes precedence over radius and replaces the city clause on purpose. */
+  polygon?: [number, number][];
   sort?: SortKey;
   page?: number;
   pageSize?: number;

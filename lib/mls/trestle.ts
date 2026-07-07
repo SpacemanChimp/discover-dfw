@@ -27,7 +27,7 @@ import type {
   SortKey,
 } from "./types";
 import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
-import { boundingBox, type LonLat } from "./geo";
+import { boundingBox, polygonBounds, type LonLat } from "./geo";
 
 import { TRESTLE_ODATA_BASE_URL, TRESTLE_TOKEN_URL, trestleCredentials } from "./trestle-env";
 
@@ -129,7 +129,15 @@ function buildFilter(f: SearchFilters): string {
 
   const center: LonLat | undefined =
     f.center ?? (f.radiusMiles && f.citySlug ? (cityBySlug[f.citySlug]?.ll as LonLat) : undefined);
-  if (f.radiusMiles && center) {
+  if (f.polygon && f.polygon.length >= 3) {
+    // drawn boundary — bounding-box approximation, same as radius below
+    // (fallback provider only; local does the exact point-in-polygon).
+    // Takes precedence over radius/city like the local provider.
+    const box = polygonBounds(f.polygon);
+    parts.push(
+      `Latitude ge ${box.minLat} and Latitude le ${box.maxLat} and Longitude ge ${box.minLon} and Longitude le ${box.maxLon}`
+    );
+  } else if (f.radiusMiles && center) {
     // OData geo functions aren't supported by the feed — bounding-box
     // approximation (fallback provider only; local does the exact circle)
     const box = boundingBox(center, f.radiusMiles);

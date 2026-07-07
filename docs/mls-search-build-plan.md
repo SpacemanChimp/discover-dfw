@@ -30,6 +30,7 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 20 | **Live market band + photo lightbox + keyword search** — snapshots gain median DOM, city pages declare live data, gallery opens a full lightbox (media cap 12→50), `q` keyword filter across all providers | ✅ |
 | 21 | **Radius search + search UX** — within 5/10/15/25 mi of any city (crosses city lines), sort control, pagination, clear-filters chip, "Nearby on the market" on listing pages | ✅ |
 | 22 | **Zillow-style search: real map + filter popovers + perf** — Leaflet/Carto geographic map with brand price pins over the full filtered set (`/api/map-pins`, 600 cap), PRICE / BEDS & BATHS / FILTERS popover panels with batched Apply, client router cache, counts memo | ✅ |
+| 23 | **Hover photo cards + draw boundary + uncapped map** — Zillow-style hover card with photo carousel (`/api/pin-card`), freehand map boundary → `?poly=` (RDP-simplified, shared polygon search across providers), pin cap 600→5,000 with capped-viewport bbox refetch, two-layer marker renderer (static canvas dots + capped bubble overlay) | ✅ |
 | Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts, optional Google-basemap swap (needs user's Maps API key + billing) | ⬜ |
 
 ### Phase 3 notes
@@ -650,7 +651,50 @@ a dev server on :3111, or against production):
   `getActiveCountsByCity`). Perceived speed: the map updates client-side
   from the pins API without a page reload.
 
-### Market snapshots spec audit (post-Phase 20)
+### Phase 23 notes — hover cards, draw boundary, uncapped map
+
+- **Hover photo cards**: hovering any pin (bubble or dot) opens a React
+  overlay card — photo strip with ‹ › arrows + dot indicators (≤6 photos),
+  PRICE CUT chip (delta from self-tracked `PreviousListPrice`), price /
+  beds / baths / sqft / address, VIEW LISTING →. Fed by
+  `GET /api/pin-card?k=` (slim public projection + up to 6 media URLs,
+  `raw` scalar read only for the price-cut figure; s-maxage 900) with a
+  module-level cache so repeat hovers never refetch. 250 ms grace timer
+  lets the pointer travel pin → card; card flips below the pin near the
+  top edge; touch: first tap opens, map tap closes; Escape closes.
+- **Draw boundary**: ✏ DRAW BOUNDARY arms a pointer-capture overlay
+  (dragging/scroll-zoom paused, crosshair + hint chip); the freehand
+  gesture draws a live dashed polyline, on release is RDP-simplified
+  (≤30 pts, 4 dp) and pushed as `?poly=lon,lat;…` (`page` reset). The
+  active boundary renders as a dashed ink polygon with a faint orange
+  wash, owns `fitBounds`, and shows ✕ CLEAR BOUNDARY (map) + the
+  toolbar clear chip ("custom boundary" bit). `lib/mls/geo.ts` gained
+  `pointInPolygon` / `simplifyPolygon` / `serializePolygon` /
+  `parsePolygon` (3–40 pts, DFW-range validated — junk URLs parse to
+  undefined) / `polygonBounds`; `SearchFilters.polygon` runs through all
+  three providers (local: slim bbox prefilter → JS point-in-polygon
+  refine, same two-phase shape as radius; trestle: bounds-box
+  approximation; mock: exact PIP). Precedence: polygon > radius > city.
+- **Uncapped map**: `MAP_PIN_CAP` 600 → 5,000 (slim pins page in 5
+  parallel 1,000-row chunks under PostgREST's response cap). When a
+  payload is still capped, the chip reads "SHOWING 5,000 IN VIEW OF
+  30,979 — ZOOM OR FILTER FOR MORE" and every `moveend` refetches with
+  the viewport `bbox` (400 ms debounce, DFW-clamped server-side) so the
+  visible window is always complete — verified 30,979 → 9,986 (Frisco,
+  z12) → 4,012 uncapped (z13).
+- **Two-layer marker renderer** (perf): big payloads build ONE static
+  canvas-dot layer per payload (dots don't depend on the viewport);
+  viewport changes only resync a DOM price-bubble overlay capped at
+  400, and only when the bubble set actually changed — extras stay
+  visible as dots underneath. The old single layer rebuilt every
+  event-wired marker on each moveend AND zoomend (2× per zoom step;
+  up to 5,000 markers, unbounded DOM bubbles at z≥13 — 4,012 in
+  Frisco). Measured after: zero >50 ms long tasks across zoom storms.
+- **Field note**: a "renderer frozen" scare during verification was
+  Chrome background-tab throttling (hidden tabs: rAF suspended, so
+  Leaflet's *animated* zooms never commit; timers coalesce to 1/min
+  after 5 min hidden — CDP evals with sleeps time out at 45 s). Test
+  maps in a foreground tab or drive `setView(..., { animate: false })`.
 
 Audited against the "city market snapshots powered by listings database"
 spec. Already built (Phases 18–20): the `city_market_snapshots`

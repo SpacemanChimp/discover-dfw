@@ -22,7 +22,7 @@ import type {
 } from "./types";
 import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
 import { getSupabaseAdmin } from "@/lib/db/admin";
-import { boundingBox, milesBetween, type LonLat } from "./geo";
+import { boundingBox, milesBetween, pointInPolygon, polygonBounds, type LonLat } from "./geo";
 import { getOpenHouses, openHouseBadge } from "./trestle";
 
 const DEFAULT_PAGE_SIZE = 24;
@@ -166,6 +166,68 @@ function applySort(query: any, sort: SortKey | undefined) {
 
 const SELECT = "*, listing_media(media_url, \"order\")";
 
+/* Shared slim geo path for search() — radius and polygon both ride it:
+   slim bounding-box prefilter (cheap btree-able range on lat/lon, no wide
+   rows) paged in 1,000-row chunks (PostgREST caps every response — big
+   shapes silently undercount otherwise), exact shape membership + sort
+   mirrored in JS, then full rows fetched for just the page by key and
+   reordered by rank. Crosses city lines by design (skipCity). Capped at
+   12,000 candidates — a 25mi box over Dallas fits. */
+async function geoSlimSearch(
+  db: any,
+  filters: SearchFilters,
+  box: { minLat: number; maxLat: number; minLon: number; maxLon: number },
+  inShape: (r: any) => boolean,
+  label: string,
+  page: number,
+  pageSize: number
+): Promise<{ data: any[]; count: number }> {
+  const boxRows: any[] = [];
+  for (let p = 0; p < 12; p++) {
+    let slim = db
+      .from("listings")
+      .select("listing_key, latitude, longitude, list_price, living_area, days_on_market, modification_timestamp");
+    slim = applyFilters(slim, filters, { skipCity: true });
+    const { data: chunk, error } = await slim
+      .gte("latitude", box.minLat)
+      .lte("latitude", box.maxLat)
+      .gte("longitude", box.minLon)
+      .lte("longitude", box.maxLon)
+      .not("latitude", "is", null)
+      .order("listing_key")
+      .range(p * 1000, p * 1000 + 999);
+    if (error) throw new Error(`local provider (${label}): ${error.message}`);
+    boxRows.push(...(chunk ?? []));
+    if (!chunk || chunk.length < 1000) break;
+  }
+
+  const hits = boxRows.filter(inShape);
+  const num = (v: any, fallback: number) => (v == null ? fallback : Number(v));
+  hits.sort((a: any, b: any) => {
+    switch (filters.sort) {
+      case "price-asc":
+        return num(a.list_price, Infinity) - num(b.list_price, Infinity);
+      case "price-desc":
+        return num(b.list_price, -1) - num(a.list_price, -1);
+      case "sqft-desc":
+        return num(b.living_area, -1) - num(a.living_area, -1);
+      default: {
+        const d = num(a.days_on_market, Infinity) - num(b.days_on_market, Infinity);
+        return d !== 0 ? d : String(b.modification_timestamp).localeCompare(String(a.modification_timestamp));
+      }
+    }
+  });
+  const keys = hits.slice((page - 1) * pageSize, page * pageSize).map((r: any) => r.listing_key);
+  if (!keys.length) return { data: [], count: hits.length };
+  const full = await db.from("listings").select(SELECT).in("listing_key", keys);
+  if (full.error) throw new Error(`local provider (${label} rows): ${full.error.message}`);
+  const rank = new Map(keys.map((k: string, i: number) => [k, i]));
+  const data = (full.data ?? []).sort(
+    (a: any, b: any) => (rank.get(a.listing_key) ?? 0) - (rank.get(b.listing_key) ?? 0)
+  );
+  return { data, count: hits.length };
+}
+
 async function search(filters: SearchFilters): Promise<SearchResult> {
   const db = getSupabaseAdmin();
   if (!db) return { listings: [], total: 0, page: 1, pageSize: DEFAULT_PAGE_SIZE, mlsLastUpdated: new Date().toISOString() };
@@ -175,67 +237,42 @@ async function search(filters: SearchFilters): Promise<SearchResult> {
   let data: any[] | null;
   let count: number | null;
 
+  const polygon: LonLat[] | undefined =
+    filters.polygon && filters.polygon.length >= 3 ? filters.polygon : undefined;
   const center: LonLat | undefined =
     filters.center ??
     (filters.radiusMiles && filters.citySlug ? (cityBySlug[filters.citySlug]?.ll as LonLat) : undefined);
 
-  if (filters.radiusMiles && center) {
-    /* Radius search: slim bounding-box prefilter (cheap btree-able range
-       on lat/lon, no wide rows), exact Haversine refine + sort in JS,
-       then fetch full rows for just the page. Crosses city lines by
-       design. Capped at 4,000 candidates — a 25mi box over Dallas fits. */
-    const box = boundingBox(center, filters.radiusMiles);
-    // PostgREST caps a single response at 1,000 rows — page the slim box
-    // scan (ordered for stable pages) or big radii silently undercount
-    const boxRows: any[] = [];
-    for (let p = 0; p < 12; p++) {
-      let slim = db
-        .from("listings")
-        .select("listing_key, latitude, longitude, list_price, living_area, days_on_market, modification_timestamp");
-      slim = applyFilters(slim, filters, { skipCity: true });
-      const { data: chunk, error } = await slim
-        .gte("latitude", box.minLat)
-        .lte("latitude", box.maxLat)
-        .gte("longitude", box.minLon)
-        .lte("longitude", box.maxLon)
-        .not("latitude", "is", null)
-        .order("listing_key")
-        .range(p * 1000, p * 1000 + 999);
-      if (error) throw new Error(`local provider (radius): ${error.message}`);
-      boxRows.push(...(chunk ?? []));
-      if (!chunk || chunk.length < 1000) break;
-    }
-
-    const inCircle = boxRows.filter(
-      (r: any) => milesBetween(center, [r.longitude, r.latitude]) <= filters.radiusMiles!
+  if (polygon) {
+    /* Polygon search (drawn map boundary): the prefilter box is the
+       polygon's bounds and membership is exact point-in-polygon. Takes
+       precedence over radius; skips the city clause — a drawn boundary
+       crosses cities on purpose. */
+    const res = await geoSlimSearch(
+      db,
+      filters,
+      polygonBounds(polygon),
+      (r: any) =>
+        r.longitude != null && r.latitude != null && pointInPolygon([r.longitude, r.latitude], polygon),
+      "polygon",
+      page,
+      pageSize
     );
-    const num = (v: any, fallback: number) => (v == null ? fallback : Number(v));
-    inCircle.sort((a: any, b: any) => {
-      switch (filters.sort) {
-        case "price-asc":
-          return num(a.list_price, Infinity) - num(b.list_price, Infinity);
-        case "price-desc":
-          return num(b.list_price, -1) - num(a.list_price, -1);
-        case "sqft-desc":
-          return num(b.living_area, -1) - num(a.living_area, -1);
-        default: {
-          const d = num(a.days_on_market, Infinity) - num(b.days_on_market, Infinity);
-          return d !== 0 ? d : String(b.modification_timestamp).localeCompare(String(a.modification_timestamp));
-        }
-      }
-    });
-    count = inCircle.length;
-    const keys = inCircle.slice((page - 1) * pageSize, page * pageSize).map((r: any) => r.listing_key);
-    if (!keys.length) {
-      data = [];
-    } else {
-      const full = await db.from("listings").select(SELECT).in("listing_key", keys);
-      if (full.error) throw new Error(`local provider (radius rows): ${full.error.message}`);
-      const rank = new Map(keys.map((k: string, i: number) => [k, i]));
-      data = (full.data ?? []).sort(
-        (a: any, b: any) => (rank.get(a.listing_key) ?? 0) - (rank.get(b.listing_key) ?? 0)
-      );
-    }
+    data = res.data;
+    count = res.count;
+  } else if (filters.radiusMiles && center) {
+    /* Radius search: bounding-box prefilter, exact Haversine refine. */
+    const res = await geoSlimSearch(
+      db,
+      filters,
+      boundingBox(center, filters.radiusMiles),
+      (r: any) => milesBetween(center, [r.longitude, r.latitude]) <= filters.radiusMiles!,
+      "radius",
+      page,
+      pageSize
+    );
+    data = res.data;
+    count = res.count;
   } else if (filters.q) {
     /* Keyword searches go two-phase: a wide select riding the FTS bitmap
        scan detoasts thousands of matched rows and blows the statement
@@ -293,14 +330,26 @@ export type MapPin = {
   c: string;
 };
 
-/** Hard cap on pins returned to the map — keeps payloads and Leaflet sane. */
-export const MAP_PIN_CAP = 600;
+/** Hard cap on pins returned to the map — keeps payloads and the map sane. */
+export const MAP_PIN_CAP = 5000;
 
 /* The feed contains garbage coordinates (13 rows with the minus sign
    missing from longitude — Fort Worth homes "in China" — and a few
    out-of-region latitudes). Pins are clamped to the DFW region so one bad
-   row can't poison the map's fitBounds. */
-const DFW_BOUNDS = { minLat: 31.5, maxLat: 34.5, minLon: -99, maxLon: -95.5 };
+   row can't poison the map's fitBounds. Exported for the map-pins route's
+   bbox clamp. */
+export const DFW_BOUNDS = { minLat: 31.5, maxLat: 34.5, minLon: -99, maxLon: -95.5 };
+
+type LatLonBox = { minLat: number; maxLat: number; minLon: number; maxLon: number };
+
+function intersectBoxes(a: LatLonBox, b: LatLonBox): LatLonBox {
+  return {
+    minLat: Math.max(a.minLat, b.minLat),
+    maxLat: Math.min(a.maxLat, b.maxLat),
+    minLon: Math.max(a.minLon, b.minLon),
+    maxLon: Math.min(a.maxLon, b.maxLon),
+  };
+}
 
 const PIN_SELECT =
   "listing_key, latitude, longitude, list_price, beds, baths, unparsed_address, city, days_on_market";
@@ -321,77 +370,102 @@ function toPin(r: any): MapPin {
 /** Map-pin search: same filter semantics as search(), but a slim projection
     only (never raw/remarks/media). Pins are capped at MAP_PIN_CAP ordered by
     days_on_market ascending (nulls last); `total` is the full filtered count
-    so the client can say "600 of 2,148 on the map". Rows without coordinates
-    are dropped — they can't sit on a map. */
-export async function searchMapPins(filters: SearchFilters): Promise<{ pins: MapPin[]; total: number }> {
+    so the client can say "5,000 of 12,148 on the map". Rows without
+    coordinates are dropped — they can't sit on a map.
+
+    opts.bbox is a viewport hint (NOT part of SearchFilters): it narrows the
+    lat/lon ranges by intersection so panning/zooming fetches only visible
+    pins. The prefilter box is always DFW_BOUNDS ∩ shape box ∩ bbox —
+    polygon takes precedence over radius, and both skip the city clause
+    (a drawn boundary / radius crosses city lines on purpose). */
+export async function searchMapPins(
+  filters: SearchFilters,
+  opts?: { bbox?: LatLonBox }
+): Promise<{ pins: MapPin[]; total: number }> {
   const db = getSupabaseAdmin();
   if (!db) return { pins: [], total: 0 };
 
+  const polygon: LonLat[] | undefined =
+    filters.polygon && filters.polygon.length >= 3 ? filters.polygon : undefined;
   const center: LonLat | undefined =
     filters.center ??
     (filters.radiusMiles && filters.citySlug ? (cityBySlug[filters.citySlug]?.ll as LonLat) : undefined);
+  const radius: number | undefined = !polygon && filters.radiusMiles && center ? filters.radiusMiles : undefined;
 
-  if (filters.radiusMiles && center) {
-    /* Radius mode mirrors search(): slim bounding-box prefilter paged in
-       1,000-row chunks (PostgREST caps every response), exact Haversine
-       refine in JS. Crosses city lines by design. */
-    const box = boundingBox(center, filters.radiusMiles);
-    const boxRows: any[] = [];
-    for (let p = 0; p < 12; p++) {
+  let box: LatLonBox = { ...DFW_BOUNDS };
+  if (polygon) box = intersectBoxes(box, polygonBounds(polygon));
+  else if (radius && center) box = intersectBoxes(box, boundingBox(center, radius));
+  if (opts?.bbox) box = intersectBoxes(box, opts.bbox);
+  // empty intersection (viewport off to the side of the shape/region)
+  if (box.minLat >= box.maxLat || box.minLon >= box.maxLon) return { pins: [], total: 0 };
+
+  const geoOpts = polygon || radius ? { skipCity: true } : undefined;
+
+  /* PostgREST caps every response at 1,000 rows — fire the 5 disjoint pages
+     that can fill MAP_PIN_CAP IN PARALLEL. Each page carries the same
+     deterministic order (days_on_market asc nulls-last, then listing_key)
+     so the ranges are stable and the concat stays globally sorted. A short
+     page marks the end of the box's data. */
+  const PAGE = 1000;
+  const pages = await Promise.all(
+    [0, 1, 2, 3, 4].map((i) => {
       let slim = db.from("listings").select(PIN_SELECT);
-      slim = applyFilters(slim, filters, { skipCity: true });
-      const { data: chunk, error } = await slim
+      slim = applyFilters(slim, filters, geoOpts);
+      return slim
         .gte("latitude", box.minLat)
         .lte("latitude", box.maxLat)
         .gte("longitude", box.minLon)
         .lte("longitude", box.maxLon)
         .not("latitude", "is", null)
         .not("longitude", "is", null)
+        .order("days_on_market", { ascending: true, nullsFirst: false })
         .order("listing_key")
-        .range(p * 1000, p * 1000 + 999);
-      if (error) throw new Error(`local provider (map pins radius): ${error.message}`);
-      boxRows.push(...(chunk ?? []));
-      if (!chunk || chunk.length < 1000) break;
+        .range(i * PAGE, i * PAGE + PAGE - 1);
+    })
+  );
+  const rows: any[] = [];
+  let sawEnd = false;
+  for (const res of pages) {
+    if (res.error) throw new Error(`local provider (map pins): ${res.error.message}`);
+    rows.push(...(res.data ?? []));
+    if ((res.data ?? []).length < PAGE) {
+      sawEnd = true; // later pages are past the end — nothing more to concat
+      break;
     }
-
-    const inCircle = boxRows.filter(
-      (r: any) =>
-        r.latitude != null &&
-        r.longitude != null &&
-        milesBetween(center, [r.longitude, r.latitude]) <= filters.radiusMiles!
-    );
-    const dom = (v: any) => (v == null ? Infinity : Number(v)); // nulls last
-    inCircle.sort((a: any, b: any) => dom(a.days_on_market) - dom(b.days_on_market));
-    return { pins: inCircle.slice(0, MAP_PIN_CAP).map(toPin), total: inCircle.length };
   }
 
-  /* Standard mode: one slim query under the same filters (the q path rides
-     the search_tsv GIN index — safe here because the select never detoasts
-     wide columns), plus a head count for the true total. */
-  let query = db.from("listings").select(PIN_SELECT);
-  query = applyFilters(query, filters);
-  const { data, error } = await query
-    .gte("latitude", DFW_BOUNDS.minLat)
-    .lte("latitude", DFW_BOUNDS.maxLat)
-    .gte("longitude", DFW_BOUNDS.minLon)
-    .lte("longitude", DFW_BOUNDS.maxLon)
-    .order("days_on_market", { ascending: true, nullsFirst: false })
-    .order("listing_key")
-    .range(0, MAP_PIN_CAP - 1);
-  if (error) throw new Error(`local provider (map pins): ${error.message}`);
-  const pins = (data ?? []).map(toPin);
+  /* JS refine: exact shape membership on the box candidates (order is
+     preserved, so no re-sort needed). */
+  const refined = polygon
+    ? rows.filter(
+        (r: any) =>
+          r.latitude != null && r.longitude != null && pointInPolygon([r.longitude, r.latitude], polygon)
+      )
+    : radius && center
+      ? rows.filter(
+          (r: any) =>
+            r.latitude != null && r.longitude != null && milesBetween(center, [r.longitude, r.latitude]) <= radius
+        )
+      : rows;
 
-  if (pins.length < MAP_PIN_CAP) return { pins, total: pins.length };
+  const pins = refined.slice(0, MAP_PIN_CAP).map(toPin);
 
+  /* A short page means the parallel fetch saw the whole box — the refined
+     length IS the exact total. */
+  if (sawEnd) return { pins, total: refined.length };
+
+  /* Truncated at 5,000 candidates: head-count the box instead. For polygon
+     and radius this is the BOX count — an upper-bound approximation of the
+     true shape count (exactness would need paging the entire box). */
   let head = db.from("listings").select("listing_key", { count: "exact", head: true });
-  head = applyFilters(head, filters);
+  head = applyFilters(head, filters, geoOpts);
   const counted = await head
-    .gte("latitude", DFW_BOUNDS.minLat)
-    .lte("latitude", DFW_BOUNDS.maxLat)
-    .gte("longitude", DFW_BOUNDS.minLon)
-    .lte("longitude", DFW_BOUNDS.maxLon);
+    .gte("latitude", box.minLat)
+    .lte("latitude", box.maxLat)
+    .gte("longitude", box.minLon)
+    .lte("longitude", box.maxLon);
   if (counted.error) throw new Error(`local provider (map pins count): ${counted.error.message}`);
-  return { pins, total: counted.count ?? pins.length };
+  return { pins, total: counted.count ?? refined.length };
 }
 
 export const localProvider: MlsProvider = {

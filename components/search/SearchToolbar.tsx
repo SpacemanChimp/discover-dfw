@@ -231,13 +231,14 @@ export default function SearchToolbar({
   const hasActiveFilters = !!(
     query.minPrice || query.maxPrice || query.minBeds || query.minBaths ||
     query.minSqft || query.maxSqft || query.propertyType || query.statuses?.length ||
-    query.newBuildsOnly || query.q || query.radiusMiles
+    query.newBuildsOnly || query.q || query.radiusMiles || query.polygon
   );
   const clearAll = () =>
     navigate({
       minPrice: undefined, maxPrice: undefined, minBeds: undefined, minBaths: undefined,
       minSqft: undefined, maxSqft: undefined, propertyType: undefined, statuses: undefined,
       newBuildsOnly: undefined, q: undefined, radiusMiles: undefined, sort: undefined,
+      polygon: undefined,
     });
 
   const bits = [
@@ -248,6 +249,7 @@ export default function SearchToolbar({
     query.propertyType || null,
     query.statuses?.[0] ? SLUG_BY_STATUS[query.statuses[0]].replace(/-/g, " ") : null,
     query.newBuildsOnly ? "new construction" : null,
+    query.polygon ? "custom boundary" : null,
   ].filter(Boolean);
   const savePayload = {
     name: bits.join(" · "),

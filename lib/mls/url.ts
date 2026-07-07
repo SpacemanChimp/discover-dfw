@@ -1,8 +1,10 @@
 /* URL query string <-> SearchFilters. Dependency-free and client-safe —
    the toolbar and server pages share one serialization so a URL always
    means the same search. Params: city, min, max, beds, baths, minsqft,
-   maxsqft, type, status, new, sort, page, q (keywords). */
+   maxsqft, type, status, new, sort, page, q (keywords), r (radius miles),
+   poly (drawn boundary, "lon,lat;lon,lat;…"). */
 import type { ListingStatus, PropertyType, SearchFilters, SortKey } from "./types";
+import { parsePolygon, serializePolygon } from "./geo";
 
 const SORT_KEYS: SortKey[] = ["newest", "price-asc", "price-desc", "sqft-desc"];
 
@@ -49,6 +51,9 @@ export function parseSearchFilters(
     page: num("page"),
     q: (one("q") || "").trim().slice(0, 120) || undefined,
     radiusMiles: [5, 10, 15, 25].includes(num("r") ?? 0) ? num("r") : undefined,
+    // invalid poly strings parse to undefined silently — junk URLs just
+    // fall back to the non-polygon search
+    polygon: parsePolygon(one("poly") ?? ""),
   };
 }
 
@@ -67,6 +72,7 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
   if (f.sort) params.set("sort", f.sort);
   if (f.q) params.set("q", f.q);
   if (f.radiusMiles) params.set("r", String(f.radiusMiles));
+  if (f.polygon?.length) params.set("poly", serializePolygon(f.polygon));
   return params.toString();
 }
 
@@ -83,5 +89,6 @@ export function searchFiltersLabel(f: SearchFilters, cityName?: string): string 
   if (f.newBuildsOnly) parts.push("new construction");
   if (f.q) parts.push(`“${f.q}”`);
   if (f.radiusMiles) parts.push(`within ${f.radiusMiles} mi`);
+  if (f.polygon?.length) parts.push("custom area");
   return parts.join(" · ");
 }
