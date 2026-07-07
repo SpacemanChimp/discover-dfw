@@ -166,6 +166,12 @@ export async function GET(req: Request) {
   const budgetParam = Number(reqUrl.searchParams.get("budget")) || TIME_BUDGET_MS;
   // Vercel serverless caps at maxDuration; only local/manual runs may go long
   const timeBudget = process.env.VERCEL ? Math.min(budgetParam, TIME_BUDGET_MS) : budgetParam;
+  // heavy $expand=Media pages can outrun the gateway when the feed slows —
+  // manual walks may shrink pages so no single request runs long
+  const pageSize = Math.min(
+    PAGE_SIZE,
+    Math.max(25, Number(reqUrl.searchParams.get("pagesize")) || PAGE_SIZE)
+  );
 
   try {
     const token = await getToken();
@@ -290,7 +296,7 @@ export async function GET(req: Request) {
       const filter = `${cityClause} and ${typeClause}${statusClause} and ${cursorClause}`;
       const url =
         `${API_BASE}/Property?$filter=${encodeURIComponent(filter)}` +
-        `&$orderby=${encodeURIComponent("ModificationTimestamp asc,ListingKey asc")}&$top=${PAGE_SIZE}` +
+        `&$orderby=${encodeURIComponent("ModificationTimestamp asc,ListingKey asc")}&$top=${pageSize}` +
         `&$select=${SELECT}&$expand=${encodeURIComponent("Media($orderby=Order;$top=50)")}`;
 
       let rows: any[];
@@ -339,7 +345,7 @@ export async function GET(req: Request) {
         const lastDry = rows[rows.length - 1];
         cursorTs = lastDry.ModificationTimestamp;
         cursorKey = String(lastDry.ListingKey);
-        if (rows.length < PAGE_SIZE) { if (!incremental) backfillComplete = true; break; }
+        if (rows.length < pageSize) { if (!incremental) backfillComplete = true; break; }
         if (limit && seen >= limit) break;
         continue;
       }
@@ -386,7 +392,7 @@ export async function GET(req: Request) {
       const last = rows[rows.length - 1];
       cursorTs = last.ModificationTimestamp;
       cursorKey = String(last.ListingKey);
-      if (rows.length < PAGE_SIZE) {
+      if (rows.length < pageSize) {
         if (!incremental) backfillComplete = true;
         break;
       }
