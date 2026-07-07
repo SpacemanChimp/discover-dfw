@@ -1,8 +1,10 @@
 import { bySlug, countyById, cities } from "@/lib/dfw-data";
 import { getMlsProvider, isLiveMls, PROPERTY_TYPE_OPTIONS } from "@/lib/mls";
 import type { SearchFilters } from "@/lib/mls/types";
+import { searchFiltersToQueryString } from "@/lib/mls/url";
 import SearchNav from "./SearchNav";
 import SearchToolbar from "./SearchToolbar";
+import Pager from "./Pager";
 import ListingResultsRail from "./ListingResultsRail";
 import SearchMapPanel from "./SearchMapPanel";
 import MobileCitySearchIndex from "./MobileCitySearchIndex";
@@ -104,6 +106,13 @@ export default async function MapRoom({
       <div className="homes-split">
         <div className={`homes-rail${!city ? " desktop-only-flex" : ""}`}>
           <ListingResultsRail result={result} city={city} countyName={county?.name} />
+          <Pager
+            total={result.total}
+            page={result.page}
+            pageSize={result.pageSize}
+            basePath={citySlug ? `/city/${citySlug}/homes` : "/homes"}
+            qs={searchFiltersToQueryString(effective, !!citySlug)}
+          />
         </div>
 
         <div className="homes-map">

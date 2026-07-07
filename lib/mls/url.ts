@@ -48,6 +48,7 @@ export function parseSearchFilters(
     sort: sort && SORT_KEYS.includes(sort) ? sort : undefined,
     page: num("page"),
     q: (one("q") || "").trim().slice(0, 120) || undefined,
+    radiusMiles: [5, 10, 15, 25].includes(num("r") ?? 0) ? num("r") : undefined,
   };
 }
 
@@ -65,6 +66,7 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
   if (f.newBuildsOnly) params.set("new", "1");
   if (f.sort) params.set("sort", f.sort);
   if (f.q) params.set("q", f.q);
+  if (f.radiusMiles) params.set("r", String(f.radiusMiles));
   return params.toString();
 }
 
@@ -80,5 +82,6 @@ export function searchFiltersLabel(f: SearchFilters, cityName?: string): string 
   if (f.statuses?.[0]) parts.push(f.statuses[0].replace(/([A-Z])/g, " $1").trim().toLowerCase());
   if (f.newBuildsOnly) parts.push("new construction");
   if (f.q) parts.push(`“${f.q}”`);
+  if (f.radiusMiles) parts.push(`within ${f.radiusMiles} mi`);
   return parts.join(" · ");
 }

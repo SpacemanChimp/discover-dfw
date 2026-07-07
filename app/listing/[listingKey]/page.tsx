@@ -5,6 +5,7 @@ import { bySlug, countyById } from "@/lib/dfw-data";
 import { getMlsProvider, isLiveMls } from "@/lib/mls";
 import { mockListings } from "@/data/mock-listings";
 import ListingDetailDossier from "@/components/search/ListingDetailDossier";
+import NearbyListings from "@/components/listing/NearbyListings";
 import SearchNav from "@/components/search/SearchNav";
 import MLSComplianceFooter from "@/components/search/MLSComplianceFooter";
 
@@ -59,6 +60,7 @@ export default async function ListingPage({
         </Link>
       </div>
       <ListingDetailDossier listing={listing} city={city} countyName={county.name} />
+      <NearbyListings listing={listing} />
       <MLSComplianceFooter asOf={listing.mlsLastUpdated} />
     </div>
   );

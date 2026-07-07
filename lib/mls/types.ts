@@ -135,6 +135,10 @@ export interface SearchFilters {
   newBuildsOnly?: boolean;
   /** Free-text keywords — remarks, address, subdivision. */
   q?: string;
+  /** Radius search in miles — centered on `center`, else the city centroid. */
+  radiusMiles?: number;
+  /** Explicit radius center [lon, lat] (e.g. "nearby this listing"). */
+  center?: [number, number];
   sort?: SortKey;
   page?: number;
   pageSize?: number;

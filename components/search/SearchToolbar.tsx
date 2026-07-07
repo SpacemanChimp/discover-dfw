@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { cities } from "@/lib/dfw-data";
-import type { ListingStatus, PropertyType, SearchFilters } from "@/lib/mls/types";
+import { RADIUS_OPTIONS } from "@/lib/mls/geo";
+import type { ListingStatus, PropertyType, SearchFilters, SortKey } from "@/lib/mls/types";
 import { searchFiltersToQueryString, SLUG_BY_STATUS, STATUS_BY_SLUG } from "@/lib/mls/url";
 import SaveSearchButton from "./SaveSearchButton";
 
@@ -70,6 +71,19 @@ export default function SearchToolbar({
   const currentCityName = cities.find((c) => c.slug === (citySlug || query.citySlug))?.name || "";
 
   const effCity = citySlug || query.citySlug;
+
+  const hasActiveFilters = !!(
+    query.minPrice || query.maxPrice || query.minBeds || query.minBaths ||
+    query.minSqft || query.maxSqft || query.propertyType || query.statuses?.length ||
+    query.newBuildsOnly || query.q || query.radiusMiles
+  );
+  const clearAll = () =>
+    navigate({
+      minPrice: undefined, maxPrice: undefined, minBeds: undefined, minBaths: undefined,
+      minSqft: undefined, maxSqft: undefined, propertyType: undefined, statuses: undefined,
+      newBuildsOnly: undefined, q: undefined, radiusMiles: undefined, sort: undefined,
+    });
+
   const bits = [
     currentCityName || "All of DFW",
     query.minBeds ? `${query.minBeds}+ bd` : null,
@@ -224,6 +238,39 @@ export default function SearchToolbar({
         <option value="pending">PENDING</option>
       </select>
 
+      {effCity && (
+        <select
+          aria-label="Search radius"
+          value={query.radiusMiles ?? 0}
+          onChange={(e) => navigate({ radiusMiles: Number(e.target.value) || undefined })}
+          className="font-mono"
+          style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
+        >
+          <option value={0}>IN TOWN ONLY</option>
+          {RADIUS_OPTIONS.map((r) => (
+            <option key={r} value={r}>
+              WITHIN {r} MI
+            </option>
+          ))}
+        </select>
+      )}
+
+      <select
+        aria-label="Sort results"
+        value={query.sort ?? "newest"}
+        onChange={(e) => {
+          const v = e.target.value as SortKey;
+          navigate({ sort: v === "newest" ? undefined : v });
+        }}
+        className="font-mono"
+        style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
+      >
+        <option value="newest">NEWEST FIRST</option>
+        <option value="price-asc">PRICE — LOW TO HIGH</option>
+        <option value="price-desc">PRICE — HIGH TO LOW</option>
+        <option value="sqft-desc">LARGEST FIRST</option>
+      </select>
+
       <button
         type="button"
         onClick={() => navigate({ newBuildsOnly: query.newBuildsOnly ? undefined : true })}
@@ -240,6 +287,24 @@ export default function SearchToolbar({
       >
         NEW BUILDS
       </button>
+
+      {hasActiveFilters && (
+        <button
+          type="button"
+          onClick={clearAll}
+          className="font-mono"
+          style={{
+            ...pill,
+            fontSize: 10,
+            letterSpacing: ".12em",
+            background: "transparent",
+            borderColor: "rgba(29,25,19,.35)",
+            color: "rgba(29,25,19,.6)",
+          }}
+        >
+          ✕ CLEAR
+        </button>
+      )}
 
       <SaveSearchButton payload={savePayload} />
     </div>

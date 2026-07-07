@@ -22,6 +22,7 @@ import type {
 } from "./types";
 import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
 import { getSupabaseAdmin } from "@/lib/db/admin";
+import { boundingBox, milesBetween, type LonLat } from "./geo";
 import { getOpenHouses, openHouseBadge } from "./trestle";
 
 const DEFAULT_PAGE_SIZE = 24;
@@ -95,11 +96,14 @@ function toListing(r: any): Listing {
   };
 }
 
-function applyFilters(query: any, f: SearchFilters) {
+function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean }) {
   const statuses = f.statuses?.length ? f.statuses : DEFAULT_STATUSES;
   query = query.in("standard_status", statuses);
 
-  if (f.citySlug) {
+  if (opts?.skipCity) {
+    // radius mode: the bounding box replaces the city clause on purpose —
+    // "within 10 mi of Denton" should cross city lines
+  } else if (f.citySlug) {
     const city = cityBySlug[f.citySlug];
     query = query.eq("city", city ? city.name : f.citySlug);
   } else {
@@ -171,7 +175,68 @@ async function search(filters: SearchFilters): Promise<SearchResult> {
   let data: any[] | null;
   let count: number | null;
 
-  if (filters.q) {
+  const center: LonLat | undefined =
+    filters.center ??
+    (filters.radiusMiles && filters.citySlug ? (cityBySlug[filters.citySlug]?.ll as LonLat) : undefined);
+
+  if (filters.radiusMiles && center) {
+    /* Radius search: slim bounding-box prefilter (cheap btree-able range
+       on lat/lon, no wide rows), exact Haversine refine + sort in JS,
+       then fetch full rows for just the page. Crosses city lines by
+       design. Capped at 4,000 candidates — a 25mi box over Dallas fits. */
+    const box = boundingBox(center, filters.radiusMiles);
+    // PostgREST caps a single response at 1,000 rows — page the slim box
+    // scan (ordered for stable pages) or big radii silently undercount
+    const boxRows: any[] = [];
+    for (let p = 0; p < 12; p++) {
+      let slim = db
+        .from("listings")
+        .select("listing_key, latitude, longitude, list_price, living_area, days_on_market, modification_timestamp");
+      slim = applyFilters(slim, filters, { skipCity: true });
+      const { data: chunk, error } = await slim
+        .gte("latitude", box.minLat)
+        .lte("latitude", box.maxLat)
+        .gte("longitude", box.minLon)
+        .lte("longitude", box.maxLon)
+        .not("latitude", "is", null)
+        .order("listing_key")
+        .range(p * 1000, p * 1000 + 999);
+      if (error) throw new Error(`local provider (radius): ${error.message}`);
+      boxRows.push(...(chunk ?? []));
+      if (!chunk || chunk.length < 1000) break;
+    }
+
+    const inCircle = boxRows.filter(
+      (r: any) => milesBetween(center, [r.longitude, r.latitude]) <= filters.radiusMiles!
+    );
+    const num = (v: any, fallback: number) => (v == null ? fallback : Number(v));
+    inCircle.sort((a: any, b: any) => {
+      switch (filters.sort) {
+        case "price-asc":
+          return num(a.list_price, Infinity) - num(b.list_price, Infinity);
+        case "price-desc":
+          return num(b.list_price, -1) - num(a.list_price, -1);
+        case "sqft-desc":
+          return num(b.living_area, -1) - num(a.living_area, -1);
+        default: {
+          const d = num(a.days_on_market, Infinity) - num(b.days_on_market, Infinity);
+          return d !== 0 ? d : String(b.modification_timestamp).localeCompare(String(a.modification_timestamp));
+        }
+      }
+    });
+    count = inCircle.length;
+    const keys = inCircle.slice((page - 1) * pageSize, page * pageSize).map((r: any) => r.listing_key);
+    if (!keys.length) {
+      data = [];
+    } else {
+      const full = await db.from("listings").select(SELECT).in("listing_key", keys);
+      if (full.error) throw new Error(`local provider (radius rows): ${full.error.message}`);
+      const rank = new Map(keys.map((k: string, i: number) => [k, i]));
+      data = (full.data ?? []).sort(
+        (a: any, b: any) => (rank.get(a.listing_key) ?? 0) - (rank.get(b.listing_key) ?? 0)
+      );
+    }
+  } else if (filters.q) {
     /* Keyword searches go two-phase: a wide select riding the FTS bitmap
        scan detoasts thousands of matched rows and blows the statement
        timeout on broad terms ("pool" ≈ 10k matches). Phase 1 pages slim

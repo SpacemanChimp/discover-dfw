@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cities, bySlug, countyById } from "@/lib/dfw-data";
 import { getMlsProvider, isLiveMls, parseSearchFilters, PROPERTY_TYPE_OPTIONS } from "@/lib/mls";
+import { searchFiltersToQueryString } from "@/lib/mls/url";
+import Pager from "@/components/search/Pager";
 import type { SearchFilters } from "@/lib/mls/types";
 import SearchNav from "@/components/search/SearchNav";
 import SearchToolbar from "@/components/search/SearchToolbar";
@@ -95,6 +97,15 @@ export default async function CityHomesPage({
         mlsSource={result.listings[0]?.mlsSource ?? (isLiveMls ? "NTREIS" : "MOCK")}
         nearby={nearby}
       />
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 4vw 26px" }}>
+        <Pager
+          total={result.total}
+          page={result.page}
+          pageSize={result.pageSize}
+          basePath={`/city/${slug}/homes`}
+          qs={searchFiltersToQueryString(filters, true)}
+        />
+      </div>
 
       <MLSComplianceFooter asOf={result.mlsLastUpdated} />
     </div>

@@ -28,7 +28,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 18 | **MLS sync job + local provider** — `/api/mls/sync` (keyset-paginated Trestle replication, backfill→incremental), `MLS_PROVIDER=local` reads Postgres | ✅ |
 | 19 | **Production on the local store** — Vercel Pro: sync cron every 15 min (maxDuration 300), PRICE CUT via self-tracked price history (feed withholds OriginalListPrice), open houses fetched live per detail view, `MLS_PROVIDER=local` in production | ✅ |
 | 20 | **Live market band + photo lightbox + keyword search** — snapshots gain median DOM, city pages declare live data, gallery opens a full lightbox (media cap 12→50), `q` keyword filter across all providers | ✅ |
-| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), radius search, The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
+| 21 | **Radius search + search UX** — within 5/10/15/25 mi of any city (crosses city lines), sort control, pagination, clear-filters chip, "Nearby on the market" on listing pages | ✅ |
+| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
 
 ### Phase 3 notes
 
@@ -590,6 +591,31 @@ a dev server on :3111, or against production):
     curl --max-time 3600 -H "Authorization: Bearer $SECRET" "$BASE/api/mls/sync?full=1&budget=3400000"
 
     node scripts/trestle-smoke.mjs [city]    # credentials/endpoint smoke test
+
+### Phase 21 notes — radius search + search UX
+
+- **Radius engine** (`lib/mls/geo.ts` + provider paths): center resolves
+  from an explicit `filters.center` or the scoped city's centroid — no
+  geocoder needed. Local provider: slim bounding-box prefilter on
+  lat/lon (PAGED in 1,000-row chunks — PostgREST caps single responses
+  at 1,000 and a 25mi box exceeds it; unpaged it silently undercounted
+  AND shrank with radius), exact Haversine circle refine + sort in JS,
+  full rows fetched per page by key. Crosses city lines by design
+  (verified: Denton in-town 945 → 5mi 660 → 10mi 1,664 → 25mi 9,185;
+  25mi renders in ~2.3s). Trestle falls back to the bounding box (feed
+  lacks OData geo functions); mock refines via centroids.
+- **URL param `r`** (5|10|15|25) through the shared url module — radius
+  rides saved searches and digest replays like any filter, and the
+  query label gains "within N mi".
+- **Toolbar UX**: WITHIN N MI select (city-scoped only), NEWEST/PRICE
+  ↑↓/LARGEST sort select (the SortKey engine existed since Phase 3 with
+  no UI), and a ✕ CLEAR chip when any filter is active.
+- **Pagination at last**: shared `Pager` (plain links — crawlable,
+  back-button friendly) on the Map Room rail and city search pages;
+  visitors were previously hard-capped at 24 results.
+- **"Nearby on the market"** on every listing page: 3mi radius around
+  the listing's coordinates, four compact cards, degrades to nothing on
+  any hiccup.
 
 ### Market snapshots spec audit (post-Phase 20)
 

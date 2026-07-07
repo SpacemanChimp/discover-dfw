@@ -27,6 +27,7 @@ import type {
   SortKey,
 } from "./types";
 import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
+import { boundingBox, type LonLat } from "./geo";
 
 import { TRESTLE_ODATA_BASE_URL, TRESTLE_TOKEN_URL, trestleCredentials } from "./trestle-env";
 
@@ -126,7 +127,16 @@ function buildFilter(f: SearchFilters): string {
   const statuses = f.statuses?.length ? f.statuses : DEFAULT_STATUSES;
   parts.push(`StandardStatus in (${statuses.map(q).join(",")})`);
 
-  if (f.citySlug) {
+  const center: LonLat | undefined =
+    f.center ?? (f.radiusMiles && f.citySlug ? (cityBySlug[f.citySlug]?.ll as LonLat) : undefined);
+  if (f.radiusMiles && center) {
+    // OData geo functions aren't supported by the feed — bounding-box
+    // approximation (fallback provider only; local does the exact circle)
+    const box = boundingBox(center, f.radiusMiles);
+    parts.push(
+      `Latitude ge ${box.minLat} and Latitude le ${box.maxLat} and Longitude ge ${box.minLon} and Longitude le ${box.maxLon}`
+    );
+  } else if (f.citySlug) {
     const city = cityBySlug[f.citySlug];
     parts.push(`City eq ${q(city ? city.name : f.citySlug)}`);
   } else {

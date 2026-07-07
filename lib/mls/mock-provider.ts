@@ -5,6 +5,7 @@ import type { MlsProvider } from "./provider";
 import type { Listing, SearchFilters, SearchResult } from "./types";
 import { mockListings, MOCK_MLS_LAST_UPDATED } from "@/data/mock-listings";
 import { cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
+import { milesBetween, type LonLat } from "./geo";
 
 const DEFAULT_PAGE_SIZE = 24;
 
@@ -31,7 +32,12 @@ validate(mockListings);
 
 /* ---- search mechanics ---- */
 function matches(l: Listing, f: SearchFilters): boolean {
-  if (f.citySlug && l.citySlug !== f.citySlug) return false;
+  const center: LonLat | undefined =
+    f.center ?? (f.radiusMiles && f.citySlug ? (cityBySlug[f.citySlug]?.ll as LonLat) : undefined);
+  if (f.radiusMiles && center) {
+    // radius replaces the city clause (mock lonLats sit on centroids)
+    if (!l.lonLat || milesBetween(center, l.lonLat) > f.radiusMiles) return false;
+  } else if (f.citySlug && l.citySlug !== f.citySlug) return false;
   if (f.minPrice != null && l.listPrice < f.minPrice) return false;
   if (f.maxPrice != null && l.listPrice > f.maxPrice) return false;
   if (f.minBeds != null && l.bedsTotal < f.minBeds) return false;
