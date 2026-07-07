@@ -7,6 +7,7 @@ import SearchToolbar from "./SearchToolbar";
 import Pager from "./Pager";
 import ListingResultsRail from "./ListingResultsRail";
 import SearchMapPanel from "./SearchMapPanel";
+import LiveMapPanel from "./LiveMapPanel";
 import MobileCitySearchIndex from "./MobileCitySearchIndex";
 import MLSComplianceFooter from "./MLSComplianceFooter";
 
@@ -116,11 +117,22 @@ export default async function MapRoom({
         </div>
 
         <div className="homes-map">
-          <SearchMapPanel
-            listings={result.listings}
-            activeCitySlug={effective.citySlug}
-            total={metroTotal}
-          />
+          {isLiveMls ? (
+            // real geographic map with price pins over the whole filtered
+            // result set (search surfaces only — the illustrated metroplex
+            // stays everywhere editorial)
+            <LiveMapPanel
+              qs={searchFiltersToQueryString(effective)}
+              activeCitySlug={effective.citySlug}
+              total={result.total}
+            />
+          ) : (
+            <SearchMapPanel
+              listings={result.listings}
+              activeCitySlug={effective.citySlug}
+              total={metroTotal}
+            />
+          )}
         </div>
 
         {!city && <MobileCitySearchIndex counts={counts} />}

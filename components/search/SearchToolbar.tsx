@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cities } from "@/lib/dfw-data";
 import { RADIUS_OPTIONS } from "@/lib/mls/geo";
@@ -27,6 +28,154 @@ const pill: React.CSSProperties = {
   cursor: "pointer",
 };
 
+/* ---- popover chrome ---- */
+
+const panelStyle: React.CSSProperties = {
+  position: "absolute",
+  top: "calc(100% + 8px)",
+  left: 0,
+  background: "#FBF7EE",
+  border: "2px solid #1D1913",
+  borderRadius: 16,
+  boxShadow: "0 14px 34px rgba(20,16,10,.18)",
+  padding: 18,
+  minWidth: 260,
+  maxWidth: "min(92vw, 340px)",
+  zIndex: 60,
+};
+
+const monoLabel: React.CSSProperties = {
+  fontSize: 10,
+  letterSpacing: ".16em",
+  textTransform: "uppercase",
+  color: "rgba(29,25,19,.6)",
+  marginBottom: 8,
+};
+
+const numInput: React.CSSProperties = {
+  width: "100%",
+  minWidth: 0,
+  border: "1.5px solid #1D1913",
+  borderRadius: 10,
+  padding: "9px 10px",
+  fontSize: 13,
+  fontWeight: 600,
+  fontFamily: "inherit",
+  background: "#F6F1E6",
+  color: "#1D1913",
+  outline: "none",
+};
+
+const applyBtn: React.CSSProperties = {
+  width: "100%",
+  border: "1.5px solid #D9481F",
+  borderRadius: 999,
+  padding: "11px 16px",
+  background: "#D9481F",
+  color: "#F6F1E6",
+  fontSize: 11,
+  letterSpacing: ".14em",
+  fontWeight: 700,
+  cursor: "pointer",
+  marginTop: 14,
+};
+
+function PopButton({
+  label,
+  active,
+  expanded,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  expanded: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={expanded}
+      aria-haspopup="true"
+      onClick={onClick}
+      className="font-mono"
+      style={{
+        ...pill,
+        letterSpacing: ".06em",
+        fontSize: 11,
+        borderColor: active ? "#D9481F" : "#1D1913",
+        color: active ? "#D9481F" : "#1D1913",
+      }}
+    >
+      {label} ▾
+    </button>
+  );
+}
+
+function OptionPill({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className="font-mono"
+      style={{
+        border: selected ? "1.5px solid #1D1913" : "1.5px solid rgba(29,25,19,.35)",
+        borderRadius: 999,
+        padding: "7px 12px",
+        fontSize: 10.5,
+        letterSpacing: ".08em",
+        background: selected ? "#1D1913" : "#FBF7EE",
+        color: selected ? "#F6F1E6" : "#1D1913",
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ---- compact button-label summaries (Zillow-style) ---- */
+
+const fmtK = (v: number) =>
+  v >= 1_000_000
+    ? `$${(v / 1_000_000).toFixed(v % 1_000_000 ? 1 : 0)}M`
+    : `$${Math.round(v / 1000)}K`;
+
+function priceLabel(min?: number, max?: number): string {
+  if (min && max) return `${fmtK(min)}–${fmtK(max)}`;
+  if (max) return `UNDER ${fmtK(max)}`;
+  if (min) return `${fmtK(min)}+`;
+  return "PRICE";
+}
+
+function bedsBathsLabel(minBeds?: number, minBaths?: number): string {
+  const parts: string[] = [];
+  if (minBeds) parts.push(`${minBeds}+ BD`);
+  if (minBaths) parts.push(`${minBaths}+ BA`);
+  return parts.length ? parts.join(", ") : "BEDS & BATHS";
+}
+
+/** Blank-safe positive-int parse — mirrors the server-side URL parser. */
+const toNum = (s: string): number | undefined => {
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+};
+
+const STATUS_CHOICES: { label: string; slug: string }[] = [
+  { label: "ANY", slug: "" },
+  { label: "ACTIVE", slug: "active" },
+  { label: "COMING SOON", slug: "coming-soon" },
+  { label: "PENDING", slug: "pending" },
+];
+
 /* Filters live in the URL — every control rewrites the query string so
    results are server-rendered, shareable, and back-button friendly. */
 export default function SearchToolbar({
@@ -43,7 +192,14 @@ export default function SearchToolbar({
 
   const navigate = (patch: Partial<SearchFilters>) => {
     const q = { ...query, ...patch };
-    const target = q.citySlug && q.citySlug !== citySlug ? q.citySlug : citySlug;
+    // In the Map Room (/homes) every change stays in the Map Room — the
+    // map is the point. Only the dedicated /city/[slug]/homes pages keep
+    // their path form (and switching city there moves to the new city).
+    const target = citySlug
+      ? q.citySlug && q.citySlug !== citySlug
+        ? q.citySlug
+        : citySlug
+      : undefined;
     // one canonical serializer shared with the server-side parser
     const qs = searchFiltersToQueryString(q, !!target);
     const path = target ? `/city/${target}/homes` : "/homes";
@@ -104,6 +260,84 @@ export default function SearchToolbar({
     emailEnabled: true,
   };
 
+  /* ---- popover state: one open at a time; drafts seed from the URL on
+     open and only hit navigate() ONCE on APPLY (batched round trip) ---- */
+  const [open, setOpen] = useState<string | null>(null);
+  const [priceMinDraft, setPriceMinDraft] = useState("");
+  const [priceMaxDraft, setPriceMaxDraft] = useState("");
+  const [bedsDraft, setBedsDraft] = useState(0);
+  const [bathsDraft, setBathsDraft] = useState(0);
+  const [typeDraft, setTypeDraft] = useState("");
+  const [statusDraft, setStatusDraft] = useState("");
+  const [minSqftDraft, setMinSqftDraft] = useState("");
+  const [maxSqftDraft, setMaxSqftDraft] = useState("");
+  const [radiusDraft, setRadiusDraft] = useState(0);
+
+  const openPop = (name: string) => {
+    if (open === name) {
+      setOpen(null);
+      return;
+    }
+    // re-seed drafts from the live query so stale edits never linger
+    if (name === "price") {
+      setPriceMinDraft(query.minPrice ? String(query.minPrice) : "");
+      setPriceMaxDraft(query.maxPrice ? String(query.maxPrice) : "");
+    } else if (name === "beds") {
+      setBedsDraft(query.minBeds ?? 0);
+      setBathsDraft(query.minBaths ?? 0);
+    } else if (name === "filters") {
+      setTypeDraft(query.propertyType ?? "");
+      setStatusDraft(query.statuses?.[0] ? SLUG_BY_STATUS[query.statuses[0]] : "");
+      setMinSqftDraft(query.minSqft ? String(query.minSqft) : "");
+      setMaxSqftDraft(query.maxSqft ? String(query.maxSqft) : "");
+      setRadiusDraft(query.radiusMiles ?? 0);
+    }
+    setOpen(name);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!(e.target instanceof Element) || !e.target.closest("[data-ddfw-pop]")) setOpen(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const applyPrice = () => {
+    navigate({ minPrice: toNum(priceMinDraft), maxPrice: toNum(priceMaxDraft) });
+    setOpen(null);
+  };
+  const applyBedsBaths = () => {
+    navigate({ minBeds: bedsDraft || undefined, minBaths: bathsDraft || undefined });
+    setOpen(null);
+  };
+  const applyFilters = () => {
+    const status: ListingStatus | undefined = STATUS_BY_SLUG[statusDraft];
+    navigate({
+      propertyType: (typeDraft as PropertyType) || undefined,
+      statuses: status ? [status] : undefined,
+      minSqft: toNum(minSqftDraft),
+      maxSqft: toNum(maxSqftDraft),
+      radiusMiles: radiusDraft || undefined,
+    });
+    setOpen(null);
+  };
+
+  const filtersCount =
+    (query.propertyType ? 1 : 0) +
+    (query.statuses?.length ? 1 : 0) +
+    (query.minSqft ? 1 : 0) +
+    (query.maxSqft ? 1 : 0) +
+    (query.radiusMiles ? 1 : 0);
+
   return (
     <div
       style={{
@@ -160,100 +394,201 @@ export default function SearchToolbar({
         </datalist>
       </div>
 
-      <select
-        aria-label="Price range"
-        value={priceIdx === -1 ? 0 : priceIdx}
-        onChange={(e) => {
-          const b = PRICE_BANDS[Number(e.target.value)];
-          navigate({ minPrice: b.min, maxPrice: b.max });
-        }}
-        className="font-mono"
-        style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
-      >
-        {PRICE_BANDS.map((b, i) => (
-          <option key={b.label} value={i}>
-            {b.label}
-          </option>
-        ))}
-      </select>
+      {/* PRICE popover */}
+      <div data-ddfw-pop style={{ position: "relative" }}>
+        <PopButton
+          label={priceLabel(query.minPrice, query.maxPrice)}
+          active={!!(query.minPrice || query.maxPrice)}
+          expanded={open === "price"}
+          onClick={() => openPop("price")}
+        />
+        {open === "price" && (
+          <div style={panelStyle} role="dialog" aria-label="Price range">
+            <div className="font-mono" style={monoLabel}>PRICE RANGE</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={25000}
+                placeholder="No min"
+                aria-label="Minimum price"
+                value={priceMinDraft}
+                onChange={(e) => setPriceMinDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+                style={numInput}
+              />
+              <span style={{ fontWeight: 700, color: "rgba(29,25,19,.5)" }}>–</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={25000}
+                placeholder="No max"
+                aria-label="Maximum price"
+                value={priceMaxDraft}
+                onChange={(e) => setPriceMaxDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+                style={numInput}
+              />
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+              {PRICE_BANDS.map((b) => (
+                <OptionPill
+                  key={b.label}
+                  label={b.label}
+                  selected={
+                    (b.min ?? 0) === (toNum(priceMinDraft) ?? 0) &&
+                    (b.max ?? 0) === (toNum(priceMaxDraft) ?? 0)
+                  }
+                  onClick={() => {
+                    setPriceMinDraft(b.min ? String(b.min) : "");
+                    setPriceMaxDraft(b.max ? String(b.max) : "");
+                  }}
+                />
+              ))}
+            </div>
+            <button type="button" onClick={applyPrice} className="font-mono" style={applyBtn}>
+              APPLY
+            </button>
+          </div>
+        )}
+      </div>
 
-      <select
-        aria-label="Minimum bedrooms"
-        value={query.minBeds ?? 0}
-        onChange={(e) => navigate({ minBeds: Number(e.target.value) || undefined })}
-        className="font-mono"
-        style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
-      >
-        <option value={0}>ANY BEDS</option>
-        {[2, 3, 4, 5].map((n) => (
-          <option key={n} value={n}>
-            {n}+ BEDS
-          </option>
-        ))}
-      </select>
+      {/* BEDS & BATHS popover */}
+      <div data-ddfw-pop style={{ position: "relative" }}>
+        <PopButton
+          label={bedsBathsLabel(query.minBeds, query.minBaths)}
+          active={!!(query.minBeds || query.minBaths)}
+          expanded={open === "beds"}
+          onClick={() => openPop("beds")}
+        />
+        {open === "beds" && (
+          <div style={panelStyle} role="dialog" aria-label="Beds and baths">
+            <div className="font-mono" style={monoLabel}>BEDROOMS</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {[0, 1, 2, 3, 4, 5].map((n) => (
+                <OptionPill
+                  key={n}
+                  label={n === 0 ? "ANY" : `${n}+`}
+                  selected={bedsDraft === n}
+                  onClick={() => setBedsDraft(n)}
+                />
+              ))}
+            </div>
+            <div className="font-mono" style={{ ...monoLabel, marginTop: 14 }}>BATHROOMS</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {[0, 1, 2, 3, 4].map((n) => (
+                <OptionPill
+                  key={n}
+                  label={n === 0 ? "ANY" : `${n}+`}
+                  selected={bathsDraft === n}
+                  onClick={() => setBathsDraft(n)}
+                />
+              ))}
+            </div>
+            <button type="button" onClick={applyBedsBaths} className="font-mono" style={applyBtn}>
+              APPLY
+            </button>
+          </div>
+        )}
+      </div>
 
-      <select
-        aria-label="Minimum bathrooms"
-        value={query.minBaths ?? 0}
-        onChange={(e) => navigate({ minBaths: Number(e.target.value) || undefined })}
-        className="font-mono"
-        style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
-      >
-        <option value={0}>ANY BATHS</option>
-        {[2, 3, 4].map((n) => (
-          <option key={n} value={n}>
-            {n}+ BATHS
-          </option>
-        ))}
-      </select>
+      {/* FILTERS popover — home type, status, square feet, radius */}
+      <div data-ddfw-pop style={{ position: "relative" }}>
+        <PopButton
+          label={filtersCount ? `FILTERS · ${filtersCount}` : "FILTERS"}
+          active={filtersCount > 0}
+          expanded={open === "filters"}
+          onClick={() => openPop("filters")}
+        />
+        {open === "filters" && (
+          <div
+            style={{ ...panelStyle, width: 320, maxHeight: "60vh", overflowY: "auto" }}
+            role="dialog"
+            aria-label="More filters"
+          >
+            <div className="font-mono" style={monoLabel}>HOME TYPE</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <OptionPill label="ANY" selected={typeDraft === ""} onClick={() => setTypeDraft("")} />
+              {propertyTypes.map((t) => (
+                <OptionPill
+                  key={t}
+                  label={t.toUpperCase()}
+                  selected={typeDraft === t}
+                  onClick={() => setTypeDraft(t)}
+                />
+              ))}
+            </div>
 
-      <select
-        aria-label="Home type"
-        value={query.propertyType ?? ""}
-        onChange={(e) => navigate({ propertyType: (e.target.value as PropertyType) || undefined })}
-        className="font-mono"
-        style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
-      >
-        <option value="">HOME TYPE</option>
-        {propertyTypes.map((t) => (
-          <option key={t} value={t}>
-            {t.toUpperCase()}
-          </option>
-        ))}
-      </select>
+            <div className="font-mono" style={{ ...monoLabel, marginTop: 14 }}>STATUS</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {STATUS_CHOICES.map((s) => (
+                <OptionPill
+                  key={s.slug || "any"}
+                  label={s.label}
+                  selected={statusDraft === s.slug}
+                  onClick={() => setStatusDraft(s.slug)}
+                />
+              ))}
+            </div>
 
-      <select
-        aria-label="Listing status"
-        value={query.statuses?.[0] ? SLUG_BY_STATUS[query.statuses[0]] : ""}
-        onChange={(e) => {
-          const status: ListingStatus | undefined = STATUS_BY_SLUG[e.target.value];
-          navigate({ statuses: status ? [status] : undefined });
-        }}
-        className="font-mono"
-        style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
-      >
-        <option value="">ANY STATUS</option>
-        <option value="active">ACTIVE</option>
-        <option value="coming-soon">COMING SOON</option>
-        <option value="pending">PENDING</option>
-      </select>
+            <div className="font-mono" style={{ ...monoLabel, marginTop: 14 }}>SQUARE FEET</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={100}
+                placeholder="No min"
+                aria-label="Minimum square feet"
+                value={minSqftDraft}
+                onChange={(e) => setMinSqftDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+                style={numInput}
+              />
+              <span style={{ fontWeight: 700, color: "rgba(29,25,19,.5)" }}>–</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={100}
+                placeholder="No max"
+                aria-label="Maximum square feet"
+                value={maxSqftDraft}
+                onChange={(e) => setMaxSqftDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+                style={numInput}
+              />
+            </div>
 
-      {effCity && (
-        <select
-          aria-label="Search radius"
-          value={query.radiusMiles ?? 0}
-          onChange={(e) => navigate({ radiusMiles: Number(e.target.value) || undefined })}
-          className="font-mono"
-          style={{ ...pill, letterSpacing: ".06em", fontSize: 11 }}
-        >
-          <option value={0}>IN TOWN ONLY</option>
-          {RADIUS_OPTIONS.map((r) => (
-            <option key={r} value={r}>
-              WITHIN {r} MI
-            </option>
-          ))}
-        </select>
-      )}
+            {effCity && (
+              <>
+                <div className="font-mono" style={{ ...monoLabel, marginTop: 14 }}>RADIUS</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  <OptionPill
+                    label="IN TOWN ONLY"
+                    selected={radiusDraft === 0}
+                    onClick={() => setRadiusDraft(0)}
+                  />
+                  {RADIUS_OPTIONS.map((r) => (
+                    <OptionPill
+                      key={r}
+                      label={`WITHIN ${r} MI`}
+                      selected={radiusDraft === r}
+                      onClick={() => setRadiusDraft(r)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            <button type="button" onClick={applyFilters} className="font-mono" style={applyBtn}>
+              APPLY
+            </button>
+          </div>
+        )}
+      </div>
 
       <select
         aria-label="Sort results"

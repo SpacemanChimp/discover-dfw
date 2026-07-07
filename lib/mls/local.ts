@@ -279,6 +279,121 @@ async function search(filters: SearchFilters): Promise<SearchResult> {
   };
 }
 
+/* ---- map pins (slim payload for the live map panel) ---- */
+
+/** Compact pin for the map: key, lat, lon, price, beds, baths, address, city. */
+export type MapPin = {
+  k: string;
+  lat: number;
+  lon: number;
+  p: number;
+  b: number;
+  ba: number;
+  a: string;
+  c: string;
+};
+
+/** Hard cap on pins returned to the map — keeps payloads and Leaflet sane. */
+export const MAP_PIN_CAP = 600;
+
+/* The feed contains garbage coordinates (13 rows with the minus sign
+   missing from longitude — Fort Worth homes "in China" — and a few
+   out-of-region latitudes). Pins are clamped to the DFW region so one bad
+   row can't poison the map's fitBounds. */
+const DFW_BOUNDS = { minLat: 31.5, maxLat: 34.5, minLon: -99, maxLon: -95.5 };
+
+const PIN_SELECT =
+  "listing_key, latitude, longitude, list_price, beds, baths, unparsed_address, city, days_on_market";
+
+function toPin(r: any): MapPin {
+  return {
+    k: r.listing_key,
+    lat: Number(r.latitude),
+    lon: Number(r.longitude),
+    p: Number(r.list_price ?? 0),
+    b: r.beds ?? 0,
+    ba: Number(r.baths ?? 0),
+    a: r.unparsed_address || "Address withheld",
+    c: r.city || "",
+  };
+}
+
+/** Map-pin search: same filter semantics as search(), but a slim projection
+    only (never raw/remarks/media). Pins are capped at MAP_PIN_CAP ordered by
+    days_on_market ascending (nulls last); `total` is the full filtered count
+    so the client can say "600 of 2,148 on the map". Rows without coordinates
+    are dropped — they can't sit on a map. */
+export async function searchMapPins(filters: SearchFilters): Promise<{ pins: MapPin[]; total: number }> {
+  const db = getSupabaseAdmin();
+  if (!db) return { pins: [], total: 0 };
+
+  const center: LonLat | undefined =
+    filters.center ??
+    (filters.radiusMiles && filters.citySlug ? (cityBySlug[filters.citySlug]?.ll as LonLat) : undefined);
+
+  if (filters.radiusMiles && center) {
+    /* Radius mode mirrors search(): slim bounding-box prefilter paged in
+       1,000-row chunks (PostgREST caps every response), exact Haversine
+       refine in JS. Crosses city lines by design. */
+    const box = boundingBox(center, filters.radiusMiles);
+    const boxRows: any[] = [];
+    for (let p = 0; p < 12; p++) {
+      let slim = db.from("listings").select(PIN_SELECT);
+      slim = applyFilters(slim, filters, { skipCity: true });
+      const { data: chunk, error } = await slim
+        .gte("latitude", box.minLat)
+        .lte("latitude", box.maxLat)
+        .gte("longitude", box.minLon)
+        .lte("longitude", box.maxLon)
+        .not("latitude", "is", null)
+        .not("longitude", "is", null)
+        .order("listing_key")
+        .range(p * 1000, p * 1000 + 999);
+      if (error) throw new Error(`local provider (map pins radius): ${error.message}`);
+      boxRows.push(...(chunk ?? []));
+      if (!chunk || chunk.length < 1000) break;
+    }
+
+    const inCircle = boxRows.filter(
+      (r: any) =>
+        r.latitude != null &&
+        r.longitude != null &&
+        milesBetween(center, [r.longitude, r.latitude]) <= filters.radiusMiles!
+    );
+    const dom = (v: any) => (v == null ? Infinity : Number(v)); // nulls last
+    inCircle.sort((a: any, b: any) => dom(a.days_on_market) - dom(b.days_on_market));
+    return { pins: inCircle.slice(0, MAP_PIN_CAP).map(toPin), total: inCircle.length };
+  }
+
+  /* Standard mode: one slim query under the same filters (the q path rides
+     the search_tsv GIN index — safe here because the select never detoasts
+     wide columns), plus a head count for the true total. */
+  let query = db.from("listings").select(PIN_SELECT);
+  query = applyFilters(query, filters);
+  const { data, error } = await query
+    .gte("latitude", DFW_BOUNDS.minLat)
+    .lte("latitude", DFW_BOUNDS.maxLat)
+    .gte("longitude", DFW_BOUNDS.minLon)
+    .lte("longitude", DFW_BOUNDS.maxLon)
+    .order("days_on_market", { ascending: true, nullsFirst: false })
+    .order("listing_key")
+    .range(0, MAP_PIN_CAP - 1);
+  if (error) throw new Error(`local provider (map pins): ${error.message}`);
+  const pins = (data ?? []).map(toPin);
+
+  if (pins.length < MAP_PIN_CAP) return { pins, total: pins.length };
+
+  let head = db.from("listings").select("listing_key", { count: "exact", head: true });
+  head = applyFilters(head, filters);
+  const counted = await head
+    .gte("latitude", DFW_BOUNDS.minLat)
+    .lte("latitude", DFW_BOUNDS.maxLat)
+    .gte("longitude", DFW_BOUNDS.minLon)
+    .lte("longitude", DFW_BOUNDS.maxLon);
+  if (counted.error) throw new Error(`local provider (map pins count): ${counted.error.message}`);
+  return { pins, total: counted.count ?? pins.length };
+}
+
 export const localProvider: MlsProvider = {
   async searchListings(filters: SearchFilters): Promise<SearchResult> {
     return search(filters);
@@ -353,6 +468,9 @@ export const localProvider: MlsProvider = {
   },
 
   async getActiveCountsByCity(): Promise<Record<string, number>> {
+    // hot path on every /homes render — memoize per instance for 60s
+    // (counts move on the 15-min sync cadence anyway)
+    if (countsMemo && Date.now() - countsMemo.at < 60_000) return countsMemo.value;
     const db = getSupabaseAdmin();
     const out: Record<string, number> = {};
     if (!db) return out;
@@ -375,6 +493,9 @@ export const localProvider: MlsProvider = {
         out[c.slug] = count ?? 0;
       }
     }
+    countsMemo = { at: Date.now(), value: out };
     return out;
   },
 };
+
+let countsMemo: { at: number; value: Record<string, number> } | null = null;

@@ -29,7 +29,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 19 | **Production on the local store** — Vercel Pro: sync cron every 15 min (maxDuration 300), PRICE CUT via self-tracked price history (feed withholds OriginalListPrice), open houses fetched live per detail view, `MLS_PROVIDER=local` in production | ✅ |
 | 20 | **Live market band + photo lightbox + keyword search** — snapshots gain median DOM, city pages declare live data, gallery opens a full lightbox (media cap 12→50), `q` keyword filter across all providers | ✅ |
 | 21 | **Radius search + search UX** — within 5/10/15/25 mi of any city (crosses city lines), sort control, pagination, clear-filters chip, "Nearby on the market" on listing pages | ✅ |
-| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts | ⬜ |
+| 22 | **Zillow-style search: real map + filter popovers + perf** — Leaflet/Carto geographic map with brand price pins over the full filtered set (`/api/map-pins`, 600 cap), PRICE / BEDS & BATHS / FILTERS popover panels with batched Apply, client router cache, counts memo | ✅ |
+| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts, optional Google-basemap swap (needs user's Maps API key + billing) | ⬜ |
 
 ### Phase 3 notes
 
@@ -616,6 +617,38 @@ a dev server on :3111, or against production):
 - **"Nearby on the market"** on every listing page: 3mi radius around
   the listing's coordinates, four compact cards, degrades to nothing on
   any hiccup.
+
+### Phase 22 notes — Zillow-style search (real map, popovers, perf)
+
+- **Map** (`components/search/LiveMapPanel.tsx`, client): Leaflet 1.9 +
+  Carto Voyager raster tiles (keyless; attribution required and
+  rendered). Pins come from `GET /api/map-pins?<filters>` — a slim
+  public projection (never raw/remarks/media) capped at 600, same
+  filter semantics as search including q and radius; CDN-cached 5 min
+  (s-maxage) while the browser fetches no-store. >250 pins render as
+  canvas dots at low zoom and swap to branded price bubbles per
+  viewport at zoom ≥13; popups are branded mini cards linking to
+  `/listing/[key]`. Map lives ONLY in the Map Room (`/homes`) in live
+  mode; the illustrated metroplex stays for mock mode and all
+  editorial surfaces. Swap to a Google basemap later = one tile-layer
+  change + user-supplied Maps API key/billing.
+- **Feed coordinate garbage** (found during integration): 13 rows had
+  the minus sign missing from longitude ("Fort Worth homes in China"),
+  6 had out-of-region latitudes — one bad pin poisons fitBounds to a
+  world view. Pins are clamped to a DFW bounds box server-side AND the
+  sync now sign-corrects/nulls implausible coordinates on every upsert.
+- **Toolbar popovers**: PRICE (min/max + band chips), BEDS & BATHS
+  (pill grid), FILTERS (type/status/sqft/radius) — one navigation per
+  APPLY instead of one per control; buttons show compact state
+  summaries ("UNDER $400K", "3+ BD, 2+ BA", "FILTERS · 2").
+- **Map Room stays the Map Room**: toolbar navigation from `/homes`
+  keeps the query-param form (map persists across every filter change);
+  only the dedicated `/city/[slug]/homes` pages keep their path form.
+- **Perf**: measured prod warm renders 0.3–0.7s (the "slow" feel was
+  full-page round trips per control change — now batched + client
+  router cache via `experimental.staleTimes` + a 60s module memo on
+  `getActiveCountsByCity`). Perceived speed: the map updates client-side
+  from the pins API without a page reload.
 
 ### Market snapshots spec audit (post-Phase 20)
 

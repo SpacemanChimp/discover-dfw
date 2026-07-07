@@ -94,8 +94,16 @@ function mapRow(p: any) {
     postal_code: p.PostalCode ?? null,
     county: p.CountyOrParish ?? null,
     subdivision: p.SubdivisionName ?? null,
-    latitude: p.Latitude ?? null,
-    longitude: p.Longitude ?? null,
+    // the feed occasionally drops the minus sign from longitude (Texas is
+    // always negative) — recover it; null anything implausible for DFW
+    ...(() => {
+      let lat = p.Latitude ?? null;
+      let lon = p.Longitude ?? null;
+      if (lon != null && lon > 0 && lat != null && lat > 25 && lat < 37) lon = -lon;
+      if (lat != null && (lat < 25 || lat > 37)) { lat = null; lon = null; }
+      if (lon != null && (lon < -104 || lon > -93)) { lat = null; lon = null; }
+      return { latitude: lat, longitude: lon };
+    })(),
     public_remarks: p.PublicRemarks ?? null,
     list_office_name: p.ListOfficeName ?? null,
     list_agent_name: null, // populate only once IDX display rules are confirmed to permit it
