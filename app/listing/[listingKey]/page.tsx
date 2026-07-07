@@ -54,7 +54,14 @@ export default async function ListingPage({
         <Link
           href={`/city/${city.slug}/homes`}
           className="city-back font-mono"
-          style={{ fontSize: 10, letterSpacing: ".18em", color: "rgba(29,25,19,.6)", textDecoration: "none" }}
+          style={{
+            fontSize: 10,
+            letterSpacing: ".18em",
+            color: "rgba(29,25,19,.65)",
+            textDecoration: "none",
+            display: "inline-block",
+            padding: "10px 0",
+          }}
         >
           ← ALL {city.name.toUpperCase()} HOMES
         </Link>

@@ -36,7 +36,7 @@ export default function ListingFactsLedger({ listing }: { listing: Listing }) {
     <>
       <div
         className="font-mono"
-        style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F", marginTop: 26 }}
+        style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17", marginTop: 26 }}
       >
         01 — THE NUMBERS
       </div>
@@ -53,7 +53,7 @@ export default function ListingFactsLedger({ listing }: { listing: Listing }) {
             key={f.label}
             style={{ border: "1.5px solid rgba(29,25,19,.35)", borderRadius: 12, background: "#FBF7EE", padding: "12px 15px" }}
           >
-            <div className="font-mono" style={{ fontSize: 7.5, letterSpacing: ".18em", color: "rgba(29,25,19,.5)" }}>
+            <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".18em", color: "rgba(29,25,19,.62)" }}>
               {f.label}
             </div>
             <div

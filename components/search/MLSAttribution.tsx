@@ -25,7 +25,7 @@ export default function MLSAttribution({
       style={{
         fontSize: compact ? 8 : 9,
         letterSpacing: ".14em",
-        color: "rgba(29,25,19,.45)",
+        color: "rgba(29,25,19,.62)",
         display: "flex",
         justifyContent: "space-between",
         gap: 10,

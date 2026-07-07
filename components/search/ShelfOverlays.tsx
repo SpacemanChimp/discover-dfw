@@ -38,7 +38,7 @@ export default function ShelfOverlays() {
               animation: "fadeUp .25s ease both",
             }}
           >
-            <span style={{ color: "#E88D6B", fontSize: 16 }}>♥</span>
+            <span aria-hidden="true" style={{ color: "#E88D6B", fontSize: 16 }}>♥</span>
             <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{shelf.toast}</span>
           </div>
         </div>

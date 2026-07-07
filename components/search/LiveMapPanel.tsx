@@ -90,13 +90,14 @@ const MAP_CSS = `
   display: inline-block; white-space: nowrap;
   background: #FBF7EE; color: #1D1913;
   border: 1.5px solid #1D1913; border-radius: 999px;
-  padding: 3px 9px;
+  padding: 5px 10px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 10px; font-weight: 700; letter-spacing: .04em;
   box-shadow: 0 4px 10px rgba(20,16,10,.22);
   cursor: pointer;
 }
 .ddfw-pin:hover { background: #1D1913; color: #F6F1E6; }
+.leaflet-touch .leaflet-control-zoom a { width: 40px; height: 40px; line-height: 40px; }
 `;
 
 const arrowBtnStyle = (side: "left" | "right"): React.CSSProperties => ({
@@ -104,13 +105,13 @@ const arrowBtnStyle = (side: "left" | "right"): React.CSSProperties => ({
   top: "50%",
   transform: "translateY(-50%)",
   [side]: 8,
-  width: 32,
-  height: 32,
+  width: 40,
+  height: 40,
   borderRadius: 999,
   background: "#F6F1E6",
   border: "1.5px solid #1D1913",
   color: "#1D1913",
-  fontSize: 17,
+  fontSize: 19,
   fontWeight: 700,
   lineHeight: 1,
   cursor: "pointer",
@@ -246,7 +247,7 @@ export default function LiveMapPanel({
     for (const p of pins) {
       const icon = L.divIcon({
         className: "ddfw-pin-wrap",
-        html: `<span class="ddfw-pin">${fmtPrice(p.p)}</span>`,
+        html: `<span class="ddfw-pin" title="${fmtPrice(p.p)} — opens listing preview">${fmtPrice(p.p)}</span>`,
         iconSize: [0, 0],
       });
       const m = L.marker([p.lat, p.lon], { icon });
@@ -701,7 +702,12 @@ export default function LiveMapPanel({
   return (
     <div style={{ position: "relative", height: "100%", width: "100%", background: "#F2EBDC" }}>
       <style>{MAP_CSS}</style>
-      <div ref={mapDivRef} style={{ position: "absolute", inset: 0 }} aria-label="Map of matching listings" />
+      <div
+        ref={mapDivRef}
+        role="region"
+        style={{ position: "absolute", inset: 0 }}
+        aria-label="Map of matching listings"
+      />
 
       {/* count chip — top left, clear of Leaflet's zoom control */}
       <div
@@ -716,12 +722,12 @@ export default function LiveMapPanel({
           border: "2px solid #1D1913",
           borderRadius: 999,
           padding: "6px 12px",
-          fontSize: 9,
+          fontSize: 10,
           letterSpacing: ".18em",
           fontWeight: 700,
           color: "#1D1913",
           boxShadow: "0 6px 14px rgba(20,16,10,.18)",
-          maxWidth: "min(62%, 460px)",
+          maxWidth: "min(74%, 460px)",
         }}
       >
         {chipText}
@@ -748,9 +754,9 @@ export default function LiveMapPanel({
             style={{
               background: "#FBF7EE",
               border: "1.5px solid #D9481F",
-              color: "#D9481F",
+              color: "#C13E17",
               borderRadius: 999,
-              padding: "7px 13px",
+              padding: "12px 16px",
               fontSize: 9.5,
               letterSpacing: ".16em",
               fontWeight: 700,
@@ -770,7 +776,7 @@ export default function LiveMapPanel({
               border: "1.5px solid #1D1913",
               color: drawing ? "#F6F1E6" : "#1D1913",
               borderRadius: 999,
-              padding: "7px 13px",
+              padding: "12px 16px",
               fontSize: 9.5,
               letterSpacing: ".16em",
               fontWeight: 700,
@@ -852,6 +858,49 @@ export default function LiveMapPanel({
             boxShadow: "0 16px 38px rgba(20,16,10,.28)",
           }}
         >
+          {/* touch users have no hover-out — give the card an explicit ✕
+              (40x40 hit area, drawn at 28px) */}
+          <button
+            type="button"
+            aria-label="Close listing preview"
+            onClick={closeCardNow}
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              zIndex: 5,
+              width: 40,
+              height: 40,
+              padding: 0,
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 999,
+                background: "#F6F1E6",
+                border: "1.5px solid #1D1913",
+                color: "#1D1913",
+                fontSize: 13,
+                fontWeight: 700,
+                lineHeight: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 10px rgba(20,16,10,.22)",
+              }}
+            >
+              ✕
+            </span>
+          </button>
           {cardData ? (
             <>
               {/* photo strip */}
@@ -872,7 +921,7 @@ export default function LiveMapPanel({
                       position: "absolute",
                       top: 8,
                       left: 8,
-                      background: "#D9481F",
+                      background: "#C13E17",
                       color: "#F6F1E6",
                       borderRadius: 999,
                       padding: "3px 8px",
@@ -955,12 +1004,12 @@ export default function LiveMapPanel({
                   style={{
                     display: "inline-block",
                     marginTop: 8,
-                    color: "#D9481F",
+                    color: "#C13E17",
                     fontSize: 9.5,
                     letterSpacing: ".14em",
                     fontWeight: 700,
                     textDecoration: "none",
-                    borderBottom: "1.5px solid #D9481F",
+                    borderBottom: "1.5px solid #C13E17",
                     paddingBottom: 1,
                   }}
                 >
@@ -1007,7 +1056,7 @@ export default function LiveMapPanel({
           >
             <div
               className="font-mono"
-              style={{ fontSize: 9, letterSpacing: ".2em", color: "#D9481F", fontWeight: 700 }}
+              style={{ fontSize: 9, letterSpacing: ".2em", color: "#C13E17", fontWeight: 700 }}
             >
               {failed ? "MAP UNAVAILABLE" : "NO PINS TO SHOW"}
             </div>
@@ -1023,7 +1072,7 @@ export default function LiveMapPanel({
                 fontSize: 9.5,
                 letterSpacing: ".12em",
                 marginTop: 8,
-                color: "rgba(29,25,19,.55)",
+                color: "rgba(29,25,19,.62)",
               }}
             >
               {failed ? "TRY AGAIN IN A MOMENT" : "LOOSEN A FILTER OR WIDEN THE RADIUS"}

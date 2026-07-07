@@ -127,7 +127,7 @@ export default async function MapRoom({
         }
         extra={
           countsPromise ? (
-            <Suspense fallback={null}>
+            <Suspense fallback={<MobileIndexSkeleton />}>
               <MobileIndexSection countsPromise={countsPromise} />
             </Suspense>
           ) : undefined
@@ -169,13 +169,13 @@ function Shell({
           borderBottom: "1px solid rgba(29,25,19,.16)",
           fontSize: 9.5,
           letterSpacing: ".22em",
-          color: "rgba(29,25,19,.55)",
+          color: "rgba(29,25,19,.62)",
         }}
       >
         <span>A FIELD GUIDE TO NORTH TEXAS REAL ESTATE</span>
         <span style={{ display: "flex", gap: 16 }}>
           <span>{cities.length} CITIES</span>
-          <span style={{ color: "#D9481F" }}>✳</span>
+          <span style={{ color: "#D9481F" }} aria-hidden="true">✳</span>
           <span>{isLiveMls ? "LIVE MLS FEED — NTREIS" : "LIVE MLS FEED — PLACEHOLDER"}</span>
         </span>
       </div>
@@ -214,7 +214,7 @@ function Shell({
             fontSize: 9.5,
             fontWeight: 700,
             letterSpacing: ".2em",
-            color: "#D9481F",
+            color: "#C13E17",
           }}
         >
           SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED
@@ -267,6 +267,71 @@ async function MobileIndexSection({
   return <MobileCitySearchIndex counts={counts} />;
 }
 
+/* Index-shaped placeholder while city counts stream — mirrors the
+   MobileCitySearchIndex row silhouettes so the swap doesn't jump. */
+function MobileIndexSkeleton() {
+  return (
+    <div
+      className="mobile-only"
+      style={{ padding: "18px 4vw 60px", width: "100%" }}
+      aria-busy="true"
+      aria-label="Loading the city index"
+    >
+      <div
+        className="font-mono"
+        style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17" }}
+      >
+        PULLING THE INDEX…
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", marginTop: 8 }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rail-skeleton-card"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              height: 56,
+              padding: "13px 2px",
+              borderBottom: "1px solid rgba(29,25,19,.16)",
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  height: 16,
+                  width: "44%",
+                  borderRadius: 6,
+                  background: "repeating-linear-gradient(45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
+                }}
+              />
+              <div
+                style={{
+                  height: 9,
+                  width: "68%",
+                  borderRadius: 6,
+                  background: "rgba(29,25,19,.08)",
+                  marginTop: 6,
+                }}
+              />
+            </div>
+            <div
+              style={{
+                height: 24,
+                width: 64,
+                borderRadius: 999,
+                background: "repeating-linear-gradient(45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
+                border: "1.5px solid rgba(29,25,19,.25)",
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 async function ComplianceSection({ resultPromise }: { resultPromise: Promise<SearchResult> }) {
   const result = await resultPromise;
   return <MLSComplianceFooter asOf={result.mlsLastUpdated} />;
@@ -287,7 +352,7 @@ function RailSkeleton() {
           fontSize: 10,
           fontWeight: 700,
           letterSpacing: ".26em",
-          color: "#D9481F",
+          color: "#C13E17",
           borderBottom: "2px solid #1D1913",
           paddingBottom: 10,
         }}
@@ -307,7 +372,8 @@ function RailSkeleton() {
         >
           <div
             style={{
-              height: 180,
+              // 210 matches ListingCardLedger's photo box — no stream-swap jump
+              height: 210,
               background: "repeating-linear-gradient(45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
             }}
           />

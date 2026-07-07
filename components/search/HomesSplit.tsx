@@ -31,7 +31,7 @@ export default function HomesSplit({
         onClick={() => setView(view === "map" ? "list" : "map")}
         style={{
           position: "fixed",
-          bottom: 18,
+          bottom: "calc(18px + env(safe-area-inset-bottom))",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 1400,
@@ -42,12 +42,20 @@ export default function HomesSplit({
           fontSize: 10,
           fontWeight: 700,
           letterSpacing: ".18em",
-          padding: "12px 22px",
+          padding: "14px 26px",
           boxShadow: "0 14px 30px rgba(29,25,19,.35)",
           cursor: "pointer",
         }}
       >
-        {view === "map" ? "☰ LIST" : "◐ MAP"}
+        {view === "map" ? (
+          <>
+            <span aria-hidden="true">☰</span> LIST
+          </>
+        ) : (
+          <>
+            <span aria-hidden="true">◐</span> MAP
+          </>
+        )}
       </button>
     </div>
   );

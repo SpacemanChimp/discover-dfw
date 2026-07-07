@@ -9,7 +9,7 @@ export default function ListingNotFound() {
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "90px 4vw 120px", textAlign: "center" }}>
         <div
           className="font-mono"
-          style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F" }}
+          style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17" }}
         >
           OFF THE LEDGER
         </div>
@@ -28,14 +28,14 @@ export default function ListingNotFound() {
             href="/homes"
             className="btn-primary"
             style={{
-              background: "#D9481F",
+              background: "#C13E17",
               color: "#F6F1E6",
               borderRadius: 999,
               padding: "14px 26px",
               fontWeight: 700,
               fontSize: 14,
               textDecoration: "none",
-              border: "2px solid #D9481F",
+              border: "2px solid #C13E17",
             }}
           >
             Back to the search

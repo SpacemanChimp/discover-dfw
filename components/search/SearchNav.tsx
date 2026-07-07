@@ -40,7 +40,9 @@ export default function SearchNav() {
         </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {shelf.ready && !shelf.account && (
+        {/* always in the layout — visibility flips on hydration so the nav
+            never reflows when the shelf wakes up */}
+        {!shelf.account && (
           <button
             type="button"
             onClick={shelf.openAuth}
@@ -49,11 +51,13 @@ export default function SearchNav() {
               fontSize: 10.5,
               fontWeight: 700,
               letterSpacing: ".16em",
-              color: "#D9481F",
+              color: "#C13E17",
               background: "none",
               border: "none",
+              padding: "12px 10px",
               cursor: "pointer",
               whiteSpace: "nowrap",
+              visibility: shelf.ready ? "visible" : "hidden",
             }}
           >
             SIGN IN
@@ -78,19 +82,21 @@ export default function SearchNav() {
           }}
         >
           {shelf.ready && shelf.savedCount > 0 ? "♥" : "♡"} MY SHELF
-          {shelf.ready && shelf.savedCount > 0 && (
-            <span
-              style={{
-                background: "#D9481F",
-                color: "#F6F1E6",
-                borderRadius: 99,
-                fontSize: 10,
-                padding: "2px 7px",
-              }}
-            >
-              {shelf.savedCount}
-            </span>
-          )}
+          {/* badge space is always reserved — ♡→♥+count must not nudge the nav */}
+          <span
+            style={{
+              background: "#C13E17",
+              color: "#F6F1E6",
+              borderRadius: 99,
+              fontSize: 10,
+              padding: "2px 7px",
+              minWidth: 24,
+              textAlign: "center",
+              visibility: shelf.ready && shelf.savedCount > 0 ? "visible" : "hidden",
+            }}
+          >
+            {shelf.ready && shelf.savedCount > 0 ? shelf.savedCount : 0}
+          </span>
         </Link>
       </div>
     </nav>
@@ -100,7 +106,7 @@ export default function SearchNav() {
 const navLink: React.CSSProperties = {
   fontSize: 10.5,
   letterSpacing: ".18em",
-  color: "rgba(29,25,19,.6)",
+  color: "rgba(29,25,19,.65)",
   textDecoration: "none",
   whiteSpace: "nowrap",
   fontWeight: 600,

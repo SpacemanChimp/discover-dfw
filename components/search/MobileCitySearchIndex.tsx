@@ -22,7 +22,7 @@ export default function MobileCitySearchIndex({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 18 }}>
         <span
           className="font-mono"
-          style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F" }}
+          style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17" }}
         >
           THE INDEX — {rows.length} CITIES WITH HOMES
         </span>
@@ -48,7 +48,7 @@ export default function MobileCitySearchIndex({
               </div>
               <div
                 className="font-mono"
-                style={{ fontSize: 9, letterSpacing: ".14em", color: "rgba(29,25,19,.5)", marginTop: 2 }}
+                style={{ fontSize: 9, letterSpacing: ".14em", color: "rgba(29,25,19,.62)", marginTop: 2 }}
               >
                 {countyById[c.county].name.toUpperCase()} CO · MEDIAN {fmtK(c.price)} · {c.dom} DOM
               </div>
@@ -56,7 +56,7 @@ export default function MobileCitySearchIndex({
             <span
               className="font-mono"
               style={{
-                background: (counts[c.slug] || 0) >= 2 ? "#D9481F" : "#FBF7EE",
+                background: (counts[c.slug] || 0) >= 2 ? "#C13E17" : "#FBF7EE",
                 color: (counts[c.slug] || 0) >= 2 ? "#F6F1E6" : "#1D1913",
                 border: "1.5px solid #1D1913",
                 borderRadius: 999,
@@ -68,7 +68,7 @@ export default function MobileCitySearchIndex({
             >
               {counts[c.slug]} {counts[c.slug] === 1 ? "HOME" : "HOMES"}
             </span>
-            <span style={{ fontSize: 16, color: "rgba(29,25,19,.5)" }}>›</span>
+            <span style={{ fontSize: 16, color: "rgba(29,25,19,.62)" }}>›</span>
           </Link>
         ))}
       </div>
@@ -78,7 +78,7 @@ export default function MobileCitySearchIndex({
           textAlign: "center",
           fontSize: 9,
           letterSpacing: ".2em",
-          color: "rgba(29,25,19,.45)",
+          color: "rgba(29,25,19,.62)",
           marginTop: 20,
         }}
       >

@@ -1,10 +1,21 @@
 "use client";
+import { useEffect, useRef } from "react";
 import { useShelf } from "@/lib/shelf";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 
 /* The soft ask — shown once, ~1s after the first guest save. Never blocks:
    "Keep browsing as a guest" is a first-class choice. */
 export default function SoftAccountGate() {
   const shelf = useShelf();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const primaryRef = useRef<HTMLButtonElement>(null);
+  useDialogA11y({ open: shelf.gateOpen, onClose: shelf.closeGate, panelRef });
+
+  // land on the primary action, not the bare panel
+  useEffect(() => {
+    if (shelf.gateOpen) primaryRef.current?.focus();
+  }, [shelf.gateOpen]);
+
   if (!shelf.gateOpen) return null;
   return (
     <div
@@ -23,6 +34,8 @@ export default function SoftAccountGate() {
       }}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "#F6F1E6",
@@ -34,12 +47,13 @@ export default function SoftAccountGate() {
           width: "100%",
           margin: "0 auto",
           animation: "fadeUp .3s ease both",
+          outline: "none",
         }}
       >
         <div style={{ width: 44, height: 5, borderRadius: 99, background: "rgba(29,25,19,.25)", margin: "0 auto" }} />
         <div
           className="font-mono"
-          style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F", marginTop: 18 }}
+          style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17", marginTop: 18 }}
         >
           YOUR SHELF — {shelf.savedCount} {shelf.savedCount === 1 ? "HOME" : "HOMES"}
         </div>
@@ -53,6 +67,7 @@ export default function SoftAccountGate() {
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 18 }}>
           <button
             type="button"
+            ref={primaryRef}
             onClick={shelf.openAuth}
             className="btn-primary"
             style={{
@@ -91,7 +106,7 @@ export default function SoftAccountGate() {
         </div>
         <div
           className="font-mono"
-          style={{ textAlign: "center", fontSize: 8.5, letterSpacing: ".18em", color: "rgba(29,25,19,.5)", marginTop: 14 }}
+          style={{ textAlign: "center", fontSize: 8.5, letterSpacing: ".18em", color: "rgba(29,25,19,.62)", marginTop: 14 }}
         >
           NO SPAM — JUST THE HOUSES.
         </div>

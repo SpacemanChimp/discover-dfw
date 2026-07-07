@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cities } from "@/lib/dfw-data";
 import { RADIUS_OPTIONS } from "@/lib/mls/geo";
@@ -19,7 +19,7 @@ const PRICE_BANDS: { label: string; min?: number; max?: number }[] = [
 const pill: React.CSSProperties = {
   border: "1.5px solid #1D1913",
   borderRadius: 999,
-  padding: "10px 16px",
+  padding: "12px 16px",
   fontSize: 12.5,
   fontWeight: 600,
   background: "#FBF7EE",
@@ -48,7 +48,7 @@ const monoLabel: React.CSSProperties = {
   fontSize: 10,
   letterSpacing: ".16em",
   textTransform: "uppercase",
-  color: "rgba(29,25,19,.6)",
+  color: "rgba(29,25,19,.65)",
   marginBottom: 8,
 };
 
@@ -68,10 +68,10 @@ const numInput: React.CSSProperties = {
 
 const applyBtn: React.CSSProperties = {
   width: "100%",
-  border: "1.5px solid #D9481F",
+  border: "1.5px solid #C13E17",
   borderRadius: 999,
   padding: "11px 16px",
-  background: "#D9481F",
+  background: "#C13E17",
   color: "#F6F1E6",
   fontSize: 11,
   letterSpacing: ".14em",
@@ -103,7 +103,7 @@ function PopButton({
         letterSpacing: ".06em",
         fontSize: 11,
         borderColor: active ? "#D9481F" : "#1D1913",
-        color: active ? "#D9481F" : "#1D1913",
+        color: active ? "#C13E17" : "#1D1913",
       }}
     >
       {label} ▾
@@ -129,7 +129,7 @@ function OptionPill({
       style={{
         border: selected ? "1.5px solid #1D1913" : "1.5px solid rgba(29,25,19,.35)",
         borderRadius: 999,
-        padding: "7px 12px",
+        padding: "10px 14px",
         fontSize: 10.5,
         letterSpacing: ".08em",
         background: selected ? "#1D1913" : "#FBF7EE",
@@ -333,6 +333,13 @@ export default function SearchToolbar({
     setOpen(null);
   };
 
+  /* role=dialog panels must actually receive focus when they open — only
+     one is ever open, so a single ref travels between them */
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (open) panelRef.current?.focus();
+  }, [open]);
+
   const filtersCount =
     (query.propertyType ? 1 : 0) +
     (query.statuses?.length ? 1 : 0) +
@@ -342,6 +349,7 @@ export default function SearchToolbar({
 
   return (
     <div
+      className="ddfw-toolbar"
       style={{
         display: "flex",
         alignItems: "center",
@@ -405,7 +413,7 @@ export default function SearchToolbar({
           onClick={() => openPop("price")}
         />
         {open === "price" && (
-          <div style={panelStyle} role="dialog" aria-label="Price range">
+          <div ref={panelRef} tabIndex={-1} style={panelStyle} role="dialog" aria-label="Price range">
             <div className="font-mono" style={monoLabel}>PRICE RANGE</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input
@@ -420,7 +428,7 @@ export default function SearchToolbar({
                 onKeyDown={(e) => e.key === "Enter" && applyPrice()}
                 style={numInput}
               />
-              <span style={{ fontWeight: 700, color: "rgba(29,25,19,.5)" }}>–</span>
+              <span style={{ fontWeight: 700, color: "rgba(29,25,19,.62)" }}>–</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -434,7 +442,7 @@ export default function SearchToolbar({
                 style={numInput}
               />
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
               {PRICE_BANDS.map((b) => (
                 <OptionPill
                   key={b.label}
@@ -466,9 +474,9 @@ export default function SearchToolbar({
           onClick={() => openPop("beds")}
         />
         {open === "beds" && (
-          <div style={panelStyle} role="dialog" aria-label="Beds and baths">
+          <div ref={panelRef} tabIndex={-1} style={panelStyle} role="dialog" aria-label="Beds and baths">
             <div className="font-mono" style={monoLabel}>BEDROOMS</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {[0, 1, 2, 3, 4, 5].map((n) => (
                 <OptionPill
                   key={n}
@@ -479,7 +487,7 @@ export default function SearchToolbar({
               ))}
             </div>
             <div className="font-mono" style={{ ...monoLabel, marginTop: 14 }}>BATHROOMS</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {[0, 1, 2, 3, 4].map((n) => (
                 <OptionPill
                   key={n}
@@ -506,12 +514,14 @@ export default function SearchToolbar({
         />
         {open === "filters" && (
           <div
+            ref={panelRef}
+            tabIndex={-1}
             style={{ ...panelStyle, width: 320, maxHeight: "60vh", overflowY: "auto" }}
             role="dialog"
             aria-label="More filters"
           >
             <div className="font-mono" style={monoLabel}>HOME TYPE</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               <OptionPill label="ANY" selected={typeDraft === ""} onClick={() => setTypeDraft("")} />
               {propertyTypes.map((t) => (
                 <OptionPill
@@ -524,7 +534,7 @@ export default function SearchToolbar({
             </div>
 
             <div className="font-mono" style={{ ...monoLabel, marginTop: 14 }}>STATUS</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {STATUS_CHOICES.map((s) => (
                 <OptionPill
                   key={s.slug || "any"}
@@ -549,7 +559,7 @@ export default function SearchToolbar({
                 onKeyDown={(e) => e.key === "Enter" && applyFilters()}
                 style={numInput}
               />
-              <span style={{ fontWeight: 700, color: "rgba(29,25,19,.5)" }}>–</span>
+              <span style={{ fontWeight: 700, color: "rgba(29,25,19,.62)" }}>–</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -567,7 +577,7 @@ export default function SearchToolbar({
             {effCity && (
               <>
                 <div className="font-mono" style={{ ...monoLabel, marginTop: 14 }}>RADIUS</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   <OptionPill
                     label="IN TOWN ONLY"
                     selected={radiusDraft === 0}
@@ -636,7 +646,7 @@ export default function SearchToolbar({
             letterSpacing: ".12em",
             background: "transparent",
             borderColor: "rgba(29,25,19,.35)",
-            color: "rgba(29,25,19,.6)",
+            color: "rgba(29,25,19,.65)",
           }}
         >
           ✕ CLEAR

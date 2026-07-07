@@ -1,6 +1,7 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Listing } from "@/lib/mls/types";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 import SaveListingButton from "@/components/search/SaveListingButton";
 
 /* Gallery collage — Zillow-class: hero spanning two rows (~60% width) plus a
@@ -65,20 +66,27 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
     [photos.length]
   );
 
+  // Escape/trap/scroll-lock/focus-restore live in the shared hook; arrows
+  // stay a separate listener so stepping photos doesn't retrigger it
+  const isOpen = open !== null;
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  useDialogA11y({ open: isOpen, onClose: () => setOpen(null), panelRef });
+
   useEffect(() => {
-    if (open === null) return;
+    if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(null);
       if (e.key === "ArrowRight") step(1);
       if (e.key === "ArrowLeft") step(-1);
     };
     window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [open, step]);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, step]);
+
+  // land on the Close button; the hook returns focus to the opening tile
+  useEffect(() => {
+    if (isOpen) closeBtnRef.current?.focus();
+  }, [isOpen]);
 
   const slot = (stripe: string): React.CSSProperties => ({
     background: `repeating-linear-gradient(45deg,${stripe} 0 12px,#E2D6B9 12px 24px)`,
@@ -145,7 +153,7 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
             {/* placeholder always underneath; broken URLs hide themselves */}
             <span
               className="font-mono"
-              style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 12 }}
+              style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.68)", textAlign: "center", padding: 12 }}
             >
               MLS PHOTO 1 OF {listing.photoCount} — {(primary?.caption ?? listing.photoLabel).toUpperCase()}
             </span>
@@ -201,7 +209,7 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
             >
               <span
                 className="font-mono"
-                style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", textAlign: "center", padding: 10 }}
+                style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.68)", textAlign: "center", padding: 10 }}
               >
                 {(m.caption || "MLS PHOTO").toUpperCase()}
               </span>
@@ -230,6 +238,8 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
           role="dialog"
           aria-modal="true"
           aria-label={`Photo ${open + 1} of ${photos.length}`}
+          ref={panelRef}
+          tabIndex={-1}
           onClick={() => setOpen(null)}
           style={{
             position: "fixed",
@@ -239,6 +249,7 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            outline: "none",
           }}
         >
           {broken.has(open) ? (
@@ -270,6 +281,7 @@ export default function ListingPhotoGallery({ listing }: { listing: Listing }) {
           <button
             type="button"
             aria-label="Close gallery"
+            ref={closeBtnRef}
             onClick={() => setOpen(null)}
             className="font-mono"
             style={{

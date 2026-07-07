@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Listing } from "@/lib/mls/types";
 import { useShelf } from "@/lib/shelf";
 import { getSessionId } from "@/lib/session-id";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 import LeadSuccessState from "./LeadSuccessState";
 
 const QUICK = [
@@ -19,7 +20,7 @@ const input: React.CSSProperties = {
   borderRadius: 14,
   padding: "12px 15px",
   background: "#FBF7EE",
-  fontSize: 13,
+  fontSize: 16, // ≥16px keeps iOS Safari from zooming the sheet on focus
   fontFamily: "inherit",
   color: "#1D1913",
   outline: "none",
@@ -47,6 +48,8 @@ export default function AskQuestionSheet({
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
   const openedAt = useRef(Date.now());
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, panelRef });
 
   // each open: fresh spam clock + prefill from the signed-in account
   useEffect(() => {
@@ -122,6 +125,8 @@ export default function AskQuestionSheet({
       }}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "#F6F1E6",
@@ -135,6 +140,7 @@ export default function AskQuestionSheet({
           maxHeight: "88vh",
           overflowY: "auto",
           animation: "fadeUp .3s ease both",
+          outline: "none",
         }}
       >
         <div style={{ width: 44, height: 5, borderRadius: 99, background: "rgba(29,25,19,.25)", margin: "0 auto" }} />
@@ -181,20 +187,21 @@ export default function AskQuestionSheet({
                 <div className="font-serif" style={{ fontWeight: 800, fontSize: 16.5 }}>
                   Your {cityName} guide
                 </div>
-                <div className="font-mono" style={{ fontSize: 8, letterSpacing: ".14em", color: "rgba(29,25,19,.55)", marginTop: 2 }}>
+                <div className="font-mono" style={{ fontSize: 8, letterSpacing: ".14em", color: "rgba(29,25,19,.62)", marginTop: 2 }}>
                   ONE LOCAL GUIDE · REPLIES IN ~10 MIN
                 </div>
               </div>
               <span style={{ width: 9, height: 9, borderRadius: 99, background: "#2E7D4F" }} />
             </div>
-            <div className="font-mono" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".2em", color: "rgba(29,25,19,.5)", marginTop: 16 }}>
+            <div className="font-mono" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".2em", color: "rgba(29,25,19,.62)", marginTop: 16 }}>
               ABOUT {listing.unparsedAddress.toUpperCase()} — TAP TO ASK
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 9 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 9 }}>
               {QUICK.map((s) => (
                 <button
                   key={s}
                   type="button"
+                  aria-pressed={q === s}
                   onClick={() => {
                     setQ(s);
                     setErr(null);
@@ -202,7 +209,7 @@ export default function AskQuestionSheet({
                   style={{
                     border: q === s ? "1.5px solid #D9481F" : "1.5px solid #1D1913",
                     borderRadius: 999,
-                    padding: "8px 13px",
+                    padding: "11px 14px",
                     fontSize: 12,
                     fontWeight: 600,
                     background: q === s ? "rgba(217,72,31,.08)" : "#FBF7EE",
@@ -222,6 +229,9 @@ export default function AskQuestionSheet({
                 setErr(null);
               }}
               placeholder="Or ask it your way…"
+              aria-label="Or ask it your way…"
+              aria-invalid={!!err}
+              aria-describedby={err ? "question-error" : undefined}
               rows={3}
               style={{ ...input, marginTop: 13, resize: "vertical" }}
             />
@@ -230,13 +240,14 @@ export default function AskQuestionSheet({
                 <button
                   key={p}
                   type="button"
+                  aria-pressed={pref === p}
                   onClick={() => setPref(p)}
                   className="font-mono"
                   style={{
                     flex: 1,
                     border: "1.5px solid #1D1913",
                     borderRadius: 999,
-                    padding: "10px 0",
+                    padding: "12px 0",
                     textAlign: "center",
                     fontSize: 8.5,
                     fontWeight: pref === p ? 700 : 400,
@@ -255,6 +266,9 @@ export default function AskQuestionSheet({
                 value={name}
                 onChange={(e) => { setName(e.target.value); setErr(null); }}
                 placeholder="Your name"
+                aria-label="Your name"
+                aria-invalid={!!err}
+                aria-describedby={err ? "question-error" : undefined}
                 style={{ ...input, flex: 1 }}
               />
               <input
@@ -262,6 +276,9 @@ export default function AskQuestionSheet({
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErr(null); }}
                 placeholder="Your email"
+                aria-label="Your email"
+                aria-invalid={!!err}
+                aria-describedby={err ? "question-error" : undefined}
                 style={{ ...input, flex: 1 }}
               />
             </div>
@@ -271,6 +288,9 @@ export default function AskQuestionSheet({
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value); setErr(null); }}
                 placeholder="The number to text you back at"
+                aria-label="The number to text you back at"
+                aria-invalid={!!err}
+                aria-describedby={err ? "question-error" : undefined}
                 style={{ ...input, marginTop: 8 }}
               />
             )}
@@ -286,7 +306,7 @@ export default function AskQuestionSheet({
               style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
             />
             {err && (
-              <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".1em", color: "#D9481F", marginTop: 8 }}>
+              <div id="question-error" role="alert" className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".1em", color: "#C13E17", marginTop: 8 }}>
                 {err.toUpperCase()}
               </div>
             )}
@@ -315,7 +335,7 @@ export default function AskQuestionSheet({
             </button>
             <div
               className="font-mono"
-              style={{ textAlign: "center", fontSize: 8, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", marginTop: 12 }}
+              style={{ textAlign: "center", fontSize: 8, letterSpacing: ".16em", color: "rgba(29,25,19,.62)", marginTop: 12 }}
             >
               YOUR INFO GOES TO ONE GUIDE — NEVER A LEAD LIST
             </div>

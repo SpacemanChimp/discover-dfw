@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useShelf } from "@/lib/shelf";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 
 /* "Membership — free, always." Email-first magic link via Supabase Auth,
    plus Google OAuth. In environments without Supabase env vars it falls
@@ -10,6 +11,24 @@ export default function AuthModal() {
   const [email, setEmail] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [phase, setPhase] = useState<"form" | "sending" | "sent">("form");
+  const [googling, setGoogling] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const sentBtnRef = useRef<HTMLButtonElement>(null);
+
+  const close = () => {
+    setPhase("form");
+    setErr(null);
+    setGoogling(false);
+    shelf.closeAuth();
+  };
+
+  useDialogA11y({ open: shelf.authOpen, onClose: close, panelRef });
+
+  // "sent" swaps the whole panel — hand focus to its only action
+  useEffect(() => {
+    if (phase === "sent") sentBtnRef.current?.focus();
+  }, [phase]);
+
   if (!shelf.authOpen) return null;
 
   const submit = async (e: React.FormEvent) => {
@@ -35,14 +54,13 @@ export default function AuthModal() {
 
   const google = async () => {
     setErr(null);
+    setGoogling(true);
     const error = await shelf.signInWithGoogle();
-    if (error) setErr(error);
-  };
-
-  const close = () => {
-    setPhase("form");
-    setErr(null);
-    shelf.closeAuth();
+    // success navigates away — only an error hands the button back
+    if (error) {
+      setErr(error);
+      setGoogling(false);
+    }
   };
 
   return (
@@ -63,6 +81,8 @@ export default function AuthModal() {
       }}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "#F6F1E6",
@@ -74,6 +94,7 @@ export default function AuthModal() {
           width: "100%",
           maxWidth: 420,
           animation: "fadeUp .25s ease both",
+          outline: "none",
         }}
       >
         <button
@@ -82,10 +103,10 @@ export default function AuthModal() {
           onClick={close}
           style={{
             position: "absolute",
-            top: 14,
-            right: 14,
-            width: 32,
-            height: 32,
+            top: 10,
+            right: 10,
+            width: 40,
+            height: 40,
             borderRadius: 99,
             border: "1.5px solid #1D1913",
             background: "transparent",
@@ -99,7 +120,7 @@ export default function AuthModal() {
 
         {phase === "sent" ? (
           <div style={{ textAlign: "center", padding: "22px 4px 10px" }}>
-            <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F" }}>
+            <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17" }}>
               CHECK YOUR MAIL
             </div>
             <div className="font-serif" style={{ fontWeight: 900, fontSize: 29, lineHeight: 1.05, marginTop: 10 }}>
@@ -111,12 +132,13 @@ export default function AuthModal() {
             </p>
             <div
               className="font-mono"
-              style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.45)", marginTop: 16 }}
+              style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.62)", marginTop: 16 }}
             >
               NOTHING ARRIVED? CHECK SPAM, OR TRY AGAIN IN A MINUTE.
             </div>
             <button
               type="button"
+              ref={sentBtnRef}
               onClick={close}
               style={{
                 width: "100%",
@@ -137,7 +159,7 @@ export default function AuthModal() {
           </div>
         ) : (
           <>
-            <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F" }}>
+            <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17" }}>
               MEMBERSHIP — FREE, ALWAYS
             </div>
             <div className="font-serif" style={{ fontWeight: 900, fontSize: 31, lineHeight: 1.05, marginTop: 10 }}>
@@ -150,7 +172,7 @@ export default function AuthModal() {
                 "The Letter — one calm market email a week",
               ].map((t) => (
                 <div key={t} style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
-                  <span style={{ color: "#D9481F", fontSize: 13 }}>✳</span>
+                  <span aria-hidden="true" style={{ color: "#D9481F", fontSize: 13 }}>✳</span>
                   <span style={{ fontSize: 13.5, lineHeight: 1.5, color: "rgba(29,25,19,.8)" }}>{t}</span>
                 </div>
               ))}
@@ -165,6 +187,11 @@ export default function AuthModal() {
                 }}
                 placeholder="you@northtexas.com"
                 autoFocus
+                aria-label="Email address"
+                name="email"
+                autoComplete="email"
+                aria-invalid={!!err}
+                aria-describedby={err ? "auth-error" : undefined}
                 style={{
                   width: "100%",
                   boxSizing: "border-box",
@@ -173,14 +200,14 @@ export default function AuthModal() {
                   padding: "14px 18px",
                   marginTop: 18,
                   background: "#FBF7EE",
-                  fontSize: 13.5,
+                  fontSize: 16, // ≥16px keeps iOS Safari from zooming on focus
                   fontFamily: "inherit",
                   color: "#1D1913",
                   outline: "none",
                 }}
               />
               {err && (
-                <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "#D9481F", marginTop: 8 }}>
+                <div id="auth-error" role="alert" className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "#C13E17", marginTop: 8 }}>
                   {err.toUpperCase()}
                 </div>
               )}
@@ -213,7 +240,7 @@ export default function AuthModal() {
             </form>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14 }}>
               <span style={{ flex: 1, height: 1, background: "rgba(29,25,19,.2)" }} />
-              <span className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".2em", color: "rgba(29,25,19,.45)" }}>
+              <span className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".2em", color: "rgba(29,25,19,.62)" }}>
                 OR
               </span>
               <span style={{ flex: 1, height: 1, background: "rgba(29,25,19,.2)" }} />
@@ -221,7 +248,7 @@ export default function AuthModal() {
             <button
               type="button"
               onClick={google}
-              disabled={shelf.authMode === "local"}
+              disabled={shelf.authMode === "local" || googling}
               title={shelf.authMode === "local" ? "Accounts arrive with the backend environment" : undefined}
               style={{
                 width: "100%",
@@ -234,15 +261,16 @@ export default function AuthModal() {
                 marginTop: 12,
                 background: "#FBF7EE",
                 color: shelf.authMode === "local" ? "rgba(29,25,19,.45)" : "#1D1913",
-                cursor: shelf.authMode === "local" ? "not-allowed" : "pointer",
+                cursor: shelf.authMode === "local" ? "not-allowed" : googling ? "wait" : "pointer",
                 fontFamily: "inherit",
+                opacity: googling ? 0.7 : 1,
               }}
             >
-              Continue with Google
+              {googling ? "Opening Google…" : "Continue with Google"}
             </button>
             <div
               className="font-mono"
-              style={{ textAlign: "center", fontSize: 8, letterSpacing: ".16em", color: "rgba(29,25,19,.45)", marginTop: 14 }}
+              style={{ textAlign: "center", fontSize: 8, letterSpacing: ".16em", color: "rgba(29,25,19,.62)", marginTop: 14 }}
             >
               NO PASSWORDS · UNSUBSCRIBE ANYTIME · WE NEVER SELL YOUR NUMBER
             </div>

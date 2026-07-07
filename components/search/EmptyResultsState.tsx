@@ -4,7 +4,7 @@ export default function EmptyResultsState({ cityName }: { cityName?: string }) {
     <div style={{ textAlign: "center", padding: "48px 12px" }}>
       <div
         className="font-mono"
-        style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".24em", color: "#D9481F" }}
+        style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".24em", color: "#C13E17" }}
       >
         NOTHING ON THE LEDGER
       </div>
@@ -14,7 +14,7 @@ export default function EmptyResultsState({ cityName }: { cityName?: string }) {
       >
         Nothing matches that combination{cityName ? ` in ${cityName}` : ""} — yet.
       </div>
-      <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.6, color: "rgba(29,25,19,.55)" }}>
+      <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.6, color: "rgba(29,25,19,.65)" }}>
         Loosen a filter, or save the search and we&rsquo;ll watch the market for you.
       </p>
     </div>

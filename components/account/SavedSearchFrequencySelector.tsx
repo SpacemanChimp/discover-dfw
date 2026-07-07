@@ -40,12 +40,12 @@ export default function SavedSearchFrequencySelector({
             className="font-mono"
             style={{
               border: "none",
-              padding: "6px 10px",
+              padding: "12px 12px",
               fontSize: 8,
               fontWeight: active ? 700 : 400,
               letterSpacing: ".12em",
               background: active ? "#1D1913" : "transparent",
-              color: active ? "#F6F1E6" : "rgba(29,25,19,.6)",
+              color: active ? "#F6F1E6" : "rgba(29,25,19,.65)",
               cursor: active ? "default" : "pointer",
             }}
           >

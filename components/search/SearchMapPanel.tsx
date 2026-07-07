@@ -90,7 +90,7 @@ export default function SearchMapPanel({
           padding: "0 14px",
           fontSize: 9.5,
           letterSpacing: ".22em",
-          color: "rgba(29,25,19,.5)",
+          color: "rgba(29,25,19,.62)",
         }}
       >
         <span>DALLAS–FORT WORTH METROPLEX — CLICK A CITY OR A PIN</span>
@@ -121,16 +121,16 @@ export default function SearchMapPanel({
         {cities.map((c) => {
           const [x, y] = project(c.ll).map(r1);
           return (
-            <circle
+            <g
               key={c.slug}
-              cx={x}
-              cy={y}
-              r={5}
-              style={{ fill: "rgba(38,32,22,.32)", cursor: "pointer" }}
+              style={{ cursor: "pointer" }}
               onClick={() => router.push(`/city/${c.slug}/homes`)}
             >
               <title>{`${c.name} — search homes`}</title>
-            </circle>
+              <circle cx={x} cy={y} r={5} style={{ fill: "rgba(38,32,22,.32)" }} />
+              {/* invisible ring widens the tap target — transparent still paints */}
+              <circle cx={x} cy={y} r={14} style={{ fill: "transparent" }} />
+            </g>
           );
         })}
         {activeXY && (
@@ -184,7 +184,7 @@ export default function SearchMapPanel({
           padding: "10px 14px 6px",
           fontSize: 9.5,
           letterSpacing: ".18em",
-          color: "rgba(29,25,19,.55)",
+          color: "rgba(29,25,19,.62)",
         }}
       >
         <span>
@@ -194,7 +194,7 @@ export default function SearchMapPanel({
         <span>
           {active ? (
             <>
-              VIEWING: <span style={{ color: "#D9481F", fontWeight: 700 }}>{active.name.toUpperCase()}</span> ·{" "}
+              VIEWING: <span style={{ color: "#C13E17", fontWeight: 700 }}>{active.name.toUpperCase()}</span> ·{" "}
             </>
           ) : null}
           {listings.length} OF {total} RESULTS

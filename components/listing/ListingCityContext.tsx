@@ -23,7 +23,7 @@ export default function ListingCityContext({
     <>
       <div
         className="font-mono"
-        style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F", marginTop: 26 }}
+        style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17", marginTop: 26 }}
       >
         02 — KNOW THE CITY
       </div>
@@ -35,12 +35,20 @@ export default function ListingCityContext({
           <Link
             href={`/city/${city.slug}`}
             className="link-underline font-mono"
-            style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".14em", color: "#D9481F", textDecoration: "none" }}
+            style={{
+              fontSize: 8.5,
+              fontWeight: 700,
+              letterSpacing: ".14em",
+              color: "#C13E17",
+              textDecoration: "none",
+              display: "inline-block",
+              padding: "10px 0",
+            }}
           >
             FULL CITY REPORT →
           </Link>
         </div>
-        <div className="font-mono" style={{ marginTop: 12, fontSize: 8.5, letterSpacing: ".12em", color: "rgba(29,25,19,.55)" }}>
+        <div className="font-mono" style={{ marginTop: 12, fontSize: 8.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)" }}>
           THIS HOME VS CITY MEDIAN ({fmtK(city.price)} · {isLiveMls ? "EDITORIAL EST." : "PLACEHOLDER"})
         </div>
         <div style={{ position: "relative", height: 8, borderRadius: 99, background: "rgba(29,25,19,.14)", marginTop: 8 }}>
@@ -58,7 +66,7 @@ export default function ListingCityContext({
             marginTop: 6,
             fontSize: 8,
             letterSpacing: ".1em",
-            color: "rgba(29,25,19,.5)",
+            color: "rgba(29,25,19,.62)",
             flexWrap: "wrap",
           }}
         >
@@ -74,7 +82,7 @@ export default function ListingCityContext({
           <Link
             href={`/city/${city.slug}/homes`}
             className="link-underline"
-            style={{ color: "rgba(29,25,19,.55)", textDecoration: "none" }}
+            style={{ color: "#C13E17", textDecoration: "none", display: "inline-block", padding: "10px 0" }}
           >
             ALL {city.name.toUpperCase()} HOMES →
           </Link>

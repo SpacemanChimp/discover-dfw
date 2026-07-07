@@ -26,7 +26,7 @@ export default async function NearbyListings({ listing }: { listing: Listing }) 
     <section style={{ maxWidth: 860, margin: "0 auto", padding: "8px 4vw 30px" }}>
       <div
         className="font-mono"
-        style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".24em", color: "#D9481F", marginBottom: 12 }}
+        style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".24em", color: "#C13E17", marginBottom: 12 }}
       >
         NEARBY ON THE MARKET — WITHIN 3 MILES
       </div>
@@ -65,13 +65,13 @@ export default async function NearbyListings({ listing }: { listing: Listing }) 
               )}
             </div>
             <div style={{ padding: "10px 12px 12px" }}>
-              <div className="font-serif" style={{ fontWeight: 800, fontSize: 16, color: "#D9481F" }}>
+              <div className="font-serif" style={{ fontWeight: 800, fontSize: 19, color: "#D9481F" }}>
                 ${l.listPrice.toLocaleString("en-US")}
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {l.unparsedAddress}
               </div>
-              <div className="font-mono" style={{ fontSize: 8, letterSpacing: ".12em", color: "rgba(29,25,19,.55)", marginTop: 4 }}>
+              <div className="font-mono" style={{ fontSize: 8, letterSpacing: ".12em", color: "rgba(29,25,19,.62)", marginTop: 4 }}>
                 {l.bedsTotal} BD · {l.bathsTotal} BA{l.livingAreaSqft ? ` · ${l.livingAreaSqft.toLocaleString("en-US")} SQFT` : ""}
               </div>
             </div>

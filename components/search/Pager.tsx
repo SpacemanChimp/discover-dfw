@@ -35,7 +35,7 @@ export default function Pager({
         style={{
           border: "1.5px solid #1D1913",
           borderRadius: 999,
-          padding: "9px 16px",
+          padding: "13px 18px",
           fontSize: 9.5,
           fontWeight: 700,
           letterSpacing: ".14em",
@@ -52,7 +52,7 @@ export default function Pager({
         style={{
           border: "1.5px solid rgba(29,25,19,.25)",
           borderRadius: 999,
-          padding: "9px 16px",
+          padding: "13px 18px",
           fontSize: 9.5,
           fontWeight: 700,
           letterSpacing: ".14em",
@@ -69,7 +69,7 @@ export default function Pager({
       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, padding: "10px 0 4px" }}
     >
       {arrow("← PREV", page - 1, page > 1)}
-      <span className="font-mono" style={{ fontSize: 9, letterSpacing: ".18em", color: "rgba(29,25,19,.55)" }}>
+      <span className="font-mono" style={{ fontSize: 9, letterSpacing: ".18em", color: "rgba(29,25,19,.62)" }}>
         PAGE {page} OF {pages}
       </span>
       {arrow("NEXT →", page + 1, page < pages)}

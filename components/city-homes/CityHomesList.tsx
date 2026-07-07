@@ -33,13 +33,13 @@ export default function CityHomesList({
           fontSize: 10,
           fontWeight: 700,
           letterSpacing: ".24em",
-          color: "#D9481F",
+          color: "#C13E17",
         }}
       >
         <span>
           ON THE MARKET — {listings.length} {listings.length === 1 ? "HOME" : "HOMES"}
         </span>
-        <span style={{ color: "rgba(29,25,19,.45)", fontWeight: 400 }}>NEWEST FIRST · MOCK FEED</span>
+        <span style={{ color: "rgba(29,25,19,.62)", fontWeight: 400 }}>NEWEST FIRST · MOCK FEED</span>
       </div>
 
       {listings.length === 0 ? (

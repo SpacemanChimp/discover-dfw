@@ -32,6 +32,7 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 22 | **Zillow-style search: real map + filter popovers + perf** — Leaflet/Carto geographic map with brand price pins over the full filtered set (`/api/map-pins`, 600 cap), PRICE / BEDS & BATHS / FILTERS popover panels with batched Apply, client router cache, counts memo | ✅ |
 | 23 | **Hover photo cards + draw boundary + uncapped map** — Zillow-style hover card with photo carousel (`/api/pin-card`), freehand map boundary → `?poly=` (RDP-simplified, shared polygon search across providers), pin cap 600→5,000 with capped-viewport bbox refetch, two-layer marker renderer (static canvas dots + capped bubble overlay) | ✅ |
 | 24 | **Instant search shell + mobile map + big gallery + live copy** — /homes streams (toolbar+map paint immediately, rail suspends; `unstable_cache` on rail/counts for cold lambdas), mobile MAP/LIST toggle (Leaflet survives display:none via ResizeObserver + deferred fit), pins always follow the viewport (bbox-follow mode), Zillow-class 5-photo dossier collage @1240px, placeholder copy retired behind `isLiveMls` sitewide | ✅ |
+| 25 | **Mobile polish + accessibility** — WCAG contrast sweep (ink-alpha .45/.5/.55→.62, small-orange text → #C13E17), shared `useDialogA11y` (Escape/focus-trap/restore/scroll-lock) on all 5 overlays, form labels + role=alert errors + aria-pressed chips, 40px tap targets, mobile popover sheets, toggle clearance for TREC links, loading/empty skeletons on dashboards + city-homes route; **fixed: saved-homes fed mock data on the live feed** (new `/api/shelf-listings`) | ✅ |
 | Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts, optional Google-basemap swap (needs user's Maps API key + billing) | ⬜ |
 
 ### Phase 3 notes
@@ -749,6 +750,60 @@ a dev server on :3111, or against production):
 - **Dev-verification footnote**: React streaming leaves the shell's
   pre-resolve tree in a `<div hidden>` in dev — DOM probes must filter
   on visibility or they read phantom "PLOTTING THE MAP…" chips.
+
+### Phase 25 notes — mobile polish + accessibility
+
+Audited all seven surfaces (map room, city homes, listing dossier, saved
+homes, saved searches, auth gate, lead sheets) against a nine-point
+checklist; ~60 findings fixed. The load-bearing ones:
+
+- **Saved homes was broken in production** (found by the audit): the page
+  still fed `mockListings`, so every live-feed save rendered "NO LONGER
+  AVAILABLE". New `GET /api/shelf-listings?keys=` (numeric-validated,
+  deduped, ≤60 keys, public `Listing` projection only, private/no-store)
+  hydrates the dashboard client-side in live mode; a fetch failure shows
+  "SHELF LOOKUP FAILED — TRY A REFRESH" instead of false off-market rows.
+- **Contrast**: the muted-ink microcopy tokens failed WCAG across the
+  board (ink@.45 = 2.8:1, @.5 = 3.3:1, @.55 = 3.8:1 on cream — including
+  the legally required IDX attribution/disclaimer strips). All text at
+  those alphas → `.62` (4.7:1); borderline `.6` → `.65`; the dark footer
+  stamp cream@.45 → `.55`. Small orange (#D9481F = 3.8:1) → `#C13E17`
+  (4.7:1 — the pre-existing `.btn-primary` hover shade) for text under
+  ~19px; big serif prices/borders/fills stay #D9481F. Filled-orange
+  buttons (cream text) rest at #C13E17 now, hover #B23814 — done once in
+  globals via `.btn-primary[style*="d9481f" i]` with `!important` (inline
+  styles otherwise win).
+- **Dialogs**: new `lib/use-dialog-a11y.ts` (Escape close, Tab trap,
+  focus into panel on open + restore to opener on close, body scroll
+  lock; opener captured at render time so AuthModal's autoFocus
+  survives) wired into RequestShowingSheet, AskQuestionSheet, AuthModal,
+  SoftAccountGate, and the gallery lightbox. Sheets/auth also gained
+  input aria-labels, role="alert" errors with aria-invalid/describedby,
+  aria-pressed selection chips, and 16px inputs (kills iOS focus-zoom;
+  toolbar inputs get 16px under 940px via `.ddfw-toolbar` CSS).
+- **Mobile layout**: toolbar popovers were absolute-anchored and
+  overflowed 375px viewports — under 940px they now pin as a fixed sheet
+  (`[data-ddfw-pop] > [role="dialog"]`). The floating MAP/LIST toggle sat
+  on the TREC links at full scroll — the compliance footer reserves 96px
+  under 940px and the toggle respects `env(safe-area-inset-bottom)`, as
+  does the dossier's sticky CTA bar.
+- **Tap targets** to ≥40px: pager arrows, draw/clear boundary, map-card
+  photo arrows + a new labeled close button on the pin card (touch had
+  no discoverable dismissal), Leaflet zoom, toolbar pills/option chips,
+  hearts (default 40), account text-buttons (SIGN OUT/REMOVE/RUN with
+  hit-slop padding), cadence pills, sheet chips. REMOVE on saved
+  searches is now a two-tap confirm ("SURE? REMOVE", 3s window).
+- **States/CLS**: both account dashboards show broadsheet-silhouette
+  skeletons until the shelf resolves (count pills show "—", no false
+  empty); `/city/[slug]/homes` verified to have its loading.tsx; the
+  mobile index streams behind a row skeleton instead of a blank page;
+  rail skeleton photo slots 180→210 to match the real card (kills the
+  stream-swap jump); SIGN IN/badge reserve space in the sticky nav;
+  `scrollbar-gutter: stable` stops the lightbox scroll-lock shift.
+- Verified in-browser at 375px and 1440px: index-first default, popover
+  in-viewport + focused, Escape/focus-restore on sheets and auth modal,
+  TREC links clear the toggle, attribution at rgba(.62), desktop layout
+  pixel-identical (rail 520, toggle hidden, popovers anchored).
 
 ### Market snapshots spec audit (post-Phase 20)
 

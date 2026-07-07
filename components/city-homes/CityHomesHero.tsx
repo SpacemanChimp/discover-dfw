@@ -14,7 +14,7 @@ export default function CityHomesHero({ snapshot }: { snapshot: CityMarketSnapsh
           gap: 9,
           fontSize: 10.5,
           letterSpacing: ".24em",
-          color: "#D9481F",
+          color: "#C13E17",
           border: "1.5px solid rgba(217,72,31,.5)",
           borderRadius: 999,
           padding: "7px 14px",
@@ -54,7 +54,7 @@ export default function CityHomesHero({ snapshot }: { snapshot: CityMarketSnapsh
           <span
             className="font-mono"
             style={{
-              background: "#D9481F",
+              background: "#C13E17",
               color: "#F6F1E6",
               borderRadius: 999,
               fontSize: 10.5,
@@ -68,14 +68,14 @@ export default function CityHomesHero({ snapshot }: { snapshot: CityMarketSnapsh
           <Link
             href={`/city/${snapshot.citySlug}`}
             className="link-underline font-mono"
-            style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", color: "#D9481F", textDecoration: "none" }}
+            style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", color: "#C13E17", textDecoration: "none" }}
           >
             READ THE FULL CITY REPORT →
           </Link>
           <Link
             href={`/homes?city=${snapshot.citySlug}`}
             className="link-underline font-mono"
-            style={{ fontSize: 10, letterSpacing: ".18em", color: "rgba(29,25,19,.55)", textDecoration: "none" }}
+            style={{ fontSize: 10, letterSpacing: ".18em", color: "#C13E17", textDecoration: "none" }}
           >
             OPEN THE MAP ROOM ↗
           </Link>

@@ -23,14 +23,14 @@ export default function ListingLeadCTA({
           className="btn-primary"
           style={{
             flex: 1.4,
-            background: "#D9481F",
+            background: "#C13E17",
             color: "#F6F1E6",
             borderRadius: 999,
             padding: "15px 0",
             textAlign: "center",
             fontWeight: 700,
             fontSize: 14,
-            border: "2px solid #D9481F",
+            border: "2px solid #C13E17",
             boxShadow: "0 10px 22px rgba(217,72,31,.28)",
             cursor: "pointer",
             fontFamily: "inherit",

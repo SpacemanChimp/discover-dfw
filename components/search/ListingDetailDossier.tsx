@@ -49,7 +49,7 @@ export default function ListingDetailDossier({
             >
               {b.label}
             </span>
-            <span className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)" }}>
+            <span className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.62)" }}>
               {listing.propertyType.toUpperCase()} · {listing.neighborhood.toUpperCase()}
             </span>
           </div>
@@ -62,7 +62,7 @@ export default function ListingDetailDossier({
           <div style={{ fontSize: 17, fontWeight: 600, marginTop: 6 }}>
             {listing.unparsedAddress}, {city.name}, TX{listing.postalCode ? ` ${listing.postalCode}` : ""}
           </div>
-          <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".14em", color: "rgba(29,25,19,.5)", marginTop: 6 }}>
+          <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".14em", color: "rgba(29,25,19,.62)", marginTop: 6 }}>
             {listing.bedsTotal} BD · {listing.bathsTotal} BA · {listing.livingAreaSqft.toLocaleString("en-US")} SQFT
             {listing.yearBuilt ? ` · BUILT ${listing.yearBuilt}` : ""}{ppsf !== null ? ` · $${ppsf}/SQFT` : ""}
           </div>
@@ -98,7 +98,7 @@ export default function ListingDetailDossier({
             listingId={listing.listingId}
             mlsSource={listing.mlsSource}
           />
-          <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".14em", color: "rgba(29,25,19,.45)" }}>
+          <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".14em", color: "rgba(29,25,19,.62)" }}>
             <LastUpdatedStamp asOf={listing.mlsLastUpdated} prefix="LAST UPDATED" />
             {" · "}
             {(listing.disclaimerText ?? DISCLAIMER_RESERVED).toUpperCase()}

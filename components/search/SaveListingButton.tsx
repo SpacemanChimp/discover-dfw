@@ -7,7 +7,7 @@ export default function SaveListingButton({
   listingKey,
   listPrice,
   standardStatus,
-  size = 36,
+  size = 40,
 }: {
   listingKey: string;
   listPrice: number;

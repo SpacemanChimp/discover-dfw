@@ -39,7 +39,7 @@ export default function SavedListingCardBroadsheet({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             className="font-mono"
-            style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.5)" }}
+            style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.62)" }}
           >
             NO LONGER AVAILABLE
           </div>
@@ -55,11 +55,11 @@ export default function SavedListingCardBroadsheet({
             fontSize: 8.5,
             fontWeight: 700,
             letterSpacing: ".14em",
-            color: "#D9481F",
+            color: "#C13E17",
             background: "none",
             border: "1.5px solid rgba(217,72,31,.5)",
             borderRadius: 999,
-            padding: "8px 14px",
+            padding: "12px 16px",
             cursor: "pointer",
             whiteSpace: "nowrap",
           }}
@@ -86,7 +86,7 @@ export default function SavedListingCardBroadsheet({
       }}
     >
       <span style={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}>
-        <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} standardStatus={listing.standardStatus} size={30} />
+        <SaveListingButton listingKey={listing.listingKey} listPrice={listing.listPrice} standardStatus={listing.standardStatus} size={40} />
       </span>
       <Link
         href={`/listing/${listing.listingKey}`}
@@ -104,7 +104,7 @@ export default function SavedListingCardBroadsheet({
         >
           <span
             className="font-mono"
-            style={{ fontSize: 7.5, letterSpacing: ".12em", color: "rgba(29,25,19,.5)", textAlign: "center" }}
+            style={{ fontSize: 7.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)", textAlign: "center" }}
           >
             MLS
             <br />
@@ -112,13 +112,13 @@ export default function SavedListingCardBroadsheet({
           </span>
         </div>
         <div style={{ flex: 1, padding: "11px 13px", borderLeft: "2px solid #1D1913", minWidth: 0 }}>
-          <span className="font-serif" style={{ fontWeight: 900, fontSize: 18, color: "#D9481F" }}>
+          <span className="font-serif" style={{ fontWeight: 900, fontSize: 19, color: "#D9481F" }}>
             {money(listing.listPrice)}
           </span>
           <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 2 }}>{listing.unparsedAddress}</div>
           <div
             className="font-mono"
-            style={{ fontSize: 8, letterSpacing: ".1em", color: "rgba(29,25,19,.5)", marginTop: 3 }}
+            style={{ fontSize: 8, letterSpacing: ".1em", color: "rgba(29,25,19,.62)", marginTop: 3 }}
           >
             {listing.bedsTotal} BD · {listing.bathsTotal} BA · {listing.livingAreaSqft.toLocaleString("en-US")} SQFT
           </div>
@@ -130,7 +130,7 @@ export default function SavedListingCardBroadsheet({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  background: "#D9481F",
+                  background: "#C13E17",
                   color: "#F6F1E6",
                   borderRadius: 99,
                   fontSize: 7.5,

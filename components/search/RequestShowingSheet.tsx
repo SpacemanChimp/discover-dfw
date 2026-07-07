@@ -3,13 +3,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Listing } from "@/lib/mls/types";
 import { useShelf } from "@/lib/shelf";
 import { getSessionId } from "@/lib/session-id";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 import LeadSuccessState from "./LeadSuccessState";
 
 const chip = (active: boolean): React.CSSProperties => ({
   flex: 1,
   border: active ? "1.5px solid #1D1913" : "1.5px solid #1D1913",
   borderRadius: 999,
-  padding: "9px 0",
+  padding: "13px 0",
   textAlign: "center",
   fontSize: 8.5,
   fontWeight: active ? 700 : 400,
@@ -26,7 +27,7 @@ const input: React.CSSProperties = {
   borderRadius: 14,
   padding: "12px 15px",
   background: "#FBF7EE",
-  fontSize: 13,
+  fontSize: 16, // ≥16px keeps iOS Safari from zooming the sheet on focus
   fontFamily: "inherit",
   color: "#1D1913",
   outline: "none",
@@ -70,6 +71,8 @@ export default function RequestShowingSheet({
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
   const openedAt = useRef(Date.now());
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open, onClose, panelRef });
 
   // each open: fresh spam clock + prefill from the signed-in account
   useEffect(() => {
@@ -139,6 +142,8 @@ export default function RequestShowingSheet({
       }}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "#F6F1E6",
@@ -152,6 +157,7 @@ export default function RequestShowingSheet({
           maxHeight: "88vh",
           overflowY: "auto",
           animation: "fadeUp .3s ease both",
+          outline: "none",
         }}
       >
         <div style={{ width: 44, height: 5, borderRadius: 99, background: "rgba(29,25,19,.25)", margin: "0 auto" }} />
@@ -164,7 +170,7 @@ export default function RequestShowingSheet({
           />
         ) : (
           <>
-            <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#D9481F", marginTop: 16 }}>
+            <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".26em", color: "#C13E17", marginTop: 16 }}>
               SEE IT IN PERSON
             </div>
             <div className="font-serif" style={{ fontWeight: 900, fontSize: 24, marginTop: 6 }}>
@@ -175,12 +181,13 @@ export default function RequestShowingSheet({
                 <button
                   key={d.key}
                   type="button"
+                  aria-pressed={i === day}
                   onClick={() => setDay(i)}
                   style={{
                     flex: 1,
                     border: `2px solid ${i === day ? "#D9481F" : "#1D1913"}`,
                     borderRadius: 12,
-                    padding: "10px 0",
+                    padding: "12px 0",
                     textAlign: "center",
                     background: i === day ? "#D9481F" : "#FBF7EE",
                     color: i === day ? "#F6F1E6" : "#1D1913",
@@ -198,7 +205,7 @@ export default function RequestShowingSheet({
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
               {["Morning", "Midday", "Evening"].map((t) => (
-                <button key={t} type="button" onClick={() => setTime(t)} className="font-mono" style={chip(time === t)}>
+                <button key={t} type="button" aria-pressed={time === t} onClick={() => setTime(t)} className="font-mono" style={chip(time === t)}>
                   {t.toUpperCase()}
                 </button>
               ))}
@@ -208,12 +215,13 @@ export default function RequestShowingSheet({
                 <button
                   key={m}
                   type="button"
+                  aria-pressed={mode === m}
                   onClick={() => setMode(m)}
                   style={{
                     flex: 1,
                     border: "2px solid #1D1913",
                     borderRadius: 999,
-                    padding: "10px 0",
+                    padding: "12px 0",
                     textAlign: "center",
                     fontSize: 12.5,
                     fontWeight: 700,
@@ -228,14 +236,25 @@ export default function RequestShowingSheet({
               ))}
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <input value={name} onChange={(e) => { setName(e.target.value); setErr(null); }} placeholder="Your name" style={{ ...input, flex: 1 }} />
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (optional)" style={{ ...input, flex: 1 }} />
+              <input
+                value={name}
+                onChange={(e) => { setName(e.target.value); setErr(null); }}
+                placeholder="Your name"
+                aria-label="Your name"
+                aria-invalid={!!err}
+                aria-describedby={err ? "showing-error" : undefined}
+                style={{ ...input, flex: 1 }}
+              />
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (optional)" aria-label="Phone (optional)" style={{ ...input, flex: 1 }} />
             </div>
             <input
               type="email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setErr(null); }}
               placeholder="Email"
+              aria-label="Email"
+              aria-invalid={!!err}
+              aria-describedby={err ? "showing-error" : undefined}
               style={{ ...input, marginTop: 8 }}
             />
             {/* honeypot — visually hidden, tabbed past, bots fill it anyway */}
@@ -253,11 +272,12 @@ export default function RequestShowingSheet({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Anything we should know? (optional)"
+              aria-label="Anything we should know? (optional)"
               rows={2}
               style={{ ...input, marginTop: 8, resize: "vertical" }}
             />
             {err && (
-              <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".1em", color: "#D9481F", marginTop: 8 }}>
+              <div id="showing-error" role="alert" className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".1em", color: "#C13E17", marginTop: 8 }}>
                 {err.toUpperCase()}
               </div>
             )}
@@ -286,7 +306,7 @@ export default function RequestShowingSheet({
             </button>
             <div
               className="font-mono"
-              style={{ textAlign: "center", fontSize: 8, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", marginTop: 12 }}
+              style={{ textAlign: "center", fontSize: 8, letterSpacing: ".16em", color: "rgba(29,25,19,.62)", marginTop: 12 }}
             >
               A LOCAL GUIDE CONFIRMS WITHIN THE HOUR — NEVER A CALL CENTER
             </div>

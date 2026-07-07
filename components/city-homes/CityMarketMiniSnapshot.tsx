@@ -32,7 +32,7 @@ export default function CityMarketMiniSnapshot({ snapshot }: { snapshot: CityMar
               minWidth: 110,
             }}
           >
-            <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)" }}>
+            <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".2em", color: "rgba(29,25,19,.62)" }}>
               {s.label}
             </div>
             <div
@@ -49,7 +49,7 @@ export default function CityMarketMiniSnapshot({ snapshot }: { snapshot: CityMar
             alignSelf: "center",
             fontSize: 9,
             letterSpacing: ".16em",
-            color: "#D9481F",
+            color: "#C13E17",
             border: isLiveMls ? "1px solid rgba(217,72,31,.6)" : "1px dashed rgba(217,72,31,.6)",
             borderRadius: 999,
             padding: "7px 13px",

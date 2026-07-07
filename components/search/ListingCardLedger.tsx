@@ -52,7 +52,7 @@ export default function ListingCardLedger({
               hides itself (onError) and the striped slot shows through */}
           <span
             className="font-mono"
-            style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)", padding: "0 14px", textAlign: "center" }}
+            style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(29,25,19,.62)", padding: "0 14px", textAlign: "center" }}
           >
             MLS PHOTO — {listing.photoLabel.toUpperCase()}
           </span>
@@ -94,7 +94,7 @@ export default function ListingCardLedger({
               {money(listing.listPrice)}
             </span>
             {ppsf !== null && (
-              <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "rgba(29,25,19,.55)" }}>
+              <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)" }}>
                 ${ppsf} / SQFT
               </span>
             )}
@@ -102,10 +102,10 @@ export default function ListingCardLedger({
           <div style={{ fontSize: 15.5, fontWeight: 600, marginTop: 5 }}>{listing.unparsedAddress}</div>
           <div
             className="font-mono"
-            style={{ fontSize: 9.5, letterSpacing: ".16em", color: "rgba(29,25,19,.5)", marginTop: 4 }}
+            style={{ fontSize: 9.5, letterSpacing: ".16em", color: "rgba(29,25,19,.62)", marginTop: 4 }}
           >
             {listing.neighborhood.toUpperCase()} ·{" "}
-            <span style={{ color: "#D9481F", fontWeight: 700 }}>{cityName.toUpperCase()} ↗</span>
+            <span style={{ color: "#C13E17", fontWeight: 700 }}>{cityName.toUpperCase()} ↗</span>
           </div>
         </div>
         <div

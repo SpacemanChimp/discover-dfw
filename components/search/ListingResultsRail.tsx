@@ -27,7 +27,7 @@ export default function ListingResultsRail({
             fontSize: 10,
             fontWeight: 700,
             letterSpacing: ".24em",
-            color: "#D9481F",
+            color: "#C13E17",
             borderBottom: "2px solid #1D1913",
             paddingBottom: 10,
           }}
@@ -49,7 +49,7 @@ export default function ListingResultsRail({
           textAlign: "center",
           fontSize: 10,
           letterSpacing: ".22em",
-          color: "rgba(29,25,19,.45)",
+          color: "rgba(29,25,19,.62)",
           padding: "4px 0 2px",
         }}
       >

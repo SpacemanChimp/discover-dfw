@@ -20,7 +20,7 @@ export default function LoadingState({ cards = 3 }: { cards?: number }) {
           fontSize: 10,
           fontWeight: 700,
           letterSpacing: ".26em",
-          color: "#D9481F",
+          color: "#C13E17",
           padding: "8px 0 2px",
         }}
       >
@@ -38,7 +38,8 @@ export default function LoadingState({ cards = 3 }: { cards?: number }) {
         >
           <div
             style={{
-              height: 180,
+              // 210 matches ListingCardLedger's photo box — no stream-swap jump
+              height: 210,
               background: "repeating-linear-gradient(45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
             }}
           />

@@ -20,7 +20,7 @@ export default function LastUpdatedStamp({
       style={{
         fontSize: light ? 9.5 : 8.5,
         letterSpacing: ".16em",
-        color: light ? "rgba(246,241,230,.45)" : "rgba(29,25,19,.45)",
+        color: light ? "rgba(246,241,230,.55)" : "rgba(29,25,19,.62)",
       }}
     >
       {prefix} {formatUpdatedStamp(asOf)} · {isLiveMls ? MLS_SOURCE.liveLong : "MOCK FEED"}

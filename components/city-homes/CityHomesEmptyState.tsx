@@ -21,7 +21,7 @@ export default function CityHomesEmptyState({
     <div style={{ textAlign: "center", padding: "56px 12px 40px" }}>
       <div
         className="font-mono"
-        style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".24em", color: "#D9481F" }}
+        style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".24em", color: "#C13E17" }}
       >
         NOTHING ON THE LEDGER
       </div>
@@ -31,7 +31,7 @@ export default function CityHomesEmptyState({
       >
         No active homes in {cityName} match — yet.
       </div>
-      <p style={{ margin: "8px auto 0", maxWidth: 420, fontSize: 13.5, lineHeight: 1.6, color: "rgba(29,25,19,.55)" }}>
+      <p style={{ margin: "8px auto 0", maxWidth: 420, fontSize: 13.5, lineHeight: 1.6, color: "rgba(29,25,19,.65)" }}>
         Loosen a filter, save the search and we&rsquo;ll watch {cityName} for you — or look one town
         over in {countyName} County.
       </p>
@@ -63,7 +63,7 @@ export default function CityHomesEmptyState({
         <Link
           href="/homes"
           className="link-underline font-mono"
-          style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", color: "#D9481F", textDecoration: "none" }}
+          style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", color: "#C13E17", textDecoration: "none" }}
         >
           BROWSE ALL OF DFW →
         </Link>

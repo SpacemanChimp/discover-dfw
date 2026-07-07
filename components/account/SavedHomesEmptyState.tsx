@@ -10,7 +10,7 @@ export default function SavedHomesEmptyState() {
       >
         Nothing on the shelf yet.
       </div>
-      <p style={{ margin: "10px auto 0", maxWidth: 340, fontSize: 14, lineHeight: 1.6, color: "rgba(29,25,19,.6)" }}>
+      <p style={{ margin: "10px auto 0", maxWidth: 340, fontSize: 14, lineHeight: 1.6, color: "rgba(29,25,19,.65)" }}>
         Tap the ♡ on any home and it lands here — price cuts and status changes included.
       </p>
       <Link
@@ -19,14 +19,14 @@ export default function SavedHomesEmptyState() {
         style={{
           display: "inline-block",
           marginTop: 20,
-          background: "#D9481F",
+          background: "#C13E17",
           color: "#F6F1E6",
           borderRadius: 999,
           padding: "14px 28px",
           fontWeight: 700,
           fontSize: 14,
           textDecoration: "none",
-          border: "2px solid #D9481F",
+          border: "2px solid #C13E17",
         }}
       >
         Browse homes

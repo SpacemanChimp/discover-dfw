@@ -9,6 +9,7 @@ const trecLink: React.CSSProperties = {
   textDecoration: "underline",
   textUnderlineOffset: 3,
   width: "fit-content",
+  padding: "8px 0",
 };
 
 export default function TrecLinks() {

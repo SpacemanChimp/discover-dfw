@@ -1,14 +1,32 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { SavedSearchFilter } from "@/lib/mls/types";
 import { useShelf } from "@/lib/shelf";
 import SavedSearchFrequencySelector from "./SavedSearchFrequencySelector";
 
 /* One standing order: name, the query line, cadence pills, email switch,
-   RUN and REMOVE. */
+   RUN and REMOVE. REMOVE is a two-tap confirm — first tap arms it for ~3s. */
 export default function SavedSearchCard({ search }: { search: SavedSearchFilter }) {
   const shelf = useShelf();
   const runHref = search.queryString ? `/homes?${search.queryString}` : "/homes";
+
+  const [confirming, setConfirming] = useState(false);
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (confirmTimer.current) clearTimeout(confirmTimer.current);
+    };
+  }, []);
+  const handleRemove = () => {
+    if (confirming) {
+      if (confirmTimer.current) clearTimeout(confirmTimer.current);
+      shelf.removeSearch(search.id);
+      return;
+    }
+    setConfirming(true);
+    confirmTimer.current = setTimeout(() => setConfirming(false), 3000);
+  };
 
   return (
     <article style={{ border: "2px solid #1D1913", borderRadius: 15, background: "#FBF7EE", padding: "14px 16px" }}>
@@ -33,7 +51,7 @@ export default function SavedSearchCard({ search }: { search: SavedSearchFilter 
           </span>
         )}
       </div>
-      <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".1em", color: "rgba(29,25,19,.55)", marginTop: 6 }}>
+      <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".1em", color: "rgba(29,25,19,.62)", marginTop: 6 }}>
         {search.queryLabel.toUpperCase()}
       </div>
 
@@ -66,24 +84,33 @@ export default function SavedSearchCard({ search }: { search: SavedSearchFilter 
               fontSize: 8,
               fontWeight: 700,
               letterSpacing: ".12em",
-              padding: "6px 10px",
+              padding: "12px 12px",
               background: search.emailEnabled ? "rgba(217,72,31,.08)" : "transparent",
-              color: search.emailEnabled ? "#D9481F" : "rgba(29,25,19,.5)",
+              color: search.emailEnabled ? "#C13E17" : "rgba(29,25,19,.62)",
               cursor: "pointer",
             }}
           >
             ✉ EMAIL {search.emailEnabled ? "ON" : "OFF"}
           </button>
         </div>
-        <span className="font-mono" style={{ display: "flex", gap: 14, fontSize: 8.5, fontWeight: 700, letterSpacing: ".12em" }}>
+        <span className="font-mono" style={{ display: "flex", gap: 18, alignItems: "center", fontSize: 8.5, fontWeight: 700, letterSpacing: ".12em" }}>
           <button
             type="button"
-            onClick={() => shelf.removeSearch(search.id)}
-            style={{ color: "rgba(29,25,19,.55)", background: "none", border: "none", cursor: "pointer", font: "inherit", letterSpacing: "inherit" }}
+            onClick={handleRemove}
+            aria-label={confirming ? "Tap again to remove this saved search" : "Remove this saved search"}
+            style={{
+              color: confirming ? "#C13E17" : "rgba(29,25,19,.62)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              font: "inherit",
+              letterSpacing: "inherit",
+              padding: "12px 8px",
+            }}
           >
-            REMOVE
+            {confirming ? "SURE? REMOVE" : "REMOVE"}
           </button>
-          <Link href={runHref} style={{ color: "#D9481F", textDecoration: "none" }}>
+          <Link href={runHref} style={{ color: "#C13E17", textDecoration: "none", padding: "12px 8px" }}>
             RUN →
           </Link>
         </span>
