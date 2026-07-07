@@ -307,14 +307,15 @@ export default function InteractiveMap({ liveMls = false }: { liveMls?: boolean 
                       }}
                     />
                     <text
-                      x={Math.round(p[0])}
-                      y={Math.round(p[1] + 16)}
+                      x={Math.round(p[0] + (lm.dx ?? 0))}
+                      y={Math.round(p[1] + (lm.dy ?? 16))}
                       style={{
                         fontFamily: "ui-monospace,Menlo,monospace",
                         fontSize: "8.4px",
                         letterSpacing: ".12em",
                         fill: pal.lmText,
-                        textAnchor: "middle",
+                        textAnchor:
+                          lm.ta === "s" ? "start" : lm.ta === "e" ? "end" : "middle",
                       }}
                     >
                       {lm.n}

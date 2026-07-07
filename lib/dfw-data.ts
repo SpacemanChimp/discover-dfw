@@ -32,7 +32,11 @@ export interface Road {
 export interface Landmark {
   n: string;
   ll: LonLat;
+  /** label anchor: "m" middle (default), "s" start, "e" end */
   ta?: string;
+  /** label offset from the diamond; defaults dx 0, dy 16 */
+  dx?: number;
+  dy?: number;
 }
 
 export interface City {
