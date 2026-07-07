@@ -71,24 +71,44 @@ async function getToken(): Promise<string> {
     );
   // no explicit cache option: POSTs are never data-cached, and `no-store`
   // would force dynamic rendering — which 500s ISR listing pages
-  const res = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "client_credentials", client_id: creds.id, client_secret: creds.secret, scope: "api" }),
-  });
+  const res = await Promise.race([
+    fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ grant_type: "client_credentials", client_id: creds.id, client_secret: creds.secret, scope: "api" }),
+    }),
+    new Promise<Response>((_, rej) =>
+      setTimeout(() => rej(new Error("Trestle token timed out")), 10_000)
+    ),
+  ]);
   if (!res.ok) throw new Error(`Trestle token request failed: ${res.status}`);
   const j = (await res.json()) as { access_token: string; expires_in?: number };
   tokenCache = { token: j.access_token, exp: Date.now() + (j.expires_in ?? 3600) * 1000 };
   return tokenCache.token;
 }
 
+/* A sick/throttled feed HANGS rather than erroring — unbounded, that hang
+   propagates into ISR page renders (open houses fetch live per detail
+   view). Race instead of AbortSignal: a signal opts the fetch out of
+   Next's data cache; the race just abandons the promise so callers can
+   degrade (open houses -> none). */
+const TRESTLE_TIMEOUT_MS = 8_000;
+function rejectAfter<T>(ms: number): Promise<T> {
+  return new Promise((_, rej) =>
+    setTimeout(() => rej(new Error(`Trestle timed out after ${ms}ms`)), ms)
+  );
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 async function odata(query: string, revalidate: number): Promise<any> {
   const token = await getToken();
-  const res = await fetch(`${API_BASE}/${query}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-    next: { revalidate },
-  });
+  const res = await Promise.race([
+    fetch(`${API_BASE}/${query}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      next: { revalidate },
+    }),
+    rejectAfter<Response>(TRESTLE_TIMEOUT_MS),
+  ]);
   if (!res.ok) {
     const body = (await res.text()).slice(0, 200);
     throw new Error(`Trestle OData ${res.status}: ${body}`);
