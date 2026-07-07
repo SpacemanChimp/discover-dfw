@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cities, counties } from "@/lib/dfw-data";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
+import { isLiveMls } from "@/lib/mls";
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import Ticker from "@/components/Ticker";
@@ -65,10 +66,10 @@ export default function Home() {
       <Nav />
       <Hero />
       <Ticker />
-      <InteractiveMap />
+      <InteractiveMap liveMls={isLiveMls} />
       <EditorsPicks />
       <StatsBand />
-      <NewBuilds />
+      <NewBuilds liveMls={isLiveMls} />
       <CityIndex />
       <About />
       <Newsletter />

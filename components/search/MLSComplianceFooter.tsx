@@ -6,7 +6,7 @@ import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
    disclaimer, refresh stamp, and the TREC disclosure links. Copy flows from
    lib/compliance (PENDING BROKER/NTREIS/LEGAL REVIEW) except the TREC link
    labels, which are regulator-mandated and final. */
-export default function MLSComplianceFooter({ asOf }: { asOf: string }) {
+export default function MLSComplianceFooter({ asOf }: { asOf?: string }) {
   return (
     <footer style={{ background: "#1D1913", color: "#F6F1E6" }}>
       <div style={{ maxWidth: 1380, margin: "0 auto", padding: "34px 4vw 30px" }}>
@@ -17,9 +17,13 @@ export default function MLSComplianceFooter({ asOf }: { asOf: string }) {
           MLS DISCLOSURES
         </div>
         <DataDisclaimer light />
-        <div style={{ marginTop: 12 }}>
-          <LastUpdatedStamp asOf={asOf} light />
-        </div>
+        {/* the refresh stamp needs the rail query; while it streams, the
+            disclaimer + TREC links above/below must already be on the page */}
+        {asOf && (
+          <div style={{ marginTop: 12 }}>
+            <LastUpdatedStamp asOf={asOf} light />
+          </div>
+        )}
         <div
           style={{
             borderTop: "1px solid rgba(246,241,230,.18)",

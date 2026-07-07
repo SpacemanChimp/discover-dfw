@@ -22,6 +22,7 @@ import {
   HoodRef,
 } from "@/lib/hoods";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
+import { isLiveMls } from "@/lib/mls";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
 import Reveals from "@/components/Reveals";
@@ -654,12 +655,30 @@ export default async function HoodPage({
               <p style={{ margin: 0, fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
                 {content.homes}
               </p>
-              <div
-                className="font-mono"
-                style={{ marginTop: 18, fontSize: 9, letterSpacing: ".16em", color: "#D9481F" }}
-              >
-                MARKET FIGURES ARE PLACEHOLDERS — CONNECT MLS
-              </div>
+              {isLiveMls ? (
+                <Link
+                  href={`/city/${c.slug}/homes`}
+                  className="font-mono"
+                  style={{
+                    display: "inline-block",
+                    marginTop: 18,
+                    fontSize: 9,
+                    letterSpacing: ".16em",
+                    color: "#D9481F",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                  }}
+                >
+                  SEARCH LIVE {c.name.toUpperCase()} HOMES →
+                </Link>
+              ) : (
+                <div
+                  className="font-mono"
+                  style={{ marginTop: 18, fontSize: 9, letterSpacing: ".16em", color: "#D9481F" }}
+                >
+                  MARKET FIGURES ARE PLACEHOLDERS — CONNECT MLS
+                </div>
+              )}
             </div>
             <div data-reveal="1">
               <div
@@ -962,7 +981,7 @@ export default async function HoodPage({
             VER&nbsp;DFW
           </Link>
           <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".18em", color: "rgba(246,241,230,.5)" }}>
-            © MMXXVI · ALL FIGURES ARE PLACEHOLDERS
+            © MMXXVI · {isLiveMls ? "LISTINGS LIVE FROM NTREIS" : "ALL FIGURES ARE PLACEHOLDERS"}
           </span>
           <Link href="/#map" className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".18em", color: "#E88D6B", textDecoration: "none" }}>
             OPEN THE MAP ↗

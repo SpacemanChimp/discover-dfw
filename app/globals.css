@@ -77,6 +77,10 @@ body {
   from { stroke-dashoffset: 600; }
   to { stroke-dashoffset: 0; }
 }
+@keyframes railPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
 
 /* ---------- reveal-on-scroll ---------- */
 [data-reveal].reveal-hidden {
@@ -206,11 +210,25 @@ body {
   min-height: 480px;
 }
 .mobile-only { display: none; }
+.rail-skeleton-card { animation: railPulse 1.6s ease-in-out infinite; }
 @media (max-width: 940px) {
   .homes-map { display: none; }
   .homes-rail { width: 100%; border-right: none; }
   .desktop-only-flex { display: none; }
   .mobile-only { display: block; }
+
+  /* map view — HomesSplit's floating toggle flips this class */
+  .homes-view-map .homes-rail { display: none; }
+  .homes-view-map .mobile-only { display: none; }
+  .homes-view-map .homes-map {
+    display: block;
+    /* the desktop sticky pane stays desktop-only */
+    position: static;
+    height: calc(100dvh - 120px);
+    min-height: 0;
+  }
+  /* the toggle itself survives both views (beats the .mobile-only hide) */
+  .homes-view-map .homes-map-toggle.mobile-only { display: block; }
 }
 
 /* ---------- listing dossier ---------- */

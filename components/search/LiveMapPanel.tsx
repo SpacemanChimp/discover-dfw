@@ -17,8 +17,9 @@ import { bySlug } from "@/lib/dfw-data";
       Cards survive the pin→card mouse trip via a 250ms grace timer.
    2. Draw boundary — a pointer-capture overlay records a freehand shape,
       simplifies it (RDP, ≤30 pts), and pushes it into the URL as ?poly=.
-   3. Uncapped sets — the server caps at 5000; when a payload is capped,
-      moveend refetches with a bbox so the visible viewport stays complete.
+   3. Uncapped sets — the server caps at 5000; when a payload is capped (or
+      any bbox fetch already narrowed the view), moveend/zoomend refetch with
+      a bbox so the visible viewport stays complete.
       Dots render on an explicit canvas renderer so thousands stay smooth. */
 
 type Leaflet = typeof import("leaflet");
@@ -122,12 +123,13 @@ const arrowBtnStyle = (side: "left" | "right"): React.CSSProperties => ({
 export default function LiveMapPanel({
   qs,
   activeCitySlug,
-  total,
+  total = 0,
 }: {
   /** Serialized current filters (searchFiltersToQueryString output, no page). */
   qs: string;
   activeCitySlug?: string;
-  total: number;
+  /** Chip fallback before the first payload lands — parents may omit it. */
+  total?: number;
 }) {
   const router = useRouter();
   const mapDivRef = useRef<HTMLDivElement | null>(null);
@@ -147,10 +149,13 @@ export default function LiveMapPanel({
   /* pins fetch plumbing */
   const qsRef = useRef(qs);
   const cappedRef = useRef(false);
+  const bboxFollowRef = useRef(false); // any bbox fetch ran for this qs — keep following the viewport
   const fetchSeqRef = useRef(0);
   const pinsCtrlRef = useRef<AbortController | null>(null);
   const moveTimerRef = useRef<number | null>(null);
   const lastFitQsRef = useRef<string | null>(null);
+  const payloadRef = useRef<LoadedPayload | null>(null); // for the resize observer — no stale closures
+  const fitPendingRef = useRef(false); // a fit was requested while the pane had no size
 
   /* hover card state */
   const [hovered, setHovered] = useState<Hovered | null>(null);
@@ -317,6 +322,7 @@ export default function LiveMapPanel({
   /* Reads only refs/module state + stable setters, so the first-render
      instance captured by the bootstrap moveend handler stays correct. */
   function loadPins(curQs: string, bbox: string) {
+    if (bbox) bboxFollowRef.current = true;
     const key = curQs + "|" + bbox;
     const seq = ++fetchSeqRef.current;
     pinsCtrlRef.current?.abort();
@@ -353,6 +359,38 @@ export default function LiveMapPanel({
         setPayload({ pins: [], total: 0, capped: false, fitQs: curQs });
         setFailed(true);
       });
+  }
+
+  /* Fits the camera once per fitQs: a custom boundary owns the frame,
+     otherwise the pins do. Reads only refs — the resize observer calls it
+     too (after clearing lastFitQsRef, since its last fit ran at 0x0). */
+  function fitCameraForPayload(p: LoadedPayload) {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    if (p.fitQs === lastFitQsRef.current) return;
+    lastFitQsRef.current = p.fitQs;
+    // hidden pane (mobile list view): mark the fit as owed and apply it when
+    // the container gets real dimensions — fitBounds at 0x0 is meaningless
+    const size = map.getSize();
+    fitPendingRef.current = size.x === 0 || size.y === 0;
+    if (fitPendingRef.current) return;
+    const poly = polyFromQs(p.fitQs);
+    if (poly) {
+      const b = polygonBounds(poly);
+      map.fitBounds(
+        L.latLngBounds([
+          [b.minLat, b.minLon],
+          [b.maxLat, b.maxLon],
+        ]).pad(0.05),
+        { maxZoom: 15 }
+      );
+    } else if (p.pins.length) {
+      const bounds = L.latLngBounds(
+        p.pins.map((pin) => [pin.lat, pin.lon] as [number, number])
+      ).pad(0.1);
+      map.fitBounds(bounds, { maxZoom: 15 });
+    }
   }
 
   /* ---- draw boundary ---- */
@@ -445,6 +483,7 @@ export default function LiveMapPanel({
   /* ---- map bootstrap — once. Leaflet loads client-side only. ---- */
   useEffect(() => {
     let cancelled = false;
+    let resizeObs: ResizeObserver | null = null;
     (async () => {
       const mod = await import("leaflet");
       const L: Leaflet = ((mod as { default?: Leaflet }).default ?? mod) as Leaflet;
@@ -472,15 +511,23 @@ export default function LiveMapPanel({
           syncBubbles();
         }, 120);
       });
-      // capped payloads: keep the visible viewport complete via bbox refetch
-      map.on("moveend", () => {
-        if (!cappedRef.current) return;
+      // viewport-follow refetch: capped payloads need it, and once any bbox
+      // fetch ran the payload only covers that box, so every later viewport
+      // needs its own fetch too. zoomend included — an animated zoom can
+      // settle without firing moveend. The payload cache dedupes repeats.
+      map.on("moveend zoomend", () => {
+        if (!cappedRef.current && !bboxFollowRef.current) return;
         if (moveTimerRef.current !== null) window.clearTimeout(moveTimerRef.current);
         moveTimerRef.current = window.setTimeout(() => {
           moveTimerRef.current = null;
           const m = mapRef.current;
           if (!m) return;
+          // a hidden pane collapses to 0x0 and invalidateSize fires moveend —
+          // its degenerate bounds would silently fetch the FULL result set
+          const size = m.getSize();
+          if (size.x === 0 || size.y === 0) return;
           const b = m.getBounds();
+          if (b.getWest() >= b.getEast() || b.getSouth() >= b.getNorth()) return;
           const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
             .map((n) => n.toFixed(5))
             .join(",");
@@ -495,10 +542,32 @@ export default function LiveMapPanel({
       });
 
       mapRef.current = map;
+
+      // hidden-pane resilience: on mobile this map can mount inside a
+      // display:none pane, so Leaflet initializes at 0x0 and renders blank.
+      // Any resize gets invalidateSize; the 0x0 -> visible transition also
+      // refits the camera, since the original fit ran against a zero box.
+      const container = mapDivRef.current!;
+      resizeObs = new ResizeObserver(() => {
+        const m = mapRef.current;
+        const el = mapDivRef.current;
+        if (!m || !el) return;
+        const hasSize = el.clientWidth > 0 && el.clientHeight > 0;
+        m.invalidateSize();
+        // apply an owed fit only — a pane that was hidden AFTER a real fit
+        // keeps the user's camera across list <-> map round trips
+        if (hasSize && fitPendingRef.current && payloadRef.current) {
+          lastFitQsRef.current = null;
+          fitCameraForPayload(payloadRef.current);
+        }
+      });
+      resizeObs.observe(container);
+
       setReady(true);
     })();
     return () => {
       cancelled = true;
+      resizeObs?.disconnect();
       if (moveTimerRef.current !== null) window.clearTimeout(moveTimerRef.current);
       if (viewTimerRef.current !== null) window.clearTimeout(viewTimerRef.current);
       if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
@@ -529,6 +598,7 @@ export default function LiveMapPanel({
   /* Pins — refetch whenever the serialized filters change (bbox reset). */
   useEffect(() => {
     qsRef.current = qs;
+    bboxFollowRef.current = false; // a new filter set starts from the full fetch
     loadPins(qs, "");
     return () => pinsCtrlRef.current?.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -539,31 +609,11 @@ export default function LiveMapPanel({
      refetches while panning reuse the same qs and never zoom-fight. */
   useEffect(() => {
     if (!ready || !payload) return;
-    const L = leafletRef.current;
-    const map = mapRef.current;
-    if (!L || !map) return;
+    if (!leafletRef.current || !mapRef.current) return;
     pinsRef.current = payload.pins;
+    payloadRef.current = payload;
     cappedRef.current = payload.capped;
-    if (payload.fitQs !== lastFitQsRef.current) {
-      lastFitQsRef.current = payload.fitQs;
-      const poly = polyFromQs(payload.fitQs);
-      if (poly) {
-        // a custom boundary owns the frame — never fit beyond it
-        const b = polygonBounds(poly);
-        map.fitBounds(
-          L.latLngBounds([
-            [b.minLat, b.minLon],
-            [b.maxLat, b.maxLon],
-          ]).pad(0.05),
-          { maxZoom: 15 }
-        );
-      } else if (payload.pins.length) {
-        const bounds = L.latLngBounds(
-          payload.pins.map((p) => [p.lat, p.lon] as [number, number])
-        ).pad(0.1);
-        map.fitBounds(bounds, { maxZoom: 15 });
-      }
-    }
+    fitCameraForPayload(payload);
     renderMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, payload]);
@@ -742,7 +792,7 @@ export default function LiveMapPanel({
             top: 52,
             left: "50%",
             transform: "translateX(-50%)",
-            zIndex: 1250,
+            zIndex: 1550,
             pointerEvents: "none",
             background: "#1D1913",
             color: "#F6F1E6",
@@ -769,7 +819,9 @@ export default function LiveMapPanel({
           style={{
             position: "absolute",
             inset: 0,
-            zIndex: 1200,
+            // above the mobile MAP/LIST toggle (1400) — a draw stroke must
+            // never land on the toggle mid-gesture
+            zIndex: 1500,
             cursor: "crosshair",
             touchAction: "none",
             background: "transparent",
@@ -792,7 +844,7 @@ export default function LiveMapPanel({
             position: "absolute",
             ...cardPos,
             width: CARD_W,
-            zIndex: 1300,
+            zIndex: 1600,
             background: "#FBF7EE",
             border: "2px solid #1D1913",
             borderRadius: 16,

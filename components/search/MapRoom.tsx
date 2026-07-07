@@ -1,6 +1,8 @@
-import { bySlug, countyById, cities } from "@/lib/dfw-data";
+import { Suspense } from "react";
+import { unstable_cache } from "next/cache";
+import { bySlug, countyById, cities, type City } from "@/lib/dfw-data";
 import { getMlsProvider, isLiveMls, PROPERTY_TYPE_OPTIONS } from "@/lib/mls";
-import type { SearchFilters } from "@/lib/mls/types";
+import type { SearchFilters, SearchResult } from "@/lib/mls/types";
 import { searchFiltersToQueryString } from "@/lib/mls/url";
 import SearchNav from "./SearchNav";
 import SearchToolbar from "./SearchToolbar";
@@ -10,11 +12,18 @@ import SearchMapPanel from "./SearchMapPanel";
 import LiveMapPanel from "./LiveMapPanel";
 import MobileCitySearchIndex from "./MobileCitySearchIndex";
 import MLSComplianceFooter from "./MLSComplianceFooter";
+import HomesSplit from "./HomesSplit";
 
 /* "The Map Room" — desktop: listing rail + city-aware map panel. Mobile:
    the index (cities first) until a city is chosen, then the rail
-   full-width. Composed from ListingResultsRail / SearchMapPanel /
-   MobileCitySearchIndex; this component owns data fetching + layout. */
+   full-width, with a floating list<->map toggle. Composed from
+   ListingResultsRail / SearchMapPanel / MobileCitySearchIndex; this
+   component owns data fetching + layout.
+
+   Live mode streams: the shell (nav, toolbar, map pane) returns with NO
+   awaits while the rail/index/footer resolve inside Suspense — a cold
+   Supabase lambda no longer blocks first paint. Mock mode keeps the
+   original fully blocking tree (the mock provider is instant). */
 export default async function MapRoom({
   query,
   citySlug,
@@ -28,17 +37,125 @@ export default async function MapRoom({
 }) {
   const provider = getMlsProvider();
   const effective: SearchFilters = { ...query, citySlug: citySlug || query.citySlug };
-  const [result, counts] = await Promise.all([
-    provider.searchListings(effective),
-    // per-city active counts for map context + the mobile index
-    provider.getActiveCountsByCity(),
-  ]);
-  const metroTotal = Object.values(counts).reduce((a, b) => a + b, 0);
 
   const city = effective.citySlug ? bySlug[effective.citySlug] : undefined;
   const county = city ? countyById[city.county] : undefined;
-  const propertyTypes = PROPERTY_TYPE_OPTIONS;
+  const basePath = citySlug ? `/city/${citySlug}/homes` : "/homes";
+  const pagerQs = searchFiltersToQueryString(effective, !!citySlug);
 
+  if (!isLiveMls) {
+    const [result, counts] = await Promise.all([
+      provider.searchListings(effective),
+      // per-city active counts for map context + the mobile index
+      provider.getActiveCountsByCity(),
+    ]);
+    const metroTotal = Object.values(counts).reduce((a, b) => a + b, 0);
+    return (
+      <Shell effective={effective} citySlug={citySlug} authFailed={authFailed}>
+        <HomesSplit
+          railDesktopOnly={!city}
+          rail={
+            <>
+              <ListingResultsRail result={result} city={city} countyName={county?.name} />
+              <Pager
+                total={result.total}
+                page={result.page}
+                pageSize={result.pageSize}
+                basePath={basePath}
+                qs={pagerQs}
+              />
+            </>
+          }
+          map={
+            <SearchMapPanel
+              listings={result.listings}
+              activeCitySlug={effective.citySlug}
+              total={metroTotal}
+            />
+          }
+          extra={!city ? <MobileCitySearchIndex counts={counts} /> : undefined}
+        />
+        <MLSComplianceFooter asOf={result.mlsLastUpdated} />
+      </Shell>
+    );
+  }
+
+  /* Listings are public rows (no per-user data), so Vercel's shared Data
+     Cache is safe — cold lambdas reuse a warm result instead of waiting on
+     Supabase. searchFiltersToQueryString omits page/pageSize, hence the
+     explicit key parts. Started, NOT awaited — the Suspense subcomponents
+     below resolve them while the shell streams. */
+  const resultPromise = unstable_cache(
+    () => provider.searchListings(effective),
+    [
+      "rail-search",
+      searchFiltersToQueryString(effective),
+      String(effective.page ?? 1),
+      String(effective.pageSize ?? ""),
+    ],
+    { revalidate: 120 }
+  )();
+  const countsPromise = city
+    ? null // counts only feed the mobile index — skip the query city-side
+    : unstable_cache(() => provider.getActiveCountsByCity(), ["city-counts"], {
+        revalidate: 300,
+      })();
+
+  return (
+    <Shell effective={effective} citySlug={citySlug} authFailed={authFailed}>
+      <HomesSplit
+        railDesktopOnly={!city}
+        rail={
+          <Suspense fallback={<RailSkeleton />}>
+            <RailResults
+              resultPromise={resultPromise}
+              city={city}
+              countyName={county?.name}
+              basePath={basePath}
+              qs={pagerQs}
+            />
+          </Suspense>
+        }
+        map={
+          // real geographic map with price pins over the whole filtered
+          // result set — fetches its own pins client-side, so it renders
+          // in the streamed shell without waiting on the rail query
+          <LiveMapPanel
+            qs={searchFiltersToQueryString(effective)}
+            activeCitySlug={effective.citySlug}
+          />
+        }
+        extra={
+          countsPromise ? (
+            <Suspense fallback={null}>
+              <MobileIndexSection countsPromise={countsPromise} />
+            </Suspense>
+          ) : undefined
+        }
+      />
+      {/* the map shows live MLS pins within the streamed shell, so the
+          compliance block may never be absent — the fallback renders the
+          disclaimer + TREC links immediately, the resolve adds the stamp */}
+      <Suspense fallback={<MLSComplianceFooter />}>
+        <ComplianceSection resultPromise={resultPromise} />
+      </Suspense>
+    </Shell>
+  );
+}
+
+/* Everything above the split — identical for both modes so live streaming
+   can't drift visually from the blocking mock tree. */
+function Shell({
+  effective,
+  citySlug,
+  authFailed,
+  children,
+}: {
+  effective: SearchFilters;
+  citySlug?: string;
+  authFailed?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
       <SearchNav />
@@ -63,7 +180,7 @@ export default async function MapRoom({
         </span>
       </div>
 
-      <SearchToolbar query={effective} citySlug={citySlug} propertyTypes={propertyTypes} />
+      <SearchToolbar query={effective} citySlug={citySlug} propertyTypes={PROPERTY_TYPE_OPTIONS} />
 
       {authFailed && (
         <div
@@ -104,41 +221,103 @@ export default async function MapRoom({
         </div>
       )}
 
-      <div className="homes-split">
-        <div className={`homes-rail${!city ? " desktop-only-flex" : ""}`}>
-          <ListingResultsRail result={result} city={city} countyName={county?.name} />
-          <Pager
-            total={result.total}
-            page={result.page}
-            pageSize={result.pageSize}
-            basePath={citySlug ? `/city/${citySlug}/homes` : "/homes"}
-            qs={searchFiltersToQueryString(effective, !!citySlug)}
-          />
-        </div>
+      {children}
+    </div>
+  );
+}
 
-        <div className="homes-map">
-          {isLiveMls ? (
-            // real geographic map with price pins over the whole filtered
-            // result set (search surfaces only — the illustrated metroplex
-            // stays everywhere editorial)
-            <LiveMapPanel
-              qs={searchFiltersToQueryString(effective)}
-              activeCitySlug={effective.citySlug}
-              total={result.total}
-            />
-          ) : (
-            <SearchMapPanel
-              listings={result.listings}
-              activeCitySlug={effective.citySlug}
-              total={metroTotal}
-            />
-          )}
-        </div>
+/* ---- streaming subcomponents (live mode) — each awaits a shared promise
+   inside its own Suspense boundary; awaiting the same promise object twice
+   never refires the query ---- */
 
-        {!city && <MobileCitySearchIndex counts={counts} />}
+async function RailResults({
+  resultPromise,
+  city,
+  countyName,
+  basePath,
+  qs,
+}: {
+  resultPromise: Promise<SearchResult>;
+  city?: City;
+  countyName?: string;
+  basePath: string;
+  qs: string;
+}) {
+  const result = await resultPromise;
+  return (
+    <>
+      <ListingResultsRail result={result} city={city} countyName={countyName} />
+      <Pager
+        total={result.total}
+        page={result.page}
+        pageSize={result.pageSize}
+        basePath={basePath}
+        qs={qs}
+      />
+    </>
+  );
+}
+
+async function MobileIndexSection({
+  countsPromise,
+}: {
+  countsPromise: Promise<Record<string, number>>;
+}) {
+  const counts = await countsPromise;
+  return <MobileCitySearchIndex counts={counts} />;
+}
+
+async function ComplianceSection({ resultPromise }: { resultPromise: Promise<SearchResult> }) {
+  const result = await resultPromise;
+  return <MLSComplianceFooter asOf={result.mlsLastUpdated} />;
+}
+
+/* Rail-shaped placeholder while the ledger streams in — same card
+   silhouette as ListingCardLedger so the swap doesn't jump. */
+function RailSkeleton() {
+  return (
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: 18 }}
+      aria-busy="true"
+      aria-label="Loading listings"
+    >
+      <div
+        className="font-mono"
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: ".26em",
+          color: "#D9481F",
+          borderBottom: "2px solid #1D1913",
+          paddingBottom: 10,
+        }}
+      >
+        PULLING THE LEDGER…
       </div>
-
-      <MLSComplianceFooter asOf={result.mlsLastUpdated} />
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="rail-skeleton-card"
+          style={{
+            border: "2px solid #1D1913",
+            borderRadius: 18,
+            overflow: "hidden",
+            background: "#FBF7EE",
+          }}
+        >
+          <div
+            style={{
+              height: 180,
+              background: "repeating-linear-gradient(45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
+            }}
+          />
+          <div style={{ padding: "16px 18px" }}>
+            <div style={{ height: 22, width: "42%", borderRadius: 6, background: "rgba(29,25,19,.1)" }} />
+            <div style={{ height: 13, width: "68%", borderRadius: 6, background: "rgba(29,25,19,.08)", marginTop: 10 }} />
+            <div style={{ height: 13, width: "55%", borderRadius: 6, background: "rgba(29,25,19,.08)", marginTop: 7 }} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

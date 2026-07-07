@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { counties } from "@/lib/dfw-data";
+import { isLiveMls } from "@/lib/mls";
 import { Wordmark } from "./Logo";
 import TrecLinks from "./TrecLinks";
 
@@ -97,7 +98,11 @@ export default function Footer() {
           }}
         >
           <span>© MMXXVI DISCOVER DFW</span>
-          <span>ALL MARKET FIGURES ARE PLACEHOLDERS</span>
+          <span>
+            {isLiveMls
+              ? "LISTINGS LIVE FROM NTREIS — REFRESHED EVERY 15 MINUTES"
+              : "ALL MARKET FIGURES ARE PLACEHOLDERS"}
+          </span>
           <Link href="/#top" style={{ color: "#E88D6B", textDecoration: "none" }}>
             BACK TO TOP ↑
           </Link>

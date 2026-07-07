@@ -10,7 +10,7 @@ const STATUS_COLOR: Record<string, string> = {
   "FINAL PHASE": "#C9A24B",
 };
 
-export default function NewBuilds() {
+export default function NewBuilds({ liveMls }: { liveMls?: boolean }) {
   const [filter, setFilter] = useState<string>("all");
 
   // county ids that actually have communities, in the core-first county order
@@ -104,7 +104,7 @@ export default function NewBuilds() {
           >
             Master-planned communities taking contracts right now — filter by
             county, then step into the community report. Prices &amp; builder
-            counts are placeholders.
+            counts are {liveMls ? "editorial — verify with sales offices" : "placeholders"}.
           </p>
         </div>
 

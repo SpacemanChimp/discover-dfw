@@ -31,6 +31,7 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 21 | **Radius search + search UX** — within 5/10/15/25 mi of any city (crosses city lines), sort control, pagination, clear-filters chip, "Nearby on the market" on listing pages | ✅ |
 | 22 | **Zillow-style search: real map + filter popovers + perf** — Leaflet/Carto geographic map with brand price pins over the full filtered set (`/api/map-pins`, 600 cap), PRICE / BEDS & BATHS / FILTERS popover panels with batched Apply, client router cache, counts memo | ✅ |
 | 23 | **Hover photo cards + draw boundary + uncapped map** — Zillow-style hover card with photo carousel (`/api/pin-card`), freehand map boundary → `?poly=` (RDP-simplified, shared polygon search across providers), pin cap 600→5,000 with capped-viewport bbox refetch, two-layer marker renderer (static canvas dots + capped bubble overlay) | ✅ |
+| 24 | **Instant search shell + mobile map + big gallery + live copy** — /homes streams (toolbar+map paint immediately, rail suspends; `unstable_cache` on rail/counts for cold lambdas), mobile MAP/LIST toggle (Leaflet survives display:none via ResizeObserver + deferred fit), pins always follow the viewport (bbox-follow mode), Zillow-class 5-photo dossier collage @1240px, placeholder copy retired behind `isLiveMls` sitewide | ✅ |
 | Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts, optional Google-basemap swap (needs user's Maps API key + billing) | ⬜ |
 
 ### Phase 3 notes
@@ -695,6 +696,61 @@ a dev server on :3111, or against production):
   Leaflet's *animated* zooms never commit; timers coalesce to 1/min
   after 5 min hidden — CDP evals with sleeps time out at 45 s). Test
   maps in a foreground tab or drive `setView(..., { animate: false })`.
+
+### Phase 24 notes — instant shell, mobile map, big gallery, live copy
+
+- **The 15–20s complaint**: production /homes blocked the whole page on
+  `Promise.all(searchListings, getActiveCountsByCity)` — cold lambda +
+  cold Supabase = the full-screen "PULLING THE LEDGER" for the entire
+  wait. Two-part fix in `MapRoom.tsx`: (1) live mode returns the shell
+  (nav, toolbar, map pane) with NO awaits — the rail resolves in an
+  async subcomponent inside `<Suspense>` with a brand skeleton; the
+  mobile index and compliance stamp stream in their own boundaries
+  (the compliance fallback still renders the disclaimer + TREC links
+  immediately — attribution may never lag the map's live pins).
+  (2) both queries ride `unstable_cache` (rail keyed
+  qs+page+pageSize, revalidate 120s; counts 300s) so even cold lambdas
+  hit Vercel's shared Data Cache instead of Supabase. Mock mode keeps
+  the original blocking tree. `/api/map-pins`' box head-count is now
+  non-fatal — a count timeout degrades the chip total instead of
+  500ing the map (it had bricked it to "PLOTTING THE MAP…").
+- **Mobile map**: globals.css used to `display:none` the map under
+  940px, full stop. New client `HomesSplit` (server slots as
+  ReactNode) adds a floating ◐ MAP / ☰ LIST toggle (fixed, z1400) that
+  flips `.homes-view-map`; map fills `calc(100dvh - 120px)`. Leaflet
+  now survives initializing inside `display:none`: a ResizeObserver
+  calls `invalidateSize()` on any size change, and fits requested
+  while the pane had no box are deferred (`fitPendingRef`) and applied
+  on first reveal — but a pane hidden AFTER a real fit keeps the
+  user's camera across list↔map round trips (verified: Frisco z13
+  survives a round trip exactly). Draw overlay/hint/hover-card z-order
+  raised to 1500/1550/1600 so a draw stroke can't hit the toggle.
+- **Pins follow the camera**: the bbox refetch used to run only while
+  a payload was `capped` — after one uncapped viewport payload, pan/
+  zoom went dead (zoom out = mostly empty map). `bboxFollowRef` arms on
+  any bbox fetch and resets per qs; refetch listens on moveend+zoomend
+  through the same 400ms debounce; degenerate bounds from a hidden
+  0×0 pane are skipped. Verified both directions (5,000-cap → 4,012
+  uncapped @Frisco z13 → capped again on zoom-out).
+- **Gallery**: dossier shell 860→1240 with text sections re-capped at
+  860; `ListingPhotoGallery` is a container-query collage (hero ~60%
+  spanning 2 rows + 2×2 tiles, height clamp(380px,46vw,640px), hero
+  measured 615×636 vs the old ≤440) with graceful 0–4-photo collapses,
+  VIEW ALL {N} PHOTOS pill, +N chips per layout, LCP-eager hero,
+  lightbox untouched.
+- **Copy sweep**: every "placeholder / connect MLS" claim now gates on
+  `isLiveMls` — hood pages get a "SEARCH LIVE {CITY} HOMES →" chip,
+  the sitewide footer says "LISTINGS LIVE FROM NTREIS — REFRESHED
+  EVERY 15 MINUTES", StatsBand/InteractiveMap/NewBuilds/dossier median
+  relabel their editorial figures "EDITORIAL ESTIMATE" (they must not
+  claim live either). `lib/compliance.ts` untouched (frozen pending
+  broker review). Future work: compute a real metro median for
+  StatsBand from snapshots.
+- **Dev-verification footnote**: React streaming leaves the shell's
+  pre-resolve tree in a `<div hidden>` in dev — DOM probes must filter
+  on visibility or they read phantom "PLOTTING THE MAP…" chips.
+
+### Market snapshots spec audit (post-Phase 20)
 
 Audited against the "city market snapshots powered by listings database"
 spec. Already built (Phases 18–20): the `city_market_snapshots`

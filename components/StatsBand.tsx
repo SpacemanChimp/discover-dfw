@@ -1,10 +1,16 @@
 import { cities, counties } from "@/lib/dfw-data";
+import { isLiveMls } from "@/lib/mls";
 
+/* The band's figures stay editorial even on the live feed (metro-wide
+   median isn't computed yet) — live mode must not call them placeholders
+   while the footer declares live NTREIS data, but must not claim live
+   either. */
+const estNote = isLiveMls ? "EDITORIAL ESTIMATE" : "PLACEHOLDER";
 const STATS: [string, string][] = [
-  ["$528K", "METRO MEDIAN LIST · PLACEHOLDER"],
+  ["$528K", `METRO MEDIAN LIST · ${estNote}`],
   [String(cities.length), "CITIES PROFILED IN FULL"],
   [String(counties.length), "COUNTIES ON THE MAP"],
-  ["8.4M", "METRO RESIDENTS · PLACEHOLDER"],
+  ["8.4M", `METRO RESIDENTS · ${estNote}`],
 ];
 
 export default function StatsBand() {

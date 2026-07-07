@@ -22,7 +22,9 @@ import { pal } from "@/lib/theme";
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
-export default function InteractiveMap() {
+/* liveMls arrives as a prop — process.env.MLS_PROVIDER is server-only, so
+   the server parent (app/page.tsx) passes the flag across the boundary. */
+export default function InteractiveMap({ liveMls = false }: { liveMls?: boolean }) {
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
@@ -544,7 +546,9 @@ export default function InteractiveMap() {
       >
         <span>SIMPLIFIED COUNTY GEOMETRY · NOT FOR NAVIGATION</span>
         <span style={{ color: "#D9481F" }}>
-          ALL FIGURES ARE PLACEHOLDERS — REPLACE WITH LIVE MLS DATA
+          {liveMls
+            ? "FIGURES ARE EDITORIAL ESTIMATES — LIVE LISTINGS ON CITY PAGES"
+            : "ALL FIGURES ARE PLACEHOLDERS — REPLACE WITH LIVE MLS DATA"}
         </span>
       </div>
     </section>

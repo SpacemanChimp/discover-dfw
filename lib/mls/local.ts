@@ -464,7 +464,12 @@ export async function searchMapPins(
     .lte("latitude", box.maxLat)
     .gte("longitude", box.minLon)
     .lte("longitude", box.maxLon);
-  if (counted.error) throw new Error(`local provider (map pins count): ${counted.error.message}`);
+  // the count only feeds the chip's "OF N" — a timeout here must degrade
+  // to the lower bound, never 500 the whole pins payload (map goes blank)
+  if (counted.error) {
+    console.warn(`local provider (map pins count, non-fatal): ${counted.error.message || "no message"}`);
+    return { pins, total: refined.length };
+  }
   return { pins, total: counted.count ?? refined.length };
 }
 

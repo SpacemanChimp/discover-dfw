@@ -1192,7 +1192,7 @@ export default async function CityPage({
             VER&nbsp;DFW
           </Link>
           <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".18em", color: "rgba(246,241,230,.5)" }}>
-            © MMXXVI · ALL FIGURES ARE PLACEHOLDERS
+            © MMXXVI · {isLiveMls ? "LISTINGS LIVE FROM NTREIS" : "ALL FIGURES ARE PLACEHOLDERS"}
           </span>
           <Link href="/#map" className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".18em", color: "#E88D6B", textDecoration: "none" }}>
             OPEN THE MAP ↗

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { City } from "@/lib/dfw-data";
 import { fmtK } from "@/lib/dfw-data";
 import type { Listing } from "@/lib/mls/types";
+import { isLiveMls } from "@/lib/mls";
 
 /* "02 — KNOW THE CITY" — ties the listing back to the editorial city
    report with the this-home-vs-city-median bar. */
@@ -40,7 +41,7 @@ export default function ListingCityContext({
           </Link>
         </div>
         <div className="font-mono" style={{ marginTop: 12, fontSize: 8.5, letterSpacing: ".12em", color: "rgba(29,25,19,.55)" }}>
-          THIS HOME VS CITY MEDIAN ({fmtK(city.price)} · PLACEHOLDER)
+          THIS HOME VS CITY MEDIAN ({fmtK(city.price)} · {isLiveMls ? "EDITORIAL EST." : "PLACEHOLDER"})
         </div>
         <div style={{ position: "relative", height: 8, borderRadius: 99, background: "rgba(29,25,19,.14)", marginTop: 8 }}>
           <span
