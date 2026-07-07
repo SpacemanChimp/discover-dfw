@@ -245,6 +245,18 @@ export async function GET(req: Request) {
     // keyset cursor: resume from the newest (timestamp, key) we hold
     let cursorTs = "1970-01-01T00:00:00Z";
     let cursorKey = "";
+    // a full walk no longer fits one time budget (90 cities) — callers thread
+    // the response's `cursor` back via ?cursor=ts|key to resume the repair
+    // walk instead of restarting from epoch. Strictly validated: both parts
+    // are interpolated into the OData filter.
+    const cursorParam = reqUrl.searchParams.get("cursor") ?? "";
+    if (fullWalk && cursorParam.includes("|")) {
+      const [ts, key] = cursorParam.split("|");
+      if (/^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/.test(ts) && /^\d*$/.test(key)) {
+        cursorTs = ts;
+        cursorKey = key;
+      }
+    }
     if (!fullWalk) {
       const { data: cursorRow } = await db
         .from("listings")
