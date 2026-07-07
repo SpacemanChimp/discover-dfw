@@ -33,6 +33,7 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 23 | **Hover photo cards + draw boundary + uncapped map** — Zillow-style hover card with photo carousel (`/api/pin-card`), freehand map boundary → `?poly=` (RDP-simplified, shared polygon search across providers), pin cap 600→5,000 with capped-viewport bbox refetch, two-layer marker renderer (static canvas dots + capped bubble overlay) | ✅ |
 | 24 | **Instant search shell + mobile map + big gallery + live copy** — /homes streams (toolbar+map paint immediately, rail suspends; `unstable_cache` on rail/counts for cold lambdas), mobile MAP/LIST toggle (Leaflet survives display:none via ResizeObserver + deferred fit), pins always follow the viewport (bbox-follow mode), Zillow-class 5-photo dossier collage @1240px, placeholder copy retired behind `isLiveMls` sitewide | ✅ |
 | 25 | **Mobile polish + accessibility** — WCAG contrast sweep (ink-alpha .45/.5/.55→.62, small-orange text → #C13E17), shared `useDialogA11y` (Escape/focus-trap/restore/scroll-lock) on all 5 overlays, form labels + role=alert errors + aria-pressed chips, 40px tap targets, mobile popover sheets, toggle clearance for TREC links, loading/empty skeletons on dashboards + city-homes route; **fixed: saved-homes fed mock data on the live feed** (new `/api/shelf-listings`) | ✅ |
+| 26 | **90-city expansion + backfill hardening** — merged the map-labels branch (53→90 cities incl. Carrollton, Waxahachie, Garland, Richardson…; 562 static pages), full backfill to 42,220 active metro listings + 90 city snapshots; sync `?full=1` gained a resumable `?cursor=` (+ `cursorResumed` echo) and `?pagesize=`; every Trestle call race-bounded (8s); Supabase compute NANO→SMALL after the walk saturated the instance | ✅ |
 | Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts, optional Google-basemap swap (needs user's Maps API key + billing) | ⬜ |
 
 ### Phase 3 notes
@@ -804,6 +805,40 @@ checklist; ~60 findings fixed. The load-bearing ones:
   in-viewport + focused, Escape/focus-restore on sheets and auth modal,
   TREC links clear the toggle, attribution at rgba(.62), desktop layout
   pixel-identical (rail 520, toggle hidden, popovers anchored).
+
+### Phase 26 notes — 90-city expansion, backfill incident + hardening
+
+- **Expansion**: the `claude/dfw-map-labels-q2tacn` branch (authored in a
+  separate session) grew `lib/dfw.data.json` from 53 to 90 full city
+  entries — every previously label-only suburb (Carrollton, Waxahachie,
+  Garland, Richardson, Lewisville, Mesquite, Grand Prairie, Mansfield…)
+  now has a city page, hood pages, search tab, pins, and snapshot. The
+  sync's Trestle scope derives from the same array, so the merge alone
+  re-scoped replication; a full backfill pulled the inventory:
+  metro actives 30,979 → **42,220**, 562 static pages (was 340).
+- **Backfill incident (2026-07-07), for the record**: `?full=1` was a
+  from-epoch walk with NO cross-invocation resume — once the 90-city
+  walk outgrew one 240s budget, every call re-upserted the same oldest
+  pages (compounded by a first fix whose timestamp regex rejected the
+  feed's `-00:00` offset form, silently falling back to epoch). Hours of
+  duplicated row+media churn saturated the NANO (0.5GB shared-CPU)
+  Supabase instance until even `select … limit 1` timed out upstream;
+  listing pages also hung because the live open-house fetch had no
+  timeout. Recovery: compute upgraded NANO→SMALL (2GB dedicated,
+  restart cleared the wedge), then the walk finished in 5 clean runs
+  (~7.5k rows/150s on SMALL vs ~3k and sinking on NANO).
+- **Hardening shipped**: `?cursor=ts|key` resume for full walks with a
+  `cursorResumed` echo (callers MUST abort if false), `?pagesize=`
+  (floor 25) so no single feed request can outrun the 300s gateway,
+  every `odata()`/token call race-bounded at 8s/10s (degrade, never
+  hang — Promise.race, not AbortSignal, which would opt fetches out of
+  Next's data cache), and `/api/map-pins`' box count made non-fatal.
+- **Runbook for the next city expansion**: merge dataset → deploy →
+  `?full=1&budget=150000&pagesize=100` threading `cursor` from each
+  response until `backfillComplete` (seed from the furthest cursor if
+  resuming a broken walk) → verify per-city pins + a rail page + the
+  snapshot chip. Watch per-run row counts: a declining trend means the
+  DATABASE is drowning, not the feed.
 
 ### Market snapshots spec audit (post-Phase 20)
 
