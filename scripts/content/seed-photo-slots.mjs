@@ -213,63 +213,71 @@ console.log(`would insert: ${inserts.length} | would update: ${updates.length} |
 for (const o of orphans.slice(0, 10))
   console.log(`  orphan: [${o.entity_type}] ${o.entity_slug} · ${o.slot_key}`);
 
+// once the Supabase client exists, never call process.exit() — it races
+// libuv handle teardown on Windows (assertion crash, exit code 9 after all
+// output). Set process.exitCode and let the event loop drain instead.
 if (DIFF && !APPLY) {
   console.log("--diff complete — read-only, nothing written, no job-run row claimed.");
-  process.exit(0);
+  process.exitCode = 0;
+} else {
+  await runApply();
 }
 
 // ---- --apply: claim the single-flight run row, then write -----------------
-const { data: run, error: claimErr } = await db
-  .from("content_job_runs")
-  .insert({ job_name: "seed_photo_slots", dry_run: false })
-  .select("id")
-  .single();
-if (claimErr) {
-  console.error(
-    claimErr.code === "23505"
-      ? "REFUSED: another seed_photo_slots run is in flight (or a crashed run holds the lock).\n" +
-          "Release a crashed run: update content_job_runs set finished_at = now(), status = 'failed' " +
-          "where job_name = 'seed_photo_slots' and finished_at is null;"
-      : `REFUSED: could not claim job run: ${claimErr.message}`
-  );
-  process.exit(1);
-}
-
-let inserted = 0, updated = 0, failed = 0;
-const logError = (item_ref, stage, message) =>
-  db.from("content_job_errors").insert({ run_id: run.id, item_ref, stage, message }).then(() => {});
-
-try {
-  for (let i = 0; i < inserts.length; i += 200) {
-    const batch = inserts.slice(i, i + 200);
-    const { error } = await db.from("photo_slots").insert(batch);
-    if (!error) { inserted += batch.length; continue; }
-    // one bad row can poison a batch — retry rows individually
-    for (const row of batch) {
-      const { error: rowErr } = await db.from("photo_slots").insert(row);
-      if (rowErr) { failed++; await logError(keyOf(row).replaceAll(" ", "/"), "insert", rowErr.message); }
-      else inserted++;
-    }
-  }
-  for (const u of updates) {
-    const { id, ...fields } = u;
-    const patch = Object.fromEntries(SEED_FIELDS.map((f) => [f, fields[f] ?? null]));
-    const { error } = await db.from("photo_slots").update(patch).eq("id", id).eq("status", "missing");
-    if (error) { failed++; await logError(`${u.entity_type}/${u.entity_slug}/${u.slot_key}`, "update", error.message); }
-    else updated++;
-  }
-} finally {
-  await db
+async function runApply() {
+  const { data: run, error: claimErr } = await db
     .from("content_job_runs")
-    .update({
-      finished_at: new Date().toISOString(),
-      status: failed > 0 ? "partial" : "success",
-      items_seen: slots.length,
-      items_written: inserted + updated,
-      error_summary: failed > 0 ? `${failed} item(s) failed — see content_job_errors` : null,
-    })
-    .eq("id", run.id);
-}
+    .insert({ job_name: "seed_photo_slots", dry_run: false })
+    .select("id")
+    .single();
+  if (claimErr) {
+    console.error(
+      claimErr.code === "23505"
+        ? "REFUSED: another seed_photo_slots run is in flight (or a crashed run holds the lock).\n" +
+            "Release a crashed run: update content_job_runs set finished_at = now(), status = 'failed' " +
+            "where job_name = 'seed_photo_slots' and finished_at is null;"
+        : `REFUSED: could not claim job run: ${claimErr.message}`
+    );
+    process.exitCode = 1;
+    return;
+  }
 
-console.log(`APPLY complete: inserted=${inserted} updated=${updated} failed=${failed} (run ${run.id})`);
-process.exit(failed > 0 ? 1 : 0);
+  let inserted = 0, updated = 0, failed = 0;
+  const logError = (item_ref, stage, message) =>
+    db.from("content_job_errors").insert({ run_id: run.id, item_ref, stage, message }).then(() => {});
+
+  try {
+    for (let i = 0; i < inserts.length; i += 200) {
+      const batch = inserts.slice(i, i + 200);
+      const { error } = await db.from("photo_slots").insert(batch);
+      if (!error) { inserted += batch.length; continue; }
+      // one bad row can poison a batch — retry rows individually
+      for (const row of batch) {
+        const { error: rowErr } = await db.from("photo_slots").insert(row);
+        if (rowErr) { failed++; await logError(keyOf(row).replaceAll(" ", "/"), "insert", rowErr.message); }
+        else inserted++;
+      }
+    }
+    for (const u of updates) {
+      const { id, ...fields } = u;
+      const patch = Object.fromEntries(SEED_FIELDS.map((f) => [f, fields[f] ?? null]));
+      const { error } = await db.from("photo_slots").update(patch).eq("id", id).eq("status", "missing");
+      if (error) { failed++; await logError(`${u.entity_type}/${u.entity_slug}/${u.slot_key}`, "update", error.message); }
+      else updated++;
+    }
+  } finally {
+    await db
+      .from("content_job_runs")
+      .update({
+        finished_at: new Date().toISOString(),
+        status: failed > 0 ? "partial" : "success",
+        items_seen: slots.length,
+        items_written: inserted + updated,
+        error_summary: failed > 0 ? `${failed} item(s) failed — see content_job_errors` : null,
+      })
+      .eq("id", run.id);
+  }
+
+  console.log(`APPLY complete: inserted=${inserted} updated=${updated} failed=${failed} (run ${run.id})`);
+  process.exitCode = failed > 0 ? 1 : 0;
+}
