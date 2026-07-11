@@ -8,9 +8,11 @@ import { getSupabaseAdmin } from "@/lib/db/admin";
 /* v1: only sources whose publish rules are fully handled (attribution +
    license + source page preserved end-to-end). Unsplash needs hotlink +
    download-tracking pings, Pexels a prominent credit link — both stay
-   unapprovable until implemented AND documented. The 0010 RPC enforces
-   this again at the database layer. */
-export const APPROVABLE_SOURCES = new Set(["wikimedia", "openverse"]);
+   unapprovable until implemented AND documented. manual_upload (CI-7,
+   admin's own photos, rights confirmed at upload) approves once
+   migration 0011 is applied — the RPC enforces the same list at the
+   database layer either way. */
+export const APPROVABLE_SOURCES = new Set(["wikimedia", "openverse", "manual_upload"]);
 
 export type ReviewCandidate = {
   id: string;
@@ -81,7 +83,8 @@ export async function getPhotoReviewQueue(): Promise<ReviewSlot[]> {
       db
         .from("photo_slots")
         .select("id, entity_type, entity_slug, slot_key, label, status")
-        .in("status", ["candidates_found", "approved"])
+        // 'missing' included since CI-7: empty slots are upload targets
+        .in("status", ["missing", "candidates_found", "approved"])
         .order("entity_type")
         .order("entity_slug")
         .order("slot_key")

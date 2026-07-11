@@ -25,10 +25,12 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
   const [flaggedOnly, setFlaggedOnly] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [showEmpty, setShowEmpty] = useState(false);
   const [dialog, setDialog] = useState<
     | { kind: "approve"; slot: ReviewSlot; candidate: ReviewCandidate; altText: string; caption: string; attributionText: string }
     | { kind: "reject"; slot: ReviewSlot; candidate: ReviewCandidate; reason: string; detail: string }
     | { kind: "unpublish"; slot: ReviewSlot; notes: string }
+    | { kind: "upload"; slot: ReviewSlot; file: File | null; attributionText: string; caption: string; rightsConfirmed: boolean }
     | null
   >(null);
 
@@ -38,9 +40,9 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
         (s) =>
           (typeFilter === "all" || s.entityType === typeFilter) &&
           (!flaggedOnly || s.candidates.some((c) => c.flags.length > 0)) &&
-          (s.candidates.length > 0 || s.asset)
+          (showEmpty || s.candidates.length > 0 || s.asset)
       ),
-    [slots, typeFilter, flaggedOnly]
+    [slots, typeFilter, flaggedOnly, showEmpty]
   );
   const pendingTotal = useMemo(() => slots.reduce((n, s) => n + s.candidates.length, 0), [slots]);
 
@@ -129,6 +131,50 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
     setDialog(null);
   }
 
+  async function submitUpload() {
+    if (!dialog || dialog.kind !== "upload" || !dialog.file) return;
+    const { slot, file, attributionText, caption, rightsConfirmed } = dialog;
+    setBusy(slot.id);
+    setBanner(null);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("slotId", slot.id);
+      fd.set("attributionText", attributionText);
+      fd.set("caption", caption);
+      fd.set("rightsConfirmed", String(rightsConfirmed));
+      const res = await fetch("/api/admin/photos/upload", { method: "POST", body: fd });
+      const r = (await res.json()) as ActionResult & { candidateId?: string; imageUrl?: string; width?: number; height?: number };
+      if (!r.ok) {
+        setBanner(`UPLOAD FAILED — ${r.error}`);
+        return;
+      }
+      const newCandidate: ReviewCandidate = {
+        id: r.candidateId!,
+        source: "manual_upload",
+        approvable: true,
+        status: "pending",
+        imageUrl: r.imageUrl!,
+        thumbnailUrl: r.imageUrl!,
+        sourcePageUrl: null,
+        photographer: adminEmail,
+        attributionText,
+        license: "Owned — Discover DFW",
+        width: r.width ?? null,
+        height: r.height ?? null,
+        confidenceScore: null,
+        claudeNotes: null,
+        flags: [],
+        rejectedReason: null,
+      };
+      setSlots((prev) => prev.map((s) => (s.id === slot.id ? { ...s, candidates: [newCandidate, ...s.candidates] } : s)));
+      setBanner(`UPLOADED to ${slot.entitySlug}/${slot.slotKey} as a PENDING candidate — publish via APPROVE when ready.`);
+      setDialog(null);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function research(slot: ReviewSlot, candidate: ReviewCandidate) {
     const r = await post({ action: "needs_research", candidateId: candidate.id }, candidate.id);
     if (!r.ok) {
@@ -185,6 +231,10 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
             <input type="checkbox" checked={flaggedOnly} onChange={(e) => setFlaggedOnly(e.target.checked)} />
             FLAGGED ONLY
           </label>
+          <label style={{ ...mono, display: "flex", gap: 6, alignItems: "center", cursor: "pointer" }}>
+            <input type="checkbox" checked={showEmpty} onChange={(e) => setShowEmpty(e.target.checked)} />
+            SHOW EMPTY SLOTS (UPLOAD TARGETS)
+          </label>
         </div>
 
         {banner && (
@@ -230,7 +280,18 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
                   </button>
                 </div>
               ) : (
-                <span style={chip("#E8DEC9", INK)}>{slot.candidates.length} CANDIDATE(S)</span>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={chip("#E8DEC9", INK)}>{slot.candidates.length} CANDIDATE(S)</span>
+                  <button
+                    style={btn(true)}
+                    disabled={busy !== null}
+                    onClick={() =>
+                      setDialog({ kind: "upload", slot, file: null, attributionText: "PHOTO: DISCOVER DFW", caption: "", rightsConfirmed: false })
+                    }
+                  >
+                    UPLOAD…
+                  </button>
+                </div>
               )}
             </div>
 
@@ -401,6 +462,56 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
                     </button>
                     <button style={btn()} disabled={busy !== null} onClick={submitReject}>
                       {busy ? "…" : "CONFIRM REJECT"}
+                    </button>
+                  </div>
+                </>
+              )}
+              {dialog.kind === "upload" && (
+                <>
+                  <div style={{ ...mono, color: ORANGE, marginBottom: 10 }}>
+                    UPLOAD PHOTO — {dialog.slot.entitySlug}/{dialog.slot.slotKey} · “{dialog.slot.label}”
+                  </div>
+                  <p style={{ fontSize: 12.5, lineHeight: 1.7, marginTop: 0 }}>
+                    JPEG/PNG/WebP · max 4 MB · min 1200px wide · landscape. The file is re-encoded web-ready (EXIF/GPS
+                    stripped) and becomes a PENDING candidate — publishing stays a separate APPROVE step.
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => setDialog({ ...dialog, file: e.target.files?.[0] ?? null })}
+                    style={{ ...mono, display: "block", marginBottom: 10 }}
+                  />
+                  <label style={{ ...mono, display: "block", marginBottom: 4 }}>ATTRIBUTION (REQUIRED)</label>
+                  <input
+                    value={dialog.attributionText}
+                    onChange={(e) => setDialog({ ...dialog, attributionText: e.target.value })}
+                    style={{ width: "100%", padding: 8, border: `2px solid ${INK}`, borderRadius: 8, marginBottom: 10, fontSize: 13 }}
+                  />
+                  <label style={{ ...mono, display: "block", marginBottom: 4 }}>CAPTION (OPTIONAL)</label>
+                  <input
+                    value={dialog.caption}
+                    onChange={(e) => setDialog({ ...dialog, caption: e.target.value })}
+                    style={{ width: "100%", padding: 8, border: `2px solid ${INK}`, borderRadius: 8, marginBottom: 10, fontSize: 13 }}
+                  />
+                  <label style={{ ...mono, display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 14, cursor: "pointer", lineHeight: 1.6 }}>
+                    <input
+                      type="checkbox"
+                      checked={dialog.rightsConfirmed}
+                      onChange={(e) => setDialog({ ...dialog, rightsConfirmed: e.target.checked })}
+                      style={{ marginTop: 2 }}
+                    />
+                    I HAVE THE RIGHT TO USE THIS PHOTO ON DISCOVERDFW.COM
+                  </label>
+                  <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button style={btn(true)} disabled={busy !== null} onClick={() => setDialog(null)}>
+                      CANCEL
+                    </button>
+                    <button
+                      style={{ ...btn(), opacity: dialog.file && dialog.attributionText.trim() && dialog.rightsConfirmed ? 1 : 0.4 }}
+                      disabled={!dialog.file || !dialog.attributionText.trim() || !dialog.rightsConfirmed || busy !== null}
+                      onClick={submitUpload}
+                    >
+                      {busy ? "UPLOADING…" : "UPLOAD AS PENDING CANDIDATE"}
                     </button>
                   </div>
                 </>
