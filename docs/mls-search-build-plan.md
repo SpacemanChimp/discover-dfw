@@ -965,6 +965,10 @@ access stays server-side.
   fetch priority, gallery + picks lazy.
 - Dev-only mock (`CONTENT_EDITORIAL_PHOTO_MOCK=1`, non-production builds
   only, data:-URI image) exercises the approved path without any DB rows.
+- ⚠️ Seeded **new-build hood hero slots may not render yet**: new-build
+  hood pages (e.g. `fort-worth/ventana`) take a different section branch
+  with no photo slot. Those rows are deliberate inventory for a future
+  surface — not a bug, and not candidates for cleanup.
 - Caching: city pages ISR 15m; hood pages + homepage are fully static —
   approved photos there appear on next deploy until CI-6's publish step
   calls `revalidatePath()` for affected pages (decided in CI-3 planning).
