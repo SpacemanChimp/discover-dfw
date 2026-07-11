@@ -6,7 +6,8 @@
     "dev": "node -e \"fs.rmSync('.next',{recursive:true,force:true})\" && next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "content:seed-photo-slots": "node --env-file=.env.local scripts/content/seed-photo-slots.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
