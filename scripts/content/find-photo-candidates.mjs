@@ -131,10 +131,13 @@ function mentionsPlace(p, slot) {
   const place = (slot.required_place_name ?? "").split(",")[0].trim().toLowerCase();
   if (!place) return false;
   const meta = p.imageinfo?.[0]?.extmetadata ?? {};
+  // underscores are the URL form of Commons titles — normalize so
+  // "Old_Town_Coppell_August_2019" matches "old town coppell"
   const hay = [p.title, meta.ObjectName?.value, meta.ImageDescription?.value, meta.Categories?.value]
     .filter(Boolean)
     .join(" ")
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/_/g, " ");
   return hay.includes(place);
 }
 
@@ -190,6 +193,14 @@ const wikimedia = {
       headers
     );
     let pages = data?.query?.pages ?? [];
+    // Hood names collide with products, people, and other places — the
+    // "Aurora HDR" software staged San Antonio River Walk photos on
+    // aurora/old-aurora — so for NEIGHBORHOOD slots even text-search
+    // results must mention the hood name in reliable metadata (title/
+    // ObjectName/description/categories). City/homepage text results
+    // stay exempt: their curated queries have produced consistently
+    // clean batches.
+    if (slot.entity_type === "neighborhood") pages = pages.filter((p) => mentionsPlace(p, slot));
     // thin text results + we have coordinates → geosearch fallback.
     // NEVER for neighborhood slots: hood slots share the CITY centroid
     // (dataset has no per-hood coordinates), so geosearch staged the
@@ -448,6 +459,7 @@ function printConfig() {
   console.log(`caps: ${PER_SLOT_TOTAL_CAP} pending/slot (hard ceiling) · ${PER_PROVIDER_PER_SLOT}/provider/slot · min width ${MIN_WIDTH}px · orientation must match slot`);
   console.log(`media types: bitmap photos only (${[...BITMAP_EXTENSIONS].join("/")}) — PDFs/documents/SVGs never stage (Commons filetype:bitmap + MIME check; Openverse category=photograph + filetype; URL-extension backup on all providers)`);
   console.log(`geosearch: city/homepage slots only, AND result must mention the place name in title/description/categories — geotag alone is not relevance (orbital/nadir imagery is geographically near but editorially irrelevant)`);
+  console.log(`neighborhood text search: results must also mention the hood name in title/description/categories — hood names collide with products/people/places (the Aurora HDR lesson); city/homepage text results exempt`);
   console.log(`licenses at ingest: PD / CC0 / CC-BY / CC-BY-SA · Pexels License · Unsplash License (NC/ND/unknown dropped)`);
   console.log(`pacing ms/call: ${JSON.stringify(SPACING_MS)} · retries: 2 (1s/4s backoff, honors Retry-After)`);
 }
