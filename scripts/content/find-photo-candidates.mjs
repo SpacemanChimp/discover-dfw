@@ -23,6 +23,7 @@
  *
  * Other flags: --limit=N (slots per run; apply defaults to 25),
  *              --only=<city-slug> (city + its hoods + its homepage pick),
+ *              --type=<city|neighborhood|homepage> (single entity type),
  *              --provider=<wikimedia|openverse|pexels|unsplash>.
  *
  * Providers (verified against official docs 2026-07-11):
@@ -55,6 +56,12 @@ const SAMPLE = sampleArg ? Number(sampleArg.split("=")[1]) || 2 : 0;
 const limit = Number((argv.find((a) => a.startsWith("--limit=")) ?? "").split("=")[1]) || (APPLY ? 25 : 0);
 const only = (argv.find((a) => a.startsWith("--only=")) ?? "").split("=")[1] || "";
 const providerFilter = (argv.find((a) => a.startsWith("--provider=")) ?? "").split("=")[1] || "";
+const typeFilter = (argv.find((a) => a.startsWith("--type=")) ?? "").split("=")[1] || "";
+
+if (typeFilter && !["city", "neighborhood", "homepage"].includes(typeFilter)) {
+  console.error(`REFUSED: --type must be one of city|neighborhood|homepage (got "${typeFilter}").`);
+  process.exit(1);
+}
 
 if ((APPLY || SAMPLE > 0) && process.env.CONTENT_INTELLIGENCE_DRY_RUN !== "false") {
   console.error(
@@ -349,6 +356,7 @@ function evidenceFor(slot, c) {
 }
 
 const matchesOnly = (slug) => !only || slug === only || slug.startsWith(only + "/");
+const matchesType = (entityType) => !typeFilter || entityType === typeFilter;
 
 /* ---- offline default tier ----------------------------------------------- */
 function printConfig() {
@@ -412,11 +420,13 @@ for (const r of pendingRows) {
 }
 
 let eligible = allSlots.filter(
-  (s) => matchesOnly(s.entity_slug) && (pendingCount.get(s.id) ?? 0) < PER_SLOT_TOTAL_CAP
+  (s) => matchesOnly(s.entity_slug) && matchesType(s.entity_type) && (pendingCount.get(s.id) ?? 0) < PER_SLOT_TOTAL_CAP
 );
 // curated labels make better queries — search those first
 eligible.sort((a, b) => (a.label_source === b.label_source ? 0 : a.label_source === "explicit" ? -1 : 1));
-const atCapacity = allSlots.filter((s) => matchesOnly(s.entity_slug) && (pendingCount.get(s.id) ?? 0) >= PER_SLOT_TOTAL_CAP);
+const atCapacity = allSlots.filter(
+  (s) => matchesOnly(s.entity_slug) && matchesType(s.entity_type) && (pendingCount.get(s.id) ?? 0) >= PER_SLOT_TOTAL_CAP
+);
 if (limit > 0) eligible = eligible.slice(0, limit);
 
 if (DIFF && !APPLY) {
