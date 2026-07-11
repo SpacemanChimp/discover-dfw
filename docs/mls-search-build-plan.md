@@ -946,8 +946,33 @@ access stays server-side.
 | --- | --- | --- |
 | CI-1 | Schema (`0009_content_intelligence.sql`), docs, `.env.example`, dry-run seed stub | ✅ merged 3d5352e; **0009 applied 2026-07-11** — 12 tables, RLS enabled on all, zero policies, `touch_updated_at()` + listings trigger verified intact |
 | CI-2 | Seeder write path (`--diff` read-only, `--apply` env-gated), npm script, runbook | ✅ complete — seeded 2026-07-11, 635 photo_slots rows; idempotency re-run items_written=0 |
-| CI-3 | `EditorialPhoto` render + placeholder fallback | ⬜ |
+| CI-3 | `EditorialPhoto` render + placeholder fallback | ⏳ implementation in PR — merge is a separate approval gate |
 | CI-4…11 | analyzer, providers, scoring, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
+
+### CI-3 notes — EditorialPhoto render (read-only feature)
+
+- `lib/content/editorial-photos.ts` (server-only via `import "server-only"`,
+  reuses `getSupabaseAdmin()`): one query per page — `photo_slots` where
+  `status='approved'` inner-joined to `photo_assets`; keyed
+  `entity_slug::slot_key` (homepage picks all share `slot_key='pick'`).
+  AbortController timeout 3s; every failure path returns an empty map →
+  placeholders render, a page can never 500 on a photo read. No RLS policy
+  added; the browser only receives finished HTML.
+- `components/EditorialPhoto.tsx`: no approved asset → renders the
+  surface's existing placeholder markup (children) untouched; approved
+  asset → plain `<img>` + mandatory attribution chip (links
+  `source_page_url` when present). `priority` prop: hood heroes eager/high
+  fetch priority, gallery + picks lazy.
+- Dev-only mock (`CONTENT_EDITORIAL_PHOTO_MOCK=1`, non-production builds
+  only, data:-URI image) exercises the approved path without any DB rows.
+- ⚠️ Seeded **new-build hood hero slots may not render yet**: new-build
+  hood pages (e.g. `fort-worth/ventana`) take a different section branch
+  with no photo slot. Those rows are deliberate inventory for a future
+  surface — not a bug, and not candidates for cleanup.
+- Caching: city pages ISR 15m; hood pages + homepage are fully static —
+  approved photos there appear on next deploy until CI-6's publish step
+  calls `revalidatePath()` for affected pages (decided in CI-3 planning).
+- Rollback: `git revert` of the merge — no DB changes exist in CI-3.
 
 ### CI-2 notes — photo_slots seeder (execution gated)
 

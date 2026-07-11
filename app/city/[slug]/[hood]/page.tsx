@@ -23,8 +23,10 @@ import {
 } from "@/lib/hoods";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { isLiveMls } from "@/lib/mls";
+import { getApprovedPhotos, photoKey } from "@/lib/content/editorial-photos";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
+import EditorialPhoto from "@/components/EditorialPhoto";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
 
@@ -122,6 +124,11 @@ export default async function HoodPage({
   const county = countyById[c.county];
   const content = contentFor(c, h);
   const nb = h.newBuild;
+
+  /* CI-3: approved hero photo (photo_assets is human-gated; empty →
+     the placeholder below renders unchanged) */
+  const photos = await getApprovedPhotos("neighborhood", `${c.slug}/${h.slug}`);
+
   const cityIdx = cities.indexOf(c);
   const prevCity = cities[(cityIdx - 1 + cities.length) % cities.length];
   const nextCity = cities[(cityIdx + 1) % cities.length];
@@ -681,7 +688,9 @@ export default async function HoodPage({
               )}
             </div>
             <div data-reveal="1">
-              <div
+              <EditorialPhoto
+                photo={photos.get(photoKey(`${c.slug}/${h.slug}`, "hero"))}
+                priority
                 className="gallery-slot"
                 style={{
                   aspectRatio: "4 / 3",
@@ -711,7 +720,7 @@ export default async function HoodPage({
                   DROP PHOTO —<br />
                   {h.name.toUpperCase()} STREETSCAPE
                 </span>
-              </div>
+              </EditorialPhoto>
             </div>
           </div>
         </section>
