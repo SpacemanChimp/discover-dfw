@@ -959,7 +959,9 @@ access stays server-side.
   results, **writes nothing**; `--apply` = inserts. `--sample` and
   `--apply` both require `CONTENT_INTELLIGENCE_DRY_RUN=false` exactly
   (external calls are privileged, not just writes). `--limit` (apply
-  default 25), `--only=<city>`, `--provider=<name>`.
+  default 25), `--only=<city>`, `--type=<city|neighborhood|homepage>`
+  (single entity type; `--type=homepage` = exactly the 4 picks),
+  `--provider=<name>`.
 - **Caps (hard):** 8 pending candidates per slot TOTAL — remaining
   capacity is computed before every insert; 4 per provider per slot
   inside that ceiling; min width 1200px; orientation must match the
