@@ -32,6 +32,10 @@
  *              generator=search + prop=imageinfo(extmetadata) carries
  *              LicenseShortName/LicenseUrl/Artist; descriptionurl is the
  *              file page (source_page_url). Geosearch fallback on lat/lon.
+ *              Photos only: `filetype:bitmap` (Help:CirrusSearch keyword)
+ *              narrows text search; the client-side MIME allowlist is the
+ *              guarantee on every path incl. geosearch (the pilot staged
+ *              a census-map PDF before this filter existed).
  *   openverse  keyless; anonymous limits burst 20/min + 200/day sustained
  *              (full sweeps must batch across runs/days). Returns license,
  *              creator, foreign_landing_url and a PRE-FORMATTED
@@ -87,6 +91,25 @@ const okOpenverseLicense = (s) => ["by", "by-sa", "cc0", "pdm"].includes((s ?? "
 
 const SPACING_MS = { wikimedia: 1000, openverse: 3200, pexels: 500, unsplash: 1000 };
 
+/* Photos only — PDFs, maps-as-documents, SVGs, and other non-photo assets
+   never stage (the CI-4 pilot surfaced a census-map PDF from Commons).
+   Primary defense: server-side constraints (Commons `filetype:bitmap`
+   per Help:CirrusSearch; Openverse `category=photograph`, verified) plus
+   MIME/filetype checks where the provider reports them. Backup defense:
+   a URL-extension allowlist in passesQuality() for every provider — a
+   URL with a non-bitmap extension is always rejected; extensionless URLs
+   are allowed only for the photo-only CDNs (pexels/unsplash). */
+const BITMAP_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "tif", "tiff"]);
+const BITMAP_MIMES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp", "image/tiff"]);
+const urlExtension = (u) => {
+  try {
+    const m = new URL(u).pathname.toLowerCase().match(/\.([a-z0-9]+)$/);
+    return m ? m[1] : "";
+  } catch {
+    return "";
+  }
+};
+
 const truncate = (s, n = 500) => (typeof s === "string" && s.length > n ? s.slice(0, n) + "…" : s);
 const stripHtml = (s) => (s ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 
@@ -132,10 +155,10 @@ const wikimedia = {
     const headers = { "User-Agent": process.env.WIKIMEDIA_USER_AGENT };
     const base = "https://commons.wikimedia.org/w/api.php";
     const common =
-      "&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=640&format=json&formatversion=2&maxlag=5";
+      "&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=640&format=json&formatversion=2&maxlag=5";
     let data = await pacedFetchJson(
       "wikimedia",
-      `${base}?action=query&generator=search&gsrsearch=${encodeURIComponent(slot.search_query ?? slot.label)}&gsrnamespace=6&gsrlimit=${RESULTS_PER_QUERY}${common}`,
+      `${base}?action=query&generator=search&gsrsearch=${encodeURIComponent(`${slot.search_query ?? slot.label} filetype:bitmap`)}&gsrnamespace=6&gsrlimit=${RESULTS_PER_QUERY}${common}`,
       headers
     );
     let pages = data?.query?.pages ?? [];
@@ -154,6 +177,9 @@ const wikimedia = {
       const meta = ii?.extmetadata ?? {};
       const licenseShort = meta.LicenseShortName?.value ?? "";
       if (!ii?.url || !ii.descriptionurl || !okWikimediaLicense(licenseShort)) continue;
+      // photos only — geosearch results bypass filetype:bitmap, so gate on
+      // the reported MIME for every path
+      if (!BITMAP_MIMES.has(ii.mime)) continue;
       const artist = stripHtml(meta.Artist?.value) || "UNKNOWN";
       out.push({
         source: "wikimedia",
@@ -173,6 +199,7 @@ const wikimedia = {
           pageid: p.pageid,
           descriptionurl: ii.descriptionurl,
           url: ii.url,
+          mime: ii.mime,
           width: ii.width,
           height: ii.height,
           extmetadata: {
@@ -200,12 +227,16 @@ const openverse = {
     };
     const data = await pacedFetchJson(
       "openverse",
-      `https://api.openverse.org/v1/images/?q=${encodeURIComponent(slot.search_query ?? slot.label)}&license=${OPENVERSE_LICENSES}&page_size=${RESULTS_PER_QUERY}`,
+      `https://api.openverse.org/v1/images/?q=${encodeURIComponent(slot.search_query ?? slot.label)}&license=${OPENVERSE_LICENSES}&category=photograph&page_size=${RESULTS_PER_QUERY}`,
       headers
     );
     const out = [];
     for (const r of data?.results ?? []) {
       if (!r.url || !r.foreign_landing_url || !okOpenverseLicense(r.license)) continue;
+      // photos only — trust the reported filetype, fall back to the URL
+      // extension; neither bitmap → drop (conservative)
+      const ft = (r.filetype ?? "").toLowerCase();
+      if (!(BITMAP_EXTENSIONS.has(ft) || BITMAP_EXTENSIONS.has(urlExtension(r.url)))) continue;
       const licenseLabel = r.license === "pdm" ? "Public Domain Mark" : r.license === "cc0" ? "CC0" : `CC ${r.license.toUpperCase()} ${r.license_version ?? ""}`.trim();
       out.push({
         source: "openverse",
@@ -234,6 +265,8 @@ const openverse = {
           attribution: truncate(r.attribution),
           width: r.width,
           height: r.height,
+          category: r.category,
+          filetype: r.filetype,
           source: r.source,
           provider: r.provider,
         },
@@ -330,6 +363,12 @@ const PROVIDERS = [wikimedia, openverse, pexels, unsplash].filter(
 /* ---- shared filtering --------------------------------------------------- */
 function passesQuality(c, slot) {
   if (!c.image_url || !c.source_page_url) return false;
+  // backup media-type gate for EVERY provider: a non-bitmap extension
+  // (.pdf, .svg, .djvu, …) always rejects; extensionless URLs pass here
+  // because the photo-only CDNs (pexels/unsplash) don't use extensions —
+  // wikimedia/openverse already proved bitmap via MIME/filetype above
+  const ext = urlExtension(c.image_url);
+  if (ext && !BITMAP_EXTENSIONS.has(ext)) return false;
   if (c.width != null && c.width < MIN_WIDTH) return false;
   if (c.width != null && c.height != null) {
     const o = slot.preferred_orientation ?? "landscape";
@@ -367,6 +406,7 @@ function printConfig() {
   if (process.env.CONTENT_ENABLE_GOOGLE_PLACES === "true")
     console.warn("  WARNING: CONTENT_ENABLE_GOOGLE_PLACES=true is IGNORED — no code path exists in v1.");
   console.log(`caps: ${PER_SLOT_TOTAL_CAP} pending/slot (hard ceiling) · ${PER_PROVIDER_PER_SLOT}/provider/slot · min width ${MIN_WIDTH}px · orientation must match slot`);
+  console.log(`media types: bitmap photos only (${[...BITMAP_EXTENSIONS].join("/")}) — PDFs/documents/SVGs never stage (Commons filetype:bitmap + MIME check; Openverse category=photograph + filetype; URL-extension backup on all providers)`);
   console.log(`licenses at ingest: PD / CC0 / CC-BY / CC-BY-SA · Pexels License · Unsplash License (NC/ND/unknown dropped)`);
   console.log(`pacing ms/call: ${JSON.stringify(SPACING_MS)} · retries: 2 (1s/4s backoff, honors Retry-After)`);
 }
