@@ -946,9 +946,10 @@ access stays server-side.
 | --- | --- | --- |
 | CI-1 | Schema (`0009_content_intelligence.sql`), docs, `.env.example`, dry-run seed stub | ✅ merged 3d5352e; **0009 applied 2026-07-11** — 12 tables, RLS enabled on all, zero policies, `touch_updated_at()` + listings trigger verified intact |
 | CI-2 | Seeder write path (`--diff` read-only, `--apply` env-gated), npm script, runbook | ✅ complete — seeded 2026-07-11, 635 photo_slots rows; idempotency re-run items_written=0 |
-| CI-3 | `EditorialPhoto` render + placeholder fallback | ⏳ implementation in PR — merge is a separate approval gate |
-| CI-4 | Photo candidate sourcing (wikimedia/openverse/pexels/unsplash → `photo_candidates`, pending only) | ⏳ implementation in PR — `--diff`/`--sample`/each `--apply` batch are separate approval gates |
-| CI-5…11 | analyzer, scoring, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
+| CI-3 | `EditorialPhoto` render + placeholder fallback | ✅ merged 6c5fb6c, deployed 2026-07-11 — placeholders DOM-identical in prod; renders nothing until a human approves an asset |
+| CI-4 | Photo candidate sourcing (wikimedia/openverse → `photo_candidates`, pending only) | ⏳ sourcing in approved batches — 487 pending candidates / 142 slots as of 2026-07-11; each batch + each relevance-filter fix is its own gate |
+| CI-5 | Candidate scoring (`confidence_score`/`claude_notes` via Claude API, metadata-only v1) | ⏳ implementation in PR — **paid API execution is a separate approval gate** |
+| CI-6…11 | analyzer, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
 
 ### CI-4 notes — photo candidate sourcing (nothing publishes)
 
@@ -1046,6 +1047,38 @@ access stays server-side.
   status='missing' where status='candidates_found';` Scoped: by
   `source`, or by `created_at` inside a run row's started/finished
   window. Job-run/error rows are always kept.
+
+### CI-5 notes — candidate scorer (paid execution gated)
+
+- `scripts/content/score-photo-candidates.mjs` · `npm run
+  content:score-photo-candidates`. Fills `confidence_score` (0-100) +
+  `claude_notes` on PENDING candidates only — never status, never
+  photo_assets, never publishes. Metadata-only v1 (title/description/
+  categories/photographer/license/dims; no image bytes). One request
+  scores a whole slot's candidates together (comparative, mirrors human
+  review). Rubric hard-codes the three observed failure modes to score
+  0-9: orbital/ISS frames, same-name-elsewhere places (Lakewood
+  Heights GA), product-name collisions (Aurora HDR).
+- Tiers: default offline (no DB/SDK/network) · `--diff` read-only DB ·
+  `--sample=N` paid API, writes nothing · `--apply` writes scores,
+  claims `score_photo_candidates` single-flight run. `--sample`/
+  `--apply` require `CONTENT_INTELLIGENCE_DRY_RUN=false` AND
+  `ANTHROPIC_API_KEY` (paid calls are privileged; key lives in
+  `.env.local` only, never Vercel).
+- Model: `CONTENT_CLAUDE_MODEL` env, default `claude-opus-4-8`;
+  structured output via `output_config.format` json_schema (canonical
+  form). ⚠ Verify model id + request shape against official docs before
+  the FIRST sample/apply run (approval condition). `@anthropic-ai/sdk`
+  is a devDependency; the SDK loads only in the paid tiers.
+- Known v1 limitation: wikimedia evidence rows don't carry description/
+  categories (pruned per CI-4 amendment 4), so wikimedia scoring leans
+  on title/filename. A small finder follow-up could add extmetadata
+  description+categories to evidence — categories are exactly the
+  signal that exposed the Lakewood-Georgia collision.
+- Rollback: `update photo_candidates set confidence_score = null,
+  claude_notes = null where confidence_score is not null;` (or scoped by
+  run window). Scores are advisory — no render or publish path reads
+  them until CI-6.
 
 ### CI-3 notes — EditorialPhoto render (read-only feature)
 

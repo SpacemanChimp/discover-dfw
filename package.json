@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "content:seed-photo-slots": "node --env-file=.env.local scripts/content/seed-photo-slots.mjs",
-    "content:find-photo-candidates": "node --env-file=.env.local scripts/content/find-photo-candidates.mjs"
+    "content:find-photo-candidates": "node --env-file=.env.local scripts/content/find-photo-candidates.mjs",
+    "content:score-photo-candidates": "node --env-file=.env.local scripts/content/score-photo-candidates.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -21,6 +22,7 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@types/node": "22.10.2",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.0",
