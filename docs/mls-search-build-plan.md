@@ -951,16 +951,20 @@ access stays server-side.
 
 ### CI-1 notes — schema + groundwork (unapplied)
 
-- **Slot inventory (verified against main 012d440):** only **21 of 90
-  cities carry explicit `gallery` arrays** (63 curated labels); the other
-  69 render three generic fallback labels each via the `c.gallery || […]`
-  default in `app/city/[slug]/page.tsx` — 270 city slots total, of which
-  207 are fallback. Plus 360 hood heroes and 4 EditorsPicks = **634
-  slots**. `photo_slots.label_source` (`explicit|fallback`) records the
-  difference so the resolver prioritizes curated landmarks over generic
-  queries. The 19 `newBuilds` map onto hood-hero slots (no double-seed);
-  **18/19 match — "Ventana" (fort-worth) has no hood page and its
-  homepage card 404s today** (pre-existing on main, fix separately).
+- **Slot inventory (verified against main 012d440, corrected
+  2026-07-10):** only **21 of 90 cities carry explicit `gallery` arrays**
+  (63 curated labels); the other 69 render three generic fallback labels
+  each via the `c.gallery || […]` default in `app/city/[slug]/page.tsx` —
+  270 city slots total, of which 207 are fallback. Plus 361 hood heroes
+  and 4 EditorsPicks = **635 slots**. `photo_slots.label_source`
+  (`explicit|fallback`) records the difference so the resolver
+  prioritizes curated landmarks over generic queries. Hood pages are the
+  **union** of each city's `hoods` array and its `newBuilds` entries
+  (`lib/hoods.ts` `hoodsForCity()` — every consumer resolves through
+  it), so all 19 communities have live hood pages sharing those hero
+  slots. An earlier CI-1 draft wrongly flagged "Ventana" (fort-worth) as
+  a 404 by auditing the raw `hoods` array alone — **any future hood/link
+  audit must resolve through `hoodsForCity()`**, never the raw JSON.
 - **Feed reality (probed 2026-07-07, shapes the analyzer):**
   `NewConstructionYN` is null on every record (withheld, like
   OriginalListPrice) — new-build detection uses `year_built >= year-1`

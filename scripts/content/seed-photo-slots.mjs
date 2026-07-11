@@ -7,13 +7,18 @@
  *
  * Run: node scripts/content/seed-photo-slots.mjs [--limit=N] [--only=slug]
  *
- * Slot inventory (verified against main 012d440, 2026-07-07):
+ * Slot inventory (verified against main 012d440, corrected 2026-07-10):
  *   city galleries : 21 cities x 3 curated labels = 63 explicit
  *                    69 cities x 3 fallback labels = 207 fallback
- *   hood heroes    : 360 (the 19 new-build communities ARE hood pages
- *                    and share these slots — no separate new_build rows)
+ *   hood heroes    : 361 — the union of each city's hoods array PLUS its
+ *                    newBuilds entries, mirroring lib/hoods.ts
+ *                    hoodsForCity() (newBuilds-only pages like
+ *                    fort-worth/ventana are real rendered pages, NOT 404s
+ *                    — auditing the raw hoods array alone undercounts).
+ *                    New-build communities share these hood-hero slots;
+ *                    no separate new_build rows.
  *   homepage picks : 4 (EditorsPicks)
- *   total          : 634
+ *   total          : 635
  */
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
@@ -69,7 +74,15 @@ for (const c of cities) {
       longitude: c.ll?.[0] ?? null,
     })
   );
-  for (const [hoodName] of c.hoods ?? []) {
+  // hood pages are the UNION of the hoods array + newBuilds registered to
+  // the city (lib/hoods.ts hoodsForCity) — mirror that union here or we
+  // miss newBuilds-only pages like fort-worth/ventana
+  const hoodNames = (c.hoods ?? []).map(([n]) => n);
+  const hoodSlugSet = new Set(hoodNames.map(slugifyHood));
+  for (const b of (data.newBuilds ?? []).filter((b) => b.city === c.slug)) {
+    if (!hoodSlugSet.has(slugifyHood(b.name))) hoodNames.push(b.name);
+  }
+  for (const hoodName of hoodNames) {
     slots.push({
       entity_type: "neighborhood",
       entity_slug: `${c.slug}/${slugifyHood(hoodName)}`,
@@ -100,7 +113,8 @@ for (const p of HOMEPAGE_PICKS) {
   });
 }
 
-// the 19 newBuilds map onto existing hood-hero slots — report the overlap
+// every newBuild maps onto a hood-hero slot (the union above guarantees
+// it) — report the count as a sanity check
 const nbHoodSlugs = new Set(
   (data.newBuilds ?? []).map((b) => `${b.city}/${slugifyHood(b.name)}`)
 );
