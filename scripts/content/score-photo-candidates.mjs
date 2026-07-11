@@ -220,6 +220,7 @@ async function runScoring() {
   }
 
   let scored = 0, failed = 0, seen = 0;
+  const usage = { in: 0, out: 0, requests: 0 };
   const logError = (item_ref, stage, message) =>
     run
       ? db.from("content_job_errors").insert({ run_id: run.id, item_ref, stage, message }).then(() => {})
@@ -238,18 +239,26 @@ async function runScoring() {
           search_query: slot.search_query,
           required_place_name: slot.required_place_name,
         },
-        candidates: group.map((r) => ({
-          id: r.id,
-          source: r.source,
-          title: r.raw_api_response?.title ?? null,
-          description: (r.raw_api_response?.description ?? "").slice(0, 500) || null,
-          categories: r.raw_api_response?.categories ?? null,
-          photographer: r.photographer,
-          license: r.license,
-          width: r.width,
-          height: r.height,
-          image_filename: decodeURIComponent((r.image_url ?? "").split("/").pop() ?? ""),
-        })),
+        // evidenceFor() nests provider data under `result` — read there
+        // (raw_api_response->'result'), NOT at the top level, or every
+        // title/description reaches the model as null
+        candidates: group.map((r) => {
+          const ev = r.raw_api_response?.result ?? {};
+          return {
+            id: r.id,
+            source: r.source,
+            strategy: ev.strategy ?? null,
+            title: ev.title ?? null,
+            description:
+              String(ev.extmetadata?.ImageDescription ?? ev.description ?? "").slice(0, 500) || null,
+            categories: ev.categories ?? ev.category ?? null,
+            photographer: r.photographer,
+            license: r.license,
+            width: r.width,
+            height: r.height,
+            image_filename: decodeURIComponent((r.image_url ?? "").split("/").pop() ?? ""),
+          };
+        }),
       };
       try {
         const response = await anthropic.messages.create({
@@ -260,6 +269,9 @@ async function runScoring() {
           output_config: { format: { type: "json_schema", schema: OUTPUT_SCHEMA } },
         });
         if (response.stop_reason === "refusal") throw new Error("model refusal (stop_reason=refusal)");
+        usage.in += response.usage?.input_tokens ?? 0;
+        usage.out += response.usage?.output_tokens ?? 0;
+        usage.requests++;
         const text = response.content.find((b) => b.type === "text")?.text ?? "";
         const { scores } = JSON.parse(text);
         for (const s of scores) {
@@ -267,7 +279,8 @@ async function runScoring() {
           if (!target) continue;
           const notes = `${s.reasons}${s.flags.length ? ` [${s.flags.join(", ")}]` : ""}`;
           if (SAMPLE > 0) {
-            console.log(`  [${slotRef}] ${payload.candidates.find((c) => c.id === s.id)?.image_filename?.slice(0, 55)} → ${s.score} · ${notes.slice(0, 110)}`);
+            const c = payload.candidates.find((x) => x.id === s.id);
+            console.log(`  [${slotRef}] [${c?.strategy ?? "legacy"}] ${c?.image_filename?.slice(0, 55)} → ${s.score} · ${notes.slice(0, 130)}`);
           } else {
             const { error } = await db
               .from("photo_candidates")
@@ -298,7 +311,10 @@ async function runScoring() {
         .eq("id", run.id);
   }
 
-  if (SAMPLE > 0) console.log(`\nSAMPLE complete: ${slotGroups.length} slot(s) scored via API, nothing written.`);
+  // Opus 4.8: $5/M input · $25/M output
+  const cost = (usage.in * 5 + usage.out * 25) / 1e6;
+  console.log(`\nusage: ${usage.requests} request(s) · ${usage.in} input + ${usage.out} output tokens ≈ $${cost.toFixed(4)} (model ${MODEL}, effort default)`);
+  if (SAMPLE > 0) console.log(`SAMPLE complete: ${slotGroups.length} slot(s) scored via API, nothing written.`);
   else console.log(`APPLY complete: slots=${slotGroups.length} candidates_scored=${scored} failed=${failed} (run ${run?.id})`);
   process.exitCode = failed > 0 ? 1 : 0;
 }
