@@ -971,6 +971,29 @@ access stays server-side.
   hood slots share the city centroid, and geosearch was staging the
   identical photo set on every hood in a city (Denton finding); a hood
   whose text query misses now stages nothing.
+- **Iconic-first sourcing (CI-4b):** for city/homepage slots (and
+  override-mapped hoods) the wikimedia provider tries STRUCTURED sources
+  before any search: Wikidata `P18` entity image → Commons category
+  (`P373` claim or curated override) enumeration → Wikipedia lead image
+  (accepted only when the file resolves on Commons — enwiki page images
+  can be local fair-use). Text/geosearch fallback runs only when
+  structured sources stage fewer than 2 keepers, and structured
+  candidates consume the per-slot capacity first. Slot→item mapping:
+  curated overrides in `scripts/content/iconic-targets.mjs`
+  (script-owned data; every entry carries label + verify URL + note for
+  review) else the `"<City>, Texas"` article-title convention. NOTHING
+  is trusted blindly: auto-resolved items must have P625 coordinates
+  within 30km of the slot (missing coords = rejected); curated items
+  skip the coord check only because a human wrote them, and every file
+  still passes license/bitmap/size gates plus a structured-only
+  non-photo blocklist (map/locator/seal/coat of arms/flag/logo/census/
+  diagram/chart/street plan on title+Categories). All new candidates —
+  structured AND fallback, every provider — stamp
+  `raw_api_response.strategy` (wikidata_p18 | commons_category |
+  wikipedia_lead | text_search | geosearch) so review and CI-5 scoring
+  can compare sourcing paths; pre-CI-4b rows read as legacy (null).
+  Slots at the 8-cap are skipped as always — capacity for iconic
+  refills opens via CI-6 rejections, never by overwriting or deleting.
 - **Geosearch relevance (added after city batch 2):** a geotag alone is
   NOT sufficient — orbital/nadir imagery (ISS "View of Earth" frames)
   is geotagged near a town while editorially irrelevant, and batch 2
