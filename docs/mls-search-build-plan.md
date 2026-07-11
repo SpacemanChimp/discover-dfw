@@ -967,6 +967,17 @@ access stays server-side.
   inside that ceiling; min width 1200px; orientation must match the
   slot. License allowlist at ingest: PD/CC0/CC-BY/CC-BY-SA + Pexels/
   Unsplash native licenses; NC/ND/unknown are dropped, never stored.
+- **Media types (added after the pilot staged a census-map PDF):**
+  bitmap photos only — jpg/jpeg/png/webp/gif/tif/tiff. Commons text
+  search adds `filetype:bitmap` (Help:CirrusSearch) and every Commons
+  result (incl. geosearch, which bypasses search keywords) must report
+  an allowlisted MIME; Openverse queries add `category=photograph`
+  (parameter verified against the live API 2026-07-11) and results must
+  show a bitmap `filetype` or URL extension; ALL providers additionally
+  pass a URL-extension backup — any non-bitmap extension rejects,
+  extensionless URLs allowed only because pexels/unsplash CDNs are
+  photo-only. The pilot's frisco PDF candidate predates this filter;
+  removing it is a separate explicit data-change gate.
 - **Writes:** `photo_candidates` inserts ride the schema defaults —
   `status='pending'`, `license_verified=false`; the script contains no
   `'approved'` write for any table. `photo_slots` flips
