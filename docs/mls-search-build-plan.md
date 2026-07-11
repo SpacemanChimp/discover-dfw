@@ -945,7 +945,7 @@ access stays server-side.
 | CI Phase | Scope | State |
 | --- | --- | --- |
 | CI-1 | Schema (`0009_content_intelligence.sql`), docs, `.env.example`, dry-run seed stub | ✅ merged 3d5352e; **0009 applied 2026-07-11** — 12 tables, RLS enabled on all, zero policies, `touch_updated_at()` + listings trigger verified intact |
-| CI-2 | Seeder write path (`--diff` read-only, `--apply` env-gated), npm script, runbook | ⏳ implementation in PR — **seed execution is a separate approval gate** |
+| CI-2 | Seeder write path (`--diff` read-only, `--apply` env-gated), npm script, runbook | ✅ complete — seeded 2026-07-11, 635 photo_slots rows; idempotency re-run items_written=0 |
 | CI-3 | `EditorialPhoto` render + placeholder fallback | ⬜ |
 | CI-4…11 | analyzer, providers, scoring, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
 
