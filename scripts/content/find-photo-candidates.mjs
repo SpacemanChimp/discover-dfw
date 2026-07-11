@@ -24,6 +24,10 @@
  * Other flags: --limit=N (slots per run; apply defaults to 25),
  *              --only=<city-slug> (city + its hoods + its homepage pick),
  *              --type=<city|neighborhood|homepage> (single entity type),
+ *              --status=<missing|candidates_found> (slot status filter),
+ *              --start-after=<entity_type/entity_slug/slot_key> (batch
+ *                cursor into the deterministic slot order; each apply
+ *                prints the key to pass next),
  *              --provider=<wikimedia|openverse|pexels|unsplash>.
  *
  * Providers (verified against official docs 2026-07-11):
@@ -31,7 +35,9 @@
  *              ("Name/ver (url; email)") — missing/generic UAs get 403s.
  *              generator=search + prop=imageinfo(extmetadata) carries
  *              LicenseShortName/LicenseUrl/Artist; descriptionurl is the
- *              file page (source_page_url). Geosearch fallback on lat/lon.
+ *              file page (source_page_url). Geosearch fallback on lat/lon
+ *              for city/homepage slots ONLY (hood slots share the city
+ *              centroid → identical results across a city's hoods).
  *              Photos only: `filetype:bitmap` (Help:CirrusSearch keyword)
  *              narrows text search; the client-side MIME allowlist is the
  *              guarantee on every path incl. geosearch (the pilot staged
@@ -61,9 +67,15 @@ const limit = Number((argv.find((a) => a.startsWith("--limit=")) ?? "").split("=
 const only = (argv.find((a) => a.startsWith("--only=")) ?? "").split("=")[1] || "";
 const providerFilter = (argv.find((a) => a.startsWith("--provider=")) ?? "").split("=")[1] || "";
 const typeFilter = (argv.find((a) => a.startsWith("--type=")) ?? "").split("=")[1] || "";
+const statusFilter = (argv.find((a) => a.startsWith("--status=")) ?? "").split("=")[1] || "";
+const startAfter = (argv.find((a) => a.startsWith("--start-after=")) ?? "").split("=").slice(1).join("=") || "";
 
 if (typeFilter && !["city", "neighborhood", "homepage"].includes(typeFilter)) {
   console.error(`REFUSED: --type must be one of city|neighborhood|homepage (got "${typeFilter}").`);
+  process.exit(1);
+}
+if (statusFilter && !["missing", "candidates_found"].includes(statusFilter)) {
+  console.error(`REFUSED: --status must be missing or candidates_found (got "${statusFilter}").`);
   process.exit(1);
 }
 
@@ -162,8 +174,12 @@ const wikimedia = {
       headers
     );
     let pages = data?.query?.pages ?? [];
-    // thin text results + we have coordinates → geosearch fallback
-    if (pages.length < 2 && slot.latitude != null && slot.longitude != null) {
+    // thin text results + we have coordinates → geosearch fallback.
+    // NEVER for neighborhood slots: hood slots share the CITY centroid
+    // (dataset has no per-hood coordinates), so geosearch staged the
+    // identical photo set on every hood in a city (Denton apply finding).
+    // A hood whose text query misses stages nothing — that's honest.
+    if (pages.length < 2 && slot.latitude != null && slot.longitude != null && slot.entity_type !== "neighborhood") {
       data = await pacedFetchJson(
         "wikimedia",
         `${base}?action=query&generator=geosearch&ggscoord=${slot.latitude}|${slot.longitude}&ggsradius=10000&ggsnamespace=6&ggslimit=${RESULTS_PER_QUERY}${common}`,
@@ -459,17 +475,40 @@ for (const r of pendingRows) {
   existingKeys.add(`${r.photo_slot_id}|${r.source_page_url || `${r.source}:${r.external_id}`}`);
 }
 
-let eligible = allSlots.filter(
-  (s) => matchesOnly(s.entity_slug) && matchesType(s.entity_type) && (pendingCount.get(s.id) ?? 0) < PER_SLOT_TOTAL_CAP
+/* Deterministic processing order, stable run-over-run: curated (explicit)
+   labels first, then entity_type/entity_slug/slot_key. The --start-after
+   cursor indexes into THIS order over ALL slots (not just eligible ones),
+   so a slot that flipped or filled since the last batch still anchors the
+   cursor correctly. Batch recipe: --status=missing --start-after=<key
+   printed by the previous apply> --limit=N. */
+const keyOfSlot = (s) => `${s.entity_type}/${s.entity_slug}/${s.slot_key}`;
+const ordered = [...allSlots].sort((a, b) =>
+  a.label_source === b.label_source
+    ? keyOfSlot(a) < keyOfSlot(b) ? -1 : keyOfSlot(a) > keyOfSlot(b) ? 1 : 0
+    : a.label_source === "explicit" ? -1 : 1
 );
-// curated labels make better queries — search those first
-eligible.sort((a, b) => (a.label_source === b.label_source ? 0 : a.label_source === "explicit" ? -1 : 1));
-const atCapacity = allSlots.filter(
-  (s) => matchesOnly(s.entity_slug) && matchesType(s.entity_type) && (pendingCount.get(s.id) ?? 0) >= PER_SLOT_TOTAL_CAP
-);
+let cursorPassed = !startAfter;
+let eligible = [];
+const atCapacity = [];
+for (const s of ordered) {
+  if (!cursorPassed) {
+    if (keyOfSlot(s) === startAfter) cursorPassed = true;
+    continue;
+  }
+  if (!(matchesOnly(s.entity_slug) && matchesType(s.entity_type))) continue;
+  if (statusFilter && s.status !== statusFilter) continue;
+  if ((pendingCount.get(s.id) ?? 0) >= PER_SLOT_TOTAL_CAP) { atCapacity.push(s); continue; }
+  eligible.push(s);
+}
 if (limit > 0) eligible = eligible.slice(0, limit);
 
-if (DIFF && !APPLY) {
+if (startAfter && !cursorPassed) {
+  console.error(
+    `REFUSED: --start-after key "${startAfter}" not found in the slot order.\n` +
+      "Use the exact entity_type/entity_slug/slot_key printed by the previous run."
+  );
+  process.exitCode = 1;
+} else if (DIFF && !APPLY) {
   console.log("--diff (read-only) — no provider calls, nothing written, no job-run row claimed.");
   printConfig();
   const byType = {};
@@ -612,5 +651,7 @@ async function runSearch() {
 
   if (SAMPLE > 0) console.log(`\nSAMPLE complete: ${slots.length} slot(s) searched, nothing written.`);
   else console.log(`APPLY complete: slots=${slots.length} inserted=${inserted} duplicates=${duplicates} filtered_out=${rejectedFilters} slots_flipped=${slotsFlipped} failed=${failed} (run ${run.id})`);
+  if (slots.length > 0)
+    console.log(`next batch: --start-after=${keyOfSlot(slots[slots.length - 1])}`);
   process.exitCode = failed > 0 ? 1 : 0;
 }

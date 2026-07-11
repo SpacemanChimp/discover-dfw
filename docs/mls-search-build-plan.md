@@ -961,7 +961,14 @@ access stays server-side.
   (external calls are privileged, not just writes). `--limit` (apply
   default 25), `--only=<city>`, `--type=<city|neighborhood|homepage>`
   (single entity type; `--type=homepage` = exactly the 4 picks),
-  `--provider=<name>`.
+  `--status=<missing|candidates_found>`,
+  `--start-after=<entity_type/entity_slug/slot_key>` (deterministic
+  batch cursor — each apply prints the next key), `--provider=<name>`.
+  Batch recipe: `--apply --status=missing --start-after=<printed key>
+  --limit=N`. Geosearch fallback runs for city/homepage slots ONLY —
+  hood slots share the city centroid, and geosearch was staging the
+  identical photo set on every hood in a city (Denton finding); a hood
+  whose text query misses now stages nothing.
 - **Caps (hard):** 8 pending candidates per slot TOTAL — remaining
   capacity is computed before every insert; 4 per provider per slot
   inside that ceiling; min width 1200px; orientation must match the
