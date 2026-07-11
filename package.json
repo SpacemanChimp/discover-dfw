@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "content:seed-photo-slots": "node --env-file=.env.local scripts/content/seed-photo-slots.mjs"
+    "content:seed-photo-slots": "node --env-file=.env.local scripts/content/seed-photo-slots.mjs",
+    "content:find-photo-candidates": "node --env-file=.env.local scripts/content/find-photo-candidates.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

@@ -947,7 +947,72 @@ access stays server-side.
 | CI-1 | Schema (`0009_content_intelligence.sql`), docs, `.env.example`, dry-run seed stub | ✅ merged 3d5352e; **0009 applied 2026-07-11** — 12 tables, RLS enabled on all, zero policies, `touch_updated_at()` + listings trigger verified intact |
 | CI-2 | Seeder write path (`--diff` read-only, `--apply` env-gated), npm script, runbook | ✅ complete — seeded 2026-07-11, 635 photo_slots rows; idempotency re-run items_written=0 |
 | CI-3 | `EditorialPhoto` render + placeholder fallback | ⏳ implementation in PR — merge is a separate approval gate |
-| CI-4…11 | analyzer, providers, scoring, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
+| CI-4 | Photo candidate sourcing (wikimedia/openverse/pexels/unsplash → `photo_candidates`, pending only) | ⏳ implementation in PR — `--diff`/`--sample`/each `--apply` batch are separate approval gates |
+| CI-5…11 | analyzer, scoring, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
+
+### CI-4 notes — photo candidate sourcing (nothing publishes)
+
+- `scripts/content/find-photo-candidates.mjs` · `npm run
+  content:find-photo-candidates`. Tiers: default = offline config print
+  (no DB, no network); `--diff` = read-only DB (eligible slots, capacity,
+  provider readiness); `--sample=N` = live provider calls printing
+  results, **writes nothing**; `--apply` = inserts. `--sample` and
+  `--apply` both require `CONTENT_INTELLIGENCE_DRY_RUN=false` exactly
+  (external calls are privileged, not just writes). `--limit` (apply
+  default 25), `--only=<city>`, `--provider=<name>`.
+- **Caps (hard):** 8 pending candidates per slot TOTAL — remaining
+  capacity is computed before every insert; 4 per provider per slot
+  inside that ceiling; min width 1200px; orientation must match the
+  slot. License allowlist at ingest: PD/CC0/CC-BY/CC-BY-SA + Pexels/
+  Unsplash native licenses; NC/ND/unknown are dropped, never stored.
+- **Writes:** `photo_candidates` inserts ride the schema defaults —
+  `status='pending'`, `license_verified=false`; the script contains no
+  `'approved'` write for any table. `photo_slots` flips
+  missing→candidates_found ONLY when the slot actually holds ≥1 pending
+  candidate after the run (searched-but-empty slots stay `missing`).
+  `photo_assets` is never referenced. Single-flight lock
+  `job_name='find_photo_candidates'`; per-item failures →
+  content_job_errors; run stamped in a finally block.
+- **Evidence (`raw_api_response`):** pruned per-result allowlist +
+  `{provider, query, retrieved_at}`, 16k size guard — never request
+  headers, never keys. Unsplash evidence keeps `links.download_location`
+  (publish-time GET required) and hotlink URLs — CI-6 obligations.
+- **Provider facts (verified vs official docs 2026-07-11):** wikimedia —
+  UA policy mandates `Name/ver (url; email)`, 403 otherwise; extmetadata
+  carries LicenseShortName/LicenseUrl/Artist; descriptionurl = file page.
+  openverse — anonymous burst 20/min, sustained **200/day** (full sweeps
+  batch across runs/days or need a registered key); ships a pre-formatted
+  `attribution` string (stored verbatim). pexels — 200/hr, plain
+  `Authorization` header, photo.url = photo page. unsplash — demo 50/hr,
+  `Authorization: Client-ID`, REQUIRES hotlinking + download ping.
+  Pacing ms/call: wikimedia 1000 / openverse 3200 / pexels 500 /
+  unsplash 1000; 2 retries (1s/4s), honors Retry-After.
+- **Google Places:** no client code exists in v1 —
+  `CONTENT_ENABLE_GOOGLE_PLACES=true` prints a warning and is ignored.
+- **Verification SQL (after any apply):**
+  `select 'candidates_total', count(*)::text from photo_candidates
+  union all select 'by_source: '||source, count(*)::text from photo_candidates group by source
+  union all select 'by_license: '||coalesce(license,'NULL'), count(*)::text from photo_candidates group by license
+  union all select 'all_pending', (count(*) = count(*) filter (where status='pending'))::text from photo_candidates
+  union all select 'license_verified_all_false', (count(*) = count(*) filter (where license_verified = false))::text from photo_candidates
+  union all select 'missing_evidence', count(*)::text from photo_candidates where raw_api_response is null
+  union all select 'missing_attribution', count(*)::text from photo_candidates where attribution_text is null or license is null or source_page_url is null
+  union all select 'approved_candidates', count(*)::text from photo_candidates where status='approved'
+  union all select 'google_places_rows', count(*)::text from photo_candidates where source='google_places'
+  union all select 'max_per_slot', coalesce(max(cnt),0)::text from (select count(*) cnt from photo_candidates group by photo_slot_id) x
+  union all select 'slot_status: '||status, count(*)::text from photo_slots group by status
+  union all select 'approved_slots', count(*)::text from photo_slots where status='approved'
+  union all select 'photo_assets_rows', count(*)::text from photo_assets;`
+  Expect: all_pending=true, license_verified_all_false=true,
+  missing_evidence=0, missing_attribution=0, approved_candidates=0,
+  google_places_rows=0, **max_per_slot ≤ 8**, slot statuses only
+  missing/candidates_found, approved_slots=0, photo_assets_rows=0.
+- **Rollback (explicit approval only; never after CI-6 approvals exist —
+  photo_assets.selected_candidate_id references these rows):** full reset
+  = `delete from photo_candidates;` then `update photo_slots set
+  status='missing' where status='candidates_found';` Scoped: by
+  `source`, or by `created_at` inside a run row's started/finished
+  window. Job-run/error rows are always kept.
 
 ### CI-3 notes — EditorialPhoto render (read-only feature)
 
