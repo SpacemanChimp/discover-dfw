@@ -58,6 +58,8 @@
  * Never call process.exit() once any client exists (CI-2 lesson: it races
  * libuv teardown on Windows) — set process.exitCode and drain.
  */
+import { ICONIC_TARGETS } from "./iconic-targets.mjs";
+
 const argv = process.argv.slice(2);
 const APPLY = argv.includes("--apply");
 const DIFF = argv.includes("--diff");
@@ -102,6 +104,26 @@ const okWikimediaLicense = (s) =>
 const okOpenverseLicense = (s) => ["by", "by-sa", "cc0", "pdm"].includes((s ?? "").toLowerCase());
 
 const SPACING_MS = { wikimedia: 1000, openverse: 3200, pexels: 500, unsplash: 1000 };
+
+/* CI-4b iconic-first: structured Wikimedia sources (Wikidata P18 →
+   Commons category via P373/override → Wikipedia lead image) run BEFORE
+   text/geosearch and consume per-slot capacity first. The fallback only
+   runs when structured sources leave the slot below this floor. */
+const CANDIDATE_FLOOR = 2;
+
+/* Commons categories mix in raster maps/heraldry occasionally — every
+   STRUCTURED result must clear this blocklist on title + Categories
+   (bitmap-MIME/license/size gates still apply on top). */
+const NON_PHOTO_PATTERN = /\b(map|locator|seal|coat of arms|flag|logo|census|diagram|chart|street plan)\b/i;
+
+const haversineKm = (lat1, lon1, lat2, lon2) => {
+  const rad = (d) => (d * Math.PI) / 180;
+  const a =
+    Math.sin(rad(lat2 - lat1) / 2) ** 2 +
+    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(a));
+};
+const COORD_TOLERANCE_KM = 30;
 
 /* Photos only — PDFs, maps-as-documents, SVGs, and other non-photo assets
    never stage (the CI-4 pilot surfaced a census-map PDF from Commons).
@@ -183,6 +205,124 @@ async function pacedFetchJson(providerName, url, headers) {
    evidence (allowlisted response fields + provider/query/retrieved_at;
    never request headers, never keys). */
 
+const WIKI_COMMON =
+  "&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=640&format=json&formatversion=2&maxlag=5";
+
+/* convert Commons imageinfo pages into candidate objects; strategy is
+   stamped into the evidence so review/scoring can compare sourcing paths */
+function wikimediaCandidatesFromPages(pages, strategy, extraRaw = {}) {
+  const out = [];
+  for (const p of pages ?? []) {
+    const ii = p.imageinfo?.[0];
+    const meta = ii?.extmetadata ?? {};
+    const licenseShort = meta.LicenseShortName?.value ?? "";
+    if (p.missing || !ii?.url || !ii.descriptionurl || !okWikimediaLicense(licenseShort)) continue;
+    if (!BITMAP_MIMES.has(ii.mime)) continue;
+    // structured results (P18/category/lead) additionally clear the
+    // non-photo blocklist — categories mix in raster maps and heraldry
+    if (strategy !== "text_search" && strategy !== "geosearch") {
+      const hay = `${p.title ?? ""} ${meta.Categories?.value ?? ""}`;
+      if (NON_PHOTO_PATTERN.test(hay)) continue;
+    }
+    const artist = stripHtml(meta.Artist?.value) || "UNKNOWN";
+    out.push({
+      source: "wikimedia",
+      external_id: String(p.pageid ?? p.title),
+      image_url: ii.url,
+      thumbnail_url: ii.thumburl ?? null,
+      source_page_url: ii.descriptionurl,
+      photographer: artist,
+      attribution_text: `PHOTO: ${artist.toUpperCase()} / WIKIMEDIA COMMONS (${licenseShort.toUpperCase()})`,
+      attribution_html: meta.Artist?.value ? truncate(meta.Artist.value) : null,
+      license: licenseShort,
+      license_url: meta.LicenseUrl?.value ?? null,
+      width: ii.width ?? null,
+      height: ii.height ?? null,
+      raw: {
+        strategy,
+        ...extraRaw,
+        title: p.title,
+        pageid: p.pageid,
+        descriptionurl: ii.descriptionurl,
+        url: ii.url,
+        mime: ii.mime,
+        width: ii.width,
+        height: ii.height,
+        extmetadata: {
+          LicenseShortName: truncate(meta.LicenseShortName?.value),
+          LicenseUrl: truncate(meta.LicenseUrl?.value),
+          UsageTerms: truncate(meta.UsageTerms?.value),
+          Artist: truncate(meta.Artist?.value),
+          Credit: truncate(meta.Credit?.value),
+          ImageDescription: truncate(meta.ImageDescription?.value),
+        },
+      },
+    });
+  }
+  return out;
+}
+
+/* Resolve a slot to its Wikidata identity. Curated override first (the
+   iconic-targets map), else the "<City>, Texas" article-title convention
+   for city/homepage slots. NEVER trusted blindly: when both the slot and
+   the item carry coordinates they must agree within COORD_TOLERANCE_KM;
+   an auto-resolved item without coordinates is rejected outright, an
+   override without them is allowed (explicit human curation) but its
+   files still pass every downstream gate. */
+async function resolveStructuredTarget(slot, headers) {
+  const slotKey = `${slot.entity_type}/${slot.entity_slug}/${slot.slot_key}`;
+  const override = ICONIC_TARGETS[slotKey] ?? null;
+  let wikidataId = override?.wikidataId ?? null;
+  let title = override?.wikipediaTitle ?? null;
+  if (!wikidataId && !title) {
+    if (slot.entity_type === "neighborhood") return null; // hoods only via override
+    const city = (slot.required_place_name ?? "").split(",")[0].trim();
+    if (!city) return null;
+    title = `${city}, Texas`;
+  }
+
+  if (!wikidataId && title) {
+    const d = await pacedFetchJson(
+      "wikimedia",
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageprops&ppprop=wikibase_item&redirects=1&format=json&formatversion=2`,
+      headers
+    );
+    const page = d?.query?.pages?.[0];
+    wikidataId = page?.pageprops?.wikibase_item ?? null;
+    if (page?.title) title = page.title; // follow redirect normalization
+  }
+
+  let claims = null;
+  if (wikidataId) {
+    const d = await pacedFetchJson(
+      "wikimedia",
+      `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${wikidataId}&props=claims&format=json`,
+      headers
+    );
+    claims = d?.entities?.[wikidataId]?.claims ?? null;
+  }
+  if (!claims && !override?.commonsCategory) return null;
+
+  const claimValue = (prop) => claims?.[prop]?.[0]?.mainsnak?.datavalue?.value ?? null;
+  const coord = claimValue("P625");
+  if (slot.latitude != null && slot.longitude != null) {
+    if (coord?.latitude != null) {
+      if (haversineKm(slot.latitude, slot.longitude, coord.latitude, coord.longitude) > COORD_TOLERANCE_KM)
+        return null; // resolved a same-named place somewhere else — refuse
+    } else if (!override) {
+      return null; // auto-resolved item with no coordinates — too risky
+    }
+  }
+
+  return {
+    wikidataId,
+    title,
+    p18: typeof claimValue("P18") === "string" ? claimValue("P18") : null,
+    commonsCategory: override?.commonsCategory ?? (typeof claimValue("P373") === "string" ? claimValue("P373") : null),
+    curated: Boolean(override),
+  };
+}
+
 const wikimedia = {
   name: "wikimedia",
   enabled: () => Boolean(process.env.WIKIMEDIA_USER_AGENT),
@@ -190,8 +330,77 @@ const wikimedia = {
   async search(slot) {
     const headers = { "User-Agent": process.env.WIKIMEDIA_USER_AGENT };
     const base = "https://commons.wikimedia.org/w/api.php";
-    const common =
-      "&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=640&format=json&formatversion=2&maxlag=5";
+    const common = WIKI_COMMON;
+
+    /* ---- CI-4b structured strategies, in priority order ---------------- */
+    const structured = [];
+    const seenFiles = new Set(); // normalized filenames across strategies
+    const normFile = (t) => (t ?? "").replace(/^File:/i, "").replace(/_/g, " ").trim().toLowerCase();
+    let target = null;
+    try {
+      target = await resolveStructuredTarget(slot, headers);
+    } catch (e) {
+      console.warn(`  wikidata resolution failed for ${slot.entity_slug}/${slot.slot_key}: ${e.message} — falling back to search`);
+    }
+    if (target) {
+      const extraRaw = { wikidata_id: target.wikidataId, resolved_title: target.title, curated: target.curated };
+      // 1. P18 + 3. Wikipedia lead image — fetched via ONE Commons
+      //    imageinfo call; a file that does not resolve on Commons is
+      //    dropped (enwiki page images can be local fair-use files)
+      const directFiles = [];
+      if (target.p18) directFiles.push({ file: target.p18, strategy: "wikidata_p18" });
+      if (target.title) {
+        const d = await pacedFetchJson(
+          "wikimedia",
+          `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(target.title)}&prop=pageimages&piprop=name&redirects=1&format=json&formatversion=2`,
+          headers
+        );
+        const lead = d?.query?.pages?.[0]?.pageimage;
+        if (lead && !directFiles.some((f) => normFile(f.file) === normFile(lead)))
+          directFiles.push({ file: lead, strategy: "wikipedia_lead" });
+      }
+      if (directFiles.length > 0) {
+        const titles = directFiles.map((f) => "File:" + f.file.replace(/^File:/i, "")).join("|");
+        const d = await pacedFetchJson(
+          "wikimedia",
+          `${base}?action=query&titles=${encodeURIComponent(titles)}${common}`,
+          headers
+        );
+        for (const p of d?.query?.pages ?? []) {
+          const match = directFiles.find((f) => normFile(f.file) === normFile(p.title));
+          for (const c of wikimediaCandidatesFromPages([p], match?.strategy ?? "wikidata_p18", extraRaw)) {
+            if (seenFiles.has(normFile(c.raw.title))) continue;
+            seenFiles.add(normFile(c.raw.title));
+            structured.push(c);
+          }
+        }
+      }
+      // 2. Commons category enumeration (P373 or curated category)
+      if (target.commonsCategory) {
+        const d = await pacedFetchJson(
+          "wikimedia",
+          `${base}?action=query&generator=categorymembers&gcmtitle=${encodeURIComponent("Category:" + target.commonsCategory)}&gcmtype=file&gcmlimit=${RESULTS_PER_QUERY * 2}${common}`,
+          headers
+        );
+        for (const c of wikimediaCandidatesFromPages(d?.query?.pages ?? [], "commons_category", {
+          ...extraRaw,
+          commons_category: target.commonsCategory,
+        })) {
+          if (seenFiles.has(normFile(c.raw.title))) continue;
+          seenFiles.add(normFile(c.raw.title));
+          structured.push(c);
+        }
+      }
+      // keep priority order: p18 → category → lead within the array
+      const rank = { wikidata_p18: 0, commons_category: 1, wikipedia_lead: 2 };
+      structured.sort((a, b) => (rank[a.raw.strategy] ?? 9) - (rank[b.raw.strategy] ?? 9));
+    }
+
+    // structured sources met the floor → no generic fallback needed;
+    // iconic candidates consume the per-slot capacity first by ordering
+    if (structured.length >= CANDIDATE_FLOOR) return structured;
+
+    /* ---- fallback: existing text search + geosearch --------------------- */
     let data = await pacedFetchJson(
       "wikimedia",
       `${base}?action=query&generator=search&gsrsearch=${encodeURIComponent(`${slot.search_query ?? slot.label} filetype:bitmap`)}&gsrnamespace=6&gsrlimit=${RESULTS_PER_QUERY}${common}`,
@@ -212,6 +421,7 @@ const wikimedia = {
     // (dataset has no per-hood coordinates), so geosearch staged the
     // identical photo set on every hood in a city (Denton apply finding).
     // A hood whose text query misses stages nothing — that's honest.
+    let geoPages = [];
     if (pages.length < 2 && slot.latitude != null && slot.longitude != null && slot.entity_type !== "neighborhood") {
       data = await pacedFetchJson(
         "wikimedia",
@@ -226,51 +436,14 @@ const wikimedia = {
       // description, or categories. Text-search results are exempt (the
       // query itself established relevance) and keep flowing through the
       // license/media/size gates unchanged.
-      pages = pages.concat((data?.query?.pages ?? []).filter((p) => mentionsPlace(p, slot)));
+      geoPages = (data?.query?.pages ?? []).filter((p) => mentionsPlace(p, slot));
     }
-    const out = [];
-    for (const p of pages) {
-      const ii = p.imageinfo?.[0];
-      const meta = ii?.extmetadata ?? {};
-      const licenseShort = meta.LicenseShortName?.value ?? "";
-      if (!ii?.url || !ii.descriptionurl || !okWikimediaLicense(licenseShort)) continue;
-      // photos only — geosearch results bypass filetype:bitmap, so gate on
-      // the reported MIME for every path
-      if (!BITMAP_MIMES.has(ii.mime)) continue;
-      const artist = stripHtml(meta.Artist?.value) || "UNKNOWN";
-      out.push({
-        source: "wikimedia",
-        external_id: String(p.pageid ?? p.title),
-        image_url: ii.url,
-        thumbnail_url: ii.thumburl ?? null,
-        source_page_url: ii.descriptionurl,
-        photographer: artist,
-        attribution_text: `PHOTO: ${artist.toUpperCase()} / WIKIMEDIA COMMONS (${licenseShort.toUpperCase()})`,
-        attribution_html: meta.Artist?.value ? truncate(meta.Artist.value) : null,
-        license: licenseShort,
-        license_url: meta.LicenseUrl?.value ?? null,
-        width: ii.width ?? null,
-        height: ii.height ?? null,
-        raw: {
-          title: p.title,
-          pageid: p.pageid,
-          descriptionurl: ii.descriptionurl,
-          url: ii.url,
-          mime: ii.mime,
-          width: ii.width,
-          height: ii.height,
-          extmetadata: {
-            LicenseShortName: truncate(meta.LicenseShortName?.value),
-            LicenseUrl: truncate(meta.LicenseUrl?.value),
-            UsageTerms: truncate(meta.UsageTerms?.value),
-            Artist: truncate(meta.Artist?.value),
-            Credit: truncate(meta.Credit?.value),
-            ImageDescription: truncate(meta.ImageDescription?.value),
-          },
-        },
-      });
-    }
-    return out;
+    const fallback = [
+      ...wikimediaCandidatesFromPages(pages, "text_search"),
+      ...wikimediaCandidatesFromPages(geoPages, "geosearch"),
+    ].filter((c) => !seenFiles.has(normFile(c.raw.title)));
+    // structured first: iconic candidates consume capacity before fallback
+    return [...structured, ...fallback];
   },
 };
 
@@ -310,6 +483,7 @@ const openverse = {
         width: r.width ?? null,
         height: r.height ?? null,
         raw: {
+          strategy: "text_search",
           id: r.id,
           title: truncate(r.title),
           url: r.url,
@@ -359,6 +533,7 @@ const pexels = {
         width: r.width ?? null,
         height: r.height ?? null,
         raw: {
+          strategy: "text_search",
           id: r.id,
           url: r.url,
           photographer: truncate(r.photographer),
@@ -399,6 +574,7 @@ const unsplash = {
         width: r.width ?? null,
         height: r.height ?? null,
         raw: {
+          strategy: "text_search",
           id: r.id,
           description: truncate(r.description),
           alt_description: truncate(r.alt_description),
@@ -466,6 +642,7 @@ function printConfig() {
   console.log(`media types: bitmap photos only (${[...BITMAP_EXTENSIONS].join("/")}) — PDFs/documents/SVGs never stage (Commons filetype:bitmap + MIME check; Openverse category=photograph + filetype; URL-extension backup on all providers)`);
   console.log(`geosearch: city/homepage slots only, AND result must mention the place name in title/description/categories — geotag alone is not relevance (orbital/nadir imagery is geographically near but editorially irrelevant)`);
   console.log(`neighborhood text search: results must mention the hood name AND its city in title/description/categories — hood names collide with products (Aurora HDR) and same-named places elsewhere (Lakewood Heights, GA); city/homepage text results exempt`);
+  console.log(`iconic-first (CI-4b): wikidata_p18 → commons_category (P373/override) → wikipedia_lead (Commons-resolving files only) → text/geosearch fallback only when structured yields < ${CANDIDATE_FLOOR}; curated targets: ${Object.keys(ICONIC_TARGETS).length}; auto-resolution "City, Texas" validated by P625 within ${COORD_TOLERANCE_KM}km; every candidate stamped raw_api_response.strategy`);
   console.log(`licenses at ingest: PD / CC0 / CC-BY / CC-BY-SA · Pexels License · Unsplash License (NC/ND/unknown dropped)`);
   console.log(`pacing ms/call: ${JSON.stringify(SPACING_MS)} · retries: 2 (1s/4s backoff, honors Retry-After)`);
 }
@@ -636,7 +813,7 @@ async function runSearch() {
         console.log(`\n[${slot.entity_type}] ${slot.entity_slug} · ${slot.slot_key} · q="${slot.search_query}" → ${toInsert.length} candidate(s) (capacity ${capacity})`);
         for (const c of toInsert)
           console.log(
-            `  ${c.source} · ${c.width}x${c.height} · ${c.license}\n    ${c.attribution_text}\n    page: ${c.source_page_url}\n    img:  ${c.image_url}`
+            `  ${c.source}${c.raw?.strategy ? ` [${c.raw.strategy}]` : ""} · ${c.width}x${c.height} · ${c.license}\n    ${c.attribution_text}\n    page: ${c.source_page_url}\n    img:  ${c.image_url}`
           );
         continue;
       }
