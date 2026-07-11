@@ -931,6 +931,79 @@ copy in `lib/compliance.ts`.
 - Radius search deferred (needs PostGIS or an earthdistance index —
   planned against the local store).
 
+## Content Intelligence Loop (parallel workstream)
+
+Two human-in-the-loop workflows sharing one review pipeline: the **New
+Build Analyzer** (detects/refreshes community data from the replicated
+listings store) and the **Photo Slot Resolver** (fills the editorial
+"DROP PHOTO" slots from license-safe sources). Full plan approved
+2026-07-07; hard rules: nothing auto-publishes, no Google Images
+scraping, MLS photos never appear on editorial surfaces, every publish
+requires human approval + verification_events audit, all Trestle/MLS
+access stays server-side.
+
+| CI Phase | Scope | State |
+| --- | --- | --- |
+| CI-1 | Schema (`0009_content_intelligence.sql`), docs, `.env.example`, dry-run seed stub — **branch/PR only, migration NOT applied** | ⏳ awaiting review |
+| CI-2 | Seed photo_slots for real | ⬜ |
+| CI-3 | `EditorialPhoto` render + placeholder fallback | ⬜ |
+| CI-4…11 | analyzer, providers, scoring, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
+
+### CI-1 notes — schema + groundwork (unapplied)
+
+- **Slot inventory (verified against main 012d440):** only **21 of 90
+  cities carry explicit `gallery` arrays** (63 curated labels); the other
+  69 render three generic fallback labels each via the `c.gallery || […]`
+  default in `app/city/[slug]/page.tsx` — 270 city slots total, of which
+  207 are fallback. Plus 360 hood heroes and 4 EditorsPicks = **634
+  slots**. `photo_slots.label_source` (`explicit|fallback`) records the
+  difference so the resolver prioritizes curated landmarks over generic
+  queries. The 19 `newBuilds` map onto hood-hero slots (no double-seed);
+  **18/19 match — "Ventana" (fort-worth) has no hood page and its
+  homepage card 404s today** (pre-existing on main, fix separately).
+- **Feed reality (probed 2026-07-07, shapes the analyzer):**
+  `NewConstructionYN` is null on every record (withheld, like
+  OriginalListPrice) — new-build detection uses `year_built >= year-1`
+  (9,724 actives feed-wide) — and `BuilderName/BuilderModel/
+  AssociationName` exist but are 0% populated, so builder identity
+  derives from `ListOfficeName`/remarks and requires human verification
+  (`community_builders.derivation`). `SubdivisionName` is 100% populated
+  but messy: phase suffixes ("Pecan Square Ph 1c") and homonyms (an
+  unrelated "Pecan Square Condos" in Addison) — hence
+  `community_aliases` + geo-clustering, never bare name matches.
+- **Concurrency/lock strategy (REQUIRED before any scheduled analyzer
+  job):** `content_job_runs` carries a partial unique index on
+  `(job_name) where finished_at is null` — a job claims its run row
+  first; a second concurrent instance fails that insert immediately.
+  DB-level, pool-safe (session advisory locks don't survive PostgREST
+  pooling). Crashed-run release: `update content_job_runs set
+  finished_at = now(), status = 'failed' where job_name = '…' and
+  finished_at is null;`. No job may be scheduled until it uses this
+  claim/release discipline — lesson from the 2026-07-07 sync incident.
+- **Media-table audit (REQUIRED before CI-4/5 rely on photo/media
+  counts):** the 2026-07-07 backfill incident re-upserted rows dozens of
+  times; before trusting `listing_media` counts, run (read-only):
+  `select listing_key, media_url, count(*) from listing_media group by
+  1,2 having count(*) > 1 limit 50;` (duplicate rows) and
+  `select count(*) from listings l join lateral (select count(*) n from
+  listing_media m where m.listing_key = l.listing_key) mc on true where
+  l.photos_count is not null and mc.n > l.photos_count;` (over-count vs
+  feed). If either returns rows, dedupe/repair BEFORE the analyzer or
+  resolver consumes media counts.
+- **Guardrails encoded in the schema:** `photo_candidates.source` has no
+  `mls` value (structural exclusion); `google_places` exists in the enum
+  but the provider ships **disabled in v1** (`CONTENT_ENABLE_GOOGLE_PLACES`
+  defaults false); one `photo_assets` row per slot (unique); the
+  pending-candidate partial unique index makes analyzers idempotent;
+  every table is RLS-enabled-no-policies (server-only door).
+- **Rollback:** CI-1 tables carry no production data until later phases —
+  rollback is the ordered `drop table` block at the bottom of
+  `0009_content_intelligence.sql` (do not drop `touch_updated_at()`,
+  shared with 0006).
+- **Dry-run stub:** `node scripts/content/seed-photo-slots.mjs` — no DB
+  client, no network; prints the 634-slot inventory; `--apply` exits 1
+  until CI-2 is approved.
+
 ## Compliance guardrails (standing)
 
 - All `/homes`, `/city/[slug]/homes`, `/listing/*`, `/account/*` routes are
