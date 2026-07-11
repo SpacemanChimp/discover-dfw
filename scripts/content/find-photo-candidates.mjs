@@ -122,14 +122,19 @@ const urlExtension = (u) => {
   }
 };
 
-/* Relevance gate for Wikimedia GEOSEARCH results only. The place name
-   (first segment of the slot's required_place_name — the city for
-   city/homepage slots) must appear, case-insensitively, in the file
-   title, ObjectName, ImageDescription, or Categories extmetadata. No
-   place name on the slot → geosearch result is dropped (conservative). */
-function mentionsPlace(p, slot) {
-  const place = (slot.required_place_name ?? "").split(",")[0].trim().toLowerCase();
-  if (!place) return false;
+/* Relevance gate against reliable Commons metadata (title, ObjectName,
+   ImageDescription, Categories). Default mode checks the FIRST segment
+   of required_place_name — the city, for city/homepage geosearch.
+   requireAllSegments mode (neighborhood text search) demands EVERY
+   segment: the hood name AND its city — "Lakewood" alone matched
+   Lakewood Heights Historic District in GEORGIA; genuine Dallas hood
+   files also mention Dallas. No place name → dropped (conservative). */
+function mentionsPlace(p, slot, { requireAllSegments = false } = {}) {
+  const segments = (slot.required_place_name ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (segments.length === 0) return false;
   const meta = p.imageinfo?.[0]?.extmetadata ?? {};
   // underscores are the URL form of Commons titles — normalize so
   // "Old_Town_Coppell_August_2019" matches "old town coppell"
@@ -138,7 +143,7 @@ function mentionsPlace(p, slot) {
     .join(" ")
     .toLowerCase()
     .replace(/_/g, " ");
-  return hay.includes(place);
+  return requireAllSegments ? segments.every((s) => hay.includes(s)) : hay.includes(segments[0]);
 }
 
 const truncate = (s, n = 500) => (typeof s === "string" && s.length > n ? s.slice(0, n) + "…" : s);
@@ -193,14 +198,15 @@ const wikimedia = {
       headers
     );
     let pages = data?.query?.pages ?? [];
-    // Hood names collide with products, people, and other places — the
-    // "Aurora HDR" software staged San Antonio River Walk photos on
-    // aurora/old-aurora — so for NEIGHBORHOOD slots even text-search
-    // results must mention the hood name in reliable metadata (title/
-    // ObjectName/description/categories). City/homepage text results
-    // stay exempt: their curated queries have produced consistently
-    // clean batches.
-    if (slot.entity_type === "neighborhood") pages = pages.filter((p) => mentionsPlace(p, slot));
+    // Hood names collide with products, people, and same-named places —
+    // "Aurora HDR" software staged San Antonio photos on aurora/old-aurora,
+    // and "Lakewood" alone matched Lakewood Heights, GEORGIA — so for
+    // NEIGHBORHOOD slots text-search results must mention BOTH the hood
+    // name AND its city in reliable metadata (title/ObjectName/
+    // description/categories). City/homepage text results stay exempt:
+    // their curated queries have produced consistently clean batches.
+    if (slot.entity_type === "neighborhood")
+      pages = pages.filter((p) => mentionsPlace(p, slot, { requireAllSegments: true }));
     // thin text results + we have coordinates → geosearch fallback.
     // NEVER for neighborhood slots: hood slots share the CITY centroid
     // (dataset has no per-hood coordinates), so geosearch staged the
@@ -459,7 +465,7 @@ function printConfig() {
   console.log(`caps: ${PER_SLOT_TOTAL_CAP} pending/slot (hard ceiling) · ${PER_PROVIDER_PER_SLOT}/provider/slot · min width ${MIN_WIDTH}px · orientation must match slot`);
   console.log(`media types: bitmap photos only (${[...BITMAP_EXTENSIONS].join("/")}) — PDFs/documents/SVGs never stage (Commons filetype:bitmap + MIME check; Openverse category=photograph + filetype; URL-extension backup on all providers)`);
   console.log(`geosearch: city/homepage slots only, AND result must mention the place name in title/description/categories — geotag alone is not relevance (orbital/nadir imagery is geographically near but editorially irrelevant)`);
-  console.log(`neighborhood text search: results must also mention the hood name in title/description/categories — hood names collide with products/people/places (the Aurora HDR lesson); city/homepage text results exempt`);
+  console.log(`neighborhood text search: results must mention the hood name AND its city in title/description/categories — hood names collide with products (Aurora HDR) and same-named places elsewhere (Lakewood Heights, GA); city/homepage text results exempt`);
   console.log(`licenses at ingest: PD / CC0 / CC-BY / CC-BY-SA · Pexels License · Unsplash License (NC/ND/unknown dropped)`);
   console.log(`pacing ms/call: ${JSON.stringify(SPACING_MS)} · retries: 2 (1s/4s backoff, honors Retry-After)`);
 }

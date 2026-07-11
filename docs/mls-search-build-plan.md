@@ -975,13 +975,16 @@ access stays server-side.
   staged 77 such rows on small fallback-label cities. Geosearch results
   must also mention the slot's place name in the Commons title,
   ObjectName, ImageDescription, or Categories metadata. For
-  NEIGHBORHOOD slots the same gate applies to text-search results too —
-  hood names collide with products/people/places ("Aurora HDR" software
-  staged San Antonio photos on aurora/old-aurora); city/homepage text
-  results stay exempt (curated queries, consistently clean) and pass
-  through the existing license/media/size gates unchanged. The 77
-  staged ISS rows, the 4 Aurora rows, and the frisco PDF stay in the
-  queue for CI-6 human rejection or a separate explicit cleanup gate.
+  NEIGHBORHOOD slots, text-search results must mention BOTH the hood
+  name AND its city — hood names collide with products ("Aurora HDR"
+  staged San Antonio photos on aurora/old-aurora) and with same-named
+  places elsewhere ("Lakewood" alone staged Lakewood Heights, GEORGIA
+  on dallas/lakewood); genuine hood files also mention their city.
+  City/homepage text results stay exempt (curated queries, consistently
+  clean) and pass through the existing license/media/size gates
+  unchanged. Bad-row ledger left untouched for CI-6 rejection or one
+  explicit cleanup gate: 77 ISS + 4 Aurora/San-Antonio + 3
+  Lakewood-Georgia + 1 tornado-mood + 1 frisco PDF = 86.
 - **Caps (hard):** 8 pending candidates per slot TOTAL — remaining
   capacity is computed before every insert; 4 per provider per slot
   inside that ceiling; min width 1200px; orientation must match the
