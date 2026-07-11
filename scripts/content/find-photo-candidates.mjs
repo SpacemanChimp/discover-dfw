@@ -122,6 +122,22 @@ const urlExtension = (u) => {
   }
 };
 
+/* Relevance gate for Wikimedia GEOSEARCH results only. The place name
+   (first segment of the slot's required_place_name — the city for
+   city/homepage slots) must appear, case-insensitively, in the file
+   title, ObjectName, ImageDescription, or Categories extmetadata. No
+   place name on the slot → geosearch result is dropped (conservative). */
+function mentionsPlace(p, slot) {
+  const place = (slot.required_place_name ?? "").split(",")[0].trim().toLowerCase();
+  if (!place) return false;
+  const meta = p.imageinfo?.[0]?.extmetadata ?? {};
+  const hay = [p.title, meta.ObjectName?.value, meta.ImageDescription?.value, meta.Categories?.value]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return hay.includes(place);
+}
+
 const truncate = (s, n = 500) => (typeof s === "string" && s.length > n ? s.slice(0, n) + "…" : s);
 const stripHtml = (s) => (s ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 
@@ -185,7 +201,15 @@ const wikimedia = {
         `${base}?action=query&generator=geosearch&ggscoord=${slot.latitude}|${slot.longitude}&ggsradius=10000&ggsnamespace=6&ggslimit=${RESULTS_PER_QUERY}${common}`,
         headers
       );
-      pages = pages.concat(data?.query?.pages ?? []);
+      // Geotag alone is NOT sufficient for geosearch results: orbital/
+      // nadir imagery (ISS "View of Earth" frames) is geotagged near a
+      // town while editorially irrelevant — batch 2 staged 77 such rows
+      // on small fallback-label cities. A geosearch result must ALSO
+      // mention the slot's place name in its title, object name,
+      // description, or categories. Text-search results are exempt (the
+      // query itself established relevance) and keep flowing through the
+      // license/media/size gates unchanged.
+      pages = pages.concat((data?.query?.pages ?? []).filter((p) => mentionsPlace(p, slot)));
     }
     const out = [];
     for (const p of pages) {
@@ -423,6 +447,7 @@ function printConfig() {
     console.warn("  WARNING: CONTENT_ENABLE_GOOGLE_PLACES=true is IGNORED — no code path exists in v1.");
   console.log(`caps: ${PER_SLOT_TOTAL_CAP} pending/slot (hard ceiling) · ${PER_PROVIDER_PER_SLOT}/provider/slot · min width ${MIN_WIDTH}px · orientation must match slot`);
   console.log(`media types: bitmap photos only (${[...BITMAP_EXTENSIONS].join("/")}) — PDFs/documents/SVGs never stage (Commons filetype:bitmap + MIME check; Openverse category=photograph + filetype; URL-extension backup on all providers)`);
+  console.log(`geosearch: city/homepage slots only, AND result must mention the place name in title/description/categories — geotag alone is not relevance (orbital/nadir imagery is geographically near but editorially irrelevant)`);
   console.log(`licenses at ingest: PD / CC0 / CC-BY / CC-BY-SA · Pexels License · Unsplash License (NC/ND/unknown dropped)`);
   console.log(`pacing ms/call: ${JSON.stringify(SPACING_MS)} · retries: 2 (1s/4s backoff, honors Retry-After)`);
 }

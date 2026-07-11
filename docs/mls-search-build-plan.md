@@ -969,6 +969,16 @@ access stays server-side.
   hood slots share the city centroid, and geosearch was staging the
   identical photo set on every hood in a city (Denton finding); a hood
   whose text query misses now stages nothing.
+- **Geosearch relevance (added after city batch 2):** a geotag alone is
+  NOT sufficient — orbital/nadir imagery (ISS "View of Earth" frames)
+  is geotagged near a town while editorially irrelevant, and batch 2
+  staged 77 such rows on small fallback-label cities. Geosearch results
+  must also mention the slot's place name in the Commons title,
+  ObjectName, ImageDescription, or Categories metadata; text-search
+  results are exempt (the query established relevance) and pass through
+  the existing license/media/size gates unchanged. The 77 staged ISS
+  rows and the frisco PDF stay in the queue for CI-6 human rejection or
+  a separate explicit cleanup gate.
 - **Caps (hard):** 8 pending candidates per slot TOTAL — remaining
   capacity is computed before every insert; 4 per provider per slot
   inside that ceiling; min width 1200px; orientation must match the
