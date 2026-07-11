@@ -102,6 +102,7 @@ export default async function EditorsPicks() {
             >
               <EditorialPhoto
                 photo={photos.get(photoKey(slug, "pick"))}
+                attributionLink={false} /* inside the card's <Link> — nested anchors are invalid HTML */
                 style={{
                   aspectRatio: "4 / 2.9",
                   position: "relative",

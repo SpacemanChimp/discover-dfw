@@ -9,6 +9,7 @@ import type { ApprovedPhoto } from "@/lib/content/editorial-photos";
 export default function EditorialPhoto({
   photo,
   priority = false,
+  attributionLink = true,
   className,
   style,
   overlay,
@@ -17,6 +18,12 @@ export default function EditorialPhoto({
   photo?: ApprovedPhoto;
   /* eager + high fetch priority — above-the-fold hero slots only */
   priority?: boolean;
+  /* false when this photo renders INSIDE a <Link>/<a> (e.g. the homepage
+     pick cards): nested anchors are invalid HTML and React's hydration
+     recovery DROPS the chip from the client DOM — the attribution then
+     renders as plain visible text instead. The source URL still lives in
+     photo_assets.source_page_url; only the chip's clickability changes. */
+  attributionLink?: boolean;
   className?: string;
   style?: CSSProperties;
   /* badges rendered over both the photo and the placeholder */
@@ -67,7 +74,7 @@ export default function EditorialPhoto({
           whiteSpace: "nowrap",
         }}
       >
-        {photo.sourcePageUrl ? (
+        {photo.sourcePageUrl && attributionLink ? (
           <a
             href={photo.sourcePageUrl}
             target="_blank"
