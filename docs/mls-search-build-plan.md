@@ -949,7 +949,8 @@ access stays server-side.
 | CI-3 | `EditorialPhoto` render + placeholder fallback | ✅ merged 6c5fb6c, deployed 2026-07-11 — placeholders DOM-identical in prod; renders nothing until a human approves an asset |
 | CI-4 | Photo candidate sourcing (wikimedia/openverse → `photo_candidates`, pending only) | ⏳ sourcing in approved batches — 487 pending candidates / 142 slots as of 2026-07-11; each batch + each relevance-filter fix is its own gate |
 | CI-5 | Candidate scoring (`confidence_score`/`claude_notes` via Claude API, metadata-only v1) | ⏳ implementation in PR — **paid API execution is a separate approval gate** |
-| CI-6…11 | analyzer, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
+| CI-6 | Photo Desk admin review (`/admin/photos`): approve → `photo_assets` → live render; reject/research/unpublish; migration `0010` RPCs | ⏳ implementation in PR — merge, 0010 application, and the FIRST supervised approve are each separate gates |
+| CI-7…11 | analyzer, Claude drafts, publish jobs, compliance review | ⬜ |
 
 ### CI-4 notes — photo candidate sourcing (nothing publishes)
 
@@ -1050,6 +1051,56 @@ access stays server-side.
   status='missing' where status='candidates_found';` Scoped: by
   `source`, or by `created_at` inside a run row's started/finished
   window. Job-run/error rows are always kept.
+
+### CI-6 notes — Photo Desk (review → publish, human-gated end to end)
+
+- Surfaces: `app/admin/photos` (ADMIN_EMAILS gate identical to the Lead
+  Desk — 404 for everyone else, noindex, force-dynamic) + POST
+  `app/api/admin/photos` (auth re-checked every request; service key
+  strictly after the gate). Queue helper `lib/content/admin-photos.ts`
+  (server-only). No public UI changes — CI-3's EditorialPhoto lights up
+  by itself when an asset appears.
+- **Atomicity (migration `0010_photo_review_rpc.sql`, apply-gated like
+  0009):** approve/reject/needs_research/unpublish are plpgsql
+  functions — all writes in one transaction, so `photo_assets` can never
+  disagree with candidate/slot/events. The API also runs a post-write
+  consistency check and reports `consistent` in the response. Until 0010
+  is applied the API returns 503 "has migration 0010 been applied?" and
+  nothing can write.
+- **Approve** (one candidate per request; arrays rejected; no bulk
+  endpoint): inserts `photo_assets` (attribution/license/source page
+  copied from the candidate; alt text required from the reviewer;
+  `approved_by` = admin email), candidate → `approved` +
+  `license_verified=true` (the reviewer's VIEW SOURCE check is the
+  verification), slot → `approved`, `verification_events` `approve` row.
+  v1 source allowlist wikimedia/openverse enforced in the UI, the API
+  layer, AND the RPC — pexels/unsplash stay unapprovable until their
+  publish obligations (Unsplash hotlink + download-ping; Pexels credit
+  link) are implemented and documented here.
+- **Revalidation — best-effort, observable:** after approve the handler
+  calls `revalidatePath` (city → `/city/<slug>`, hood →
+  `/city/<city>/<hood>`, homepage → `/`); the `publish` audit event is
+  written ONLY when revalidation succeeds (never misleading), failures
+  are reported in the response/UI, and a `revalidate` healing action
+  retries and writes the event once it works.
+- **Reject** requires a reason; when a slot's last live candidate is
+  rejected the slot returns to `missing` (re-sourceable). **Unpublish**
+  deletes the asset, slot → `candidates_found`, candidate → `pending`,
+  `unpublish` event; placeholder returns on revalidation. The 86
+  bad-ledger rows get rejected through this UI (audited), not deleted.
+- `source_evidence` gets ZERO writes — its FK targets
+  content_update_candidates (new-build analyzer); photo evidence lives
+  in `photo_candidates.raw_api_response`.
+- Verification SQL (expect all-zero violations; assets = approved slots):
+  `select 'assets', count(*)::text from photo_assets union all
+   select 'approved_slots_match', ((select count(*) from photo_slots where status='approved') = (select count(*) from photo_assets))::text union all
+   select 'assets_missing_fields', count(*)::text from photo_assets where attribution_text='' or license='' or alt_text='' union all
+   select 'asset_candidate_mismatch', count(*)::text from photo_assets a join photo_candidates c on c.id=a.selected_candidate_id where c.status<>'approved' union all
+   select 'events: '||action, count(*)::text from verification_events group by action union all
+   select 'rejected_missing_reason', count(*)::text from photo_candidates where status='rejected' and coalesce(rejected_reason,'')='';`
+- Gates after merge: (1) apply 0010 with explicit approval; (2) ONE
+  supervised first approve (suggest denton pick — Old Courthouse) with
+  live render + attribution + revalidation verified; (3) normal review.
 
 ### CI-5 notes — candidate scorer (paid execution gated)
 
