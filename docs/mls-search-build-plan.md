@@ -947,10 +947,11 @@ access stays server-side.
 | CI-1 | Schema (`0009_content_intelligence.sql`), docs, `.env.example`, dry-run seed stub | ✅ merged 3d5352e; **0009 applied 2026-07-11** — 12 tables, RLS enabled on all, zero policies, `touch_updated_at()` + listings trigger verified intact |
 | CI-2 | Seeder write path (`--diff` read-only, `--apply` env-gated), npm script, runbook | ✅ complete — seeded 2026-07-11, 635 photo_slots rows; idempotency re-run items_written=0 |
 | CI-3 | `EditorialPhoto` render + placeholder fallback | ✅ merged 6c5fb6c, deployed 2026-07-11 — placeholders DOM-identical in prod; renders nothing until a human approves an asset |
-| CI-4 | Photo candidate sourcing (wikimedia/openverse → `photo_candidates`, pending only) | ⏳ sourcing in approved batches — 487 pending candidates / 142 slots as of 2026-07-11; each batch + each relevance-filter fix is its own gate |
-| CI-5 | Candidate scoring (`confidence_score`/`claude_notes` via Claude API, metadata-only v1) | ⏳ implementation in PR — **paid API execution is a separate approval gate** |
-| CI-6 | Photo Desk admin review (`/admin/photos`): approve → `photo_assets` → live render; reject/research/unpublish; migration `0010` RPCs | ⏳ implementation in PR — merge, 0010 application, and the FIRST supervised approve are each separate gates |
-| CI-7…11 | analyzer, Claude drafts, publish jobs, compliance review | ⬜ |
+| CI-4 | Photo candidate sourcing (wikimedia/openverse → `photo_candidates`, pending only) + CI-4b iconic-first | ✅ metro-wide first pass complete 2026-07-11 (all 635 slots touched; 794 candidates); Openverse top-up + re-sourcing stay per-batch gates |
+| CI-5 | Candidate scoring (`confidence_score`/`claude_notes` via Claude API, metadata-only v1) | ⏸ merged; evidence-path fix on branch `claude/ci5-evidence-paths`; **paid execution paused/gated** |
+| CI-6 | Photo Desk admin review (`/admin/photos`): approve → `photo_assets` → live render; reject/research/unpublish; migration `0010` RPCs | ✅ live — 0010 applied 2026-07-11; first supervised reviews done (5 published) |
+| CI-7 | Manual admin uploads: Storage bucket + upload route → pending `manual_upload` candidate → existing CI-6 approve; migration `0011` | ⏳ implementation in PR — merge, 0011 application, and the FIRST supervised upload-publish are each separate gates |
+| CI-8…11 | analyzer, Claude drafts, publish jobs, compliance review | ⬜ |
 
 ### CI-4 notes — photo candidate sourcing (nothing publishes)
 
@@ -989,7 +990,9 @@ access stays server-side.
   non-photo blocklist (map/locator/seal/coat of arms/flag/logo/census/
   diagram/chart/street plan on title+Categories). All new candidates —
   structured AND fallback, every provider — stamp
-  `raw_api_response.strategy` (wikidata_p18 | commons_category |
+  the strategy field in evidence — NOTE the exact JSON path is
+  `raw_api_response->'result'->>'strategy'` (evidenceFor nests provider
+  data under `result`) — (wikidata_p18 | commons_category |
   wikipedia_lead | text_search | geosearch) so review and CI-5 scoring
   can compare sourcing paths; pre-CI-4b rows read as legacy (null).
   Slots at the 8-cap are skipped as always — capacity for iconic
@@ -1074,6 +1077,44 @@ access stays server-side.
   status='missing' where status='candidates_found';` Scoped: by
   `source`, or by `created_at` inside a run row's started/finished
   window. Job-run/error rows are always kept.
+
+### CI-7 notes — manual admin uploads (no second publish path)
+
+- Upload = pending `manual_upload` **candidate**; publish = the existing
+  CI-6 APPROVE. One file per request; no bulk; no silent replace
+  (replace = unpublish → upload → approve). Rights checkbox ("I have the
+  right to use this photo on DiscoverDFW.com") is required in the dialog
+  AND re-checked server-side.
+- `POST /api/admin/photos/upload` — Node runtime (sharp needs native
+  bindings, never Edge), ADMIN_EMAILS gate first, anonymous 404. **v1
+  size cap 4 MB — Vercel serverless request bodies max out at 4.5 MB.**
+  Bytes are decoded with sharp (Content-Type never trusted): jpeg/png/
+  webp only, ≥1200px wide after EXIF orientation, orientation must match
+  the slot. Re-encode: auto-orient → max 2400px → JPEG q82 — **the
+  re-encode IS the metadata strip** (no `.withMetadata()`, so EXIF/GPS/
+  XMP are gone); v1 stores ONLY the processed file.
+- Storage: bucket `editorial-photos` (public READ; server-side service-
+  key writes only; created by migration `0011`). Path
+  `slots/<type>/<slug>/<key>/<ts>-<rand>.jpg`. Objects are KEPT on
+  unpublish in v1 (audit copy) — orphan cleanup would be its own gate.
+- Migration `0011` (apply-gated like 0009/0010): bucket insert +
+  `approve_photo_candidate` v2 — allowlist gains `manual_upload`,
+  `source_page_url` required only for external sources, and
+  `photo_assets.storage_path` is populated from the candidate's
+  evidence (`raw_api_response->'result'->>'storage_path'`; candidates
+  have no storage_path column by design). Until 0011: uploads 503
+  ("bucket … has 0011 been applied?") and manual approvals refuse.
+- Evidence per upload (complete, no secrets/local paths): provider/
+  strategy `manual_upload`, storage_path, processed {w,h,mime,bytes},
+  original {sanitized basename, format, w, h, bytes}, uploaded_by,
+  uploaded_at, attribution, caption, rights_confirmed.
+- Verification SQL:
+  `select 'manual_candidates', count(*)::text from photo_candidates where source='manual_upload'
+   union all select 'uploaded_assets', count(*)::text from photo_assets where storage_path is not null
+   union all select 'uploaded_assets_bad_url', count(*)::text from photo_assets where storage_path is not null and public_image_url not like '%/storage/v1/object/public/editorial-photos/%'
+   union all select 'manual_missing_storage_evidence', count(*)::text from photo_candidates where source='manual_upload' and coalesce(raw_api_response->'result'->>'storage_path','')='';`
+- Gates after merge: (1) apply 0011; (2) ONE supervised first
+  upload-publish with live-render check; (3) normal use.
 
 ### CI-6 notes — Photo Desk (review → publish, human-gated end to end)
 
