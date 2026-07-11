@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { bySlug, countyById, fmtK, cities } from "@/lib/dfw-data";
+import { getApprovedPhotos, photoKey } from "@/lib/content/editorial-photos";
+import EditorialPhoto from "@/components/EditorialPhoto";
 
 /* Chat's final intent: "Start with these four" = Denton → Fort Worth → Dallas → Frisco */
 const PICKS: { slug: string; photo: string }[] = [
@@ -9,7 +11,13 @@ const PICKS: { slug: string; photo: string }[] = [
   { slug: "frisco", photo: "THE STAR DISTRICT" },
 ];
 
-export default function EditorsPicks() {
+export default async function EditorsPicks() {
+  /* CI-3: one query covers all four picks (composite entity_slug::slot_key
+     keys — every pick shares slot_key='pick'). Empty = placeholders. */
+  const photos = await getApprovedPhotos(
+    "homepage",
+    PICKS.map((p) => p.slug)
+  );
   return (
     <section style={{ maxWidth: 1380, margin: "0 auto", padding: "60px 4vw 90px" }}>
       <div
@@ -92,7 +100,8 @@ export default function EditorsPicks() {
                 display: "block",
               }}
             >
-              <div
+              <EditorialPhoto
+                photo={photos.get(photoKey(slug, "pick"))}
                 style={{
                   aspectRatio: "4 / 2.9",
                   position: "relative",
@@ -103,6 +112,24 @@ export default function EditorsPicks() {
                   alignItems: "center",
                   justifyContent: "center",
                 }}
+                overlay={
+                  <span
+                    className="font-mono"
+                    style={{
+                      position: "absolute",
+                      top: 12,
+                      left: 12,
+                      fontSize: 9.5,
+                      letterSpacing: ".2em",
+                      background: "#1D1913",
+                      color: "#F6F1E6",
+                      padding: "5px 10px",
+                      borderRadius: 999,
+                    }}
+                  >
+                    {county.name.toUpperCase()} CO.
+                  </span>
+                }
               >
                 <span
                   className="font-mono"
@@ -118,23 +145,7 @@ export default function EditorsPicks() {
                 >
                   PHOTO — {photo}
                 </span>
-                <span
-                  className="font-mono"
-                  style={{
-                    position: "absolute",
-                    top: 12,
-                    left: 12,
-                    fontSize: 9.5,
-                    letterSpacing: ".2em",
-                    background: "#1D1913",
-                    color: "#F6F1E6",
-                    padding: "5px 10px",
-                    borderRadius: 999,
-                  }}
-                >
-                  {county.name.toUpperCase()} CO.
-                </span>
-              </div>
+              </EditorialPhoto>
               <div style={{ padding: "20px 22px 22px" }}>
                 <div
                   className="font-serif"

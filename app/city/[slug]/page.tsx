@@ -17,8 +17,10 @@ import { hoodsForCity } from "@/lib/hoods";
 import { getMlsProvider, isLiveMls } from "@/lib/mls";
 import type { Listing } from "@/lib/mls/types";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
+import { getApprovedPhotos, photoKey } from "@/lib/content/editorial-photos";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
+import EditorialPhoto from "@/components/EditorialPhoto";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
 
@@ -164,6 +166,10 @@ export default async function CityPage({
   const gallery = (
     c.gallery || [c.name + " signature landmark", "neighborhood streetscape", "parks & greenbelt"]
   ).map((t) => t.toUpperCase());
+
+  /* CI-3: approved editorial photos (photo_assets is human-gated; empty →
+     every slot falls back to the placeholder below, zero visual change) */
+  const photos = await getApprovedPhotos("city", c.slug);
 
   const factors = [
     { f: 0.86, tag: "MOVE-IN READY", bd: 3, ba: 2 },
@@ -819,9 +825,10 @@ export default async function CityPage({
           data-reveal="1"
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 18 }}
         >
-          {gallery.map((g) => (
-            <div
+          {gallery.map((g, i) => (
+            <EditorialPhoto
               key={g}
+              photo={photos.get(photoKey(c.slug, `gallery-${i}`))}
               className="gallery-slot"
               style={{
                 aspectRatio: "4 / 3",
@@ -851,7 +858,7 @@ export default async function CityPage({
                 DROP PHOTO —<br />
                 {g}
               </span>
-            </div>
+            </EditorialPhoto>
           ))}
         </div>
       </section>
