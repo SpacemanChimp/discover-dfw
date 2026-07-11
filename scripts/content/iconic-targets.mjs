@@ -41,9 +41,9 @@ export const ICONIC_TARGETS = {
   },
   "homepage/frisco/pick": {
     label: "THE STAR DISTRICT",
-    wikipediaTitle: "The Star (Frisco, Texas)",
-    verify: "https://en.wikipedia.org/wiki/The_Star_(Frisco,_Texas)",
-    note: "Cowboys HQ/The Star development — the district the pick names",
+    wikipediaTitle: "Ford Center at The Star",
+    verify: "https://en.wikipedia.org/wiki/Ford_Center_at_The_Star",
+    note: "checked 2026-07-11: 'The Star (Frisco, Texas)' does NOT exist; the venue article is Ford Center at The Star (Q28225961, page image = exterior photo). No Commons category exists for either name — P18/lead only",
   },
 
   /* ---- explicit city gallery labels (landmark-specific) ---------------- */
@@ -79,9 +79,9 @@ export const ICONIC_TARGETS = {
   },
   "city/frisco/gallery-0": {
     label: "The Star district",
-    wikipediaTitle: "The Star (Frisco, Texas)",
-    verify: "https://en.wikipedia.org/wiki/The_Star_(Frisco,_Texas)",
-    note: "same target as the homepage pick",
+    wikipediaTitle: "Ford Center at The Star",
+    verify: "https://en.wikipedia.org/wiki/Ford_Center_at_The_Star",
+    note: "same target as the homepage pick (see its note — verified 2026-07-11)",
   },
   "city/grapevine/gallery-0": {
     label: "Historic Main Street",
