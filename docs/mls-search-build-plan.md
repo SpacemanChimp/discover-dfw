@@ -944,12 +944,59 @@ access stays server-side.
 
 | CI Phase | Scope | State |
 | --- | --- | --- |
-| CI-1 | Schema (`0009_content_intelligence.sql`), docs, `.env.example`, dry-run seed stub — **branch/PR only, migration NOT applied** | ⏳ awaiting review |
-| CI-2 | Seed photo_slots for real | ⬜ |
+| CI-1 | Schema (`0009_content_intelligence.sql`), docs, `.env.example`, dry-run seed stub | ✅ merged 3d5352e; **0009 applied 2026-07-11** — 12 tables, RLS enabled on all, zero policies, `touch_updated_at()` + listings trigger verified intact |
+| CI-2 | Seeder write path (`--diff` read-only, `--apply` env-gated), npm script, runbook | ⏳ implementation in PR — **seed execution is a separate approval gate** |
 | CI-3 | `EditorialPhoto` render + placeholder fallback | ⬜ |
 | CI-4…11 | analyzer, providers, scoring, Claude drafts, admin queue, publish, jobs, compliance review | ⬜ |
 
-### CI-1 notes — schema + groundwork (unapplied)
+### CI-2 notes — photo_slots seeder (execution gated)
+
+- **Slot key conventions:** `city/<slug>/gallery-{0,1,2}` (index = rendered
+  gallery position), `neighborhood/<city>/<hood>/hero` (hood set = the
+  hoods-array ∪ newBuilds union per `hoodsForCity()`; new-build
+  communities share these slots — no `new_build` rows in CI-2),
+  `homepage/<slug>/pick`. Expected totals: **635** = 270 city (63
+  explicit + 207 fallback) + 361 hood heroes + 4 picks; explicit 428 /
+  fallback 207. DB uniqueness via 0009's
+  `unique (entity_type, entity_slug, slot_key)`.
+- **Privilege tiers (`scripts/content/seed-photo-slots.mjs`):** default =
+  offline dry-run (no DB client loaded — cannot write by construction);
+  `--diff` = read-only compare (would-insert/update/protected/orphaned;
+  claims no job-run row); `--apply` = writes, requiring BOTH the flag AND
+  `CONTENT_INTELLIGENCE_DRY_RUN=false` **exactly** — unset or any other
+  value refuses. `--limit=N` / `--only=<city-slug>` scope both tiers
+  (orphan reporting is suppressed on scoped runs to avoid misreports).
+- **Idempotency:** `--apply` claims the `content_job_runs` single-flight
+  lock first (crashed-run release SQL prints on refusal). Existing slots
+  update ONLY while `status = 'missing'` and only on dataset-derived
+  fields (label, label_source, search_query, required_place_name,
+  lat/lon, orientation); any slot the pipeline or a human has touched is
+  never modified. Nothing is ever deleted — orphans are counted and
+  listed, decision stays human. Re-running apply must yield
+  inserted=0/updated=0.
+- **Verification SQL (run after apply):**
+  `select 'total', count(*)::text from photo_slots union all select
+  'by_type:'||entity_type, count(*)::text from photo_slots group by
+  entity_type union all select 'by_label_source:'||label_source,
+  count(*)::text from photo_slots group by label_source union all select
+  'all_missing', (count(*) = count(*) filter (where
+  status='missing'))::text from photo_slots union all select 'ventana',
+  count(*)::text from photo_slots where entity_slug =
+  'fort-worth/ventana' union all select 'policies_zero',
+  count(*)::text from pg_policies where tablename='photo_slots';`
+  Expect 635 / 270-361-4 / 428-207 / true / 1 / 0, then a second apply
+  proving items_written=0.
+- **Rollback for seeded rows:** ⚠️ `truncate table public.photo_slots
+  cascade;` is valid **only immediately after the initial seed and only
+  with explicit approval — never run casually** (once candidates/assets
+  exist it would cascade through human work). The safe later form:
+  `delete from photo_slots s where s.status = 'missing' and not exists
+  (select 1 from photo_candidates c where c.photo_slot_id = s.id);`
+  Surgical variants: by `entity_type`, or by seeding window using the
+  run row's started/finished timestamps. Job-run/error rows are always
+  kept (audit).
+
+### CI-1 notes — schema + groundwork (applied 2026-07-11)
 
 - **Slot inventory (verified against main 012d440, corrected
   2026-07-10):** only **21 of 90 cities carry explicit `gallery` arrays**
