@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PinSvg } from "./Logo";
+import HeroSearch from "./HeroSearch";
 
 const LETTERS_1 = ["D", "I", "S", "C"];
 const LETTERS_2 = ["V", "E", "R"];
@@ -168,6 +169,8 @@ export default function Hero() {
         county, one clickable map.
       </p>
 
+      <HeroSearch />
+
       <div
         className="font-mono"
         style={{
@@ -175,7 +178,7 @@ export default function Hero() {
           fontSize: 12.5,
           letterSpacing: ".2em",
           color: "rgba(29,25,19,.6)",
-          animation: "fadeUp .8s ease .72s both",
+          animation: "fadeUp .8s ease .78s both",
         }}
       >
         WHERE TO NEXT: <TypedNext />
