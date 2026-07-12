@@ -954,8 +954,8 @@ access stays server-side.
 | CI-8…11 | Claude drafts, publish jobs, compliance review | ⬜ |
 | NB-1 | New Build seeder: curated `newBuilds` + local listings scan → `new_build_communities`/`community_aliases`/`community_builders` (+ `--stats` snapshots), existing data only | ⏳ implementation in PR — `--diff`, `--apply`, and `--stats` are each separate approval gates |
 | NB-2…5 | builder-site discovery, content suggestions (`content_update_candidates` + `source_evidence` + Claude drafts + admin review), inventory health, alerts | ⬜ |
-| CB-1 | Community Builder drafting desk (`/admin/communities`): draft hood/new-build entries + MLS lookup + collision blocks; migration `0012` (`community_drafts`) | ⏳ implementation in PR — merge, 0012 application, and the FIRST supervised draft are each separate gates |
-| CB-2 | Draft exporter: `ready` drafts → surgical `lib/dfw.data.json` insertion on a reviewed branch (`--diff`/`--apply`) | ⬜ not implemented — drafts cannot reach a public page until this exists |
+| CB-1 | Community Builder drafting desk (`/admin/communities`): draft hood/new-build entries + MLS lookup + collision blocks; migration `0012` (`community_drafts`) | ✅ complete — merged bb1f1e0, 0012 applied 2026-07-11, supervised draft round-trip done; portal in normal use |
+| CB-2 | Draft exporter: `ready` drafts → surgical `lib/dfw.data.json` insertion on a reviewed branch (`--diff`/`--apply`/`--mark-live`/`--unexport`) | ⏳ implementation in PR — merge, `--diff`, each `--apply` batch, the data-PR merge, and `--mark-live` are all separate gates |
 
 ### CI-4 notes — photo candidate sourcing (nothing publishes)
 
@@ -1112,6 +1112,53 @@ access stays server-side.
   pages are static — the band updates on deploy or future
   revalidatePath-after---stats (NB-4 territory); the AS OF date keeps it
   honest.
+
+### CB-2 notes — draft exporter (the ONLY path from draft to page)
+
+- `scripts/content/export-community-drafts.mjs` · `npm run
+  content:export-drafts`. Tiers: default = offline config print (no DB,
+  no network); `--diff` = read-only DB, prints the LITERAL insertion
+  strings + a commit-message preview, claims no job-run row; `--apply` =
+  splice + stamp (env-gated); `--mark-live` / `--unexport` = post-merge
+  lifecycle stamps (env-gated). All write tiers require
+  `CONTENT_INTELLIGENCE_DRY_RUN=false` exactly and claim the
+  `export_community_drafts` single-flight lock. Scope with
+  `--slug=<city>/<hood>`.
+- **Order of operations in `--apply` (approved amendment):** validate →
+  splice → parse/verify output → write file → ONLY THEN stamp drafts
+  `exported` (+ audit rows, verified_by `cb2-exporter`). Any earlier
+  failure leaves drafts `ready` and the file untouched. Crash between
+  write and stamp: the re-run classifies an identical existing entry as
+  "stamp-only" and just stamps it (idempotent recovery).
+- **Batch policy: fail closed.** Any invalid draft aborts the whole run
+  with a per-draft report — the PR a human reviews always matches the
+  approved diff. Deterministic ordering (city, name).
+- **Splice, never stringify:** compact formatting is preserved by
+  replacing ONE anchored array segment (newBuilds tail, or a city's
+  hoods located via its unique `"slug":"…"` marker) verified
+  byte-for-byte against the parsed data before replacement; the output
+  must parse, additions must equal the drafts exactly, and everything
+  else must deep-equal the before state or the run aborts. BOM/NUL
+  refuse up front.
+- Validation re-runs the portal's collision rules at export time
+  (dataset may have moved since drafting): same-city slugs, the
+  cross-city NAME rule (Wellington lesson), slugifyHood fixed-point,
+  intra-batch duplicates. new_build drafts REQUIRE a numeric
+  builders_count (public shape renders a number — a generic label alone
+  cannot export) + a valid status label + `$NNNs`-shaped from label;
+  hood drafts export as `[name, note]` only and refuse selling fields.
+- **Git stays human:** the script runs no git commands and prints a
+  ready-to-paste commit message instead. Flow per export batch: fresh
+  branch → `--diff` (gate) → `--apply` (gate) → build/sitemap/remainder
+  validation → commit/push → PR reviewed+merged by a human (gate) →
+  Vercel deploys → prod probes → `--mark-live` (gate). Abandoned PR:
+  delete branch + `--unexport`. No GitHub API, no tokens in Vercel, no
+  external calls (Supabase is the script's only network peer), no
+  auto-publish — a new_build page's inventory band additionally stays
+  behind its own `published=false` switch in `new_build_communities`.
+- Rollback: pre-merge = drop the branch + `--unexport`; post-merge =
+  `git revert` + redeploy (pages 404, sitemap drops), then reset or
+  archive the drafts (audited; rows never deleted).
 
 ### CB-1 notes — Community Builder drafting desk (drafts never publish)
 
