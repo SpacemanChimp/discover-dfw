@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getAdminUser } from "@/lib/admin";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import AdminLeadList, { type AdminLead, type LeadEvent, type ShelfCount } from "@/components/admin/AdminLeadList";
+import AdminNav from "@/components/admin/AdminNav";
 
 /* The Lead Desk — internal only. Admin allowlist gate (404 for everyone
    else, including signed-in non-admins), never indexed, never linked
@@ -107,11 +108,14 @@ export default async function LeadDeskPage() {
   );
 
   return (
-    <AdminLeadList
-      adminEmail={adminUser.email}
-      leads={leads}
-      events={events}
-      shelfCounts={shelfCounts}
-    />
+    <>
+      <AdminNav current="leads" />
+      <AdminLeadList
+        adminEmail={adminUser.email}
+        leads={leads}
+        events={events}
+        shelfCounts={shelfCounts}
+      />
+    </>
   );
 }

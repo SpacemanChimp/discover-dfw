@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getAdminUser } from "@/lib/admin";
 import { getPhotoReviewQueue } from "@/lib/content/admin-photos";
 import PhotoReviewQueue from "@/components/admin/PhotoReviewQueue";
+import AdminNav from "@/components/admin/AdminNav";
 
 /* The Photo Desk — CI-6 review queue. Internal only: admin allowlist gate
    (404 for everyone else, including signed-in non-admins), never indexed,
@@ -22,5 +23,10 @@ export default async function PhotoDeskPage() {
   if (!adminUser) notFound();
 
   const slots = await getPhotoReviewQueue();
-  return <PhotoReviewQueue adminEmail={adminUser.email} slots={slots} />;
+  return (
+    <>
+      <AdminNav current="photos" />
+      <PhotoReviewQueue adminEmail={adminUser.email} slots={slots} />
+    </>
+  );
 }
