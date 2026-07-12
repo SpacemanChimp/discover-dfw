@@ -178,12 +178,36 @@ async function fetchAllPaged(build) {
   return rows;
 }
 
+/* a thrown top-level await crashes the process before the event loop can
+   drain (the CI-2 libuv lesson, uncaught-throw edition) — every DB scan
+   goes through this instead */
+let scanFailed = false;
+async function safeScan(label, fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    console.error(`SCAN FAILED (${label}): ${e.message}`);
+    scanFailed = true;
+    return [];
+  }
+}
+
+/* the listings store keys cities by NAME ("Fort Worth"), not slug — the
+   provider itself filters .eq("city", cityName). Map name↔slug via the
+   dataset; unknown city names are ignored. */
+const slugByCityName = new Map(data.cities.map((c) => [norm(c.name), c.slug]));
+const nameByCitySlug = new Map(data.cities.map((c) => [c.slug, c.name]));
+const toCitySlug = (cityName) => slugByCityName.get(norm(cityName)) ?? null;
+
 /* scan 1 — light: subdivision + city for every listing (alias matching +
    homonym detection). No remarks here: they are heavy. */
 console.log("scanning listings store (subdivision/city — read-only)…");
-const subRows = await fetchAllPaged(() =>
-  db.from("listings").select("city_slug, standard_status, subdivision:raw->>SubdivisionName")
+const subRowsRaw = await safeScan("subdivision scan", () =>
+  fetchAllPaged(() => db.from("listings").select("city, standard_status, subdivision:raw->>SubdivisionName"))
 );
+const subRows = subRowsRaw
+  .map((r) => ({ ...r, city_slug: toCitySlug(r.city) }))
+  .filter((r) => r.city_slug);
 
 /* group distinct raw subdivision variants by (normalized name, city) */
 const variantsByKey = new Map(); // `${normName}|${city}` -> Map(rawVariant -> count)
@@ -218,17 +242,21 @@ for (const c of communities) {
 /* scan 2 — heavier: office + remarks, ONLY for active new-construction
    listings in the matched communities' cities */
 const matchedCities = [...new Set(communities.filter((c) => c.aliases.length).map((c) => c.city_slug))];
+const matchedCityNames = matchedCities.map((s) => nameByCitySlug.get(s)).filter(Boolean);
 const nbYear = new Date().getFullYear() - 1;
 let nbRows = [];
-if (matchedCities.length) {
-  console.log(`scanning active new-construction listings in ${matchedCities.length} matched city(ies)…`);
-  nbRows = await fetchAllPaged(() =>
-    db
-      .from("listings")
-      .select("city_slug, standard_status, year_built, list_price, living_area, subdivision:raw->>SubdivisionName, list_office:raw->>ListOfficeName, remarks:raw->>PublicRemarks")
-      .in("city_slug", matchedCities)
-      .gte("year_built", nbYear)
+if (matchedCityNames.length) {
+  console.log(`scanning active new-construction listings in ${matchedCityNames.length} matched city(ies)…`);
+  const nbRowsRaw = await safeScan("new-construction scan", () =>
+    fetchAllPaged(() =>
+      db
+        .from("listings")
+        .select("city, standard_status, year_built, list_price, living_area, subdivision:raw->>SubdivisionName, list_office:raw->>ListOfficeName, remarks:raw->>PublicRemarks")
+        .in("city", matchedCityNames)
+        .gte("year_built", nbYear)
+    )
   );
+  nbRows = nbRowsRaw.map((r) => ({ ...r, city_slug: toCitySlug(r.city) })).filter((r) => r.city_slug);
 }
 
 /* derive builder candidates per community */
@@ -266,7 +294,7 @@ for (const c of communities) {
 }
 
 /* existing rows (never updated — insert-only everywhere) */
-const existing = await fetchAllPaged(() => db.from("new_build_communities").select("id, slug"));
+const existing = await safeScan("existing communities", () => fetchAllPaged(() => db.from("new_build_communities").select("id, slug")));
 const existingBySlug = new Map(existing.map((r) => [r.slug, r.id]));
 
 const report = () => {
@@ -285,7 +313,10 @@ const report = () => {
   console.log(`totals: would insert ${communities.filter((c) => !existingBySlug.has(c.slug)).length} community(ies) · ${totalAliases} alias(es) · ${totalBuilders} builder derivation(s) · already existing (skipped, never updated): ${communities.filter((c) => existingBySlug.has(c.slug)).length}`);
 };
 
-if (DIFF) {
+if (scanFailed) {
+  console.error("REFUSED: database scan failed — nothing written, nothing claimed.");
+  process.exitCode = 1;
+} else if (DIFF) {
   console.log("--diff (read-only) — nothing written, no job-run row claimed.");
   report();
   process.exitCode = 0;
