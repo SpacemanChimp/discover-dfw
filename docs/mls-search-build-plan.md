@@ -951,7 +951,9 @@ access stays server-side.
 | CI-5 | Candidate scoring (`confidence_score`/`claude_notes` via Claude API, metadata-only v1) | ⏸ merged; evidence-path fix on branch `claude/ci5-evidence-paths`; **paid execution paused/gated** |
 | CI-6 | Photo Desk admin review (`/admin/photos`): approve → `photo_assets` → live render; reject/research/unpublish; migration `0010` RPCs | ✅ live — 0010 applied 2026-07-11; first supervised reviews done (5 published) |
 | CI-7 | Manual admin uploads: Storage bucket + upload route → pending `manual_upload` candidate → existing CI-6 approve; migration `0011` | ⏳ implementation in PR — merge, 0011 application, and the FIRST supervised upload-publish are each separate gates |
-| CI-8…11 | analyzer, Claude drafts, publish jobs, compliance review | ⬜ |
+| CI-8…11 | Claude drafts, publish jobs, compliance review | ⬜ |
+| NB-1 | New Build seeder: curated `newBuilds` + local listings scan → `new_build_communities`/`community_aliases`/`community_builders` (+ `--stats` snapshots), existing data only | ⏳ implementation in PR — `--diff`, `--apply`, and `--stats` are each separate approval gates |
+| NB-2…5 | builder-site discovery, content suggestions (`content_update_candidates` + `source_evidence` + Claude drafts + admin review), inventory health, alerts | ⬜ |
 
 ### CI-4 notes — photo candidate sourcing (nothing publishes)
 
@@ -1077,6 +1079,52 @@ access stays server-side.
   status='missing' where status='candidates_found';` Scoped: by
   `source`, or by `created_at` inside a run row's started/finished
   window. Job-run/error rows are always kept.
+
+### NB-1 notes — new-build community seeder (existing data only)
+
+- `scripts/content/seed-new-build-communities.mjs` · `npm run
+  content:seed-new-builds`. Sources: curated `newBuilds` in dfw.data.json
+  (the ONLY source of which communities exist; 19 entries) + the local
+  listings store (`raw->>'SubdivisionName'/'ListOfficeName'/
+  'PublicRemarks'`, paged, never sorted on raw paths). NO external calls
+  — no providers, no builder sites, no Claude.
+- Tiers: default offline (dfw.data.json only) · `--diff` read-only DB
+  match report (exact / prefix / unmatched / ⚠ cross-city homonyms /
+  weak offices NOT staged) · `--apply` insert-only seed · `--stats`
+  SEPARATE snapshot run (never bundled — seed re-runs can't append
+  snapshot noise). `--apply`/`--stats` require
+  `CONTENT_INTELLIGENCE_DRY_RUN=false`; single-flight locks
+  `seed_new_build_communities` / `new_build_inventory_stats`.
+- Matching: normalized (uppercase, punctuation collapsed, trailing
+  phase/section/digit tokens stripped) + **city_slug equality required**
+  (Pecan Square Addison ≠ Pecan Square Northlake). Prefix matches
+  reported separately for human eyeballs.
+- Builders (MLS BuilderName is 0% populated — probed feed reality):
+  `list_office` derivations staged ONLY on builder-lexicon match (47
+  canonical DFW names, stored canonically) or clearly builder-like
+  names ("… Homes", no realty/brokerage marker); everything else is
+  diff-report-only. `public_remarks` = lexicon hits only. Every builder
+  row is an unverified derivation; builder facts need human
+  verification before ANY publish (hard rule).
+- INSERT-ONLY everywhere: slug/alias/builder conflicts skip — rows a
+  human touched are never updated. Every community lands
+  `published=false` + `verification_status='unverified'`; no public
+  page imports these tables (grep-verified at PR).
+- Verification SQL (post-apply): communities = newBuilds count,
+  all_unpublished true, all_unverified true, derivations only
+  list_office/public_remarks, zero orphan aliases, run `success`,
+  idempotency re-run writes 0:
+  `select 'communities', count(*)::text from new_build_communities
+   union all select 'all_unpublished', (count(*) = count(*) filter (where published = false))::text from new_build_communities
+   union all select 'all_unverified', (count(*) = count(*) filter (where verification_status = 'unverified'))::text from new_build_communities
+   union all select 'aliases', count(*)::text from community_aliases
+   union all select 'builders: '||derivation, count(*)::text from community_builders group by derivation
+   union all select 'orphan_aliases', count(*)::text from community_aliases a where not exists (select 1 from new_build_communities c where c.id = a.community_id);`
+- Rollback (only immediately after initial seed, only with explicit
+  approval; FK order): `delete from community_inventory_stats; delete
+  from community_builders; delete from community_aliases; delete from
+  new_build_communities;` Later selective: only rows still
+  `verification_status='unverified'`. Job runs/errors always kept.
 
 ### CI-7 notes — manual admin uploads (no second publish path)
 
