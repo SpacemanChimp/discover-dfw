@@ -1080,6 +1080,37 @@ access stays server-side.
   `source`, or by `created_at` inside a run row's started/finished
   window. Job-run/error rows are always kept.
 
+### NB inventory band — first public new-build surface (publish-gated)
+
+- `lib/content/new-build-stats.ts` (server-only, editorial-photos
+  failure pattern: every error/timeout/missing path returns null and the
+  hood page renders exactly as before) + a band in the new-build branch
+  of `app/city/[slug]/[hood]/page.tsx` only. Renders ONLY when the
+  community row is `published=true` AND its latest snapshot has ≥3
+  active — thin/zero-inventory communities show no band, never a bleak
+  zero. All 19 rows are `published=false`, so merging is a zero-visual
+  change until per-community flips.
+- Wording is deliberately conservative: "ACTIVE LISTINGS **MATCHED TO
+  THIS COMMUNITY**", "QUICK MOVE-IN — **ESTIMATE**", "AS OF <date> ·
+  MLS-MATCHED ONLY — BUILDER INVENTORY MAY DIFFER". Counts come from our
+  replicated NTREIS store (same compliance class as the Phase 20 city
+  market bands). NO builder names, price medians, school claims, or
+  final-phase claims render from NB data.
+- **Publish flips:** v1 testing uses a reviewed SQL statement per
+  community in the dashboard (`update new_build_communities set
+  published = true where slug = '<slug>';` + revalidate/redeploy), each
+  an explicit approval. **Intended future path: an admin toggle on a
+  New Build tab of the Photo Desk** (same ADMIN_EMAILS gate, one
+  community per action, verification_events audit) — its own gated PR;
+  any interim flip script would also need separate approval. First
+  supervised flip: `northlake/pecan-square`.
+- Rollback layers: flip `published=false` (instant per-community kill
+  switch after revalidate), `git revert` the merge (no DB coupling), and
+  the ≥3-active threshold auto-hides degraded data. Freshness: hood
+  pages are static — the band updates on deploy or future
+  revalidatePath-after---stats (NB-4 territory); the AS OF date keeps it
+  honest.
+
 ### NB-1 notes — new-build community seeder (existing data only)
 
 - `scripts/content/seed-new-build-communities.mjs` · `npm run
