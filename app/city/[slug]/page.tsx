@@ -167,9 +167,15 @@ export default async function CityPage({
     c.gallery || [c.name + " signature landmark", "neighborhood streetscape", "parks & greenbelt"]
   ).map((t) => t.toUpperCase());
 
-  /* CI-3: approved editorial photos (photo_assets is human-gated; empty →
-     every slot falls back to the placeholder below, zero visual change) */
+  /* CI-3: approved editorial photos (photo_assets is human-gated). Public
+     pages render ONLY approved frames — a slot with no asset simply doesn't
+     render, and with zero approved frames the whole gallery section hides.
+     The Photo Desk still sees every missing slot; only public output changed. */
   const photos = await getApprovedPhotos("city", c.slug);
+  const approvedGallery = gallery.flatMap((caption, i) => {
+    const photo = photos.get(photoKey(c.slug, `gallery-${i}`));
+    return photo ? [{ caption, photo }] : [];
+  });
 
   const factors = [
     { f: 0.86, tag: "MOVE-IN READY", bd: 3, ba: 2 },
@@ -815,53 +821,38 @@ export default async function CityPage({
         </div>
       </section>
 
-      {/* 06 · gallery */}
-      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw 72px" }}>
-        <div data-reveal="1" style={{ marginBottom: 30 }}>
-          <Eyebrow>06 — THE LOOK</Eyebrow>
-          <SectionH2>Three frames of {c.name}.</SectionH2>
-        </div>
-        <div
-          data-reveal="1"
-          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 18 }}
-        >
-          {gallery.map((g, i) => (
-            <EditorialPhoto
-              key={g}
-              photo={photos.get(photoKey(c.slug, `gallery-${i}`))}
-              className="gallery-slot"
-              style={{
-                aspectRatio: "4 / 3",
-                border: "2px solid #1D1913",
-                borderRadius: 18,
-                background: "repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 18,
-              }}
-            >
-              <span
-                className="font-mono"
+      {/* 06 · gallery — approved frames only; the section hides entirely when
+          none exist (no public "DROP PHOTO" placeholders; the Photo Desk keeps
+          the missing slots). Grid is auto-fit, so 1–2 frames still compose. */}
+      {approvedGallery.length > 0 && (
+        <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw 72px" }}>
+          <div data-reveal="1" style={{ marginBottom: 30 }}>
+            <Eyebrow>06 — THE LOOK</Eyebrow>
+            <SectionH2>
+              {approvedGallery.length === 1 ? `One frame of ${c.name}.` : approvedGallery.length === 2 ? `Two frames of ${c.name}.` : `Three frames of ${c.name}.`}
+            </SectionH2>
+          </div>
+          <div
+            data-reveal="1"
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 18 }}
+          >
+            {approvedGallery.map(({ caption, photo }) => (
+              <EditorialPhoto
+                key={caption}
+                photo={photo}
+                className="gallery-slot"
                 style={{
-                  fontSize: 10,
-                  letterSpacing: ".16em",
-                  color: "rgba(29,25,19,.6)",
-                  background: "rgba(246,241,230,.9)",
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px dashed rgba(29,25,19,.4)",
-                  textAlign: "center",
-                  lineHeight: 1.7,
+                  aspectRatio: "4 / 3",
+                  border: "2px solid #1D1913",
+                  borderRadius: 18,
                 }}
               >
-                DROP PHOTO —<br />
-                {g}
-              </span>
-            </EditorialPhoto>
-          ))}
-        </div>
-      </section>
+                {null}
+              </EditorialPhoto>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 07 · listings */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
