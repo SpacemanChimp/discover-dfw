@@ -195,7 +195,7 @@
   "tagline": "Beach-day living arrives at Collin County's front-door price",
   "intro": [
    "Anacapri is the newcomer that made the rest of Anna look up: a master-planned community built around a swimmable crystal lagoon, now selling on the north end of the US-75 corridor. The pitch is simple and a little audacious — resort-style water in a town known for practical starter homes. Five builders are working the early phases, and the streets still have that fresh-poured optimism where every second yard sign says welcome home.",
-   "Living here means the lagoon is the default answer to summer. Instead of loading the car for a splurge weekend, you walk down for a swim and sand between your toes, then head home for dinner. Beyond the water, it is new-community life in fast-growing North Texas: neighbors comparing floor plans, kids zoned to Anna ISD, and Legacy West in Plano about 30 minutes south when the workweek calls."
+   "Living here means the lagoon is the default answer to summer. Instead of loading the car for a splurge weekend, you walk down for a swim and sand between your toes, then head home for dinner. Beyond the water, it is new-community life in fast-growing North Texas: neighbors comparing floor plans, schools running through Anna ISD, and Legacy West in Plano about 30 minutes south when the workweek calls."
   ],
   "homes": "Everything in Anacapri is new construction, with five builders offering distinct plan lines and pricing that starts from the $360s — genuinely rare for a lagoon community anywhere in DFW, let alone Collin County. Expect the full modern production playbook: open-concept mains, flex rooms doing double duty as offices, and elevations that mix brick, stone, and board-and-batten. Lots run compact, which is part of how the math works; the lagoon is the backyard upgrade. It suits first-time buyers stretching into something memorable, and move-up families who want amenities their previous starter neighborhood never had.",
   "highlights": [
@@ -213,7 +213,7 @@
    },
    {
     "title": "Anna ISD",
-    "note": "Anacapri residents are zoned to Anna ISD schools."
+    "note": "Schools run through Anna ISD — verify assignments by address with the district."
    }
   ],
   "faq": [
@@ -236,6 +236,14 @@
    {
     "q": "How far is Anacapri from downtown Dallas or Fort Worth?",
     "a": "Downtown Dallas runs about 50 minutes via US-75, and downtown Fort Worth is the long haul at about 66 minutes. More relevant for most households: Legacy West in Plano is about 30 minutes, and DFW Airport about 45. Anna trades a longer core-city commute for a price of entry that closer suburbs stopped offering years ago."
+   },
+   {
+    "q": "How competitive is Anacapri right now?",
+    "a": "Anna's US-75 corridor is one of the metro's fastest-growing, and Anacapri's lagoon at a $360s entry is the local conversation piece. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Anacapri against?",
+    "a": "Churchill and Parks at Foster Crossing, both in Anna, compete in the same band without the lagoon. EastRidge in Princeton is the value alternative one corridor east — the Anna guide on this site maps all of it."
    }
   ],
   "newBuild": {
@@ -251,6 +259,10 @@
     "Lots near the lagoon or facing green space typically carry premiums. Decide early whether location or finishes matter more — both pull from the same budget, and a base-price home on a premium lot often holds value better than an upgraded home on a standard one.",
     "Amenity-rich communities fund their amenities through the HOA, and a lagoon is not a cheap thing to maintain. Before contracting, get the current dues, what they cover, and any access or guest policies in writing — then budget design-center spending after those numbers, not before."
    ]
+  },
+  "seo": {
+   "title": "Anacapri in Anna, TX — Lagoon Homes From the $360s",
+   "description": "Anacapri brings Anna a lagoon of its own — new homes from the $360s on the fast-growing US-75 corridor, priced under the metro's headline plans."
   }
  },
  "anna/sherley-farms": {
@@ -477,9 +489,9 @@
   "tagline": "Where the HOA runs a farmstand and means it",
   "intro": [
    "Harvest took the farm theme seriously. This master-planned community on Argyle's western edge — spilling across the line into Northlake — is built around a working community garden and a farmstand that sells what the neighborhood grows. It's one of North Texas's better-known master plans, and it earned that by giving people something to do together: seasonal events, garden plots, and a calendar that revolves around the dirt as much as the pool.",
-   "Day to day, it reads as friendly and busy. Kids ride bikes to the trails, someone's always at the garden beds, and the drive to work is manageable — about 28 minutes to DFW Airport and about 34 to downtown Fort Worth. With the community now in its final phase, the streets feel settled rather than half-built, which is a rare mood for new construction in this part of DFW."
+   "Day to day, it reads as friendly and busy. Kids ride bikes to the trails, someone's always at the garden beds, and the drive to work is manageable — about 28 minutes to DFW Airport and about 34 to downtown Fort Worth. With the community now in its last sections, the streets feel settled rather than half-built, which is a rare mood for new construction in this part of DFW."
   ],
-  "homes": "Housing in Harvest runs the master-plan range: tidy cottage-scale plans up through roomier two-story family homes, most wearing some version of the modern-farmhouse look — board-and-batten, deep porches, black-framed windows. Lots are suburban-scaled, designed for porch-sitting more than pasture-keeping, which sets Harvest apart from Argyle's acreage tradition. New construction is still available in the final phase from the $450s, alongside young resales throughout earlier sections. It suits buyers who want new-build convenience and a genuinely social street — and who'd rather join a garden than maintain an acre of one.",
+  "homes": "Housing in Harvest runs the master-plan range: tidy cottage-scale plans up through roomier two-story family homes, most wearing some version of the modern-farmhouse look — board-and-batten, deep porches, black-framed windows. Lots are suburban-scaled, designed for porch-sitting more than pasture-keeping, which sets Harvest apart from Argyle's acreage tradition. New construction is still available in the closing sections from the $450s — verify phase status with the builders, alongside young resales throughout earlier sections. It suits buyers who want new-build convenience and a genuinely social street — and who'd rather join a garden than maintain an acre of one.",
   "highlights": [
    {
     "title": "Community farmstand",
@@ -505,7 +517,7 @@
    },
    {
     "q": "Are there new construction homes in Harvest?",
-    "a": "Yes, though the window is closing. Harvest is in its final phase, with new homes offered from the $450s across the remaining sections. That means less lot selection than earlier phases but fully built-out amenities from day one. Buyers who miss the last new releases will still find young resales throughout the community, many only a few years lived-in."
+    "a": "Yes, though the window is closing. Harvest is selling its last sections, with new homes offered from the $450s — verify what remains with the builders. That means less lot selection than earlier phases but fully built-out amenities from day one. Buyers who miss the last new releases will still find young resales throughout the community, many only a few years lived-in."
    },
    {
     "q": "Is Harvest in Argyle or Northlake?",
@@ -518,6 +530,14 @@
    {
     "q": "What amenities does Harvest have?",
     "a": "The headliners are the community garden and the farmstand, where neighborhood-grown produce actually gets sold — the farm branding isn't just a sales-office mural. Around that core you'll find walking trails, gathering spaces, and a steady calendar of seasonal events. It's the kind of amenity set built for regular use rather than the occasional pool day, which shapes who the community attracts."
+   },
+   {
+    "q": "How much longer will Harvest have new homes?",
+    "a": "Harvest is winding down its last sections, so remaining new-construction picks are the closeout kind — fewer lots, but builders tend to negotiate at this stage. Verify current phase status with the sales offices."
+   },
+   {
+    "q": "What should I compare Harvest against?",
+    "a": "Pecan Square in Northlake is the natural cross-shop — same 35W corridor, similar front-porch programming, still mid-plan. The Argyle guide on this site covers the town's acreage side if the farm theme is the draw."
    }
   ],
   "newBuild": {
@@ -533,6 +553,10 @@
     "Advertised base prices rarely match final contracts. Budget real margin for the design center, spend it on structural choices — extra windows, extended patios, gas lines — and save purely cosmetic upgrades for later, when you can shop them competitively.",
     "Amenity-rich master plans carry HOA dues to match, and Harvest's programming is part of what you're paying for. Request the full fee schedule and covenant documents up front so the monthly math is settled before you write an offer."
    ]
+  },
+  "seo": {
+   "title": "Harvest in Argyle, TX — Farm-Themed New Homes, Closing Out",
+   "description": "Harvest is Argyle's farm-themed plan in its closing stretch — community garden, farmstand, and the last new-home releases from the $450s."
   }
  },
  "argyle/old-town-argyle": {
@@ -733,7 +757,7 @@
    },
    {
     "title": "River Legacy links",
-    "note": "Trail connections feed into the wooded greenbelt corridor next door."
+    "note": "Trail connections link straight into the wooded greenbelt corridor next door."
    },
    {
     "title": "Now-selling phases",
@@ -760,6 +784,14 @@
    {
     "q": "What amenities does Viridian have?",
     "a": "Water is the headline: community lakes thread through the neighborhood, and the sailing center puts residents on them with small craft and lessons. Trails loop the shorelines and connect toward River Legacy's wooded corridor, and parks and greens are scattered through the phases. It's an amenity set built around being outside rather than around a single clubhouse."
+   },
+   {
+    "q": "How competitive is Viridian right now?",
+    "a": "Viridian's central-metro position keeps a steady buyer stream — the live MLS-matched count on this page tracks what's actually available. Entry runs from the $420s. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Viridian against?",
+    "a": "Walsh on Fort Worth's west side is the other big master plan flanking Tarrant County — more acreage-scaled, higher band. The Arlington guide on this site maps the established neighborhoods if new construction isn't a must."
    }
   ],
   "newBuild": {
@@ -775,6 +807,10 @@
     "Water-facing and greenbelt-backing lots typically carry premiums and release in waves. If a view matters to you, get on the lot-release list early and ask which phases still hold inventory instead of settling for what's on today's map.",
     "Treat the design center like a second negotiation: set a firm upgrade budget before your appointment, and price big structural options — an extra bedroom, an extended patio — at contract, since those cost far less to build in than to add later."
    ]
+  },
+  "seo": {
+   "title": "Viridian — Arlington's Lake-District New Homes From $420s",
+   "description": "Viridian threads lakes, sails, and trails through north Arlington — an eight-builder master plan from the $420s in the middle of the metroplex."
   }
  },
  "aubrey/old-town-aubrey": {
@@ -866,6 +902,14 @@
    {
     "q": "What amenities does Sandbrock Ranch have?",
     "a": "The headliners are the resort-style pool, the fishing lakes threaded through the community, and the on-site elementary. Around those, the plan leans on open water, green space, and walkable streets rather than a long menu of clubs — a design that fits Aubrey's ranch-country setting better than something glassier would."
+   },
+   {
+    "q": "How competitive is Sandbrock Ranch right now?",
+    "a": "Inventory here runs deeper than most Aubrey communities — the live MLS-matched count on this page updates as listings move. Entry sits in the $400s band. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Sandbrock Ranch against?",
+    "a": "Cross-shop Union Park in Little Elm for the same corridor a step closer in, and Windsong Ranch in Prosper if the budget stretches. The full Aubrey guide on this site maps the rest of the town, including Old Town Aubrey for resale character."
    }
   ],
   "newBuild": {
@@ -881,6 +925,10 @@
     "Water-adjacent and greenbelt lots typically carry premiums, and they sell first in each release. Decide early whether the view is worth it to you; an interior homesite with good backyard orientation often delivers more usable value than a premium lot with afternoon sun.",
     "Budget the design center before you sign, not after. Structural options usually lock at contract while finishes come later, and upgrade spending climbs fast. Amenity-rich communities fund pools and lakes through HOA dues, so fold those into your monthly number from day one."
    ]
+  },
+  "seo": {
+   "title": "Sandbrock Ranch — Aubrey New Homes From the $400s",
+   "description": "Sandbrock Ranch pairs Aubrey prairie land with a seven-builder bench from the $400s — farmhouse amenity core, big skies, and DNT access down the road."
   }
  },
  "aubrey/silverado": {
@@ -2005,7 +2053,7 @@
    "Light Farms is the community that taught Celina what a master plan could be. The whole place is stitched together by trails — you can walk from most front doors to a pool, a playground, or the on-site elementary without ever crossing a major road. Mornings here look like bikes with backpacks; evenings look like neighbors drifting toward whichever amenity is hosting something that week. It reads less like a subdivision and more like a small town that happened to be built all at once.",
    "The practical case is just as strong. Light Farms sits on the west side of Celina with a straight shot south toward the Dallas North Tollway extension, which keeps Legacy West in Plano at about 26 minutes and downtown Dallas at about 47. That puts real North Texas job centers in reach while the daily radius — school, pool, trail, dinner — stays inside the neighborhood. For a lot of families, that math is the whole decision."
   ],
-  "homes": "Housing in Light Farms runs the full master-plan spectrum: tidy cottage-scale homes near the amenity cores, mid-size family plans along the greenbelts, and larger footprints on the roomier lots at the edges. Architecture leans modern Texas farmhouse — deep porches, board-and-batten, brick and stone in easy-going mixes — with streetscapes that were clearly planned to be walked, not just driven. With the community in its final phase, buyers in Celina get a rare combination: new-construction finish-out inside a neighborhood that already feels grown in. It suits families who want amenities working from day one.",
+  "homes": "Housing in Light Farms runs the full master-plan spectrum: tidy cottage-scale homes near the amenity cores, mid-size family plans along the greenbelts, and larger footprints on the roomier lots at the edges. Architecture leans modern Texas farmhouse — deep porches, board-and-batten, brick and stone in easy-going mixes — with streetscapes that were clearly planned to be walked, not just driven. With the community nearly built out, buyers in Celina get a rare combination: new-construction finish-out inside a neighborhood that already feels grown in. It suits families who want amenities working from day one.",
   "highlights": [
    {
     "title": "Trail-First Layout",
@@ -2031,7 +2079,7 @@
    },
    {
     "q": "Are there new construction homes in Light Farms?",
-    "a": "Yes, though the window is closing. Light Farms is in its final phase, with new homes offered from the $500s across several builders. Final-phase buying has a real upside: you get brand-new construction while the pools, trails, and school are already open and proven. Inventory in a closing phase moves in bursts, so check current availability early."
+    "a": "Yes, though the window is closing. Light Farms is selling its last sections, with new homes offered from the $500s across several builders — verify what remains with the sales offices. Late-stage buying has a real upside: you get brand-new construction while the pools, trails, and school are already open and proven. Inventory in a closing phase moves in bursts, so check current availability early."
    },
    {
     "q": "What school district serves Light Farms?",
@@ -2043,7 +2091,15 @@
    },
    {
     "q": "What amenities does Light Farms have?",
-    "a": "The headline trio is pools, trails, and the on-site elementary, but it is the connective tissue that sells people: greenbelts threading between sections, parks placed so kids can reach them independently, and an amenity culture with regular community programming. Because Light Farms is in its final phase, everything is built and operating — what you tour is what you get."
+    "a": "The headline trio is pools, trails, and the on-site elementary, but it is the connective tissue that sells people: greenbelts threading between sections, parks placed so kids can reach them independently, and an amenity culture with regular community programming. Because Light Farms is nearly built out, everything is built and operating — what you tour is what you get."
+   },
+   {
+    "q": "Is Light Farms almost sold out?",
+    "a": "Light Farms is down to its last sections — new-construction choice narrows from here, and the community transitions toward resale. Verify remaining releases with the sales offices."
+   },
+   {
+    "q": "What should I compare Light Farms against?",
+    "a": "Mustang Lakes and Mosaic, both in Celina, are the same-town alternatives still mid-plan. The Celina guide on this site puts all three side by side with the town's resale streets."
    }
   ],
   "newBuild": {
@@ -2059,6 +2115,10 @@
     "Budget honestly for the design center before you fall in love with a base price. Structural options and finish upgrades routinely add a meaningful layer on top, and final-phase spec homes can be a shortcut if the builder already made sensible selections.",
     "Read the HOA documents before contract, not after. Amenity-rich master plans carry real assessments to fund pools, trails, and programming, and mature communities have an operating track record you can actually review — ask for recent budgets and any planned changes."
    ]
+  },
+  "seo": {
+   "title": "Light Farms, Celina — Trail-Side Homes and New Releases",
+   "description": "Light Farms is closing out in Celina — trail-laced streets, a proven amenity slate, and its last new-home releases from the $500s."
   }
  },
  "celina/mosaic": {
@@ -2620,8 +2680,20 @@
    {
     "q": "Are there new construction homes in Bishop Arts?",
     "a": "Not in the master-planned sense — this is an established neighborhood. New construction here mostly means townhomes and small infill projects near the district, plus custom rebuilds scattered through the bungalow blocks. Buyers wanting brand-new should watch infill listings closely; they move fast in walkable pockets like this one."
+   },
+   {
+    "q": "Is Bishop Arts competitive for buyers?",
+    "a": "Yes — walkable Dallas neighborhoods with this much character are scarce, and renovated bungalows draw multiple offers in most seasons. Patience and a pre-approval letter matter more here than almost anywhere in Oak Cliff."
+   },
+   {
+    "q": "What should I compare Bishop Arts against?",
+    "a": "Lakewood offers the other flavor of storied Dallas — lake trails instead of retail strips. The Dallas guide on this site maps both alongside Preston Hollow and the rest of the city's marquee neighborhoods."
    }
-  ]
+  ],
+  "seo": {
+   "title": "Bishop Arts District, Dallas — Homes in Oak Cliff's Core",
+   "description": "Bishop Arts is Oak Cliff's walkable heart — bungalows and townhomes around Dallas's indie retail strip, minutes over the bridge from downtown."
+  }
  },
  "dallas/lakewood": {
   "tagline": "Storybook Tudors, lake mornings, and a canopy of old oaks",
@@ -2668,8 +2740,20 @@
    {
     "q": "What is there to do near Lakewood?",
     "a": "White Rock Lake is the anchor — trails, sailing, birding, the spillway. The Dallas Arboretum sits on the lake's southeast shore, and the Lakewood shopping district covers dinner, coffee, and a movie. Lower Greenville and East Dallas's restaurant rows are minutes away when you want a bigger night out."
+   },
+   {
+    "q": "Is Lakewood competitive for buyers?",
+    "a": "Consistently — Lakewood households tend to stay, so listings are scarce relative to demand and well-priced homes near the lake move quickly. Watch for estate sales and original-condition listings if you want a renovation entry point."
+   },
+   {
+    "q": "What should I compare Lakewood against?",
+    "a": "Preston Hollow for lot size and quiet money; Bishop Arts for walkability over lake access. The Dallas guide on this site puts the three side by side with the rest of the city."
    }
-  ]
+  ],
+  "seo": {
+   "title": "Lakewood, Dallas TX — Homes Near White Rock Lake",
+   "description": "Lakewood runs from White Rock Lake to Lakewood Shopping Center — storied Dallas architecture, lake trails, and a fiercely loyal resale market."
+  }
  },
  "dallas/m-streets": {
   "tagline": "Steep gables, shady blocks, Greenville Avenue at the corner",
@@ -2891,7 +2975,7 @@
    },
    {
     "q": "What school district serves Sunset Ridge?",
-    "a": "Sunset Ridge is served by Decatur ISD, the hometown district for the west side and the rest of town. Campus assignments can vary by attendance zone, so verify the specific schools for your lot with the district before contract. Living and schooling in the same small town is a big part of the neighborhood's appeal."
+    "a": "Sunset Ridge is served by Decatur ISD, the hometown district for the west side and the rest of town. Campus assignments vary by address, so verify the specific schools for your lot with the district before contract. Living and schooling in the same small town is a big part of the neighborhood's appeal."
    },
    {
     "q": "How far is Sunset Ridge from Fort Worth or DFW Airport?",
@@ -2900,6 +2984,14 @@
    {
     "q": "What amenities does Sunset Ridge have?",
     "a": "Sunset Ridge is a young community, so the headline features are the practical ones: new homes from three builders, model homes open for touring, fresh streets and sidewalks, and a location about a mile from Decatur's courthouse square. The town itself is the amenity package — coffee, boots, biscuits, and Friday night football, all a short drive from your driveway."
+   },
+   {
+    "q": "How competitive is Sunset Ridge right now?",
+    "a": "Decatur's new-construction market is small and steady rather than frenzied — Sunset Ridge's $340s band faces little local competition. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Sunset Ridge against?",
+    "a": "Shale Creek in Rhome is the nearest new-build alternative down 287. If land is the real goal, the Greenwood corridor north of Decatur — covered in the Decatur guide on this site — is where the acreage starts."
    }
   ],
   "newBuild": {
@@ -2916,6 +3008,10 @@
     "Budget the design center before you visit it. Upgrades on flooring, cabinets, and electrical add up fast, and corner or oversized lots typically carry premiums. Decide your ceiling in advance and get the final feature list in writing.",
     "Even with a builder warranty, pay for independent inspections at pre-drywall and before closing — new homes have punch lists too. Read the community's covenants and any HOA documents early, so fence styles and RV-parking rules don't surprise you later."
    ]
+  },
+  "seo": {
+   "title": "Sunset Ridge — New Construction in Decatur From the $340s",
+   "description": "Sunset Ridge puts models-open new homes on Decatur's edge from the $340s — small-town square living with US-287 running the Fort Worth commute."
   }
  },
  "decatur/the-square-district": {
@@ -3874,7 +3970,7 @@
    },
    {
     "title": "Forney ISD",
-    "note": "Neighborhood kids feed into Forney ISD, with campuses growing alongside the city."
+    "note": "Schools run through Forney ISD, with campuses growing alongside the city — verify by address."
    },
    {
     "title": "New-build momentum",
@@ -3892,7 +3988,7 @@
    },
    {
     "q": "What school district serves Gateway Parks?",
-    "a": "Gateway Parks is served by Forney ISD, the district covering this stretch of Kaufman County. School assignments can shift as fast-growing districts open new campuses, so verify the current attendance zone for any specific address with the district before you write a contract — a standard step for any new community in a growth corridor."
+    "a": "Gateway Parks is served by Forney ISD, the district covering this stretch of Kaufman County. School assignments can shift as fast-growing districts open new campuses, so verify the current school assignment for any specific address with the district before you write a contract — a standard step for any new community in a growth corridor."
    },
    {
     "q": "How far is Gateway Parks from downtown Dallas or Fort Worth?",
@@ -3901,6 +3997,14 @@
    {
     "q": "What amenities does Gateway Parks have?",
     "a": "The community was designed amenity-first: pool, playgrounds, trails, and gathering spaces are part of the plan rather than a someday promise. As with any phased master plan, some features open with early sections while others arrive as the community builds out, so ask your builder which amenities are complete today and what the HOA covers."
+   },
+   {
+    "q": "How competitive is Gateway Parks right now?",
+    "a": "Forney's entry band is the busiest slice of the east-side market, and Gateway Parks' $330s pricing sits right in it. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Gateway Parks against?",
+    "a": "Meraki is Forney's design-minded step up; Travis Ranch is the lake-adjacent resale-heavy alternative. The Forney guide on this site lays out the whole US-80 corridor."
    }
   ],
   "newBuild": {
@@ -3916,6 +4020,10 @@
     "Model homes show the upgraded version of everything. Get each builder's standard-feature sheet in writing, separate structural options from cosmetic ones, and set a design-center budget before you fall for the model — cosmetic upgrades can often be done cheaper after closing.",
     "Ask where the community sits in its phase plan. Lot premiums for greenbelt, corner, and cul-de-sac positions vary by release, and sometimes the plain interior lot in the current phase is the best value on the sheet."
    ]
+  },
+  "seo": {
+   "title": "Gateway Parks in Forney — Entry-Band New Homes on US-80",
+   "description": "Gateway Parks opens Forney's entry band — six builders from the $330s, parks threaded through, and US-80 running straight into Dallas."
   }
  },
  "forney/meraki": {
@@ -4252,6 +4360,14 @@
    {
     "q": "What amenities does Ventana have?",
     "a": "The community anchors around its pool and amenity center, with playgrounds, pocket parks, and walking trails taking advantage of the rolling ground. The amenity set is leaner than the region's mega master plans carry (part of how the pricing stays where it is), but it covers the daily essentials: somewhere to swim, play, and walk the dog."
+   },
+   {
+    "q": "How competitive is Ventana right now?",
+    "a": "Ventana's value band keeps it busy — the $390s entry is one of west Fort Worth's lowest new-construction on-ramps, and view lots go first. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Ventana against?",
+    "a": "Walsh is the obvious cross-shop — same west-side direction, bigger amenity budget, higher band. The Fort Worth guide on this site breaks down the in-town neighborhoods if commute beats acreage."
    }
   ],
   "newBuild": {
@@ -4266,6 +4382,10 @@
     "Rolling terrain means lots are not interchangeable. Hilltop and view homesites usually carry premiums, while downslope lots can involve retaining walls or drainage grading — walk the physical lot at different times of day before you commit.",
     "Request the HOA covenant package and current assessment details early, and confirm which amenities are finished versus still planned. In a community that is building out, completion timelines can slide — get the ones that matter documented in your contract."
    ]
+  },
+  "seo": {
+   "title": "Ventana in West Fort Worth — New Homes From the $390s",
+   "description": "Ventana climbs west Fort Worth's rolling edge with new homes from the $390s — view lots, models open, and a leaner price than the mega master plans."
   }
  },
  "fort-worth/walsh": {
@@ -4380,6 +4500,14 @@
    {
     "q": "What amenities does Fields have?",
     "a": "The headline is the PGA of America headquarters and its golf campus next door, which set the tone for the whole community. Within the master plan, expect trails, parks, and gathering spaces rolling out section by section as phases deliver. Ask each builder what's finished versus planned for the section you're shopping."
+   },
+   {
+    "q": "How competitive is Fields right now?",
+    "a": "Fields carries Frisco's deepest builder bench and its most-watched address — well-priced releases move fast. Entry starts in the $700s. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Fields against?",
+    "a": "Windsong Ranch in Prosper and Mustang Lakes in Celina are the two natural cross-shops — both amenity-heavy master plans a band below Fields. The Frisco guide on this site maps the resale neighborhoods around the corridor."
    }
   ],
   "newBuild": {
@@ -4395,6 +4523,10 @@
     "Golf-adjacent, greenbelt, and corner homesites carry lot premiums that aren't always in the advertised base price. Ask for the lot-premium sheet up front, and remember model homes show upgraded everything — get the included-features list in writing before you budget.",
     "Master-planned communities fund amenities through HOA dues, and new ones often layer in additional assessments. Ask exactly what the monthly obligation covers, what's built versus promised, and when planned amenities are scheduled to deliver — then keep those answers with your contract."
    ]
+  },
+  "seo": {
+   "title": "Fields in Frisco, TX — the PGA Corridor From the $700s",
+   "description": "Fields is Frisco's PGA-corridor headliner — a twelve-builder master plan from the $700s wrapping golf, offices, and the city's next growth ring."
   }
  },
  "frisco/newman-village": {
@@ -4810,6 +4942,14 @@
    {
     "q": "What school district serves Heath Golf & Yacht Club?",
     "a": "Rockwall ISD serves the community, and the district is a big part of why families shop Heath in the first place. As with any newer master plan, campus assignments can be adjusted as the area builds out, so verify the current feeding pattern for your specific lot directly with Rockwall ISD before closing."
+   },
+   {
+    "q": "How competitive is Heath Golf & Yacht Club right now?",
+    "a": "This is Heath's marquee address, and golf-and-water lots are finite — the strongest sites move first even when the broader market cools. Entry runs from the $600s. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Heath Golf & Yacht Club against?",
+    "a": "Travis Ranch works the opposite shore of Lake Ray Hubbard at a fraction of the band; nothing else in Heath matches the club setting. The Heath guide on this site covers Buffalo Creek and the town's estate streets."
    }
   ],
   "newBuild": {
@@ -4825,6 +4965,10 @@
     "Lagoon-adjacent, fairway, and lake-view lots typically carry premiums, and the best positions go early in each phase release. Get on builder interest lists ahead of time, and weigh whether a premium lot or a larger design-center budget does more for your long-term resale story.",
     "Budget realistically beyond the advertised base: design-center upgrades, structural options, and lot premiums add up fast, and resort amenities usually mean meaningful HOA dues. Read the HOA documents before you sign a contract and confirm exactly which amenities your dues cover."
    ]
+  },
+  "seo": {
+   "title": "Heath Golf & Yacht Club — Lakeside Golf Homes in Heath, TX",
+   "description": "Heath Golf & Yacht Club pairs fairways with Lake Ray Hubbard water — custom-leaning new homes from the $600s on Heath's country-club shoreline."
   }
  },
  "heath/terry-lane-corridor": {
@@ -5384,8 +5528,20 @@
    {
     "q": "Is Las Colinas walkable?",
     "a": "In stretches, yes — more than almost anywhere else in Irving. The Mandalay Canal walkways, the Lake Carolyn promenade, and the Toyota Music Factory district all connect on foot, and residents of the urban center can handle dinner, concerts, and coffee without driving. Outside that core, Las Colinas becomes a normal drive-first Texas neighborhood, so check the specific address if walkability is the priority."
+   },
+   {
+    "q": "Is Las Colinas competitive for buyers?",
+    "a": "It depends on the product — the condo and townhome market moves differently from the golf-course estates. Position between DFW Airport and downtown Dallas keeps corporate relocation demand steady across both."
+   },
+   {
+    "q": "What should I compare Las Colinas against?",
+    "a": "University Hills is Irving's established single-family alternative; Lakes of Coppell adds top-rated schools one suburb north. The Irving guide on this site covers the rest of the city's neighborhoods."
    }
-  ]
+  ],
+  "seo": {
+   "title": "Las Colinas, Irving TX — Urban-Center Homes & Canal Living",
+   "description": "Las Colinas layers canal walks, urban towers, and golf into Irving's business district — condos to estates between DFW Airport and Dallas."
+  }
  },
  "irving/university-hills": {
   "tagline": "Actual hills, mature trees, and a campus for a neighbor",
@@ -6233,6 +6389,14 @@
    {
     "q": "What amenities does Union Park have?",
     "a": "The community centers on its hilltop amenity village and a large central park, with trails, playgrounds, and open green space threading through the neighborhood. The design pushes daily life outdoors — most residents can walk or bike to the main gathering spots — and the US 380 corridor handles restaurants and retail just beyond the community's edge."
+   },
+   {
+    "q": "How competitive is Union Park right now?",
+    "a": "Union Park trades on position — 380-corridor commuters keep demand steady, and the $420s band undercuts most of what Frisco charges next door. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Union Park against?",
+    "a": "Sandbrock Ranch in Aubrey runs a similar amenity-forward play a few minutes north at a slightly lower band. The Little Elm guide on this site covers the lakefront neighborhoods if resale is on your list too."
    }
   ],
   "newBuild": {
@@ -6248,6 +6412,10 @@
     "Greenbelt, park-facing, and cul-de-sac homesites usually carry lot premiums, and corner lots can cut both ways on yard usability. Decide what you'll actually use — a view, extra backyard, no rear neighbor — and spend your premium there rather than on the flashiest map pin.",
     "The advertised base price rarely matches the model home you toured. Set a design-center budget before your appointment, get the included-features list in writing, and prioritize structural options — extra bedrooms, extended patios — over finishes you can upgrade later."
    ]
+  },
+  "seo": {
+   "title": "Union Park in Little Elm: New Homes, Parks & 380 Access",
+   "description": "Union Park stacks parks, trails, and a six-builder lineup over Little Elm's 380 corridor — new homes from the $420s with Frisco a short hop east."
   }
  },
  "little-elm/valencia-on-the-lake": {
@@ -6671,6 +6839,14 @@
    {
     "q": "What amenities does Trinity Falls have?",
     "a": "The trail network is the headline — paths run along the Trinity River greenbelt and connect the neighborhoods — with pocket parks and playgrounds scattered so most homes have green space within a short walk. Community life leans outdoors: morning runs, evening bike loops, weekend park meetups. It's an amenity set built around daily use rather than a single showpiece."
+   },
+   {
+    "q": "How competitive is Trinity Falls right now?",
+    "a": "Trinity Falls runs deep on inventory for north McKinney — the live MLS-matched count on this page tracks it. The $450s band sits well under central McKinney's new-build pricing. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Trinity Falls against?",
+    "a": "Anacapri and Churchill up the US-75 corridor in Anna offer lower bands on the same commute line. The McKinney guide on this site covers Historic Downtown and the city's established east side."
    }
   ],
   "newBuild": {
@@ -6685,6 +6861,10 @@
     "Greenbelt and trail-backing lots carry premiums, and they go first in every phase release. Decide early whether the view is worth it to you; if it is, get on release lists rather than waiting for standing inventory to appear.",
     "Budget honestly for the design center — base pricing rarely reflects the home you actually want. Set a firm upgrade cap before your appointment, and remember structural options lock in pre-drywall while some finishes can be added later for less."
    ]
+  },
+  "seo": {
+   "title": "Trinity Falls — McKinney New Homes Along the Trinity",
+   "description": "Trinity Falls stretches along the Trinity's east fork north of McKinney — eight builders from the $450s with trail miles instead of tollway noise."
   }
  },
  "melissa/liberty": {
@@ -7009,6 +7189,14 @@
    {
     "q": "What amenities does MidTowne have?",
     "a": "MidTowne's amenities are baked into the design rather than fenced behind a gate: a walkable grid of sidewalks, porch-forward streetscapes, and the neighborhood green space that new-urbanist planning builds in between blocks. The bigger amenity may be location: Heritage High close at hand and Midlothian's downtown a short drive. Confirm the current amenity list with the sales offices, since features can grow as phases open."
+   },
+   {
+    "q": "How competitive is MidTowne right now?",
+    "a": "Walkable new construction is scarce in Ellis County, so MidTowne draws from beyond Midlothian — the $400s band stays busy. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare MidTowne against?",
+    "a": "Ventana in southwest Fort Worth is the closest cross-shop for buyers working the metro's southwest quarter. The Midlothian guide on this site covers the acre-lot side of town that MidTowne deliberately isn't."
    }
   ],
   "newBuild": {
@@ -7025,6 +7213,10 @@
     "Design-center spending routinely adds a meaningful chunk on top of a base price. Set your upgrade budget before the appointment, prioritize what's hard to retrofit — electrical runs, plumbing rough-ins, structural options — and leave cosmetic finishes for later.",
     "New-urbanist neighborhoods typically run active HOAs to protect the streetscape that drew you in. Read the covenants on porches, fencing, and street parking before you sign a contract, and fold the assessment into your monthly budget alongside taxes and insurance."
    ]
+  },
+  "seo": {
+   "title": "MidTowne — Midlothian's Walkable New-Build Blocks",
+   "description": "MidTowne trades Midlothian's acre lots for connected sidewalks — five builders from the $400s within walking blocks of Heritage High."
   }
  },
  "midlothian/old-town-midlothian": {
@@ -8307,6 +8499,14 @@
    {
     "q": "How far is Windsong Ranch from downtown Dallas or Fort Worth?",
     "a": "Downtown Dallas runs about 40 minutes and downtown Fort Worth about 56, so Dallas-side commutes are the more comfortable bet. Closer in, Legacy West in Plano is about 18 minutes and DFW Airport about 34 — the two numbers that matter most for the corporate-corridor crowd. Prosper's west side positions Windsong Ranch well for the Tollway, which does most of the heavy lifting on all four routes."
+   },
+   {
+    "q": "How competitive is Windsong Ranch right now?",
+    "a": "The lagoon keeps Windsong Ranch on nearly every Prosper shortlist, so sharp releases draw quick attention. Entry runs from the $600s. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Windsong Ranch against?",
+    "a": "Fields in Frisco is the up-band cross-shop on the PGA corridor; Light Farms in Celina is the trail-first alternative now closing out. The Prosper guide on this site rounds out the town's other streets."
    }
   ],
   "newBuild": {
@@ -8322,6 +8522,10 @@
     "Lot premiums climb fastest on greenbelt, water-adjacent, and cul-de-sac positions. Decide early whether the view matters more to you at resale than an interior lot plus a bigger design-center budget — builders will happily let you spend either way.",
     "Amenity-rich communities fund those amenities through the HOA, so read the fee structure and rules before you fall for a floor plan. Then set a firm design-center ceiling — allowances vanish quickly once flooring and kitchen selections start stacking."
    ]
+  },
+  "seo": {
+   "title": "Windsong Ranch in Prosper — Lagoon Living From the $600s",
+   "description": "Windsong Ranch anchors Prosper with its crystal lagoon — nine builders from the $600s, connected trails, and Prosper ISD serving the community."
   }
  },
  "rhome/114-corridor": {
@@ -8492,7 +8696,7 @@
    },
    {
     "q": "What school district serves Shale Creek?",
-    "a": "Shale Creek is zoned to Northwest ISD, the district serving Rhome and much of the fast-growing 287 corridor. For many buyers the zoning is the headline: it puts a sought-after North Texas district within reach at entry-level new-build pricing. Confirm specific campus assignments with the district, since attendance boundaries can shift as new neighborhoods come online."
+    "a": "Shale Creek is served by Northwest ISD, the district covering Rhome and much of the fast-growing 287 corridor. For many buyers the district is the headline: it puts a sought-after North Texas district within reach at entry-level new-build pricing. Confirm specific campus assignments with the district, since attendance boundaries can shift as new neighborhoods come online."
    },
    {
     "q": "Is Shale Creek a good place to live?",
@@ -8505,11 +8709,19 @@
    {
     "q": "What amenities does Shale Creek have?",
     "a": "Shale Creek's draw is more practical than resort-style: new streets, builder variety, Northwest ISD zoning, and a location where US 287 meets TX 114. Individual sections and builders vary in what they include, so ask each sales office what community features are open now versus planned for later phases — and get timelines in writing where you can."
+   },
+   {
+    "q": "How competitive is Shale Creek right now?",
+    "a": "Rhome is early in its growth curve, so Shale Creek rarely sees the bidding pressure of the inner suburbs — the $330s band buys more house out here. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Shale Creek against?",
+    "a": "Sunset Ridge in Decatur sits one town up the 287 corridor at a similar band with a courthouse square nearby. The Rhome guide on this site covers the town's acreage stretches too."
    }
   ],
   "newBuild": {
    "amenities": [
-    "Zoned to Northwest ISD schools",
+    "Served by Northwest ISD — verify assignments by address",
     "Quick ramps to both US 287 and TX 114",
     "Multiple builder lineups to compare",
     "Entry-level through move-up floor plans",
@@ -8521,6 +8733,10 @@
     "Base pricing from the $330s rarely survives the design center intact. Set a firm upgrade budget beforehand, put money into things that are hard to change later — layout, windows, ceiling height — and save paint and hardware for weekend projects.",
     "Early phases usually mean better lot selection but more construction noise; later phases cost more and settle faster. Ask about HOA dues and what they cover before contract, and factor rural-edge utilities into your closing questions."
    ]
+  },
+  "seo": {
+   "title": "Shale Creek in Rhome, TX — New Homes From the $330s",
+   "description": "Shale Creek brings new construction to Rhome from the $330s — Wise County land prices with the 114/287 corridors carrying the commute."
   }
  },
  "roanoke/briarwyck": {
@@ -8988,6 +9204,14 @@
    {
     "q": "What amenities does Harmony Hill have?",
     "a": "The honest answer for any community this new: the amenity picture is still taking shape, so ask each builder what's planned versus what's already built. The headline amenity today is location — the PGBT about a minute away, Rowlett's lake life a short drive off, and brand-new streets and sidewalks throughout."
+   },
+   {
+    "q": "How competitive is Harmony Hill right now?",
+    "a": "Close-in new construction is scarce on the east side, which keeps Harmony Hill's four-builder lineup busier than its size suggests. Entry runs from the $430s. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare Harmony Hill against?",
+    "a": "Travis Ranch in Forney works the other shore of Lake Ray Hubbard at a lower band; Solterra in Mesquite is the master-plan-scale alternative. The Rowlett guide on this site covers the lakefront resale streets."
    }
   ],
   "newBuild": {
@@ -9003,6 +9227,10 @@
     "Design-center visits are where budgets quietly grow. Decide your must-have upgrades before you walk in: flooring, kitchen, and anything structural are worth doing at build time, while lighting and hardware are easy to swap later for less.",
     "Corner lots, greenbelt backing, and cul-de-sac positions typically carry premiums, and each builder prices them differently — ask. Read the HOA documents before contract, too; new communities often start under builder-controlled boards with rules that firm up as streets fill in."
    ]
+  },
+  "seo": {
+   "title": "Harmony Hill — Rowlett New Construction From the $430s",
+   "description": "Harmony Hill fits new construction inside Rowlett's lake-adjacent grid — four builders from the $430s minutes from Lake Ray Hubbard."
   }
  },
  "rowlett/lake-country-estates": {
@@ -9226,6 +9454,14 @@
    {
     "q": "What amenities does The Station have?",
     "a": "The district is built around the town-center idea: walkable streets, planned shops and dining, and gathering space designed to function as Sachse's downtown. Amenities will keep arriving as commercial phases open, which is typical for a mixed-use community this new. Ask the sales staff what's committed versus conceptual, and enjoy the fact that everything's a short walk either way."
+   },
+   {
+    "q": "How competitive is The Station right now?",
+    "a": "Townhome product this close to the George Bush Turnpike is rare, and The Station is Sachse's only walkable district — early phases set the tone. Pricing and releases change quickly — verify current availability with the sales offices."
+   },
+   {
+    "q": "What should I compare The Station against?",
+    "a": "Harmony Hill in Rowlett is the nearest single-family alternative at a similar band. The Sachse guide on this site covers the established neighborhoods if a yard outranks walkability."
    }
   ],
   "newBuild": {
@@ -9241,6 +9477,10 @@
     "Design-center visits are where budgets swell. Set an upgrade ceiling before your appointment, put the money into things that are hard to change later — cabinets, countertops, electrical runs — and leave paint and hardware for future weekends.",
     "Townhome HOAs typically handle exterior and common-area upkeep, which is the point of low-maintenance living — but read the documents anyway. Know exactly what dues cover, how insurance responsibilities split, and what rules govern parking before you sign."
    ]
+  },
+  "seo": {
+   "title": "The Station in Sachse — Town-Center Townhomes From $400s",
+   "description": "The Station builds Sachse the downtown it never grew — walkable town-center townhomes from the $400s along the George Bush Turnpike."
   }
  },
  "sachse/woodbridge": {
