@@ -1,27 +1,46 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { verifyUnsubscribeToken } from "@/lib/email/unsubscribe";
+import { verifyLetterToken } from "@/lib/email/letter";
 import { SITE_URL } from "@/lib/site";
 
-/* One-click unsubscribe for saved-search digests.
+/* One-click unsubscribe for saved-search digests AND The Letter (TL-1).
    GET  — the human click from the email footer → tiny branded page.
    POST — RFC 8058 one-click (List-Unsubscribe-Post) from mail clients.
-   Both verify the HMAC token and flip that one search's email_enabled
-   off; the search itself stays saved. No session required — the token
-   IS the authorization. */
+   Both verify the HMAC token; the two token kinds are scope-separated by
+   construction (digest tokens sign the bare searchId, letter tokens sign
+   `letter-unsub:${id}`), so each is tried in turn and a token can only
+   ever operate on its own table. No session required — the token IS the
+   authorization. */
 
-async function unsubscribe(token: string | null): Promise<boolean> {
-  if (!token) return false;
-  const searchId = verifyUnsubscribeToken(token);
-  if (!searchId) return false;
+type UnsubResult = { ok: boolean; kind: "digest" | "letter" | null };
+
+async function unsubscribe(token: string | null): Promise<UnsubResult> {
+  if (!token) return { ok: false, kind: null };
   const admin = getSupabaseAdmin();
-  if (!admin) return false;
-  const { data, error } = await admin
-    .from("saved_searches")
-    .update({ email_enabled: false, updated_at: new Date().toISOString() })
-    .eq("id", searchId)
-    .select("id");
-  return !error && !!data?.length;
+  if (!admin) return { ok: false, kind: null };
+
+  const searchId = verifyUnsubscribeToken(token);
+  if (searchId) {
+    const { data, error } = await admin
+      .from("saved_searches")
+      .update({ email_enabled: false, updated_at: new Date().toISOString() })
+      .eq("id", searchId)
+      .select("id");
+    if (!error && data?.length) return { ok: true, kind: "digest" };
+  }
+
+  const subscriberId = verifyLetterToken("letter-unsub", token);
+  if (subscriberId) {
+    const { data, error } = await admin
+      .from("letter_subscribers")
+      .update({ status: "unsubscribed", unsubscribed_at: new Date().toISOString() })
+      .eq("id", subscriberId)
+      .select("id");
+    if (!error && data?.length) return { ok: true, kind: "letter" };
+  }
+
+  return { ok: false, kind: null };
 }
 
 const page = (headline: string, body: string) => `<!doctype html>
@@ -38,18 +57,22 @@ const page = (headline: string, body: string) => `<!doctype html>
 
 export async function GET(req: Request) {
   const token = new URL(req.url).searchParams.get("token");
-  const ok = await unsubscribe(token);
-  return new NextResponse(
-    ok
-      ? page("Quiet, as requested.", "That standing order stays saved — it just won't email you. Flip it back on any time from your shelf.")
-      : page("That link didn't take.", "It may be malformed or for a search that no longer exists. You can manage every standing order from your shelf."),
-    { status: ok ? 200 : 400, headers: { "Content-Type": "text/html; charset=utf-8" } }
-  );
+  const res = await unsubscribe(token);
+  const body =
+    res.kind === "letter"
+      ? page("You're off the list.", "The Letter won't email you again. If you change your mind, the signup form on the homepage restarts the whole thing — confirmation and all.")
+      : res.ok
+        ? page("Quiet, as requested.", "That standing order stays saved — it just won't email you. Flip it back on any time from your shelf.")
+        : page("That link didn't take.", "It may be malformed or for a subscription that no longer exists. You can manage saved-search emails from your shelf, or re-do a Letter signup from the homepage.");
+  return new NextResponse(body, {
+    status: res.ok ? 200 : 400,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
 }
 
 /* RFC 8058 one-click — mail clients POST here without loading a page. */
 export async function POST(req: Request) {
   const token = new URL(req.url).searchParams.get("token");
-  const ok = await unsubscribe(token);
-  return NextResponse.json({ ok }, { status: ok ? 200 : 400 });
+  const res = await unsubscribe(token);
+  return NextResponse.json({ ok: res.ok }, { status: res.ok ? 200 : 400 });
 }

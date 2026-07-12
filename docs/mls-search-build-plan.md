@@ -34,7 +34,8 @@ Design source of truth: the Claude Design bundle (`Search Screens.dc.html`,
 | 24 | **Instant search shell + mobile map + big gallery + live copy** — /homes streams (toolbar+map paint immediately, rail suspends; `unstable_cache` on rail/counts for cold lambdas), mobile MAP/LIST toggle (Leaflet survives display:none via ResizeObserver + deferred fit), pins always follow the viewport (bbox-follow mode), Zillow-class 5-photo dossier collage @1240px, placeholder copy retired behind `isLiveMls` sitewide | ✅ |
 | 25 | **Mobile polish + accessibility** — WCAG contrast sweep (ink-alpha .45/.5/.55→.62, small-orange text → #C13E17), shared `useDialogA11y` (Escape/focus-trap/restore/scroll-lock) on all 5 overlays, form labels + role=alert errors + aria-pressed chips, 40px tap targets, mobile popover sheets, toggle clearance for TREC links, loading/empty skeletons on dashboards + city-homes route; **fixed: saved-homes fed mock data on the live feed** (new `/api/shelf-listings`) | ✅ |
 | 26 | **90-city expansion + backfill hardening** — merged the map-labels branch (53→90 cities incl. Carrollton, Waxahachie, Garland, Richardson…; 562 static pages), full backfill to 42,220 active metro listings + 90 city snapshots; sync `?full=1` gained a resumable `?cursor=` (+ `cursorResumed` echo) and `?pagesize=`; every Trestle call race-bounded (8s); Supabase compute NANO→SMALL after the walk saturated the instance | ✅ |
-| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), The Letter, CRM webhook, compare view, instant-tier search alerts, optional Google-basemap swap (needs user's Maps API key + billing) | ⬜ |
+| TL-1 | **The Letter: real subscriptions + double opt-in** — `letter_subscribers` (migration `0014`), subscribe/confirm routes, letter-scope unsubscribe tokens in the shared endpoint, confirmation + welcome templates (`letter@` sender, CAN-SPAM postal footer), homepage form wired for real | ⏳ implementation in PR — merge, 0014 application, and the FIRST supervised production send (user's email, separately approved) are each separate gates |
+| Next | ⚠ Compliance copy sign-off (broker + NTREIS/Cotality), TL-2 (the weekly Sunday send pipeline), CRM webhook, compare view, instant-tier search alerts, optional Google-basemap swap (needs user's Maps API key + billing) | ⬜ |
 
 ### Phase 3 notes
 
@@ -958,6 +959,40 @@ access stays server-side.
 | CB-2 | Draft exporter: `ready` drafts → surgical `lib/dfw.data.json` insertion on a reviewed branch (`--diff`/`--apply`/`--mark-live`/`--unexport`) | ✅ complete — merged 016ea72; full pipeline proven end-to-end 2026-07-11 (sanger/test round-trip incl. revert) |
 | CB-3a | SEO Community Editor: CONTENT desk (`?view=content`) + `community_content_drafts` (migration `0013`) + exporter `--content` mode → `lib/hood-content.json`; fallback-safe `generateMetadata` seo override | ⏳ implementation in PR — merge, 0013 application, and the FIRST supervised content edit/export are each separate gates |
 | CB-3b/3c | internal-links block rendering + nb-hero photo decision; Claude-assisted drafting (needs separate approval) | ⬜ |
+
+### TL-1 notes — The Letter subscriptions (double opt-in; no weekly send yet)
+
+- **Flow:** homepage form → `POST /api/letter/subscribe` (honeypot + 3s
+  dwell, bots get a fake ok; email normalized lowercased) → `pending` row
+  in `letter_subscribers` + CONFIRMATION email → signed link →
+  `GET /api/letter/confirm` → `subscribed` + WELCOME email. A submit can
+  never subscribe anyone by itself. Re-submits inside 10 minutes don't
+  re-send; an `unsubscribed` address re-enters the pending flow
+  (re-opt-in); `subscribed` re-submits get "already" with no email.
+- **Tokens:** stateless HMAC (CRON_SECRET), SCOPE-PREFIXED
+  (`letter-confirm:` / `letter-unsub:` inside the signature) so letter
+  tokens and digest tokens can never operate on each other's tables.
+  Letter unsubscribe rides the existing `/api/email/unsubscribe`
+  endpoint (GET page + RFC 8058 one-click POST); digest behavior
+  unchanged.
+- **Emails** (`lib/email/letter.ts`): sender `letter@discoverdfw.com`
+  (verified domain — local-part only, no new DNS; `sendEmail` gained an
+  optional `from`). Confirmation = transactional (why-you-got-this
+  footer + postal address). Welcome = first marketing-class send:
+  CAN-SPAM postal footer (2201 Spinks Rd. #248, Flower Mound, TX 75022),
+  visible unsubscribe link, `List-Unsubscribe` +
+  `List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers.
+- **Send gating:** `lib/email/resend.ts` dry-runs outside production
+  (unchanged). The FIRST production send is a separately-approved
+  supervised test to the admin's own address; public production sends
+  only after that gate passes.
+- **Migration `0014`** (apply-gated like 0009–0013): `letter_subscribers`
+  with status check pending/subscribed/unsubscribed, unique email,
+  confirm_sent_at throttle column, RLS no-policies, touch trigger.
+  Until applied: subscribe returns a friendly 503 and nothing sends.
+  Rows are consent records — never deleted (unsubscribe is a status).
+- **Out of scope (future gates):** TL-2 weekly Sunday send pipeline,
+  admin subscriber dashboard, CRM webhook, segmentation, broadcasts.
 
 ### CB-3a notes — SEO Community Editor (content never publishes from the desk)
 
