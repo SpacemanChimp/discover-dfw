@@ -70,12 +70,20 @@ export async function generateMetadata({
   const content = contentFor(c, h);
   const nb = h.newBuild;
 
-  const title = nb
-    ? `${h.name} — New Construction Homes in ${c.name}, TX`
-    : `${h.name} — ${c.name}, TX Neighborhood Guide & Homes`;
-  const description = nb
-    ? `${h.name} is a new-build community in ${c.name}, TX (${county.name} County) — ${nb.status.toLowerCase()}, priced from the ${nb.from} with ${nb.builders} active builders. Amenities, buyer resources, schools & FAQs.`
-    : `${h.name} neighborhood in ${c.name}, TX (${county.name} County): what it's like to live there, homes & real estate character, ${c.isd} schools, commutes, and FAQs.`;
+  /* CB-3a: Content Desk overrides win when present; the formulas below
+     remain the fallback for every page without them (mirrored in
+     lib/content/community-content-drafts.ts for duplicate detection —
+     change them there too). */
+  const title =
+    content.seo?.title ??
+    (nb
+      ? `${h.name} — New Construction Homes in ${c.name}, TX`
+      : `${h.name} — ${c.name}, TX Neighborhood Guide & Homes`);
+  const description =
+    content.seo?.description ??
+    (nb
+      ? `${h.name} is a new-build community in ${c.name}, TX (${county.name} County) — ${nb.status.toLowerCase()}, priced from the ${nb.from} with ${nb.builders} active builders. Amenities, buyer resources, schools & FAQs.`
+      : `${h.name} neighborhood in ${c.name}, TX (${county.name} County): what it's like to live there, homes & real estate character, ${c.isd} schools, commutes, and FAQs.`);
   const canonicalPath = `/city/${canonicalCityForHood(h)}/${h.slug}`;
 
   return {

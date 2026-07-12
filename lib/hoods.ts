@@ -75,6 +75,10 @@ export interface HoodContent {
   highlights: { title: string; note: string }[];
   faq: { q: string; a: string }[];
   newBuild?: { amenities: string[]; buyerNotes: string[] };
+  /** CB-3a: optional head overrides written by the Content Desk exporter.
+      generateMetadata uses these when present and its formulas otherwise —
+      the generated fallback never disappears. */
+  seo?: { title?: string; description?: string };
 }
 
 const hoodContent = contentRaw as Record<string, HoodContent>;

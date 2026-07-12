@@ -955,7 +955,63 @@ access stays server-side.
 | NB-1 | New Build seeder: curated `newBuilds` + local listings scan → `new_build_communities`/`community_aliases`/`community_builders` (+ `--stats` snapshots), existing data only | ⏳ implementation in PR — `--diff`, `--apply`, and `--stats` are each separate approval gates |
 | NB-2…5 | builder-site discovery, content suggestions (`content_update_candidates` + `source_evidence` + Claude drafts + admin review), inventory health, alerts | ⬜ |
 | CB-1 | Community Builder drafting desk (`/admin/communities`): draft hood/new-build entries + MLS lookup + collision blocks; migration `0012` (`community_drafts`) | ✅ complete — merged bb1f1e0, 0012 applied 2026-07-11, supervised draft round-trip done; portal in normal use |
-| CB-2 | Draft exporter: `ready` drafts → surgical `lib/dfw.data.json` insertion on a reviewed branch (`--diff`/`--apply`/`--mark-live`/`--unexport`) | ⏳ implementation in PR — merge, `--diff`, each `--apply` batch, the data-PR merge, and `--mark-live` are all separate gates |
+| CB-2 | Draft exporter: `ready` drafts → surgical `lib/dfw.data.json` insertion on a reviewed branch (`--diff`/`--apply`/`--mark-live`/`--unexport`) | ✅ complete — merged 016ea72; full pipeline proven end-to-end 2026-07-11 (sanger/test round-trip incl. revert) |
+| CB-3a | SEO Community Editor: CONTENT desk (`?view=content`) + `community_content_drafts` (migration `0013`) + exporter `--content` mode → `lib/hood-content.json`; fallback-safe `generateMetadata` seo override | ⏳ implementation in PR — merge, 0013 application, and the FIRST supervised content edit/export are each separate gates |
+| CB-3b/3c | internal-links block rendering + nb-hero photo decision; Claude-assisted drafting (needs separate approval) | ⬜ |
+
+### CB-3a notes — SEO Community Editor (content never publishes from the desk)
+
+- Surfaces: `/admin/communities?view=content` (same ADMIN_EMAILS gate,
+  noindex, force-dynamic) + POST `app/api/admin/communities/content`
+  (lint/save/ready/archive; auth re-checked every request). Server lib
+  `lib/content/community-content-drafts.ts` (types, reader, page
+  inventory, LINT ENGINE). Content drafts key to (city_slug, hood_slug)
+  and attach ONLY to existing pages (hoodsForCity union) — checked at
+  save, at the ready toggle, and again at export.
+- **Publish path:** exporter `--content` tiers (`npm run
+  content:export-drafts -- --content --diff|--apply|--mark-live|
+  --unexport`, same env gate + single-flight lock + splice-then-stamp
+  amendment + fail-closed batches) write the EXISTING
+  `lib/hood-content.json` on a reviewed branch. contentFor()'s generated
+  copy stays the fallback for every page without a key; a partial body
+  cannot export (contentFor returns hits as-is).
+- **hood-content.json mechanics:** pretty-printed (1-space indent),
+  alphabetically sorted keys, CRLF + trailing newline on disk. The
+  exporter proves JSON.stringify(·, null, 1) roundtrip-stability BEFORE
+  any write, inserts/updates keys in sorted position, and verifies every
+  UNSELECTED key byte-identical (updating a selected existing key is
+  legitimate — content keys are the editable unit, unlike dataset
+  entries).
+- **Lint (portal panel + server ready-gate + exporter, all mirrored — 
+  change a rule in lib/content/community-content-drafts.ts AND
+  scripts/content/export-community-drafts.mjs):** title 25–60 chars,
+  description 70–160, intro ≥2 paragraphs/≥300 chars, FAQ ≥2 entries
+  with ≥40-char answers, full core body required for export;
+  duplicate title/description blocked vs every page's FORMULA pair
+  (mirrored from the hood page's generateMetadata), exported seo keys,
+  and other drafts (exact + word-set Jaccard ≥0.9); risky-claim screen
+  (school zoning/assignment, "final phase", builder-roster assertions,
+  guarantees, exact-pricing) fails closed per the hard rules. The
+  portal's READY toggle re-lints SERVER-SIDE at export strictness and
+  refuses on errors — the browser panel is advisory only.
+- **SEO overrides are optional + fallback-safe:** HoodContent gained
+  `seo?: {title, description}`; generateMetadata uses them when present
+  and its formulas otherwise. No other rendering changes — body blocks
+  land in the existing design, FAQ flows into the existing FAQPage
+  JSON-LD automatically.
+- MLS hints panel = the CB-1 lookup, display-only facts beside the
+  editor; the claims linter screens whatever is actually written.
+  Photos: existing Photo Desk pipeline only (linked, not embedded);
+  new-build pages still render no photo slot (future decision, CB-3b).
+- Migration `0013` (apply-gated like 0009–0012): community_content_drafts
+  + partial unique key index + touch trigger + RLS no-policies. Until
+  applied: CONTENT desk lists nothing and CRUD 503s ("has 0013 been
+  applied?"). Rollback comment-only.
+- Gates after merge: (1) apply 0013; (2) ONE supervised content edit on
+  an existing page (suggest farmersville/lakehaven) through
+  lint → ready → --content --diff → --apply → PR → probes → --mark-live;
+  (3) normal weekly use. CB-3b (links rendering + nb-hero decision) and
+  CB-3c (Claude-assisted drafting) are separate approvals.
 
 ### CI-4 notes — photo candidate sourcing (nothing publishes)
 
