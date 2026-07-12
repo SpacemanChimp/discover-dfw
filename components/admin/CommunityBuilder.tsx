@@ -187,9 +187,14 @@ export default function CommunityBuilder({
               DRAFTS ONLY — PUBLISHING IS THE SEPARATELY-GATED EXPORTER · SIGNED IN AS {adminEmail.toUpperCase()}
             </p>
           </div>
-          <button style={btn} onClick={openNew} disabled={busy !== null}>
-            + NEW DRAFT
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a href="/admin/communities?view=content" style={{ ...btnGhost, textDecoration: "none" }}>
+              CONTENT DESK →
+            </a>
+            <button style={btn} onClick={openNew} disabled={busy !== null}>
+              + NEW DRAFT
+            </button>
+          </div>
         </header>
 
         {banner && (
