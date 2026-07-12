@@ -7,6 +7,8 @@
    gate — this module never writes. */
 import "server-only";
 import { getSupabaseAdmin } from "@/lib/db/admin";
+import { cities } from "@/lib/dfw-data";
+import { hoodsForCity } from "@/lib/hoods";
 
 export type NbControlRow = {
   id: string;
@@ -26,6 +28,18 @@ export type NbControlRow = {
 };
 
 const STALE_MS = 7 * 24 * 3600 * 1000;
+
+/** TRUE only when /city/{citySlug}/{hoodSlug} is a real page — resolved
+    through hoodsForCity() (hoods ∪ newBuilds), the same union every page
+    consumer uses. A non-null hood_slug is NOT enough: a seeded slug that
+    skips a slugifyHood rule (heath-golf-yacht-club vs …-golf-AND-yacht-…)
+    points at a 404 and a published band that can never render. */
+export function hoodPageExists(citySlug: string, hoodSlug: string | null): boolean {
+  if (!hoodSlug) return false;
+  const city = cities.find((c) => c.slug === citySlug);
+  if (!city) return false;
+  return hoodsForCity(city).some((h) => h.slug === hoodSlug);
+}
 
 export async function getNbControlRows(): Promise<NbControlRow[]> {
   const db = getSupabaseAdmin();
@@ -54,6 +68,10 @@ export async function getNbControlRows(): Promise<NbControlRow[]> {
         : null;
       const cautions: string[] = [];
       if (!c.hood_slug) cautions.push("NO HOOD PAGE — nothing to render a band on");
+      else if (!hoodPageExists(c.city_slug, c.hood_slug))
+        cautions.push(
+          `HOOD SLUG RESOLVES TO NO PAGE — /city/${c.city_slug}/${c.hood_slug} is a 404; fix the seeded slug (slugifyHood maps & to " and ")`
+        );
       if (!snapshot) cautions.push("NO SNAPSHOT — run NB-1 --stats first");
       else {
         if (snapshot.active < 3) cautions.push("UNDER 3 ACTIVE — the band hides itself even if published");

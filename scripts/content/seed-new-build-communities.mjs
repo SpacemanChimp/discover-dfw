@@ -123,7 +123,12 @@ const builderLike = (name) =>
   // are brokerages, not builders (C21 Fine Homes Judge Fite lesson)
   !/\b(REALTY|REAL ESTATE|REALTORS|BROKERAGE|GROUP LLC|C21|CENTURY 21|KELLER WILLIAMS|COLDWELL|COMPASS|EBBY|SOTHEBY S?|FINE HOMES|RE MAX|REMAX|EXP)\b/.test(norm(name));
 
-const slugifyHood = (n) => n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+/* MUST mirror lib/slug.ts slugifyHood exactly — the & -> " and " rule
+   included. A drifted copy here seeded "heath-golf-yacht-club" while the
+   real page is "heath-golf-and-yacht-club" (& dropped), so its band
+   publish revalidated a 404 and never rendered (2026-07-12). */
+const slugifyHood = (n) =>
+  n.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 const cityBySlug = new Map(data.cities.map((c) => [c.slug, c]));
 const countyName = (c) => data.counties?.find((co) => co.id === c.county)?.name ?? null;
