@@ -305,6 +305,7 @@ const report = () => {
   for (const c of communities) {
     const flag = c.crossCityHomonyms.length ? ` ⚠ same name also in: ${c.crossCityHomonyms.join(", ")}` : "";
     console.log(`  [${c.city_slug}] ${c.name}: ${c.exactVariants.length} exact + ${c.prefixVariants.length} prefix alias(es) · ${c.builderCandidates.length} builder candidate(s) · ${c.weakOffices.size} weak office name(s) NOT staged${flag}`);
+    for (const b of c.builderCandidates) console.log(`      builder [${b.derivation}]: ${b.builder_name} ×${b.count}`);
     for (const v of c.prefixVariants.slice(0, 4)) console.log(`      prefix: "${v}"`);
     for (const [o, n] of [...c.weakOffices.entries()].slice(0, 3)) console.log(`      weak office (report-only): "${o}" ×${n}`);
   }
