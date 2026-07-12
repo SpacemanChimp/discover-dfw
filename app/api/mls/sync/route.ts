@@ -403,22 +403,36 @@ export async function GET(req: Request) {
     let snapshotsWritten = 0;
     if (!dryRun && (incremental || backfillComplete) && Date.now() - started < timeBudget + 10_000) {
       for (const c of dfwCities) {
-        const { data: rows } = await db
-          .from("listings")
-          .select("list_price, living_area, dom:raw->CumulativeDaysOnMarket")
-          .eq("city", c.name)
-          .eq("standard_status", "Active")
-          .limit(2000);
-        const prices = (rows ?? []).map((r: any) => Number(r.list_price)).filter((x) => x > 0);
-        const ppsf = (rows ?? [])
+        // PAGE the per-city scan: PostgREST caps every response at 1,000
+        // rows regardless of .limit() (the Phase 21 lesson) — the old
+        // .limit(2000) silently floored big-city counts at 1,000 AND
+        // computed medians over an arbitrary 1,000-row sample (Dallas
+        // snapshot median read $145K against a ~$400K reality).
+        const rows: any[] = [];
+        for (let from = 0; ; from += 1000) {
+          const { data: page, error: pageErr } = await db
+            .from("listings")
+            .select("list_price, living_area, dom:raw->CumulativeDaysOnMarket")
+            .eq("city", c.name)
+            .eq("standard_status", "Active")
+            .range(from, from + 999);
+          if (pageErr) {
+            await logError("snapshot", pageErr.message, c.slug);
+            break;
+          }
+          rows.push(...(page ?? []));
+          if ((page ?? []).length < 1000) break;
+        }
+        const prices = rows.map((r: any) => Number(r.list_price)).filter((x) => x > 0);
+        const ppsf = rows
           .filter((r: any) => Number(r.list_price) > 0 && Number(r.living_area) > 0)
           .map((r: any) => Number(r.list_price) / Number(r.living_area));
-        const doms = (rows ?? []).map((r: any) => Number(r.dom)).filter((x) => Number.isFinite(x) && x >= 0);
+        const doms = rows.map((r: any) => Number(r.dom)).filter((x) => Number.isFinite(x) && x >= 0);
         const { error } = await db.from("city_market_snapshots").upsert(
           {
             city_slug: c.slug,
             as_of: new Date().toISOString().slice(0, 10),
-            active_listings: rows?.length ?? 0,
+            active_listings: rows.length,
             median_list_price: median(prices),
             price_per_sqft: ppsf.length ? Math.round(median(ppsf)!) : null,
             median_days_on_market: doms.length ? Math.round(median(doms)!) : null,
