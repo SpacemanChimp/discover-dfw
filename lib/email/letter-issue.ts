@@ -53,8 +53,14 @@ export function buildLetterIssueEmail(opts: {
         c.median != null && c.medianPrev != null && c.medianPrev !== 0
           ? ((c.median - c.medianPrev) / c.medianPrev) * 100
           : null;
+      // DELTA GUARD: |Δ| > 10%/wk in a city's median list price is a data
+      // artifact (the capped-history transition week, or sample-mix noise
+      // as inventory rotates), not news — suppress the chip rather than
+      // print an absurdity. Counts and medians themselves stay visible.
       const deltaLabel =
-        delta == null ? "" : ` · median ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}% wk`;
+        delta == null || Math.abs(delta) > 10
+          ? ""
+          : ` · median ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}% wk`;
       return `
       <tr><td style="padding:10px 18px;border-bottom:1px solid rgba(29,25,19,.14);">
         <div style="font-size:15px;font-weight:600;color:#1D1913;">
