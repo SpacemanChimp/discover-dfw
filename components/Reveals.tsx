@@ -24,7 +24,12 @@ export default function Reveals() {
           }
         });
       },
-      { threshold: 0.1 }
+      /* threshold 0 + a bottom rootMargin, NOT a ratio threshold: a ratio can
+         never be reached by elements taller than ~10x the viewport (the
+         homepage new-build grid is ~8,500px on phones — at threshold 0.1 it
+         stayed reveal-hidden forever). First pixel crossing 92% of the
+         viewport reveals, matching the original design intent. */
+      { threshold: 0, rootMargin: "0px 0px -8% 0px" }
     );
     below.forEach((el) => io.observe(el));
     return () => io.disconnect();

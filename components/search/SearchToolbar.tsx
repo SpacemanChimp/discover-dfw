@@ -53,6 +53,11 @@ const monoLabel: React.CSSProperties = {
 };
 
 const numInput: React.CSSProperties = {
+  /* flex-basis 0 (not width:100%) so the min/max input ROW's min-content
+     collapses — number inputs have a ~190px intrinsic width that percentage
+     widths don't override during shrink-to-fit, which made the mobile
+     popover panel wider than the phone viewport (417px on a 390px screen) */
+  flex: "1 1 0",
   width: "100%",
   minWidth: 0,
   border: "1.5px solid #1D1913",
