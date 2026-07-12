@@ -83,7 +83,7 @@ export type CommunityLookup = {
   suggestedBuildersCount: number | null;
   buildersObserved: string[];
   aliases: string[];
-  homonyms: { citySlug: string | null; cityName: string; count: number }[];
+  homonyms: { citySlug: string | null; cityName: string; count: number; variants: string[] }[];
   truncated: boolean;
   scannedAt: string;
 };
@@ -144,8 +144,12 @@ export async function lookupCommunity(name: string, citySlug: string): Promise<C
 
   const aliases = [...new Set(mine.map((r) => (r.subdivision ?? "").trim()).filter(Boolean))].sort();
 
-  // 2. metro-wide slim scan for cross-city homonyms
-  const homonymCount = new Map<string, number>();
+  // 2. metro-wide slim scan for cross-city homonyms. Exact-or-prefix match
+  //    on the NORMALIZED name — the canonical trap is "Pecan Square Condos"
+  //    in Addison, which only a prefix match catches ("PECAN SQUARE CONDOS"
+  //    starts with "PECAN SQUARE "). This is an advisory warning surface,
+  //    so leaning inclusive is the right failure mode.
+  const homonymHits = new Map<string, { count: number; variants: Set<string> }>();
   for (let page = 0; page < MAX_METRO_PAGES; page++) {
     const { data, error } = await db
       .from("listings")
@@ -155,17 +159,51 @@ export async function lookupCommunity(name: string, citySlug: string): Promise<C
       .range(page * PAGE, page * PAGE + PAGE - 1);
     if (error) return { error: `Homonym scan failed: ${error.message}` };
     for (const r of (data ?? []) as { city: string | null; subdivision: string | null }[]) {
-      if (normalizeSubdivision(r.subdivision) !== target) continue;
+      const nn = normalizeSubdivision(r.subdivision);
+      if (nn !== target && !nn.startsWith(`${target} `)) continue;
       const cityName = (r.city ?? "").trim();
       if (norm(cityName) === norm(city.name)) continue; // same city = the match itself
-      homonymCount.set(cityName, (homonymCount.get(cityName) ?? 0) + 1);
+      const hit = homonymHits.get(cityName) ?? { count: 0, variants: new Set<string>() };
+      hit.count++;
+      if (hit.variants.size < 3) hit.variants.add((r.subdivision ?? "").trim());
+      homonymHits.set(cityName, hit);
     }
     if ((data ?? []).length < PAGE) break;
     if (page === MAX_METRO_PAGES - 1) truncated = true;
   }
+  // 2b. targeted ANY-YEAR scan — the Addison "Pecan Square Condos" trap is
+  //     an old condo building, invisible to a new-construction-scoped walk.
+  //     Server-side prefix ilike on the RAW SubdivisionName (wildcards
+  //     stripped from the needle); punctuation variants can slip past this
+  //     net, which is why the normalized new-construction walk above stays.
+  const rawNeedle = name.trim().replace(/[%_]/g, "");
+  if (rawNeedle.length >= 3) {
+    const { data: anyYear, error: ayErr } = await db
+      .from("listings")
+      .select("city, subdivision:raw->>SubdivisionName")
+      .ilike("raw->>SubdivisionName", `${rawNeedle}%`)
+      .limit(500);
+    if (ayErr) return { error: `Homonym scan failed: ${ayErr.message}` };
+    for (const r of (anyYear ?? []) as { city: string | null; subdivision: string | null }[]) {
+      const nn = normalizeSubdivision(r.subdivision);
+      if (nn !== target && !nn.startsWith(`${target} `)) continue;
+      const cityName = (r.city ?? "").trim();
+      if (norm(cityName) === norm(city.name)) continue;
+      const hit = homonymHits.get(cityName) ?? { count: 0, variants: new Set<string>() };
+      hit.count++;
+      if (hit.variants.size < 3) hit.variants.add((r.subdivision ?? "").trim());
+      homonymHits.set(cityName, hit);
+    }
+  }
+
   const nameToSlug = new Map(cities.map((c) => [norm(c.name), c.slug]));
-  const homonyms = [...homonymCount.entries()]
-    .map(([cityName, count]) => ({ citySlug: nameToSlug.get(norm(cityName)) ?? null, cityName, count }))
+  const homonyms = [...homonymHits.entries()]
+    .map(([cityName, hit]) => ({
+      citySlug: nameToSlug.get(norm(cityName)) ?? null,
+      cityName,
+      count: hit.count,
+      variants: [...hit.variants],
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, MAX_LIST);
 

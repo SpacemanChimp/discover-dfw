@@ -151,7 +151,7 @@ export async function POST(req: Request) {
     const citySlug = String(patch.city_slug);
     const slug = String(patch.slug);
 
-    const collision = findDatasetCollision(citySlug, slug);
+    const collision = findDatasetCollision(citySlug, slug, String(patch.name));
     if (collision) return bad(collisionMessage(collision, citySlug, slug), 409);
 
     const { data: dup } = await db
@@ -195,9 +195,12 @@ export async function POST(req: Request) {
 
     const citySlug = String(patch.city_slug ?? draft.city_slug);
     const slug = String(patch.slug ?? draft.slug);
+    const name = String(patch.name ?? draft.name);
+    // always re-check the dataset (a NAME change alone can now collide);
+    // the dup-drafts query only matters when the page slug moved
+    const collision = findDatasetCollision(citySlug, slug, name);
+    if (collision) return bad(collisionMessage(collision, citySlug, slug), 409);
     if (citySlug !== draft.city_slug || slug !== draft.slug) {
-      const collision = findDatasetCollision(citySlug, slug);
-      if (collision) return bad(collisionMessage(collision, citySlug, slug), 409);
       const { data: dup } = await db
         .from("community_drafts")
         .select("id")

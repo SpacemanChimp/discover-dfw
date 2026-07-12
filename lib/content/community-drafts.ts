@@ -111,9 +111,10 @@ export type SlugCollision =
   | { kind: "unknown_city" }
   | { kind: "bad_slug"; expected: string }
   | { kind: "existing_hood"; hoodName: string }
-  | { kind: "existing_new_build"; nbName: string };
+  | { kind: "existing_new_build"; nbName: string }
+  | { kind: "cross_city_name"; where: string };
 
-export function findDatasetCollision(citySlug: string, slug: string): SlugCollision | null {
+export function findDatasetCollision(citySlug: string, slug: string, name: string): SlugCollision | null {
   const city = cities.find((c) => c.slug === citySlug);
   if (!city) return { kind: "unknown_city" };
   // the slug must be a fixed point of slugifyHood — anything else can't be routed
@@ -124,6 +125,21 @@ export function findDatasetCollision(citySlug: string, slug: string): SlugCollis
   }
   for (const nb of newBuilds) {
     if (nb.city === citySlug && slugifyHood(nb.name) === slug) return { kind: "existing_new_build", nbName: nb.name };
+  }
+  /* Cross-city NAME reuse is blocked too: newBuildByName() in lib/hoods.ts
+     attaches new-build data to hoods by case-insensitive NAME match with no
+     city scoping, so a same-named entry anywhere mis-attaches data across
+     cities (a fort-worth "Wellington" new-build would bind itself to
+     flower-mound's existing "Wellington" hood and move its canonical URL).
+     Blocked until name-scoping/precedence is resolved as its own phase. */
+  const key = name.trim().toLowerCase();
+  if (key) {
+    for (const other of cities) {
+      if (other.slug !== citySlug && other.hoods.some(([n]) => n.toLowerCase() === key))
+        return { kind: "cross_city_name", where: `hood "${name}" in ${other.name}` };
+    }
+    const nbHit = newBuilds.find((nb) => nb.name.toLowerCase() === key);
+    if (nbHit) return { kind: "cross_city_name", where: `new-build "${nbHit.name}" in ${nbHit.city}` };
   }
   return null;
 }
@@ -138,6 +154,8 @@ export function collisionMessage(c: SlugCollision, citySlug: string, slug: strin
       return `"${citySlug}/${slug}" already renders as the hood "${c.hoodName}". Existing hoods (including the six deferred new-build conversions) are blocked until precedence is resolved.`;
     case "existing_new_build":
       return `"${citySlug}/${slug}" already renders as the new-build community "${c.nbName}".`;
+    case "cross_city_name":
+      return `The name collides with the existing ${c.where} — new-build/hood matching is name-global (lib/hoods.ts newBuildByName), so cross-city name reuse mis-attaches data. Blocked until name-scoping is resolved.`;
   }
 }
 

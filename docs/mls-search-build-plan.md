@@ -1139,6 +1139,14 @@ access stays server-side.
   Crossing, Silverado, Monterra — until precedence is its own phase);
   live-drafts uniqueness query; DB partial unique index
   `(city_slug, slug) where lifecycle <> 'archived'` as the last line.
+  **Cross-city NAME reuse is blocked too:** `newBuildByName()` in
+  `lib/hoods.ts` matches hoods to new-build data by case-insensitive
+  name with NO city scoping, so a same-named entry anywhere
+  mis-attaches data across cities and moves the existing hood's
+  canonical/sitemap URL (discovered via batch-1's fort-worth
+  "Wellington" vs the existing flower-mound "Wellington" hood). A name
+  change alone re-checks on update. Unblocking needs name-scoping in
+  hoods.ts as its own gated change.
 - Lookup reads OUR replicated listings store only (no external calls,
   no writes): Active/Pending/AUC built ≥ 2025, city column holds NAMES
   (mapped from the slug), normalization/lexicon copied from the NB-1

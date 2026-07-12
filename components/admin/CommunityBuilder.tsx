@@ -340,8 +340,11 @@ export default function CommunityBuilder({
                 )}
                 {lookup.homonyms.length > 0 && (
                   <p style={{ margin: 0, color: ORANGE, fontWeight: 700 }}>
-                    ⚠ HOMONYM WARNING — same name also appears in:{" "}
-                    {lookup.homonyms.map((h) => `${h.cityName || "unknown city"} (${h.count})`).join(", ")}. Verify this is the same community before trusting counts.
+                    ⚠ HOMONYM WARNING — the same or a similar name also appears in:{" "}
+                    {lookup.homonyms
+                      .map((h) => `${h.cityName || "unknown city"} (${h.count}${h.variants.length ? `: ${h.variants.join(" / ")}` : ""})`)
+                      .join(", ")}
+                    . Verify these are not the same community before trusting counts.
                   </p>
                 )}
               </div>
@@ -408,7 +411,8 @@ export default function CommunityBuilder({
 
         <footer style={{ marginTop: 28, fontSize: 11, letterSpacing: "0.04em", color: "#5a5348" }}>
           CB-1 · DRAFTS NEVER PUBLISH — THE EXPORTER (CB-2) WRITES dfw.data.json ON A REVIEWED BRANCH · COLLISIONS WITH EXISTING
-          HOODS/NEW-BUILDS ARE BLOCKED, INCLUDING THE SIX DEFERRED CONVERSIONS · PHOTO ATTACH ARRIVES IN A LATER GATE
+          HOODS/NEW-BUILDS ARE BLOCKED (SAME-CITY SLUGS, CROSS-CITY NAMES, AND THE SIX DEFERRED CONVERSIONS) · PHOTO ATTACH
+          ARRIVES IN A LATER GATE
         </footer>
       </div>
     </main>
