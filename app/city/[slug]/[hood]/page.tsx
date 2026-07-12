@@ -24,6 +24,7 @@ import {
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { isLiveMls } from "@/lib/mls";
 import { getApprovedPhotos, photoKey } from "@/lib/content/editorial-photos";
+import { getNewBuildInventory } from "@/lib/content/new-build-stats";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
 import EditorialPhoto from "@/components/EditorialPhoto";
@@ -128,6 +129,11 @@ export default async function HoodPage({
   /* CI-3: approved hero photo (photo_assets is human-gated; empty →
      the placeholder below renders unchanged) */
   const photos = await getApprovedPhotos("neighborhood", `${c.slug}/${h.slug}`);
+
+  /* NB inventory band: renders ONLY for published new-build communities
+     with a snapshot above the thin-inventory threshold — null (today's
+     state for all 19) leaves this page byte-identical */
+  const nbInventory = nb ? await getNewBuildInventory(c.slug, h.slug) : null;
 
   const cityIdx = cities.indexOf(c);
   const prevCity = cities[(cityIdx - 1 + cities.length) % cities.length];
@@ -565,6 +571,46 @@ export default async function HoodPage({
               }
             />
           </div>
+
+          {nbInventory && (
+            <div
+              data-reveal="1"
+              className="font-mono"
+              style={{
+                border: "2px solid #1D1913",
+                borderRadius: 14,
+                background: "#FBF7EE",
+                padding: "16px 22px",
+                marginBottom: 34,
+                display: "flex",
+                gap: 24,
+                flexWrap: "wrap",
+                alignItems: "baseline",
+              }}
+            >
+              <span style={{ fontSize: 10, letterSpacing: ".22em", fontWeight: 700, color: "#D9481F" }}>
+                LIVE NTREIS DATA
+              </span>
+              <span style={{ fontSize: 12.5, letterSpacing: ".08em" }}>
+                <strong>{nbInventory.activeCount}</strong> ACTIVE LISTINGS MATCHED TO THIS COMMUNITY
+              </span>
+              <span style={{ fontSize: 12.5, letterSpacing: ".08em" }}>
+                <strong>{nbInventory.pendingCount}</strong> PENDING
+              </span>
+              {nbInventory.quickMoveInEst > 0 && (
+                <span style={{ fontSize: 12.5, letterSpacing: ".08em" }}>
+                  ~<strong>{nbInventory.quickMoveInEst}</strong> QUICK MOVE-IN — ESTIMATE
+                </span>
+              )}
+              <span style={{ fontSize: 9.5, letterSpacing: ".16em", color: "rgba(29,25,19,.55)" }}>
+                AS OF{" "}
+                {new Date(nbInventory.asOf)
+                  .toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })
+                  .toUpperCase()}{" "}
+                · MLS-MATCHED ONLY — BUILDER INVENTORY MAY DIFFER
+              </span>
+            </div>
+          )}
 
           <div
             style={{
