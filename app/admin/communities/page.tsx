@@ -5,6 +5,7 @@ import { getCommunityDrafts, cityOptions } from "@/lib/content/community-drafts"
 import { getContentDrafts, pageInventory } from "@/lib/content/community-content-drafts";
 import CommunityBuilder from "@/components/admin/CommunityBuilder";
 import ContentEditor from "@/components/admin/ContentEditor";
+import AdminNav from "@/components/admin/AdminNav";
 
 /* The Community Builder — CB-1 drafting desk + CB-3a CONTENT desk
    (?view=content). Internal only: admin allowlist gate (404 for everyone
@@ -32,8 +33,18 @@ export default async function CommunityBuilderPage({
   const { view } = await searchParams;
   if (view === "content") {
     const drafts = await getContentDrafts();
-    return <ContentEditor adminEmail={adminUser.email} drafts={drafts} pages={pageInventory()} />;
+    return (
+      <>
+        <AdminNav current="content" />
+        <ContentEditor adminEmail={adminUser.email} drafts={drafts} pages={pageInventory()} />
+      </>
+    );
   }
   const drafts = await getCommunityDrafts();
-  return <CommunityBuilder adminEmail={adminUser.email} drafts={drafts} cities={cityOptions()} />;
+  return (
+    <>
+      <AdminNav current="communities" />
+      <CommunityBuilder adminEmail={adminUser.email} drafts={drafts} cities={cityOptions()} />
+    </>
+  );
 }
