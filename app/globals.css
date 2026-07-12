@@ -12,6 +12,11 @@ html {
   scroll-behavior: smooth;
   /* the lightbox scroll-lock must not shift the desktop layout */
   scrollbar-gutter: stable;
+  /* root guard: a single too-wide element must never give the PAGE a
+     sideways pan (iOS Safari ignores body-level overflow-x for this).
+     clip ≠ hidden: it clips without creating a scroll container, so
+     position:sticky descendants keep working. */
+  overflow-x: clip;
 }
 
 body {
@@ -255,13 +260,21 @@ body {
 /* mobile search fixes — the toolbar popovers/inputs style themselves inline,
    so these overrides need !important to win */
 @media (max-width: 940px) {
-  /* popover panels anchor absolute to their pill and overflow a 375px
-     viewport — pin them to the viewport instead */
+  /* popover panels: anchor ABSOLUTE to the sticky toolbar, not fixed to the
+     viewport — iOS Safari treats position:fixed inside a touch-scrolling
+     rail as absolute-in-scroller (the real-iPhone "tiny filter panel" bug).
+     Neutralizing the pill wrapper makes the positioned sticky toolbar the
+     containing block, which every engine honors, and the rail's overflow
+     cannot clip it (the clip only applies between element and containing
+     block). Full-width sheet 8px under the toolbar in all scroll states. */
+  [data-ddfw-pop] {
+    position: static !important;
+  }
   [data-ddfw-pop] > [role="dialog"] {
-    position: fixed !important;
+    position: absolute !important;
     left: 4vw !important;
-    right: 4vw !important;
-    top: 128px !important;
+    right: auto !important;
+    top: calc(100% + 8px) !important;
     /* explicit width, NOT auto: shrink-to-fit lets a child's intrinsic
        min-content (e.g. number inputs) push the panel wider than the phone
        viewport — the panel then hangs off-screen and phones zoom/pan */
@@ -282,6 +295,23 @@ body {
   .ddfw-toolbar input,
   .ddfw-toolbar select {
     font-size: 16px !important;
+  }
+
+  /* map overlays: the count chip and DRAW BOUNDARY collided side-by-side on
+     phone widths — chip owns the top row (one ellipsized line), boundary
+     controls drop to a second row, draw hint to a third */
+  .map-count-chip {
+    right: 10px !important;
+    max-width: none !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .map-boundary-controls {
+    top: 56px !important;
+  }
+  .map-draw-hint {
+    top: 100px !important;
   }
 }
 
@@ -307,6 +337,31 @@ body {
      two sticky bars would eat a 375px viewport */
   .homes-search-nav {
     position: static !important;
+    /* the link rail's no-wrap min-content (~450px) was WIDER than a phone
+       and stretched the whole document sideways (real-iPhone bug): pin the
+       row to one line and let the rail scroll INTERNALLY instead */
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+  }
+  .homes-search-nav > div:first-child {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .homes-search-nav > div:first-child::-webkit-scrollbar {
+    display: none;
+  }
+  .homes-search-nav > div:first-child > * {
+    flex: 0 0 auto;
+  }
+  /* smaller wordmark on phones so the logo sits whole at rest instead of
+     clipping mid-letter, with the next link peeking as a scroll hint */
+  .homes-search-nav > div:first-child > a:first-child {
+    font-size: 15px !important;
+  }
+  .homes-search-nav > div:last-child {
+    flex: 0 0 auto;
   }
   .ddfw-toolbar {
     top: 0;
@@ -318,7 +373,10 @@ body {
     flex: 1 1 100% !important;
     min-width: 0 !important;
   }
-  /* filters become one horizontally scrolling strip — never a tall stack */
+  /* filters become one horizontally scrolling strip — never a tall stack.
+     NO -webkit-overflow-scrolling:touch — that legacy property makes iOS
+     turn descendant position:fixed into absolute-in-scroller; modern iOS
+     momentum-scrolls overflow:auto natively anyway. */
   .ddfw-toolbar-pills {
     display: flex;
     align-items: center;
@@ -326,7 +384,6 @@ body {
     flex: 1 1 100%;
     min-width: 0;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
   .ddfw-toolbar-pills::-webkit-scrollbar {

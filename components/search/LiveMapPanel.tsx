@@ -709,9 +709,11 @@ export default function LiveMapPanel({
         aria-label="Map of matching listings"
       />
 
-      {/* count chip — top left, clear of Leaflet's zoom control */}
+      {/* count chip — top left, clear of Leaflet's zoom control; on phones
+          globals.css stretches it to the full row and stacks the boundary
+          button below (they collided side-by-side under ~600px) */}
       <div
-        className="font-mono"
+        className="font-mono map-count-chip"
         style={{
           position: "absolute",
           top: 10,
@@ -733,8 +735,9 @@ export default function LiveMapPanel({
         {chipText}
       </div>
 
-      {/* boundary controls — top right */}
+      {/* boundary controls — top right (second row on phones) */}
       <div
+        className="map-boundary-controls"
         style={{
           position: "absolute",
           top: 10,
@@ -792,7 +795,7 @@ export default function LiveMapPanel({
       {/* draw-mode hint chip */}
       {drawing && (
         <div
-          className="font-mono"
+          className="font-mono map-draw-hint"
           style={{
             position: "absolute",
             top: 52,
