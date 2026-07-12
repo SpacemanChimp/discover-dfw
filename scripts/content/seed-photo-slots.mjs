@@ -67,8 +67,13 @@ const HOMEPAGE_PICKS = [
   { slug: "frisco", label: "THE STAR DISTRICT" },
 ];
 
+/* MUST mirror lib/slug.ts slugifyHood exactly — the & -> " and " rule
+   included. A drifted copy here seeded the Heath Golf & Yacht Club hero
+   slot at "heath/heath-golf-yacht-club" (a page that 404s) while the real
+   page is "heath-golf-and-yacht-club"; repaired 2026-07-12 by
+   fix-community-slug.mjs. */
 const slugifyHood = (n) =>
-  n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  n.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 function computeSlots() {
   const slots = [];
