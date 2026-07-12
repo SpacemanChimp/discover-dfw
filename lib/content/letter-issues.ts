@@ -105,12 +105,33 @@ export async function generateIssueStats(prev: IssueStats | null): Promise<Issue
   const db = getSupabaseAdmin();
   if (!db) return { error: "not configured" };
 
+  // city_market_snapshots is a HISTORY table (one row per city per sync
+  // day) — current values must use the LATEST row per city; consuming
+  // every row quadrupled the metro total in the first generated draft.
   const { data: snaps, error: snapErr } = await db
     .from("city_market_snapshots")
-    .select("city_slug, active_listings, median_list_price, as_of");
+    .select("city_slug, active_listings, median_list_price, as_of")
+    .order("as_of", { ascending: false });
   if (snapErr) return { error: `snapshots: ${snapErr.message}` };
 
+  // newest-first walk: first row per city = current; the first row at
+  // least 6 days older = the week-ago baseline (delta bootstrap before
+  // any sent issue exists to diff against)
+  const latest = new Map<string, NonNullable<typeof snaps>[number]>();
+  const weekAgo = new Map<string, NonNullable<typeof snaps>[number]>();
+  const DAY = 24 * 3600 * 1000;
+  for (const s of snaps ?? []) {
+    if (!latest.has(s.city_slug)) {
+      latest.set(s.city_slug, s);
+    } else if (!weekAgo.has(s.city_slug)) {
+      const newest = new Date(latest.get(s.city_slug)!.as_of).getTime();
+      if (newest - new Date(s.as_of).getTime() >= 6 * DAY) weekAgo.set(s.city_slug, s);
+    }
+  }
+
   const nameBySlug = new Map(cities.map((c) => [c.slug, c.name]));
+  // delta baseline: the previous SENT issue's frozen stats win; snapshot
+  // history fills in when no issue exists yet
   const prevMedian = new Map((prev?.cities ?? []).map((c) => [c.slug, c.median]));
 
   const { count: metroNew, error: metroErr } = await db
@@ -122,7 +143,7 @@ export async function generateIssueStats(prev: IssueStats | null): Promise<Issue
 
   const cityStats: IssueCityStat[] = [];
   let metroActives = 0;
-  for (const s of snaps ?? []) {
+  for (const s of latest.values()) {
     const name = nameBySlug.get(s.city_slug);
     if (!name) continue;
     metroActives += s.active_listings ?? 0;
@@ -138,7 +159,7 @@ export async function generateIssueStats(prev: IssueStats | null): Promise<Issue
       actives: s.active_listings ?? 0,
       new7d: count ?? 0,
       median: s.median_list_price,
-      medianPrev: prevMedian.get(s.city_slug) ?? undefined,
+      medianPrev: prevMedian.get(s.city_slug) ?? weekAgo.get(s.city_slug)?.median_list_price ?? undefined,
     });
   }
 
