@@ -11,7 +11,7 @@ const TABS: { key: string; label: string; href: string }[] = [
   { key: "leads", label: "LEADS", href: "/admin/leads" },
   { key: "photos", label: "PHOTOS", href: "/admin/photos" },
   { key: "communities", label: "COMMUNITIES", href: "/admin/communities" },
-  { key: "content", label: "CONTENT", href: "/admin/communities?view=content" },
+  { key: "content", label: "SEO CONTENT", href: "/admin/communities?view=content" },
   { key: "letter", label: "THE LETTER", href: "/admin/letter" },
 ];
 

@@ -49,21 +49,21 @@ const DESKS: Desk[] = [
   },
   {
     eyebrow: "04 — PROSE",
-    title: "Content Desk",
+    title: "SEO Content",
     blurb: "SEO titles, intros, FAQs for any page — linted, then exported through the gated content pipeline.",
     href: "/admin/communities?view=content",
   },
   {
     eyebrow: "05 — POST",
-    title: "The Letter",
+    title: "The Letter / Newsletter",
     blurb: "Subscriber counts and the Sunday issue builder. Sending stays behind its own gates.",
     href: "/admin/letter",
   },
   {
     eyebrow: "06 — PIPELINE",
-    title: "New-Build Inventory Toggles",
+    title: "New Build Controls",
     blurb: "Per-community publish switches for the live inventory bands.",
-    gateNote: "FUTURE — flips run as reviewed SQL today",
+    gateNote: "LATER — flips run as reviewed SQL today",
   },
   {
     eyebrow: "07 — PIPELINE",
