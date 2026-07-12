@@ -117,7 +117,11 @@ const lexiconMatch = (text) => {
 };
 /* builder-like heuristic for non-lexicon office names: must look like a
    builder, must not look like a brokerage */
-const builderLike = (name) => /\bHOMES\b/.test(norm(name)) && !/\b(REALTY|REAL ESTATE|REALTORS|BROKERAGE|GROUP LLC)\b/.test(norm(name));
+const builderLike = (name) =>
+  /\bHOMES\b/.test(norm(name)) &&
+  // brokerage markers: franchises and "Fine Homes"-style marketing tiers
+  // are brokerages, not builders (C21 Fine Homes Judge Fite lesson)
+  !/\b(REALTY|REAL ESTATE|REALTORS|BROKERAGE|GROUP LLC|C21|CENTURY 21|KELLER WILLIAMS|COLDWELL|COMPASS|EBBY|SOTHEBY S?|FINE HOMES|RE MAX|REMAX|EXP)\b/.test(norm(name));
 
 const slugifyHood = (n) => n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
