@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getAdminUser } from "@/lib/admin";
 import { getSupabaseAdmin } from "@/lib/db/admin";
+import { hoodPageExists } from "@/lib/content/admin-newbuilds";
 
 /* New Build Controls — publish/unpublish the inventory band for ONE
    community per request. Admin-only (ADMIN_EMAILS gate first, 404
@@ -52,6 +53,15 @@ export async function POST(req: Request) {
 
   if (publish) {
     if (!c.hood_slug) return bad("No hood page — nothing to render a band on", 422);
+    // a non-null hood_slug can still point at a 404 (seeded slug drift, e.g.
+    // the & -> " and " rule) — publishing would flip a band no page renders
+    // and revalidate a nonexistent path. Refuse; unpublish stays allowed so
+    // a bad flip can always be rolled back.
+    if (!hoodPageExists(c.city_slug, c.hood_slug))
+      return bad(
+        `Hood slug "${c.hood_slug}" resolves to no page under /city/${c.city_slug} — fix the seeded slug before publishing`,
+        422
+      );
     const { data: snap } = await db
       .from("community_inventory_stats")
       .select("active_listing_count, calculated_at")
