@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { cities, counties } from "@/lib/dfw-data";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { isLiveMls } from "@/lib/mls";
 import Nav from "@/components/Nav";
@@ -54,13 +53,6 @@ export default function Home() {
         }}
       >
         <span>A FIELD GUIDE TO NORTH TEXAS REAL ESTATE</span>
-        <span style={{ display: "flex", gap: 18, alignItems: "center" }}>
-          <span>{cities.length} CITIES</span>
-          <span style={{ color: "#D9481F" }}>✳</span>
-          <span>{counties.length} COUNTIES</span>
-          <span style={{ color: "#D9481F" }}>✳</span>
-          <span>EST. MMXXVI</span>
-        </span>
       </div>
 
       <Nav />
