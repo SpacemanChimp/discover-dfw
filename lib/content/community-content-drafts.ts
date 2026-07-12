@@ -163,7 +163,7 @@ export const FAQ_ANSWER_MIN = 40;
    assertions, and guarantee language all need human verification that the
    portal cannot provide. */
 export const RISKY_CLAIM_PATTERNS: { re: RegExp; why: string }[] = [
-  { re: /\b(zoned to|zoned for|attendance zone|feeds? into|assigned to)\b/i, why: "school zoning claims need district verification before publishing (hard rule)" },
+  { re: /\b(zoned to|zoned for|attendance zones?|feeds? into|assigned to)\b/i, why: "school zoning claims need district verification before publishing (hard rule)" },
   { re: /\battends?\b.{0,40}\b(elementary|middle|high school|isd)\b/i, why: "school assignment claims need district verification before publishing (hard rule)" },
   { re: /\bfinal phase\b/i, why: '"final phase" claims need builder verification before publishing (hard rule)' },
   { re: /\b(official|exclusive|complete|full) (builder|builders|builder list|roster)\b/i, why: "builder-roster assertions need verification — MLS-observed counts only (hard rule)" },
