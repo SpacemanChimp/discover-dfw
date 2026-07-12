@@ -8,6 +8,7 @@ import {
   hubs,
   counties,
   lakes,
+  newBuilds,
   project,
   pts,
   fmtK,
@@ -41,7 +42,13 @@ export async function generateMetadata({
   if (!c) return { title: SITE_NAME };
   const county = countyById[c.county];
   const topHoods = c.hoods.slice(0, 3).map((h) => h[0]).join(", ");
-  const description = `${c.name}, TX in ${county.name} County — ${c.tagline}. Neighborhood guides (${topHoods}), market snapshot, ${c.isd} schools, and commute times.`;
+  /* buyer-intent phrasing, unique per city via tagline + rosters: cities with
+     actively-selling communities lead with new construction; the rest lead
+     with their neighborhoods. */
+  const cityNbs = newBuilds.filter((nb) => nb.city === c.slug);
+  const description = cityNbs.length
+    ? `${c.name}, TX in ${county.name} County — ${c.tagline}. New-construction communities (${cityNbs.slice(0, 2).map((nb) => nb.name).join(", ")}), neighborhood guides, homes for sale, ${c.isd} schools, and commutes.`
+    : `${c.name}, TX in ${county.name} County — ${c.tagline}. Neighborhood guides (${topHoods}), homes for sale, market snapshot, ${c.isd} schools, and commute times.`;
   return {
     title: `${c.name}, TX — Neighborhoods, Homes & Living Guide`,
     description,
@@ -108,6 +115,19 @@ export default async function CityPage({
   const prev = cities[(idx - 1 + cities.length) % cities.length];
   const next = cities[(idx + 1) % cities.length];
   const county = countyById[c.county];
+
+  /* Nearest cities by actual map distance — real geographic neighbors only,
+     so the "compare nearby" links are useful to a human deciding between
+     towns, not link-graph filler. */
+  const nearbyCities = cities
+    .filter((x) => x.slug !== c.slug)
+    .map((x) => ({
+      city: x,
+      d: (x.ll[0] - c.ll[0]) ** 2 + (x.ll[1] - c.ll[1]) ** 2,
+    }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 4)
+    .map(({ city }) => city);
 
   const { spark, sparkX, sparkY } = buildSparkline(c);
   const p = project(c.ll);
@@ -1092,6 +1112,77 @@ export default async function CityPage({
                   ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* nearby cities — real geographic neighbors, for buyers comparing
+          towns; every card is a full city guide, not a doorway page */}
+      <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "72px 4vw" }}>
+          <div data-reveal="1" style={{ marginBottom: 26 }}>
+            <Eyebrow>NEXT DOOR — COMPARE THE MAP</Eyebrow>
+            <SectionH2>Cities near {c.name}.</SectionH2>
+          </div>
+          <div
+            data-reveal="1"
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 16 }}
+          >
+            {nearbyCities.map((n) => (
+              <Link
+                key={n.slug}
+                href={`/city/${n.slug}`}
+                className="hood-card"
+                style={{
+                  border: "2px solid #1D1913",
+                  borderRadius: 18,
+                  background: "#FBF7EE",
+                  padding: "20px 22px",
+                  textDecoration: "none",
+                  color: "#1D1913",
+                  display: "block",
+                }}
+              >
+                <div
+                  className="font-mono"
+                  style={{ fontSize: 9, letterSpacing: ".2em", color: "#D9481F", fontWeight: 700 }}
+                >
+                  {countyById[n.county].name.toUpperCase()} CO · MEDIAN {fmtK(n.price)}
+                </div>
+                <div className="font-serif" style={{ fontWeight: 800, fontSize: 21, marginTop: 8, lineHeight: 1.15 }}>
+                  {n.name} →
+                </div>
+                <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(29,25,19,.65)", marginTop: 7 }}>
+                  {n.tagline}
+                </div>
+              </Link>
+            ))}
+            <Link
+              href={`/homes?city=${c.slug}`}
+              className="hood-card"
+              style={{
+                border: "2px solid #D9481F",
+                borderRadius: 18,
+                background: "rgba(217,72,31,.07)",
+                padding: "20px 22px",
+                textDecoration: "none",
+                color: "#1D1913",
+                display: "block",
+              }}
+            >
+              <div
+                className="font-mono"
+                style={{ fontSize: 9, letterSpacing: ".2em", color: "#D9481F", fontWeight: 700 }}
+              >
+                {isLiveMls ? "LIVE MLS SEARCH" : "SEARCH PREVIEW"}
+              </div>
+              <div className="font-serif" style={{ fontWeight: 800, fontSize: 21, marginTop: 8, lineHeight: 1.15 }}>
+                Search {c.name} homes →
+              </div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(29,25,19,.65)", marginTop: 7 }}>
+                Every active listing on the map, filtered to {c.name}.
+              </div>
+            </Link>
+          </div>
         </div>
       </section>
 

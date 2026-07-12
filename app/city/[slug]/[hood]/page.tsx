@@ -906,6 +906,60 @@ export default async function HoodPage({
                 Market snapshot, schools, commutes, and every neighborhood.
               </div>
             </Link>
+            {/* conversion CTAs — links only, no popups: live search scoped to
+                this city, and the Sunday newsletter */}
+            <Link
+              href={`/homes?city=${c.slug}`}
+              className="hood-card"
+              style={{
+                border: "2px solid #E88D6B",
+                borderRadius: 18,
+                background: "rgba(232,141,107,.1)",
+                padding: "22px 24px",
+                textDecoration: "none",
+                color: "#F6F1E6",
+                display: "block",
+              }}
+            >
+              <div
+                className="font-mono"
+                style={{ fontSize: 9, letterSpacing: ".2em", color: "#E88D6B", fontWeight: 700 }}
+              >
+                {isLiveMls ? "LIVE MLS SEARCH" : "SEARCH PREVIEW"}
+              </div>
+              <div className="font-serif" style={{ fontWeight: 800, fontSize: 21, marginTop: 9, lineHeight: 1.15 }}>
+                Search {c.name} homes →
+              </div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(246,241,230,.65)", marginTop: 8 }}>
+                Every active listing near {h.name}, on the map.
+              </div>
+            </Link>
+            <Link
+              href="/#newsletter"
+              className="hood-card"
+              style={{
+                border: "2px solid rgba(246,241,230,.35)",
+                borderRadius: 18,
+                background: "rgba(246,241,230,.05)",
+                padding: "22px 24px",
+                textDecoration: "none",
+                color: "#F6F1E6",
+                display: "block",
+              }}
+            >
+              <div
+                className="font-mono"
+                style={{ fontSize: 9, letterSpacing: ".2em", color: "#E88D6B", fontWeight: 700 }}
+              >
+                THE LETTER
+              </div>
+              <div className="font-serif" style={{ fontWeight: 800, fontSize: 21, marginTop: 9, lineHeight: 1.15 }}>
+                Get the Sunday brief →
+              </div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(246,241,230,.65)", marginTop: 8 }}>
+                What listed, what went under contract, and what changed — every Sunday.
+              </div>
+            </Link>
           </div>
           {sharedCities.length > 0 && (
             <p

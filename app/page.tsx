@@ -18,14 +18,31 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: SITE_NAME,
-  url: SITE_URL,
-  description:
-    "A living atlas of Dallas–Fort Worth real estate — every city, every county, one clickable map.",
-};
+/* SearchAction mirrors the REAL hero search (it routes to /homes?q=…) —
+   never declare schema the page can't actually do. */
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    url: SITE_URL,
+    description:
+      "A living atlas of Dallas–Fort Worth real estate — every city, every county, one clickable map.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/homes?q={search_term_string}` },
+      "query-input": "required name=search_term_string",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE_NAME,
+    url: SITE_URL,
+    description: "An editorial field guide to Dallas–Fort Worth real estate.",
+    areaServed: "Dallas–Fort Worth metroplex, Texas",
+  },
+];
 
 export default function Home() {
   return (

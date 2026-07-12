@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { isLiveMls, parseSearchFilters } from "@/lib/mls";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 import MapRoom from "@/components/search/MapRoom";
 
 /* Indexable only on the live NTREIS feed — fictional mock inventory must
@@ -12,6 +13,20 @@ export const metadata: Metadata = {
   robots: { index: isLiveMls, follow: true },
 };
 
+/* CollectionPage only on the live feed — mirrors the robots.index gate above;
+   fictional mock inventory never gets structured data. */
+const jsonLd = isLiveMls
+  ? {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Search Homes for Sale in DFW — The Map Room",
+      url: `${SITE_URL}/homes`,
+      description:
+        "Live MLS search for Dallas–Fort Worth homes: listing rail, illustrated metroplex map, city and neighborhood filters.",
+      isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
+    }
+  : null;
+
 export default async function HomesPage({
   searchParams,
 }: {
@@ -19,5 +34,12 @@ export default async function HomesPage({
 }) {
   const params = await searchParams;
   const authFailed = (Array.isArray(params.auth) ? params.auth[0] : params.auth) === "failed";
-  return <MapRoom query={parseSearchFilters(params)} authFailed={authFailed} />;
+  return (
+    <>
+      {jsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      )}
+      <MapRoom query={parseSearchFilters(params)} authFailed={authFailed} />
+    </>
+  );
 }
