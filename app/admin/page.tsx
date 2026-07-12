@@ -62,8 +62,8 @@ const DESKS: Desk[] = [
   {
     eyebrow: "06 — PIPELINE",
     title: "New Build Controls",
-    blurb: "Per-community publish switches for the live inventory bands.",
-    gateNote: "LATER — flips run as reviewed SQL today",
+    blurb: "Per-community publish switches for the live inventory bands — typed confirmation per flip, caution states first.",
+    href: "/admin/newbuilds",
   },
   {
     eyebrow: "07 — PIPELINE",
