@@ -262,11 +262,15 @@ body {
     left: 4vw !important;
     right: 4vw !important;
     top: 128px !important;
-    width: auto !important;
+    /* explicit width, NOT auto: shrink-to-fit lets a child's intrinsic
+       min-content (e.g. number inputs) push the panel wider than the phone
+       viewport — the panel then hangs off-screen and phones zoom/pan */
+    width: 92vw !important;
     min-width: 0 !important;
-    max-width: none !important;
+    max-width: 92vw !important;
     max-height: 62dvh !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     z-index: 1450 !important;
   }
   /* the floating MAP/LIST toggle must never sit on the TREC links — the
