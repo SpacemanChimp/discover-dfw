@@ -954,6 +954,8 @@ access stays server-side.
 | CI-8…11 | Claude drafts, publish jobs, compliance review | ⬜ |
 | NB-1 | New Build seeder: curated `newBuilds` + local listings scan → `new_build_communities`/`community_aliases`/`community_builders` (+ `--stats` snapshots), existing data only | ⏳ implementation in PR — `--diff`, `--apply`, and `--stats` are each separate approval gates |
 | NB-2…5 | builder-site discovery, content suggestions (`content_update_candidates` + `source_evidence` + Claude drafts + admin review), inventory health, alerts | ⬜ |
+| CB-1 | Community Builder drafting desk (`/admin/communities`): draft hood/new-build entries + MLS lookup + collision blocks; migration `0012` (`community_drafts`) | ⏳ implementation in PR — merge, 0012 application, and the FIRST supervised draft are each separate gates |
+| CB-2 | Draft exporter: `ready` drafts → surgical `lib/dfw.data.json` insertion on a reviewed branch (`--diff`/`--apply`) | ⬜ not implemented — drafts cannot reach a public page until this exists |
 
 ### CI-4 notes — photo candidate sourcing (nothing publishes)
 
@@ -1110,6 +1112,59 @@ access stays server-side.
   pages are static — the band updates on deploy or future
   revalidatePath-after---stats (NB-4 territory); the AS OF date keeps it
   honest.
+
+### CB-1 notes — Community Builder drafting desk (drafts never publish)
+
+- Surfaces: `app/admin/communities` (ADMIN_EMAILS gate identical to the
+  Photo Desk — 404 for everyone else, noindex, force-dynamic) + POST
+  `app/api/admin/communities` (create/update/archive; auth re-checked
+  every request; service key strictly after the gate) + POST
+  `app/api/admin/communities/lookup` (read-only MLS scan). Draft reader
+  `lib/content/community-drafts.ts`, lookup
+  `lib/content/mls-community-lookup.ts` (both server-only).
+- **Drafts are a workspace, not a publish path.** Nothing public reads
+  `community_drafts`. Lifecycle: `draft → ready → exported → live`
+  (or `archived` pre-live, soft — rows are never deleted). `ready` only
+  marks export-eligibility; `exported`/`live` stamps belong to the CB-2
+  exporter (NOT implemented) which writes `lib/dfw.data.json` on a
+  reviewed branch/PR — the JSON stays the single source of truth.
+- Fields: type (`hood`/`new_build`), name, city, slug (canonical
+  `slugifyHood` fixed-point enforced), status_label (constrained to
+  NOW SELLING / MODELS OPEN / FINAL PHASE / SOLD OUT; default
+  NOW SELLING; null for hoods), from_label (`$230s` shape validated),
+  builders_count/label, note (≤200 chars), `mls_snapshot_json` evidence.
+- **Collision blocks (3 layers):** dataset check against the city's
+  hoods AND newBuilds (this also blocks the six deferred existing-hood
+  conversions — Devonshire, Mustang Lakes, Star Trail, Cambridge
+  Crossing, Silverado, Monterra — until precedence is its own phase);
+  live-drafts uniqueness query; DB partial unique index
+  `(city_slug, slug) where lifecycle <> 'archived'` as the last line.
+- Lookup reads OUR replicated listings store only (no external calls,
+  no writes): Active/Pending/AUC built ≥ 2025, city column holds NAMES
+  (mapped from the slug), normalization/lexicon copied from the NB-1
+  seed script (change a rule there → change it here). Returns counts,
+  QMI estimate (same READY_NOW heuristic as `--stats`), alias variants,
+  MLS-observed builders (labeled "not a verified roster"), suggested
+  band (floor rounded DOWN to the $10K band, applied only by explicit
+  click), cross-city homonym warnings, and a `truncated` flag when a
+  page cap was hit (partial scans say so).
+- Audit: every create/update/archive writes a `verification_events` row
+  (`entity_type='community_draft'`, entity_slug `city/slug`); migration
+  `0012` extends the `action` check with create/update/archive. An audit
+  insert failure is surfaced in the response banner, never swallowed.
+- Migration `0012` (apply-gated like 0009–0011): `community_drafts` +
+  partial unique index + touch trigger + RLS (no policies) + the
+  verification_events constraint extension. Until applied: the page
+  renders with an empty list and CRUD returns 503 "has 0012 been
+  applied?" — nothing else breaks. Rollback is comment-only; if any
+  draft events exist, leave the extended constraint (audit history is
+  never rewritten).
+- v1 exclusions (each a future gate): CB-2 exporter, photo
+  attach/upload from this surface, builder-site discovery, Claude
+  scoring, bulk creation, linking drafts to `new_build_communities`.
+- Gates after merge: (1) apply 0012; (2) ONE supervised first draft
+  (create → lookup → edit → ready toggle → archive round-trip);
+  (3) normal use.
 
 ### NB-1 notes — new-build community seeder (existing data only)
 
