@@ -404,6 +404,10 @@ export default function SearchToolbar({
         </datalist>
       </div>
 
+      {/* pills row — desktop: display:contents keeps the single-row layout;
+          mobile: becomes a horizontal-scroll strip under the full-width
+          search box (globals.css .ddfw-toolbar-pills) */}
+      <div className="ddfw-toolbar-pills">
       {/* PRICE popover */}
       <div data-ddfw-pop style={{ position: "relative" }}>
         <PopButton
@@ -654,6 +658,7 @@ export default function SearchToolbar({
       )}
 
       <SaveSearchButton payload={savePayload} />
+      </div>
     </div>
   );
 }

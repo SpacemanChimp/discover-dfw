@@ -9,6 +9,7 @@ export default function SearchNav() {
   const shelf = useShelf();
   return (
     <nav
+      className="homes-search-nav"
       style={{
         position: "sticky",
         top: 0,

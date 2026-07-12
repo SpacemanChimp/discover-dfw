@@ -218,9 +218,17 @@ body {
 .homes-map {
   flex: 1;
   position: sticky;
-  top: 63px;
-  height: calc(100vh - 63px);
+  /* below the sticky SearchNav (66px) + stuck toolbar (74px single-row) */
+  top: 138px;
+  height: calc(100vh - 138px);
   min-height: 480px;
+}
+/* 941–1249px the toolbar wraps to two rows (126px) — drop the map further */
+@media (max-width: 1249px) {
+  .homes-map {
+    top: 190px;
+    height: calc(100vh - 190px);
+  }
 }
 .mobile-only { display: none; }
 .rail-skeleton-card { animation: railPulse 1.6s ease-in-out infinite; }
@@ -270,6 +278,92 @@ body {
   .ddfw-toolbar input,
   .ddfw-toolbar select {
     font-size: 16px !important;
+  }
+}
+
+/* ---------- sticky search toolbar + mobile nav strips ---------- */
+
+/* /homes toolbar stays visible while scrolling — desktop: pinned just
+   under the sticky SearchNav; behavior/URL params untouched (pure CSS +
+   one wrapper div). z-index sits below the nav (60) and above content. */
+.ddfw-toolbar {
+  position: sticky;
+  /* nav is 66px tall — tuck 2px under it so no seam ever shows */
+  top: 64px;
+  z-index: 55;
+}
+/* desktop: the pills wrapper is layout-invisible — the toolbar reads as
+   the same single row it always was */
+.ddfw-toolbar-pills {
+  display: contents;
+}
+
+@media (max-width: 940px) {
+  /* phones: the search nav scrolls away and the toolbar owns the top —
+     two sticky bars would eat a 375px viewport */
+  .homes-search-nav {
+    position: static !important;
+  }
+  .ddfw-toolbar {
+    top: 0;
+    padding: 10px 4vw 8px !important;
+    row-gap: 8px !important;
+  }
+  /* search box first, full width */
+  .ddfw-toolbar > div:first-child {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+  /* filters become one horizontally scrolling strip — never a tall stack */
+  .ddfw-toolbar-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .ddfw-toolbar-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .ddfw-toolbar-pills > * {
+    flex: 0 0 auto;
+  }
+}
+
+/* homepage nav — mobile is one short row: wordmark + scrolling chips */
+.site-nav-mobile {
+  display: none;
+}
+@media (max-width: 940px) {
+  .site-nav {
+    flex-wrap: nowrap !important;
+    gap: 14px !important;
+    padding: 10px 4vw !important;
+  }
+  .site-nav-desktop {
+    display: none !important;
+  }
+  .site-nav .btn-letter {
+    display: none !important;
+  }
+  .site-nav-mobile {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .site-nav-mobile::-webkit-scrollbar {
+    display: none;
+  }
+  .site-nav-mobile > a {
+    flex: 0 0 auto;
   }
 }
 

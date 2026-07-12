@@ -31,6 +31,7 @@ export default function Nav() {
 
   return (
     <nav
+      className="site-nav"
       style={{
         position: "sticky",
         top: 0,
@@ -46,7 +47,10 @@ export default function Nav() {
       }}
     >
       <Wordmark href="/#top" fontSize={21} />
+
+      {/* desktop links — hidden ≤940px in favor of the scroll strip */}
       <div
+        className="site-nav-desktop"
         style={{
           display: "flex",
           gap: 26,
@@ -90,6 +94,23 @@ export default function Nav() {
           SEARCH HOMES
         </Link>
       </div>
+
+      {/* mobile: one short row — wordmark + horizontally scrolling chips;
+          no vertical stacking, header stays ~56px (globals.css .site-nav-*) */}
+      <div className="site-nav-mobile font-mono" aria-label="Site sections">
+        <Link href="/homes" style={{ ...chip, color: "#F6F1E6", background: "#D9481F", borderColor: "#D9481F" }}>
+          SEARCH
+        </Link>
+        {LINKS.map(({ id, label }) => (
+          <Link key={id} href={`/#${id}`} style={chip}>
+            {label}
+          </Link>
+        ))}
+        <Link href="/#newsletter" style={{ ...chip, color: "#F6F1E6", background: "#1D1913", borderColor: "#1D1913" }}>
+          THE LETTER
+        </Link>
+      </div>
+
       <Link
         href="/#newsletter"
         className="btn-letter"
@@ -111,3 +132,15 @@ export default function Nav() {
     </nav>
   );
 }
+
+const chip: React.CSSProperties = {
+  color: "#1D1913",
+  textDecoration: "none",
+  fontSize: 10.5,
+  fontWeight: 700,
+  letterSpacing: ".12em",
+  padding: "7px 13px",
+  borderRadius: 999,
+  border: "1.5px solid rgba(29,25,19,.45)",
+  whiteSpace: "nowrap",
+};
