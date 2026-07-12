@@ -134,9 +134,12 @@ export default async function HoodPage({
   const content = contentFor(c, h);
   const nb = h.newBuild;
 
-  /* CI-3: approved hero photo (photo_assets is human-gated; empty →
-     the placeholder below renders unchanged) */
+  /* CI-3: approved hero photo (photo_assets is human-gated). Public pages
+     render the hero column ONLY when an approved asset exists — no asset
+     means the text layout simply owns the row (no public "DROP PHOTO" box;
+     the Photo Desk keeps the missing slot as an upload target). */
   const photos = await getApprovedPhotos("neighborhood", `${c.slug}/${h.slug}`);
+  const heroPhoto = photos.get(photoKey(`${c.slug}/${h.slug}`, "hero"));
 
   /* NB inventory band: renders ONLY for published new-build communities
      with a snapshot above the thin-inventory threshold — null (today's
@@ -741,41 +744,24 @@ export default async function HoodPage({
                 </div>
               )}
             </div>
-            <div data-reveal="1">
-              <EditorialPhoto
-                photo={photos.get(photoKey(`${c.slug}/${h.slug}`, "hero"))}
-                priority
-                className="gallery-slot"
-                style={{
-                  aspectRatio: "4 / 3",
-                  border: "2px solid #1D1913",
-                  borderRadius: 18,
-                  background: "repeating-linear-gradient(-45deg,#EFE7D6 0 12px,#E7DDC7 12px 24px)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: 18,
-                }}
-              >
-                <span
-                  className="font-mono"
+            {/* photo column exists only with an approved asset — otherwise the
+                text column owns the row (auto-fit grid stretches it) */}
+            {heroPhoto && (
+              <div data-reveal="1">
+                <EditorialPhoto
+                  photo={heroPhoto}
+                  priority
+                  className="gallery-slot"
                   style={{
-                    fontSize: 10,
-                    letterSpacing: ".16em",
-                    color: "rgba(29,25,19,.6)",
-                    background: "rgba(246,241,230,.9)",
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    border: "1px dashed rgba(29,25,19,.4)",
-                    textAlign: "center",
-                    lineHeight: 1.7,
+                    aspectRatio: "4 / 3",
+                    border: "2px solid #1D1913",
+                    borderRadius: 18,
                   }}
                 >
-                  DROP PHOTO —<br />
-                  {h.name.toUpperCase()} STREETSCAPE
-                </span>
-              </EditorialPhoto>
-            </div>
+                  {null}
+                </EditorialPhoto>
+              </div>
+            )}
           </div>
         </section>
       )}
