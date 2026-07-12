@@ -18,6 +18,9 @@ export async function sendEmail(opts: {
   replyTo?: string;
   /** Extra SMTP headers — e.g. List-Unsubscribe on recurring digests. */
   headers?: Record<string, string>;
+  /** Sender override — e.g. The Letter's letter@ (defaults to alerts@).
+      Same verified domain; local-part-only changes need no new DNS. */
+  from?: string;
 }): Promise<{ ok: boolean; error?: string; dryRun?: boolean }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -36,7 +39,7 @@ export async function sendEmail(opts: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: FROM,
+        from: opts.from ?? FROM,
         to: [opts.to],
         subject: opts.subject,
         html: opts.html,
