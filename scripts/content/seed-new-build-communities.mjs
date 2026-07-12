@@ -420,12 +420,15 @@ async function runApply() {
   process.exitCode = failed > 0 ? 1 : 0;
 }
 
-const median = (nums) => {
+/* function declaration (hoisted) — runStats executes during module
+   evaluation, BEFORE a const defined below the dispatch would initialize
+   (the TDZ crash that stamped the first stats run success/0) */
+function median(nums) {
   const v = nums.filter((n) => n != null && isFinite(n)).sort((a, b) => a - b);
   if (!v.length) return null;
   const mid = Math.floor(v.length / 2);
   return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
-};
+}
 
 async function runStats() {
   const run = await claimRun("new_build_inventory_stats");
@@ -465,6 +468,10 @@ async function runStats() {
       if (error) { failed++; console.warn(`  ${c.slug}: snapshot failed — ${error.message}`); }
       else snapshots++;
     }
+  } catch (e) {
+    // a thrown iteration must stamp the run partial, never success
+    failed++;
+    console.error(`STATS run threw: ${e.message}`);
   } finally {
     await db
       .from("content_job_runs")
