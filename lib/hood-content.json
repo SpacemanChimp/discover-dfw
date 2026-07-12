@@ -2061,6 +2061,55 @@
    ]
   }
  },
+ "celina/mosaic": {
+  "tagline": "Celina's patchwork of plans, priced across the spectrum",
+  "intro": [
+   "Mosaic wears its name honestly: a deliberate patchwork of lot sizes, elevations and price points rather than one repeated formula. In a Celina boom that sometimes blurs into sameness, that variety is the differentiator — streets here read as assembled, not stamped.",
+   "The buyer profile is wider than most Celina plans as a result. The $380s entry band undercuts much of the city's new-construction map, while the upper plans stretch comfortably beyond it, letting move-up buyers and first-timers land in the same community without either subsidizing the other."
+  ],
+  "homes": "The MLS-matched builder mix is a Celina who's-who — Highland, Perry, Bloomfield, American Legend and Drees all show active listings — spanning compact cottage-style plans to full-size family footprints. Entry opens in the $380s band with meaningful range above it.",
+  "highlights": [
+   {
+    "title": "The variety",
+    "note": "Multiple lot sizes and plan families in one community — rare in the boom belt."
+   },
+   {
+    "title": "The entry band",
+    "note": "$380s opens the door in a city where new construction often starts higher."
+   },
+   {
+    "title": "The Celina trajectory",
+    "note": "One of the fastest-growing cities in Texas, with the Dallas North Tollway extension reshaping its math."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Where is Mosaic?",
+    "a": "Mosaic is a new-build community in Celina, Texas, in the heart of Collin County's northern growth corridor, north of Prosper and Frisco."
+   },
+   {
+    "q": "What do homes cost in Mosaic?",
+    "a": "MLS-matched active listings have recently opened in the $380s band, with larger plans ranging well above it. Verify current phase pricing with the sales offices."
+   },
+   {
+    "q": "Who is building in Mosaic?",
+    "a": "Our MLS-matched listings show Highland, Perry, Bloomfield, American Legend and Drees among the active names — a listing-data observation rather than a definitive roster, since builder mixes rotate by phase."
+   }
+  ],
+  "newBuild": {
+   "amenities": [
+    "Amenity packages build out with the phases — confirm what's open today at the sales offices."
+   ],
+   "buyerNotes": [
+    "Inventory counts on DiscoverDFW are MLS-matched estimates; builder spec inventory may differ.",
+    "Treat the published price band as a starting point — releases and incentives change quickly, so verify on site."
+   ]
+  },
+  "seo": {
+   "title": "Mosaic in Celina, TX — New Homes From the $380s",
+   "description": "Mosaic mixes plans and price points on Celina's booming grid: new construction from the $380s with Highland, Perry and a five-builder MLS mix behind it."
+  }
+ },
  "celina/mustang-lakes": {
   "tagline": "East-side water, big skies, and a clubhouse doing the heavy lifting",
   "intro": [
@@ -2104,6 +2153,55 @@
     "a": "The community is known for its resort-style amenity package built around its lakes — a clubhouse complex, pools, trails, and open space that make the water part of daily life rather than a photo backdrop. The east-side setting means those amenities serve a neighborhood crowd instead of a thoroughfare. Tour on a weekend to see the amenity core actually in use."
    }
   ]
+ },
+ "celina/the-parks-at-wilson-creek": {
+  "tagline": "The green-threaded middle of the Celina boom",
+  "intro": [
+   "The Parks at Wilson Creek stakes its identity on the plural in its name — greens and park spaces threaded between the streets rather than one token playground by the entrance. In a Celina market where communities compete on square footage, this one competes on what's between the houses.",
+   "It sits squarely in the boom's center of gravity, with the corridor's retail and schools construction racing to keep pace around it. The $410s entry band positions it above the city's starter plans and below its trophy streets — the middle Celina actually lives in."
+  ],
+  "homes": "Three heavyweight names — Highland, Perry and David Weekley — carry the MLS-matched active inventory, which keeps quality consistent across the community's family-scale plans. Pricing opens in the $410s band and climbs with lot and footprint.",
+  "highlights": [
+   {
+    "title": "The parks",
+    "note": "Green space distributed through the plan, not parked at the entrance for the brochure."
+   },
+   {
+    "title": "The builder trio",
+    "note": "Highland, Perry and Weekley in the MLS mix — three of the metro's most established names."
+   },
+   {
+    "title": "Boom-center location",
+    "note": "In the thick of Celina's growth corridor as the Tollway extension pulls the metro north."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Where is The Parks at Wilson Creek?",
+    "a": "The Parks at Wilson Creek is a new-build community in Celina, Texas, in central Collin County's northern growth corridor between Preston Road and the Dallas North Tollway's path north."
+   },
+   {
+    "q": "What do homes cost at The Parks at Wilson Creek?",
+    "a": "Active MLS-matched listings have recently opened in the $410s band. Phase releases move pricing, so confirm current numbers with the sales offices before touring."
+   },
+   {
+    "q": "Who is building at The Parks at Wilson Creek?",
+    "a": "MLS-matched listings show Highland Homes, Perry Homes and David Weekley Homes carrying the inventory — an observation from listing data rather than a definitive lineup."
+   }
+  ],
+  "newBuild": {
+   "amenities": [
+    "Amenity packages build out with the phases — confirm what's open today at the sales offices."
+   ],
+   "buyerNotes": [
+    "Inventory counts on DiscoverDFW are MLS-matched estimates; builder spec inventory may differ.",
+    "Treat the published price band as a starting point — releases and incentives change quickly, so verify on site."
+   ]
+  },
+  "seo": {
+   "title": "The Parks at Wilson Creek — Celina New Homes, $410s Band",
+   "description": "Park-laced streets in the middle of the Celina boom: The Parks at Wilson Creek opens in the $410s with Highland, Perry and David Weekley in the MLS mix."
+  }
  },
  "colleyville/caldwell-s-creek": {
   "tagline": "Sidewalks, shade, and a creek doing the landscaping",
@@ -2867,6 +2965,55 @@
     "a": "That's the whole point. The square's cafes, boutiques, and boot-and-biscuit staples sit at the center of these blocks, and most houses put you within an easy stroll. In a region built around parking lots, a Decatur address where dinner and errands happen on foot is a genuinely rare thing in North Texas."
    }
   ]
+ },
+ "denton/landmark": {
+  "tagline": "Denton finally builds itself a big new neighborhood",
+  "intro": [
+   "Big master plans usually happen where land is empty, which is exactly why Landmark is unusual: a genuinely large new community inside Denton proper — a city with a courthouse square, two universities, and an actual culture — rather than out where the map runs out of names.",
+   "That context is the sell. Buyers here get new-construction convenience without trading away the college-town texture: live music downtown, Saturday farmers markets, and a workforce anchor in the universities. The $400s entry band prices that combination against far more anonymous corners of the metro."
+  ],
+  "homes": "Landmark's MLS-matched inventory shows the deepest builder bench of any community we track in Denton — eight names including Drees, Perry, Tri Pointe, David Weekley, Coventry and Highland — from right-sized single-family plans to larger family footprints, opening in the $400s band.",
+  "highlights": [
+   {
+    "title": "City, not fringe",
+    "note": "Inside Denton proper — square, universities, music halls — not a bare-field address."
+   },
+   {
+    "title": "Eight builders",
+    "note": "The deepest MLS-observed builder mix we track in the city, with the plan variety to match."
+   },
+   {
+    "title": "The I-35 seam",
+    "note": "Denton sits where I-35E and I-35W split, putting both halves of the metro in reach."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Where is Landmark?",
+    "a": "Landmark is a new-build community inside Denton, Texas — the county seat and university town at the top of the metro where I-35 splits into its east and west branches."
+   },
+   {
+    "q": "What do homes cost in Landmark?",
+    "a": "Active MLS-matched listings have recently opened in the $400s band. Verify current phases and pricing with the sales offices — releases move quickly in Denton's tight new-build market."
+   },
+   {
+    "q": "Who is building in Landmark?",
+    "a": "Our MLS-matched listings show an unusually deep mix — Drees, Perry, Tri Pointe, David Weekley, Coventry, Highland and more. Treat the list as observed from listing data, not a definitive roster."
+   }
+  ],
+  "newBuild": {
+   "amenities": [
+    "Amenity packages build out with the phases — confirm what's open today at the sales offices."
+   ],
+   "buyerNotes": [
+    "Inventory counts on DiscoverDFW are MLS-matched estimates; builder spec inventory may differ.",
+    "Treat the published price band as a starting point — releases and incentives change quickly, so verify on site."
+   ]
+  },
+  "seo": {
+   "title": "Landmark in Denton, TX: A Big New Plan Inside the City",
+   "description": "Landmark is Denton's rare large-scale new community — an eight-builder MLS mix from the $400s inside a real city with a real square, not a bare-field suburb."
+  }
  },
  "denton/oak-hickory-district": {
   "tagline": "Porch swings and pier-and-beam within earshot of the square",
@@ -3771,6 +3918,55 @@
    ]
   }
  },
+ "forney/meraki": {
+  "tagline": "Forney's next wave, built with a little more intention",
+  "intro": [
+   "Meraki — the Greek notion of putting soul into the work — is an ambitious name for a Forney subdivision, and the community mostly earns it: more deliberate streetscapes and plan variety than the east side's volume norm, without abandoning the price discipline that makes Forney work.",
+   "Forney itself is the quiet overachiever of the eastern metro, riding US-80 straight into Dallas while its rooftops multiply. Meraki's $320s entry band slots into the city's middle — above the starter plans, below the acreage dreams — where most of its actual demand lives."
+  ],
+  "homes": "The MLS-matched mix pairs national names — Perry, Highland, Bloomfield, American Legend — with Westfield Homes carrying inventory as well, across mid-size family plans. Pricing opens in the $320s band, mid-market for Forney's new-construction map.",
+  "highlights": [
+   {
+    "title": "The US-80 line",
+    "note": "A straight highway shot west into Dallas — the east side's simplest commute story."
+   },
+   {
+    "title": "Mid-band pricing",
+    "note": "$320s entry positions Meraki between Forney's starter plans and its stretch streets."
+   },
+   {
+    "title": "Design intent",
+    "note": "More varied elevations and streetscapes than the corridor's volume default."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Where is Meraki?",
+    "a": "Meraki is a new-build community in Forney, Texas, in Kaufman County on the metro's east flank, with US-80 carrying commuters straight into Dallas."
+   },
+   {
+    "q": "What do homes cost in Meraki?",
+    "a": "Active MLS-matched listings have recently opened in the $320s band. Confirm current releases and pricing with the sales offices — Forney's mid-band moves fast."
+   },
+   {
+    "q": "Who is building in Meraki?",
+    "a": "MLS-matched listings show Perry, Highland, Bloomfield, American Legend and Westfield Homes active — observed from listing data rather than a definitive lineup."
+   }
+  ],
+  "newBuild": {
+   "amenities": [
+    "Amenity packages build out with the phases — confirm what's open today at the sales offices."
+   ],
+   "buyerNotes": [
+    "Inventory counts on DiscoverDFW are MLS-matched estimates; builder spec inventory may differ.",
+    "Treat the published price band as a starting point — releases and incentives change quickly, so verify on site."
+   ]
+  },
+  "seo": {
+   "title": "Meraki in Forney, TX — New Construction From the $320s",
+   "description": "Meraki is Forney's design-minded next wave: mid-band new construction from the $320s with a five-builder MLS mix on the metro's fast-growing east flank."
+  }
+ },
  "forney/travis-ranch": {
   "tagline": "Forney value on the quiet side of Lake Ray Hubbard",
   "intro": [
@@ -4133,6 +4329,10 @@
     "Treat pricing from the $500s as the starting line, not the finish. Corner lots, greenbelt backings, and oversized homesites carry premiums, and design-center selections add up quickly — set a firm upgrade budget before you tour the models.",
     "Master-planned amenities are funded through the HOA, so read the assessment schedule and covenants before you sign. Confirm which facilities are built today versus planned for later phases, and get delivery expectations in writing rather than off a site map."
    ]
+  },
+  "seo": {
+   "title": "Walsh in Fort Worth, TX — A 7,200-Acre Master Plan",
+   "description": "Walsh is Fort Worth's west-side epic: a 7,200-acre, fiber-first master plan with new homes from the $500s and a ten-builder bench building for decades."
   }
  },
  "frisco/fields": {
@@ -5851,6 +6051,55 @@
    }
   ]
  },
+ "lavon/elevon": {
+  "tagline": "A whole town's worth of rooftops rising off Highway 78",
+  "intro": [
+   "Elevon does not do subtle. It is one of the biggest master plans in the metro's northeast corridor, stamping street after street into the Lavon prairie along Highway 78 — and it is doing it at price points most of the metro abandoned years ago.",
+   "The buyers it fits are the ones playing the long game: get into a new house in the $240s band now, let the corridor's growth do the compounding. Lake Lavon sits minutes away for the weekends, and the 78 corridor carries you down toward Wylie and the George Bush tollway when it's time to commute."
+  ],
+  "homes": "The MLS mix here runs deep — Trophy Signature, HistoryMaker, UnionMain, M/I and Pacesetter all show up in active listings we match — with efficient starter and move-up plans dominating. Entry pricing opens in the $240s band, and volume means real choice on lots and timelines.",
+  "highlights": [
+   {
+    "title": "The scale",
+    "note": "One of the northeast corridor's largest master plans, with phases still unfolding."
+   },
+   {
+    "title": "The price of entry",
+    "note": "An entry band in the $240s that undercuts most of Collin County's new-build map."
+   },
+   {
+    "title": "Lake Lavon",
+    "note": "Boating, fishing, and shoreline parks a short drive from the front gate."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Where is Elevon?",
+    "a": "Elevon is a master-planned community in Lavon, Texas, along the Highway 78 corridor on the northeast edge of the Dallas–Fort Worth metro, near Lake Lavon."
+   },
+   {
+    "q": "What do homes cost in Elevon?",
+    "a": "Active MLS-matched listings have recently opened in the $240s band — one of the lower new-construction entry points we track in the metro. Verify current phases and pricing with the sales offices."
+   },
+   {
+    "q": "Who is building in Elevon?",
+    "a": "Our MLS-matched listings show a deep builder mix — Trophy Signature, HistoryMaker, UnionMain and M/I Homes among them. Treat that as listing-data observation rather than a definitive lineup; the mix shifts as phases release."
+   }
+  ],
+  "newBuild": {
+   "amenities": [
+    "Amenity packages build out with the phases — confirm what's open today at the sales offices."
+   ],
+   "buyerNotes": [
+    "Inventory counts on DiscoverDFW are MLS-matched estimates; builder spec inventory may differ.",
+    "Treat the published price band as a starting point — releases and incentives change quickly, so verify on site."
+   ]
+  },
+  "seo": {
+   "title": "Elevon in Lavon, TX — Master-Plan Homes From the $240s",
+   "description": "Elevon is the northeast corridor's volume play: a giant Lavon master plan with entry-band pricing, four-plus builders in the MLS mix, and Lake Lavon nearby."
+  }
+ },
  "little-elm/paloma-creek": {
   "tagline": "The established master plan that still pencils out",
   "intro": [
@@ -6622,6 +6871,55 @@
    }
   ]
  },
+ "mesquite/solterra": {
+  "tagline": "Master-plan scale without surrendering the east side",
+  "intro": [
+   "Most master plans of Solterra's ambition get built an hour from anything. This one landed in Mesquite — the east side's blue-collar stalwart — and that geography is the whole pitch: new-construction streets at prices the far-north suburbs charge, without giving up a close-in commute.",
+   "Downtown Dallas sits roughly twenty-five minutes west on US-80 or I-30, and the I-635 loop is close enough to make the rest of the metro practical. For buyers priced out of the northern arc who refuse a ninety-minute day in the car, Solterra is the counterargument."
+  ],
+  "homes": "Active MLS-matched inventory shows a genuinely varied builder bench — First Texas, David Weekley, Brightland, Lennar and Coventry all carry listings here — from compact starters up through roomier family plans. The band opens in the $280s, with the variety to climb from there.",
+  "highlights": [
+   {
+    "title": "Close-in math",
+    "note": "East-side geography keeps downtown Dallas a real commute, not an expedition."
+   },
+   {
+    "title": "The builder bench",
+    "note": "Five national names in the MLS mix means competing specs and real plan variety."
+   },
+   {
+    "title": "Scale",
+    "note": "Mesquite's biggest new master plan, with phased growth still ahead."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Where is Solterra?",
+    "a": "Solterra is a master-planned community in Mesquite, Texas, on the east side of the Dallas–Fort Worth metro with quick reach to US-80, I-30 and the I-635 loop."
+   },
+   {
+    "q": "What do homes cost in Solterra?",
+    "a": "MLS-matched active listings have recently opened in the $280s band. Phases and releases move the numbers, so confirm current pricing with the sales offices before you tour."
+   },
+   {
+    "q": "How far is Solterra from downtown Dallas?",
+    "a": "Plan on roughly twenty-five minutes to downtown Dallas outside of rush hour — one of the shortest big-city commutes any metro master plan of this scale can offer."
+   }
+  ],
+  "newBuild": {
+   "amenities": [
+    "Amenity packages build out with the phases — confirm what's open today at the sales offices."
+   ],
+   "buyerNotes": [
+    "Inventory counts on DiscoverDFW are MLS-matched estimates; builder spec inventory may differ.",
+    "Treat the published price band as a starting point — releases and incentives change quickly, so verify on site."
+   ]
+  },
+  "seo": {
+   "title": "Solterra Mesquite: East-Side New Homes in the $280s Band",
+   "description": "Solterra brings master-plan scale to Mesquite's east side — new construction from the $280s with a five-builder MLS mix and a real downtown Dallas commute."
+  }
+ },
  "midlothian/lawson-farms": {
   "tagline": "Proof that a solid family neighborhood never goes out of style",
   "intro": [
@@ -7342,7 +7640,7 @@
   "tagline": "Where the front porch is the whole point",
   "intro": [
    "Pecan Square is the community that put Northlake on the map for a lot of DFW house hunters, and it did it with porches. Streets here are built for the slow wave — neighbors on rockers, kids looping the block, an events lawn that seems to have something scheduled every weekend. Toss in a coworking barn for the work-from-home crowd and you get a master plan that actually functions like a small town.",
-   "The location does real work, too. You're right on the 35W corridor, which puts downtown Fort Worth about 30 minutes away and DFW Airport at roughly 26 — rare numbers for a neighborhood that still feels like open country at the edges. Kids attend Northwest ISD schools, and because the community is still selling, the neighbor moving in next door is probably as new to North Texas as you are. Everybody's starting fresh together, which makes friendships come easy."
+   "The location does real work, too. You're right on the 35W corridor, which puts downtown Fort Worth about 30 minutes away and DFW Airport at roughly 26 — rare numbers for a neighborhood that still feels like open country at the edges. Schools run through Northwest ISD — verify assignments by address with the district, and because the community is still selling, the neighbor moving in next door is probably as new to North Texas as you are. Everybody's starting fresh together, which makes friendships come easy."
   ],
   "homes": "New construction in Pecan Square starts from the $480s, with a deep bench of builders offering everything from tidy cottage plans to roomier family layouts. The common thread is the porch: elevations are designed street-first, so homes engage the sidewalk instead of hiding behind a garage. Lots run the typical master-plan range — manageable yards that trade mowing time for amenity access. It suits first-time master-plan buyers, relocating families who want built-in social life, and remote workers who'd rather commute to a coworking barn than a tollway. If you want acreage, look west; if you want neighbors, this is the spot.",
   "highlights": [
@@ -7397,6 +7695,10 @@
     "Base price and final price are different animals in a design-center community. Get a written list of what the model home includes versus what's standard, and hold back a real cushion for structural options and upgrades.",
     "Amenity-rich master plans come with active HOAs. Read the covenants before you commit, fold the dues into your monthly math, and ask how amenity operations are funded as the community continues to build out."
    ]
+  },
+  "seo": {
+   "title": "Pecan Square, Northlake TX — New Homes & Community Guide",
+   "description": "Pecan Square is Northlake's front-porch flagship: new homes from the $480s, a packed events calendar, and the deepest builder lineup on the 35W corridor."
   }
  },
  "parker/hidden-creek": {
@@ -7778,6 +8080,55 @@
     "a": "Both, and often on the same street. A large share of the estates have been thoroughly remodeled — kitchens, baths, outdoor living — while others remain close to original condition and are priced accordingly. That mix is an opportunity: buyers with renovation appetite can land a large home on a great lot and shape it, while turnkey shoppers can hold out for a finished one."
    }
   ]
+ },
+ "princeton/eastridge": {
+  "tagline": "Princeton's straight-ahead starter play",
+  "intro": [
+   "EastRidge is Princeton doing what Princeton does best: honest starter housing on the US-380 corridor without theatrical amenities inflating the price. The community grows in workmanlike phases east of McKinney, where the corridor's boom keeps marching and the land still prices like the frontier it recently was.",
+   "The math is the story. An entry band in the $270s buys new construction fifteen-odd minutes from McKinney's employment and retail gravity — a trade thousands of first-time buyers along 380 have already taken, and EastRidge's inventory depth suggests plenty more will."
+  ],
+  "homes": "Two volume builders — Trophy Signature and Meritage — carry nearly all of the MLS-matched active inventory, which keeps the offering focused: efficient single-family plans, quick timelines, and pricing that opens in the $270s band. Less variety than the mega-plans, more clarity.",
+  "highlights": [
+   {
+    "title": "The 380 corridor",
+    "note": "US-380 ties Princeton straight into McKinney, Frisco, and the northern arc's jobs."
+   },
+   {
+    "title": "Starter pricing",
+    "note": "A $270s entry band in a county where new construction routinely starts far higher."
+   },
+   {
+    "title": "Inventory depth",
+    "note": "Consistently among the deeper new-build inventories we match in the corridor."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Where is EastRidge?",
+    "a": "EastRidge is a new-build community in Princeton, Texas, on the US-380 corridor east of McKinney in Collin County, on the metro's fast-growing northeast side."
+   },
+   {
+    "q": "What do homes cost in EastRidge?",
+    "a": "Active MLS-matched listings have recently opened in the $270s band. Pricing moves with releases, so verify today's numbers directly with the sales offices."
+   },
+   {
+    "q": "Who is building in EastRidge?",
+    "a": "MLS-matched listings are carried almost entirely by two national volume builders, Trophy Signature and Meritage. That's a listing-data observation, not a definitive lineup — mixes change as communities grow."
+   }
+  ],
+  "newBuild": {
+   "amenities": [
+    "Amenity packages build out with the phases — confirm what's open today at the sales offices."
+   ],
+   "buyerNotes": [
+    "Inventory counts on DiscoverDFW are MLS-matched estimates; builder spec inventory may differ.",
+    "Treat the published price band as a starting point — releases and incentives change quickly, so verify on site."
+   ]
+  },
+  "seo": {
+   "title": "EastRidge in Princeton, TX — Starter Homes on US-380",
+   "description": "EastRidge pairs Princeton's starter-friendly pricing with US-380 corridor access: new homes from the $270s and two volume builders carrying deep MLS inventory."
+  }
  },
  "prosper/lakes-of-la-cima": {
   "tagline": "Prosper's settled east side, where the trees got there first",
