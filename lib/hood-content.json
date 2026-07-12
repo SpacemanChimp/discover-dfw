@@ -3420,6 +3420,55 @@
    }
   ]
  },
+ "farmersville/lakehaven": {
+  "tagline": "Farmersville's front porch on the metro's quiet edge",
+  "intro": [
+   "LakeHaven is what the far northeast corner of the metro does best: room to breathe at a price that still exists. Farmersville keeps its small-town rhythm — a historic downtown square, feed-store pragmatism, no tollway hum — and LakeHaven adds new rooftops to it without pretending to be Frisco.",
+   "The trade is distance. You are a real drive from the big employment cores, and US-380 is the artery that gets you there. In exchange, buyers get one of the lowest new-construction entry points we track in the metro, with Lake Lavon a short hop south for weekends on the water."
+  ],
+  "homes": "New construction here opens in the $230s band, and the active inventory we match through MLS runs heavily to efficient starter plans. Two national builders account for nearly all of the MLS-observed listings — Meritage Homes and Trophy Signature Homes — though counts like these are observations from listing data, not a roster. Expect compact lots, quick timelines, and pricing that undercuts most of Collin County's new-build map.",
+  "highlights": [
+   {
+    "title": "The price of entry",
+    "note": "Among the lowest new-construction floors we track anywhere in the metro."
+   },
+   {
+    "title": "Lake Lavon",
+    "note": "A short drive south for boating, fishing, and shoreline weekends."
+   },
+   {
+    "title": "The 380 corridor",
+    "note": "US-380 ties Farmersville to Princeton, McKinney, and the rest of the northern arc."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Where is LakeHaven?",
+    "a": "LakeHaven is a new-build community in Farmersville, Texas, on the far northeast edge of the Dallas–Fort Worth metro in Collin County, a short drive north of Lake Lavon."
+   },
+   {
+    "q": "What do homes cost in LakeHaven?",
+    "a": "Active MLS-matched listings have recently opened in the $230s band, one of the lowest new-construction entry points we track. Pricing moves with phases and releases, so verify current numbers with the sales offices before you tour."
+   },
+   {
+    "q": "Who is building in LakeHaven?",
+    "a": "Our MLS-matched listings are dominated by two national builders, Meritage Homes and Trophy Signature Homes. Treat that as an observation from listing data rather than a definitive lineup — builder mixes change as communities grow."
+   }
+  ],
+  "newBuild": {
+   "amenities": [
+    "Community amenities build out in phases — confirm what's open today with the sales offices."
+   ],
+   "buyerNotes": [
+    "Inventory counts on DiscoverDFW are MLS-matched estimates; builder spec inventory may differ.",
+    "Treat the $230s band as a starting point — current releases and incentives change quickly, so verify on site."
+   ]
+  },
+  "seo": {
+   "title": "LakeHaven in Farmersville, TX — New Homes From the $230s",
+   "description": "LakeHaven pairs some of DFW's lowest new-construction pricing with small-town Farmersville living near Lake Lavon. Homes, MLS-matched inventory, and FAQs."
+  }
+ },
  "flower-mound/bridlewood": {
   "tagline": "Fairways, bridle paths, and trees with real seniority",
   "intro": [
