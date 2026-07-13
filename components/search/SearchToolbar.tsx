@@ -363,6 +363,12 @@ export default function SearchToolbar({
         borderBottom: "1.5px solid rgba(29,25,19,.2)",
         background: "#F2EBDC",
         flexWrap: "wrap",
+        /* the sticky toolbar's stacking context is z 55 (globals.css) — under
+           Leaflet's panes (400+). Fine until mobile MAP view, where an open
+           popover hangs over the map and paints INVISIBLY beneath it. While a
+           popover is open, lift the whole context above every map overlay
+           (dots/controls/chip/toggle top out at 1400). */
+        zIndex: open ? 1500 : undefined,
       }}
     >
       <div
