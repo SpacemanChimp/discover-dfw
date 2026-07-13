@@ -52,6 +52,11 @@ const SELECT = [
   "SubdivisionName", "Latitude", "Longitude", "PublicRemarks", "ListOfficeName",
   "OriginatingSystemName", "ModificationTimestamp", "PhotosCount", "CumulativeDaysOnMarket",
   "NewConstructionYN", "ArchitecturalStyle",
+  // MLS-reported schools — land in `raw` for the local provider. Rows synced
+  // before this line need a full backfill (?full=1) to pick them up; until
+  // then detail pages supplement live via trestle getListingSchools().
+  "ElementarySchool", "ElementarySchoolDistrict", "MiddleOrJuniorSchool",
+  "MiddleOrJuniorSchoolDistrict", "HighSchool", "HighSchoolDistrict",
 ].join(",");
 
 const q = (s: string) => `'${s.replace(/'/g, "''")}'`;

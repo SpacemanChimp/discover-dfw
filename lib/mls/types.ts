@@ -47,6 +47,22 @@ export interface OpenHouse {
   window: string;
 }
 
+/** One school as reported on the MLS listing record. NOT a verified
+    assignment — display must say "reported for this listing" and carry
+    verify-with-the-district wording (see lib/mls/school-fields.ts). */
+export interface ListingSchoolEntry {
+  name: string;
+  district?: string;
+}
+
+/** RESO school fields off the listing record; absent when the feed omits
+    them (typically commercial/land). Never inferred from city or hood. */
+export interface ListingSchools {
+  elementary?: ListingSchoolEntry;
+  middleOrJunior?: ListingSchoolEntry;
+  high?: ListingSchoolEntry;
+}
+
 export interface Listing {
   /* identity */
   listingKey: string;
@@ -91,6 +107,8 @@ export interface Listing {
   featured?: boolean;
   /** Upcoming open houses, soonest first. */
   openHouses?: OpenHouse[];
+  /** MLS-reported schools (never a zoning claim) — see ListingSchools. */
+  schools?: ListingSchools;
 
   /* compliance — required display slots under IDX rules */
   listingBrokerName: string | null;

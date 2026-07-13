@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { bySlug, countyById } from "@/lib/dfw-data";
 import { getMlsProvider, isLiveMls } from "@/lib/mls";
+import { getListingSchools } from "@/lib/mls/trestle";
 import { mockListings } from "@/data/mock-listings";
 import ListingDetailDossier from "@/components/search/ListingDetailDossier";
 import NearbyListings from "@/components/listing/NearbyListings";
@@ -47,6 +48,12 @@ export default async function ListingPage({
   if (!city) notFound();
   const county = countyById[city.county];
 
+  /* MLS-reported schools: the provider carries them when the record (or the
+     replicated raw) has them; otherwise supplement with a live six-field
+     fetch. Never inferred, never fails the page — null renders the
+     "not reported" note. */
+  const schools = listing.schools ?? (isLiveMls ? await getListingSchools(listing.listingKey) : null);
+
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
       <SearchNav />
@@ -66,7 +73,13 @@ export default async function ListingPage({
           ← ALL {city.name.toUpperCase()} HOMES
         </Link>
       </div>
-      <ListingDetailDossier listing={listing} city={city} countyName={county.name} />
+      <ListingDetailDossier
+        listing={listing}
+        city={city}
+        countyName={county.name}
+        schools={schools}
+        liveMls={isLiveMls}
+      />
       <NearbyListings listing={listing} />
       <MLSComplianceFooter asOf={listing.mlsLastUpdated} />
     </div>

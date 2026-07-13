@@ -1,0 +1,2619 @@
+{
+ "source": "TEA A–F accountability ratings & campus directory — txschools.gov",
+ "sourceUrl": "https://txschools.gov/data/schools.json",
+ "ratingYear": 2025,
+ "retrieved": "2026-07-13",
+ "method": "Nearest rated traditional campus per level from the city centroid; campuses in the city's own district win within 15 mi. Proximity context only — never an assignment claim.",
+ "cities": {
+  "sanger": [
+   {
+    "name": "Clear Creek Elem",
+    "district": "Sanger ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 1.2,
+    "city": "Sanger",
+    "sameDistrict": true
+   },
+   {
+    "name": "Sanger MS",
+    "district": "Sanger ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.9,
+    "city": "Sanger",
+    "sameDistrict": true
+   },
+   {
+    "name": "Sanger HS",
+    "district": "Sanger ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 0.9,
+    "city": "Sanger",
+    "sameDistrict": true
+   }
+  ],
+  "denton": [
+   {
+    "name": "Newton Rayzor Elem",
+    "district": "Denton ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 1.1,
+    "city": "Denton",
+    "sameDistrict": true
+   },
+   {
+    "name": "Calhoun MS",
+    "district": "Denton ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 1.1,
+    "city": "Denton",
+    "sameDistrict": true
+   },
+   {
+    "name": "Denton HS",
+    "district": "Denton ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 3.1,
+    "city": "Denton",
+    "sameDistrict": true
+   }
+  ],
+  "aubrey": [
+   {
+    "name": "HL Brockett",
+    "district": "Aubrey ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.6,
+    "city": "Aubrey",
+    "sameDistrict": true
+   },
+   {
+    "name": "Terrie McNabb MS",
+    "district": "Aubrey ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.5,
+    "city": "Aubrey",
+    "sameDistrict": true
+   },
+   {
+    "name": "Aubrey HS",
+    "district": "Aubrey ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 0.6,
+    "city": "Aubrey",
+    "sameDistrict": true
+   }
+  ],
+  "little-elm": [
+   {
+    "name": "Hackberry Elem",
+    "district": "Little Elm ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.7,
+    "city": "Frisco",
+    "sameDistrict": true
+   },
+   {
+    "name": "Jerry R Walker MS",
+    "district": "Little Elm ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 2.1,
+    "city": "Little Elm",
+    "sameDistrict": true
+   },
+   {
+    "name": "Little Elm HS",
+    "district": "Little Elm ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.6,
+    "city": "Little Elm",
+    "sameDistrict": true
+   }
+  ],
+  "the-colony": [
+   {
+    "name": "Peters Colony Elem",
+    "district": "Lewisville ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 0.4,
+    "city": "The Colony",
+    "sameDistrict": true
+   },
+   {
+    "name": "STEM Academy at Griffin MS",
+    "district": "Lewisville ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.6,
+    "city": "The Colony",
+    "sameDistrict": true
+   },
+   {
+    "name": "The Colony HS",
+    "district": "Lewisville ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 0.9,
+    "city": "The Colony",
+    "sameDistrict": true
+   }
+  ],
+  "argyle": [
+   {
+    "name": "Hilltop Elem",
+    "district": "Argyle ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.4,
+    "city": "Argyle",
+    "sameDistrict": true
+   },
+   {
+    "name": "Argyle 6th Grade Center",
+    "district": "Argyle ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.3,
+    "city": "Argyle",
+    "sameDistrict": true
+   },
+   {
+    "name": "Argyle HS",
+    "district": "Argyle ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 3.6,
+    "city": "Flower Mound",
+    "sameDistrict": true
+   }
+  ],
+  "northlake": [
+   {
+    "name": "Johnie R Daniel Elem",
+    "district": "Northwest ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 2.7,
+    "city": "Northlake",
+    "sameDistrict": true
+   },
+   {
+    "name": "Gene Pike MS",
+    "district": "Northwest ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 7.9,
+    "city": "Justin",
+    "sameDistrict": true
+   },
+   {
+    "name": "Northwest HS",
+    "district": "Northwest ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 7.8,
+    "city": "Justin",
+    "sameDistrict": true
+   }
+  ],
+  "lantana": [
+   {
+    "name": "EP Rayzor Elem",
+    "district": "Denton ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.6,
+    "city": "Lantana",
+    "sameDistrict": true
+   },
+   {
+    "name": "Harpool MS",
+    "district": "Denton ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1.7,
+    "city": "Lantana",
+    "sameDistrict": true
+   },
+   {
+    "name": "Guyer HS",
+    "district": "Denton ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 3.3,
+    "city": "Denton",
+    "sameDistrict": true
+   }
+  ],
+  "highland-village": [
+   {
+    "name": "McAuliffe Elem",
+    "district": "Lewisville ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 1.6,
+    "city": "Highland Village",
+    "sameDistrict": true
+   },
+   {
+    "name": "Briarhill MS",
+    "district": "Lewisville ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1.6,
+    "city": "Highland Village",
+    "sameDistrict": true
+   },
+   {
+    "name": "Marcus HS",
+    "district": "Lewisville ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 2.2,
+    "city": "Flower Mound",
+    "sameDistrict": true
+   }
+  ],
+  "trophy-club": [
+   {
+    "name": "Samuel Beck Elem",
+    "district": "Northwest ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 1.5,
+    "city": "Trophy Club",
+    "sameDistrict": true
+   },
+   {
+    "name": "Medlin MS",
+    "district": "Northwest ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1.5,
+    "city": "Trophy Club",
+    "sameDistrict": true
+   },
+   {
+    "name": "Byron Nelson HS",
+    "district": "Northwest ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.5,
+    "city": "Trophy Club",
+    "sameDistrict": true
+   }
+  ],
+  "roanoke": [
+   {
+    "name": "Lakeview Elem",
+    "district": "Northwest ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.9,
+    "city": "Roanoke",
+    "sameDistrict": true
+   },
+   {
+    "name": "Medlin MS",
+    "district": "Northwest ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1.3,
+    "city": "Trophy Club",
+    "sameDistrict": true
+   },
+   {
+    "name": "James M Steele Early College HS",
+    "district": "Northwest ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 0.2,
+    "city": "Roanoke",
+    "sameDistrict": true
+   }
+  ],
+  "flower-mound": [
+   {
+    "name": "Old Settlers Elem",
+    "district": "Lewisville ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 1,
+    "city": "Flower Mound",
+    "sameDistrict": true
+   },
+   {
+    "name": "McKamy MS",
+    "district": "Lewisville ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1,
+    "city": "Flower Mound",
+    "sameDistrict": true
+   },
+   {
+    "name": "Flower Mound HS",
+    "district": "Lewisville ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.6,
+    "city": "Flower Mound",
+    "sameDistrict": true
+   }
+  ],
+  "lewisville": [
+   {
+    "name": "Mill Street Elem",
+    "district": "Lewisville ISD",
+    "level": "Elementary",
+    "rating": "F",
+    "miles": 0.3,
+    "city": "Lewisville",
+    "sameDistrict": true
+   },
+   {
+    "name": "STEM Academy at Hedrick MS",
+    "district": "Lewisville ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 2.2,
+    "city": "Lewisville",
+    "sameDistrict": true
+   },
+   {
+    "name": "Lewisville HS",
+    "district": "Lewisville ISD",
+    "level": "High",
+    "rating": "D",
+    "miles": 1.5,
+    "city": "Lewisville",
+    "sameDistrict": true
+   }
+  ],
+  "decatur": [
+   {
+    "name": "Rann Elem",
+    "district": "Decatur ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 1.3,
+    "city": "Decatur",
+    "sameDistrict": true
+   },
+   {
+    "name": "McCarroll MS",
+    "district": "Decatur ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 1.2,
+    "city": "Decatur",
+    "sameDistrict": true
+   },
+   {
+    "name": "Decatur HS",
+    "district": "Decatur ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 1.3,
+    "city": "Decatur",
+    "sameDistrict": true
+   }
+  ],
+  "bridgeport": [
+   {
+    "name": "Bridgeport Elem",
+    "district": "Bridgeport ISD",
+    "level": "Elementary",
+    "rating": "F",
+    "miles": 1.1,
+    "city": "Bridgeport",
+    "sameDistrict": true
+   },
+   {
+    "name": "Bridgeport MS",
+    "district": "Bridgeport ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 0.6,
+    "city": "Bridgeport",
+    "sameDistrict": true
+   },
+   {
+    "name": "Bridgeport HS",
+    "district": "Bridgeport ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 1,
+    "city": "Bridgeport",
+    "sameDistrict": true
+   }
+  ],
+  "rhome": [
+   {
+    "name": "Prairie View Elem",
+    "district": "Northwest ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 1.7,
+    "city": "Rhome",
+    "sameDistrict": true
+   },
+   {
+    "name": "Chisholm Trail MS",
+    "district": "Northwest ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 1.7,
+    "city": "Rhome",
+    "sameDistrict": true
+   },
+   {
+    "name": "V R Eaton HS",
+    "district": "Northwest ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 6.9,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   }
+  ],
+  "boyd": [
+   {
+    "name": "Boyd Elem",
+    "district": "Boyd ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.3,
+    "city": "Boyd",
+    "sameDistrict": true
+   },
+   {
+    "name": "Boyd MS",
+    "district": "Boyd ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.4,
+    "city": "Boyd",
+    "sameDistrict": true
+   },
+   {
+    "name": "Boyd HS",
+    "district": "Boyd ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 0.4,
+    "city": "Boyd",
+    "sameDistrict": true
+   }
+  ],
+  "aurora": [
+   {
+    "name": "Seven Hills Elem",
+    "district": "Northwest ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 2.4,
+    "city": "Rhome",
+    "sameDistrict": true
+   },
+   {
+    "name": "Chisholm Trail MS",
+    "district": "Northwest ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 2.4,
+    "city": "Rhome",
+    "sameDistrict": true
+   },
+   {
+    "name": "V R Eaton HS",
+    "district": "Northwest ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 8.5,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   }
+  ],
+  "celina": [
+   {
+    "name": "Marcy B Lykins Elem",
+    "district": "Celina ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.6,
+    "city": "Celina",
+    "sameDistrict": true
+   },
+   {
+    "name": "Jerry & Linda Moore MS",
+    "district": "Celina ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 2.4,
+    "city": "Celina",
+    "sameDistrict": true
+   },
+   {
+    "name": "Celina HS",
+    "district": "Celina ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 3.4,
+    "city": "Celina",
+    "sameDistrict": true
+   }
+  ],
+  "anna": [
+   {
+    "name": "Rosamond-Sherley Elem",
+    "district": "Anna ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 1,
+    "city": "Anna",
+    "sameDistrict": true
+   },
+   {
+    "name": "Slayter Creek MS",
+    "district": "Anna ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.8,
+    "city": "Anna",
+    "sameDistrict": true
+   },
+   {
+    "name": "Anna HS",
+    "district": "Anna ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.3,
+    "city": "Anna",
+    "sameDistrict": true
+   }
+  ],
+  "melissa": [
+   {
+    "name": "Harry McKillop Elem",
+    "district": "Melissa ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.9,
+    "city": "Melissa",
+    "sameDistrict": true
+   },
+   {
+    "name": "Clemons Creek MS",
+    "district": "Anna ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 3.1,
+    "city": "Anna",
+    "sameDistrict": false
+   },
+   {
+    "name": "Melissa HS",
+    "district": "Melissa ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.5,
+    "city": "Melissa",
+    "sameDistrict": true
+   }
+  ],
+  "prosper": [
+   {
+    "name": "Judy Rucker Elem",
+    "district": "Prosper ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.5,
+    "city": "Prosper",
+    "sameDistrict": true
+   },
+   {
+    "name": "Reynolds MS",
+    "district": "Prosper ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.5,
+    "city": "Prosper",
+    "sameDistrict": true
+   },
+   {
+    "name": "Prosper HS",
+    "district": "Prosper ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.6,
+    "city": "Prosper",
+    "sameDistrict": true
+   }
+  ],
+  "mckinney": [
+   {
+    "name": "Caldwell Elem",
+    "district": "McKinney ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 0.4,
+    "city": "McKinney",
+    "sameDistrict": true
+   },
+   {
+    "name": "Faubion MS",
+    "district": "McKinney ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1.2,
+    "city": "McKinney",
+    "sameDistrict": true
+   },
+   {
+    "name": "McKinney HS",
+    "district": "McKinney ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.2,
+    "city": "McKinney",
+    "sameDistrict": true
+   }
+  ],
+  "frisco": [
+   {
+    "name": "Bright Acad",
+    "district": "Frisco ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.8,
+    "city": "Frisco",
+    "sameDistrict": true
+   },
+   {
+    "name": "Staley MS",
+    "district": "Frisco ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.5,
+    "city": "Frisco",
+    "sameDistrict": true
+   },
+   {
+    "name": "Frisco HS",
+    "district": "Frisco ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.3,
+    "city": "Frisco",
+    "sameDistrict": true
+   }
+  ],
+  "fairview": [
+   {
+    "name": "Robert L Puster Elem",
+    "district": "Lovejoy ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.8,
+    "city": "Fairview",
+    "sameDistrict": true
+   },
+   {
+    "name": "Sloan Creek Int",
+    "district": "Lovejoy ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.8,
+    "city": "Fairview",
+    "sameDistrict": true
+   },
+   {
+    "name": "Lovejoy HS",
+    "district": "Lovejoy ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 3,
+    "city": "Lucas",
+    "sameDistrict": true
+   }
+  ],
+  "allen": [
+   {
+    "name": "Alton Boyd Elem",
+    "district": "Allen ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 1.3,
+    "city": "Allen",
+    "sameDistrict": true
+   },
+   {
+    "name": "W E Pete Ford MS",
+    "district": "Allen ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1.1,
+    "city": "Allen",
+    "sameDistrict": true
+   },
+   {
+    "name": "Lowery Freshman Center",
+    "district": "Allen ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 0.7,
+    "city": "Allen",
+    "sameDistrict": true
+   }
+  ],
+  "lucas": [
+   {
+    "name": "Joe V Hart Elem",
+    "district": "Lovejoy ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 3,
+    "city": "Lucas",
+    "sameDistrict": true
+   },
+   {
+    "name": "Willow Springs MS",
+    "district": "Lovejoy ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.9,
+    "city": "Lucas",
+    "sameDistrict": true
+   },
+   {
+    "name": "Lovejoy HS",
+    "district": "Lovejoy ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 2.4,
+    "city": "Lucas",
+    "sameDistrict": true
+   }
+  ],
+  "parker": [
+   {
+    "name": "Hunt Elem",
+    "district": "Plano ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 1.1,
+    "city": "Murphy",
+    "sameDistrict": true
+   },
+   {
+    "name": "Murphy MS",
+    "district": "Plano ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 2.3,
+    "city": "Murphy",
+    "sameDistrict": true
+   },
+   {
+    "name": "Plano East Sr HS",
+    "district": "Plano ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.6,
+    "city": "Plano",
+    "sameDistrict": true
+   }
+  ],
+  "st-paul": [
+   {
+    "name": "George W Bush Elem",
+    "district": "Wylie ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 1,
+    "city": "St Paul",
+    "sameDistrict": true
+   },
+   {
+    "name": "Davis Int",
+    "district": "Wylie ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.8,
+    "city": "Wylie",
+    "sameDistrict": true
+   },
+   {
+    "name": "Wylie HS",
+    "district": "Wylie ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 2.4,
+    "city": "Wylie",
+    "sameDistrict": true
+   }
+  ],
+  "plano": [
+   {
+    "name": "Mendenhall Elem",
+    "district": "Plano ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.4,
+    "city": "Plano",
+    "sameDistrict": true
+   },
+   {
+    "name": "Bowman MS",
+    "district": "Plano ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 1.2,
+    "city": "Plano",
+    "sameDistrict": true
+   },
+   {
+    "name": "Williams HS",
+    "district": "Plano ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 0.6,
+    "city": "Plano",
+    "sameDistrict": true
+   }
+  ],
+  "murphy": [
+   {
+    "name": "Boggess Elem",
+    "district": "Plano ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.4,
+    "city": "Murphy",
+    "sameDistrict": true
+   },
+   {
+    "name": "Murphy MS",
+    "district": "Plano ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.6,
+    "city": "Murphy",
+    "sameDistrict": true
+   },
+   {
+    "name": "McMillen HS",
+    "district": "Plano ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 0.9,
+    "city": "Murphy",
+    "sameDistrict": true
+   }
+  ],
+  "wylie": [
+   {
+    "name": "R F Hartman Elem",
+    "district": "Wylie ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.5,
+    "city": "Wylie",
+    "sameDistrict": true
+   },
+   {
+    "name": "Ab Harrison Int",
+    "district": "Wylie ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.8,
+    "city": "Wylie",
+    "sameDistrict": true
+   },
+   {
+    "name": "Wylie HS",
+    "district": "Wylie ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.9,
+    "city": "Wylie",
+    "sameDistrict": true
+   }
+  ],
+  "princeton": [
+   {
+    "name": "Lacy Elem",
+    "district": "Princeton ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.2,
+    "city": "Princeton",
+    "sameDistrict": true
+   },
+   {
+    "name": "Clark MS",
+    "district": "Princeton ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.5,
+    "city": "Princeton",
+    "sameDistrict": true
+   },
+   {
+    "name": "Princeton Sr HS",
+    "district": "Princeton ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 0.8,
+    "city": "Princeton",
+    "sameDistrict": true
+   }
+  ],
+  "farmersville": [
+   {
+    "name": "Tatum Elem",
+    "district": "Farmersville ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.4,
+    "city": "Farmersville",
+    "sameDistrict": true
+   },
+   {
+    "name": "Farmersville JH",
+    "district": "Farmersville ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.9,
+    "city": "Farmersville",
+    "sameDistrict": true
+   },
+   {
+    "name": "Farmersville HS",
+    "district": "Farmersville ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 0.7,
+    "city": "Farmersville",
+    "sameDistrict": true
+   }
+  ],
+  "lavon": [
+   {
+    "name": "Nesmith Elem",
+    "district": "Community ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.8,
+    "city": "Lavon",
+    "sameDistrict": true
+   },
+   {
+    "name": "Community Trails MS",
+    "district": "Community ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 1.2,
+    "city": "Lavon",
+    "sameDistrict": true
+   },
+   {
+    "name": "Community HS",
+    "district": "Community ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 4.9,
+    "city": "Nevada",
+    "sameDistrict": true
+   }
+  ],
+  "nevada": [
+   {
+    "name": "McClendon Elem",
+    "district": "Community ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 1.2,
+    "city": "Nevada",
+    "sameDistrict": true
+   },
+   {
+    "name": "Leland E Edge MS",
+    "district": "Community ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 1.6,
+    "city": "Nevada",
+    "sameDistrict": true
+   },
+   {
+    "name": "Community HS",
+    "district": "Community ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.6,
+    "city": "Nevada",
+    "sameDistrict": true
+   }
+  ],
+  "fort-worth": [
+   {
+    "name": "Charles Nash Elem",
+    "district": "Fort Worth ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.5,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   },
+   {
+    "name": "Elder MS",
+    "district": "Fort Worth ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 2.4,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   },
+   {
+    "name": "Carter-Riverside HS",
+    "district": "Fort Worth ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 2.7,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   }
+  ],
+  "arlington": [
+   {
+    "name": "Speer Elem",
+    "district": "Arlington ISD",
+    "level": "Elementary",
+    "rating": "F",
+    "miles": 1,
+    "city": "Arlington",
+    "sameDistrict": true
+   },
+   {
+    "name": "Ousley JH",
+    "district": "Arlington ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 2.1,
+    "city": "Arlington",
+    "sameDistrict": true
+   },
+   {
+    "name": "Arlington HS",
+    "district": "Arlington ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.1,
+    "city": "Arlington",
+    "sameDistrict": true
+   }
+  ],
+  "north-richland-hills": [
+   {
+    "name": "Snow Heights Elem",
+    "district": "Birdville ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.3,
+    "city": "North Richland Hills",
+    "sameDistrict": true
+   },
+   {
+    "name": "North Richland MS",
+    "district": "Birdville ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.4,
+    "city": "North Richland Hills",
+    "sameDistrict": true
+   },
+   {
+    "name": "Richland HS",
+    "district": "Birdville ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 0.5,
+    "city": "North Richland Hills",
+    "sameDistrict": true
+   }
+  ],
+  "lake-worth": [
+   {
+    "name": "Marine Creek Leadership Academy",
+    "district": "Lake Worth ISD",
+    "level": "Elementary",
+    "rating": "F",
+    "miles": 2.5,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   },
+   {
+    "name": "Lucyle Collins MS",
+    "district": "Lake Worth ISD",
+    "level": "Middle",
+    "rating": "F",
+    "miles": 2.7,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   },
+   {
+    "name": "Lake Worth HS",
+    "district": "Lake Worth ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 1.7,
+    "city": "Lake Worth",
+    "sameDistrict": true
+   }
+  ],
+  "azle": [
+   {
+    "name": "Walnut Creek Elem",
+    "district": "Azle ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 1.1,
+    "city": "Azle",
+    "sameDistrict": true
+   },
+   {
+    "name": "Azle JH South",
+    "district": "Azle ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.9,
+    "city": "Azle",
+    "sameDistrict": true
+   },
+   {
+    "name": "Azle HS",
+    "district": "Azle ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.3,
+    "city": "Azle",
+    "sameDistrict": true
+   }
+  ],
+  "keller": [
+   {
+    "name": "Keller-Harvel Elem",
+    "district": "Keller ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.6,
+    "city": "Keller",
+    "sameDistrict": true
+   },
+   {
+    "name": "Keller MS",
+    "district": "Keller ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.4,
+    "city": "Keller",
+    "sameDistrict": true
+   },
+   {
+    "name": "Keller HS",
+    "district": "Keller ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1,
+    "city": "Keller",
+    "sameDistrict": true
+   }
+  ],
+  "southlake": [
+   {
+    "name": "Robert H Rockenbaugh Elem",
+    "district": "Carroll ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.5,
+    "city": "Southlake",
+    "sameDistrict": true
+   },
+   {
+    "name": "George Dawson MS",
+    "district": "Carroll ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1,
+    "city": "Southlake",
+    "sameDistrict": true
+   },
+   {
+    "name": "Carroll HS",
+    "district": "Carroll ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.4,
+    "city": "Southlake",
+    "sameDistrict": true
+   }
+  ],
+  "grapevine": [
+   {
+    "name": "Cannon Elem",
+    "district": "Grapevine-Colleyville ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.6,
+    "city": "Grapevine",
+    "sameDistrict": true
+   },
+   {
+    "name": "Cross Timbers MS",
+    "district": "Grapevine-Colleyville ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 3,
+    "city": "Grapevine",
+    "sameDistrict": true
+   },
+   {
+    "name": "Grapevine HS",
+    "district": "Grapevine-Colleyville ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 2.7,
+    "city": "Grapevine",
+    "sameDistrict": true
+   }
+  ],
+  "colleyville": [
+   {
+    "name": "Bransford Elem",
+    "district": "Grapevine-Colleyville ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.7,
+    "city": "Colleyville",
+    "sameDistrict": true
+   },
+   {
+    "name": "Colleyville MS",
+    "district": "Grapevine-Colleyville ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.9,
+    "city": "Colleyville",
+    "sameDistrict": true
+   },
+   {
+    "name": "Colleyville Heritage HS",
+    "district": "Grapevine-Colleyville ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 2.6,
+    "city": "Colleyville",
+    "sameDistrict": true
+   }
+  ],
+  "bedford": [
+   {
+    "name": "Shady Brook Elem",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.8,
+    "city": "Bedford",
+    "sameDistrict": true
+   },
+   {
+    "name": "Bedford JH",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 1.4,
+    "city": "Bedford",
+    "sameDistrict": true
+   },
+   {
+    "name": "Bell HS",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1,
+    "city": "Hurst",
+    "sameDistrict": true
+   }
+  ],
+  "euless": [
+   {
+    "name": "South Euless Elem",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.5,
+    "city": "Euless",
+    "sameDistrict": true
+   },
+   {
+    "name": "Euless JH",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.4,
+    "city": "Euless",
+    "sameDistrict": true
+   },
+   {
+    "name": "Trinity HS",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.1,
+    "city": "Euless",
+    "sameDistrict": true
+   }
+  ],
+  "hurst": [
+   {
+    "name": "Harrison Lane Elem",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.1,
+    "city": "Hurst",
+    "sameDistrict": true
+   },
+   {
+    "name": "Hurst JH",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.4,
+    "city": "Hurst",
+    "sameDistrict": true
+   },
+   {
+    "name": "Bell HS",
+    "district": "Hurst-Euless-Bedford ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.4,
+    "city": "Hurst",
+    "sameDistrict": true
+   }
+  ],
+  "westlake": [
+   {
+    "name": "Walnut Grove Elem",
+    "district": "Carroll ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 2.6,
+    "city": "Southlake",
+    "sameDistrict": true
+   },
+   {
+    "name": "Don T Durham Int",
+    "district": "Carroll ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 3.2,
+    "city": "Southlake",
+    "sameDistrict": true
+   },
+   {
+    "name": "Carroll HS",
+    "district": "Carroll ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 3.3,
+    "city": "Southlake",
+    "sameDistrict": true
+   }
+  ],
+  "mansfield": [
+   {
+    "name": "Erma Nash Elem",
+    "district": "Mansfield ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.8,
+    "city": "Mansfield",
+    "sameDistrict": true
+   },
+   {
+    "name": "Rogene Worley MS",
+    "district": "Mansfield ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.9,
+    "city": "Mansfield",
+    "sameDistrict": true
+   },
+   {
+    "name": "Mansfield Legacy HS",
+    "district": "Mansfield ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.2,
+    "city": "Mansfield",
+    "sameDistrict": true
+   }
+  ],
+  "benbrook": [
+   {
+    "name": "Benbrook Elem",
+    "district": "Fort Worth ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.4,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   },
+   {
+    "name": "Leadership Academy at Leonard MS",
+    "district": "Fort Worth ISD",
+    "level": "Middle",
+    "rating": "F",
+    "miles": 3.2,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   },
+   {
+    "name": "Western Hills HS",
+    "district": "Fort Worth ISD",
+    "level": "High",
+    "rating": "D",
+    "miles": 3.2,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   }
+  ],
+  "burleson": [
+   {
+    "name": "Norwood Elem",
+    "district": "Burleson ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 1,
+    "city": "Burleson",
+    "sameDistrict": true
+   },
+   {
+    "name": "Hughes MS",
+    "district": "Burleson ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.9,
+    "city": "Burleson",
+    "sameDistrict": true
+   },
+   {
+    "name": "Burleson Centennial HS",
+    "district": "Burleson ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.3,
+    "city": "Burleson",
+    "sameDistrict": true
+   }
+  ],
+  "saginaw": [
+   {
+    "name": "Saginaw Elem",
+    "district": "Eagle Mt-Saginaw ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 0.2,
+    "city": "Saginaw",
+    "sameDistrict": true
+   },
+   {
+    "name": "Highland MS",
+    "district": "Eagle Mt-Saginaw ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 1.8,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   },
+   {
+    "name": "Saginaw HS",
+    "district": "Eagle Mt-Saginaw ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.3,
+    "city": "Saginaw",
+    "sameDistrict": true
+   }
+  ],
+  "crowley": [
+   {
+    "name": "Bess Race Elem",
+    "district": "Crowley ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 0.8,
+    "city": "Crowley",
+    "sameDistrict": true
+   },
+   {
+    "name": "H F Stevens MS",
+    "district": "Crowley ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 1.3,
+    "city": "Crowley",
+    "sameDistrict": true
+   },
+   {
+    "name": "Crowley HS",
+    "district": "Crowley ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 0.8,
+    "city": "Crowley",
+    "sameDistrict": true
+   }
+  ],
+  "watauga": [
+   {
+    "name": "Watauga Elem",
+    "district": "Birdville ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.2,
+    "city": "Watauga",
+    "sameDistrict": true
+   },
+   {
+    "name": "Watauga MS",
+    "district": "Birdville ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.4,
+    "city": "Watauga",
+    "sameDistrict": true
+   },
+   {
+    "name": "Haltom HS",
+    "district": "Birdville ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 1.6,
+    "city": "Haltom City",
+    "sameDistrict": true
+   }
+  ],
+  "haltom-city": [
+   {
+    "name": "West Birdville Elem",
+    "district": "Birdville ISD",
+    "level": "Elementary",
+    "rating": "F",
+    "miles": 0.8,
+    "city": "Haltom City",
+    "sameDistrict": true
+   },
+   {
+    "name": "Haltom MS",
+    "district": "Birdville ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 0.6,
+    "city": "Haltom City",
+    "sameDistrict": true
+   },
+   {
+    "name": "Haltom HS",
+    "district": "Birdville ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 3.4,
+    "city": "Haltom City",
+    "sameDistrict": true
+   }
+  ],
+  "white-settlement": [
+   {
+    "name": "Liberty Elem",
+    "district": "White Settlement ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 0.5,
+    "city": "White Settlement",
+    "sameDistrict": true
+   },
+   {
+    "name": "Brewer MS",
+    "district": "White Settlement ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.8,
+    "city": "White Settlement",
+    "sameDistrict": true
+   },
+   {
+    "name": "Brewer HS",
+    "district": "White Settlement ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 1.8,
+    "city": "Fort Worth",
+    "sameDistrict": true
+   }
+  ],
+  "coppell": [
+   {
+    "name": "Wilson Elem",
+    "district": "Coppell ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.9,
+    "city": "Coppell",
+    "sameDistrict": true
+   },
+   {
+    "name": "Coppell MS North",
+    "district": "Coppell ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 2.4,
+    "city": "Coppell",
+    "sameDistrict": true
+   },
+   {
+    "name": "Coppell HS",
+    "district": "Coppell ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.7,
+    "city": "Coppell",
+    "sameDistrict": true
+   }
+  ],
+  "irving": [
+   {
+    "name": "Lee Elem",
+    "district": "Irving ISD",
+    "level": "Elementary",
+    "rating": "F",
+    "miles": 0.3,
+    "city": "Irving",
+    "sameDistrict": true
+   },
+   {
+    "name": "Travis MS",
+    "district": "Irving ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 0.4,
+    "city": "Irving",
+    "sameDistrict": true
+   },
+   {
+    "name": "MacArthur HS",
+    "district": "Irving ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 0.7,
+    "city": "Irving",
+    "sameDistrict": true
+   }
+  ],
+  "dallas": [
+   {
+    "name": "Downtown Montessori at Ida B Wells Academy",
+    "district": "Dallas ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.3,
+    "city": "Dallas",
+    "sameDistrict": true
+   },
+   {
+    "name": "Billy Earl Dade MS",
+    "district": "Dallas ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 1.4,
+    "city": "Dallas",
+    "sameDistrict": true
+   },
+   {
+    "name": "James Madison HS",
+    "district": "Dallas ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.9,
+    "city": "Dallas",
+    "sameDistrict": true
+   }
+  ],
+  "sachse": [
+   {
+    "name": "John W Armstrong Elem",
+    "district": "Garland ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.8,
+    "city": "Sachse",
+    "sameDistrict": true
+   },
+   {
+    "name": "B G Hudson MS",
+    "district": "Garland ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 1.5,
+    "city": "Sachse",
+    "sameDistrict": true
+   },
+   {
+    "name": "Sachse HS",
+    "district": "Garland ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.3,
+    "city": "Sachse",
+    "sameDistrict": true
+   }
+  ],
+  "rowlett": [
+   {
+    "name": "Katherine Stephens Elem",
+    "district": "Garland ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 0.7,
+    "city": "Rowlett",
+    "sameDistrict": true
+   },
+   {
+    "name": "Coyle MS Technology Center for Math & Science",
+    "district": "Garland ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.2,
+    "city": "Rowlett",
+    "sameDistrict": true
+   },
+   {
+    "name": "Rowlett HS",
+    "district": "Garland ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 0.7,
+    "city": "Rowlett",
+    "sameDistrict": true
+   }
+  ],
+  "grand-prairie": [
+   {
+    "name": "Delmas F Morton Elem",
+    "district": "Grand Prairie ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.4,
+    "city": "Grand Prairie",
+    "sameDistrict": true
+   },
+   {
+    "name": "Digital Arts & Technology Academy at Adams MS",
+    "district": "Grand Prairie ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 1.3,
+    "city": "Grand Prairie",
+    "sameDistrict": true
+   },
+   {
+    "name": "Grand Prairie HS",
+    "district": "Grand Prairie ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 0.7,
+    "city": "Grand Prairie",
+    "sameDistrict": true
+   }
+  ],
+  "garland": [
+   {
+    "name": "Shorehaven Elem",
+    "district": "Garland ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 1,
+    "city": "Garland",
+    "sameDistrict": true
+   },
+   {
+    "name": "Bussey MS",
+    "district": "Garland ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 0.8,
+    "city": "Garland",
+    "sameDistrict": true
+   },
+   {
+    "name": "Garland HS",
+    "district": "Garland ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 0.5,
+    "city": "Garland",
+    "sameDistrict": true
+   }
+  ],
+  "richardson": [
+   {
+    "name": "Math/Science/Tech Magnet",
+    "district": "Richardson ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.3,
+    "city": "Richardson",
+    "sameDistrict": true
+   },
+   {
+    "name": "Richardson West Technology and Arts Magnet",
+    "district": "Richardson ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 1.9,
+    "city": "Richardson",
+    "sameDistrict": true
+   },
+   {
+    "name": "Richardson HS",
+    "district": "Richardson ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.9,
+    "city": "Richardson",
+    "sameDistrict": true
+   }
+  ],
+  "carrollton": [
+   {
+    "name": "Blanton Elem",
+    "district": "Carrollton-Farmers Branch ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.6,
+    "city": "Carrollton",
+    "sameDistrict": true
+   },
+   {
+    "name": "Polk MS",
+    "district": "Carrollton-Farmers Branch ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 1,
+    "city": "Carrollton",
+    "sameDistrict": true
+   },
+   {
+    "name": "Smith HS",
+    "district": "Carrollton-Farmers Branch ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 0.3,
+    "city": "Carrollton",
+    "sameDistrict": true
+   }
+  ],
+  "farmers-branch": [
+   {
+    "name": "Farmers Branch Elem",
+    "district": "Carrollton-Farmers Branch ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.5,
+    "city": "Farmers Branch",
+    "sameDistrict": true
+   },
+   {
+    "name": "Field MS",
+    "district": "Carrollton-Farmers Branch ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.3,
+    "city": "Farmers Branch",
+    "sameDistrict": true
+   },
+   {
+    "name": "Turner HS",
+    "district": "Carrollton-Farmers Branch ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.5,
+    "city": "Carrollton",
+    "sameDistrict": true
+   }
+  ],
+  "addison": [
+   {
+    "name": "Anne Frank Elem",
+    "district": "Dallas ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 1.2,
+    "city": "Dallas",
+    "sameDistrict": true
+   },
+   {
+    "name": "Ewell D Walker MS",
+    "district": "Dallas ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 3.1,
+    "city": "Dallas",
+    "sameDistrict": true
+   },
+   {
+    "name": "W T White HS",
+    "district": "Dallas ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 3.1,
+    "city": "Dallas",
+    "sameDistrict": true
+   }
+  ],
+  "mesquite": [
+   {
+    "name": "Black Elem",
+    "district": "Mesquite ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.5,
+    "city": "Mesquite",
+    "sameDistrict": true
+   },
+   {
+    "name": "Agnew MS",
+    "district": "Mesquite ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.8,
+    "city": "Mesquite",
+    "sameDistrict": true
+   },
+   {
+    "name": "Mesquite HS",
+    "district": "Mesquite ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 0.3,
+    "city": "Mesquite",
+    "sameDistrict": true
+   }
+  ],
+  "duncanville": [
+   {
+    "name": "Central Fine Arts Academy",
+    "district": "Duncanville ISD",
+    "level": "Elementary",
+    "rating": "F",
+    "miles": 0.2,
+    "city": "Duncanville",
+    "sameDistrict": true
+   },
+   {
+    "name": "J Herman Reed MS",
+    "district": "Duncanville ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.5,
+    "city": "Duncanville",
+    "sameDistrict": true
+   },
+   {
+    "name": "Duncanville HS",
+    "district": "Duncanville ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.4,
+    "city": "Duncanville",
+    "sameDistrict": true
+   }
+  ],
+  "desoto": [
+   {
+    "name": "Katherine Johnson Technology Magnet Academy",
+    "district": "Desoto ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.8,
+    "city": "Desoto",
+    "sameDistrict": true
+   },
+   {
+    "name": "Desoto West MS",
+    "district": "Desoto ISD",
+    "level": "Middle",
+    "rating": "F",
+    "miles": 1.2,
+    "city": "Desoto",
+    "sameDistrict": true
+   },
+   {
+    "name": "Desoto HS",
+    "district": "Desoto ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1,
+    "city": "Desoto",
+    "sameDistrict": true
+   }
+  ],
+  "cedar-hill": [
+   {
+    "name": "Highlands Elem",
+    "district": "Cedar Hill ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 1.5,
+    "city": "Cedar Hill",
+    "sameDistrict": true
+   },
+   {
+    "name": "W S Permenter MS",
+    "district": "Cedar Hill ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.9,
+    "city": "Cedar Hill",
+    "sameDistrict": true
+   },
+   {
+    "name": "Cedar Hill HS",
+    "district": "Cedar Hill ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 0.6,
+    "city": "Cedar Hill",
+    "sameDistrict": true
+   }
+  ],
+  "lancaster": [
+   {
+    "name": "West Main Elem",
+    "district": "Lancaster ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.4,
+    "city": "Lancaster",
+    "sameDistrict": true
+   },
+   {
+    "name": "G W Carver 6th Grade STEM Learning Center",
+    "district": "Lancaster ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 1,
+    "city": "Lancaster",
+    "sameDistrict": true
+   },
+   {
+    "name": "Lancaster HS",
+    "district": "Lancaster ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 1.8,
+    "city": "Lancaster",
+    "sameDistrict": true
+   }
+  ],
+  "balch-springs": [
+   {
+    "name": "Floyd Elem",
+    "district": "Mesquite ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.1,
+    "city": "Balch Springs",
+    "sameDistrict": true
+   },
+   {
+    "name": "New MS",
+    "district": "Mesquite ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 1.8,
+    "city": "Mesquite",
+    "sameDistrict": true
+   },
+   {
+    "name": "West Mesquite HS",
+    "district": "Mesquite ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 2.4,
+    "city": "Mesquite",
+    "sameDistrict": true
+   }
+  ],
+  "sunnyvale": [
+   {
+    "name": "Sunnyvale Elem",
+    "district": "Sunnyvale ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 0.4,
+    "city": "Sunnyvale",
+    "sameDistrict": true
+   },
+   {
+    "name": "Sunnyvale MS",
+    "district": "Sunnyvale ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 0.1,
+    "city": "Sunnyvale",
+    "sameDistrict": true
+   },
+   {
+    "name": "Sunnyvale HS",
+    "district": "Sunnyvale ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 0.2,
+    "city": "Sunnyvale",
+    "sameDistrict": true
+   }
+  ],
+  "seagoville": [
+   {
+    "name": "Seagoville Elem",
+    "district": "Dallas ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.1,
+    "city": "Seagoville",
+    "sameDistrict": true
+   },
+   {
+    "name": "Seagoville MS",
+    "district": "Dallas ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 3.9,
+    "city": "Dallas",
+    "sameDistrict": true
+   },
+   {
+    "name": "Seagoville HS",
+    "district": "Dallas ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 5.4,
+    "city": "Dallas",
+    "sameDistrict": true
+   }
+  ],
+  "rockwall": [
+   {
+    "name": "Howard Dobbs Elem",
+    "district": "Rockwall ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.4,
+    "city": "Rockwall",
+    "sameDistrict": true
+   },
+   {
+    "name": "Herman E Utley MS",
+    "district": "Rockwall ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 1.1,
+    "city": "Rockwall",
+    "sameDistrict": true
+   },
+   {
+    "name": "Rockwall HS",
+    "district": "Rockwall ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.8,
+    "city": "Rockwall",
+    "sameDistrict": true
+   }
+  ],
+  "heath": [
+   {
+    "name": "Amy Parks-Heath Elem",
+    "district": "Rockwall ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.2,
+    "city": "Heath",
+    "sameDistrict": true
+   },
+   {
+    "name": "Herman E Utley MS",
+    "district": "Rockwall ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 5.8,
+    "city": "Rockwall",
+    "sameDistrict": true
+   },
+   {
+    "name": "Rockwall-Heath HS",
+    "district": "Rockwall ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 0.7,
+    "city": "Heath",
+    "sameDistrict": true
+   }
+  ],
+  "fate": [
+   {
+    "name": "Harry Herndon Elem",
+    "district": "Royse City ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 1,
+    "city": "Royse City",
+    "sameDistrict": true
+   },
+   {
+    "name": "Bobby Summers MS",
+    "district": "Royse City ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 0.9,
+    "city": "Fate",
+    "sameDistrict": true
+   },
+   {
+    "name": "Royse City HS",
+    "district": "Royse City ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 5.6,
+    "city": "Royse City",
+    "sameDistrict": true
+   }
+  ],
+  "royse-city": [
+   {
+    "name": "Davis Elem",
+    "district": "Royse City ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 1.1,
+    "city": "Royse City",
+    "sameDistrict": true
+   },
+   {
+    "name": "Ouida Baley MS",
+    "district": "Royse City ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 1,
+    "city": "Royse City",
+    "sameDistrict": true
+   },
+   {
+    "name": "Royse City HS",
+    "district": "Royse City ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 2.3,
+    "city": "Royse City",
+    "sameDistrict": true
+   }
+  ],
+  "forney": [
+   {
+    "name": "Criswell Elem",
+    "district": "Forney ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.3,
+    "city": "Forney",
+    "sameDistrict": true
+   },
+   {
+    "name": "Warren MS",
+    "district": "Forney ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.9,
+    "city": "Forney",
+    "sameDistrict": true
+   },
+   {
+    "name": "North Forney HS",
+    "district": "Forney ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 4,
+    "city": "Forney",
+    "sameDistrict": true
+   }
+  ],
+  "terrell": [
+   {
+    "name": "Gilbert Willie Sr Elem",
+    "district": "Terrell ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 1.2,
+    "city": "Terrell",
+    "sameDistrict": true
+   },
+   {
+    "name": "Herman Furlough Jr MS",
+    "district": "Terrell ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 1.4,
+    "city": "Terrell",
+    "sameDistrict": true
+   },
+   {
+    "name": "Terrell HS",
+    "district": "Terrell ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.9,
+    "city": "Terrell",
+    "sameDistrict": true
+   }
+  ],
+  "kaufman": [
+   {
+    "name": "J W Monday Elem",
+    "district": "Kaufman ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.4,
+    "city": "Kaufman",
+    "sameDistrict": true
+   },
+   {
+    "name": "Norman JH",
+    "district": "Kaufman ISD",
+    "level": "Middle",
+    "rating": "C",
+    "miles": 1.7,
+    "city": "Kaufman",
+    "sameDistrict": true
+   },
+   {
+    "name": "Kaufman HS",
+    "district": "Kaufman ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 1.7,
+    "city": "Kaufman",
+    "sameDistrict": true
+   }
+  ],
+  "crandall": [
+   {
+    "name": "Nola Kathryn Wilson Elem",
+    "district": "Crandall ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 0.3,
+    "city": "Crandall",
+    "sameDistrict": true
+   },
+   {
+    "name": "Heartland MS",
+    "district": "Crandall ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 2.9,
+    "city": "Crandall",
+    "sameDistrict": true
+   },
+   {
+    "name": "Crandall HS",
+    "district": "Crandall ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1,
+    "city": "Crandall",
+    "sameDistrict": true
+   }
+  ],
+  "midlothian": [
+   {
+    "name": "Irvin Elem",
+    "district": "Midlothian ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.4,
+    "city": "Midlothian",
+    "sameDistrict": true
+   },
+   {
+    "name": "Frank Seale MS",
+    "district": "Midlothian ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.8,
+    "city": "Midlothian",
+    "sameDistrict": true
+   },
+   {
+    "name": "Midlothian HS",
+    "district": "Midlothian ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 0.7,
+    "city": "Midlothian",
+    "sameDistrict": true
+   }
+  ],
+  "waxahachie": [
+   {
+    "name": "Marvin Biomedical Academy",
+    "district": "Waxahachie ISD",
+    "level": "Elementary",
+    "rating": "D",
+    "miles": 0.5,
+    "city": "Waxahachie",
+    "sameDistrict": true
+   },
+   {
+    "name": "Coleman JH",
+    "district": "Waxahachie ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 1.8,
+    "city": "Waxahachie",
+    "sameDistrict": true
+   },
+   {
+    "name": "Waxahachie HS",
+    "district": "Waxahachie ISD",
+    "level": "High",
+    "rating": "C",
+    "miles": 4,
+    "city": "Waxahachie",
+    "sameDistrict": true
+   }
+  ],
+  "red-oak": [
+   {
+    "name": "Red Oak Elem",
+    "district": "Red Oak ISD",
+    "level": "Elementary",
+    "rating": "C",
+    "miles": 0.5,
+    "city": "Red Oak",
+    "sameDistrict": true
+   },
+   {
+    "name": "Red Oak MS",
+    "district": "Red Oak ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 0.8,
+    "city": "Red Oak",
+    "sameDistrict": true
+   },
+   {
+    "name": "Red Oak HS",
+    "district": "Red Oak ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1,
+    "city": "Red Oak",
+    "sameDistrict": true
+   }
+  ],
+  "ovilla": [
+   {
+    "name": "Dolores McClatchey Elem",
+    "district": "Midlothian ISD",
+    "level": "Elementary",
+    "rating": "A",
+    "miles": 1.4,
+    "city": "Ovilla",
+    "sameDistrict": true
+   },
+   {
+    "name": "Walnut Grove MS",
+    "district": "Midlothian ISD",
+    "level": "Middle",
+    "rating": "A",
+    "miles": 3.9,
+    "city": "Midlothian",
+    "sameDistrict": true
+   },
+   {
+    "name": "Midlothian HS",
+    "district": "Midlothian ISD",
+    "level": "High",
+    "rating": "A",
+    "miles": 7.4,
+    "city": "Midlothian",
+    "sameDistrict": true
+   }
+  ],
+  "glenn-heights": [
+   {
+    "name": "Shields Elem",
+    "district": "Red Oak ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 1.2,
+    "city": "Glenn Heights",
+    "sameDistrict": true
+   },
+   {
+    "name": "Red Oak MS",
+    "district": "Red Oak ISD",
+    "level": "Middle",
+    "rating": "D",
+    "miles": 4.2,
+    "city": "Red Oak",
+    "sameDistrict": true
+   },
+   {
+    "name": "Red Oak HS",
+    "district": "Red Oak ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 3,
+    "city": "Red Oak",
+    "sameDistrict": true
+   }
+  ],
+  "ennis": [
+   {
+    "name": "Travis Elem",
+    "district": "Ennis ISD",
+    "level": "Elementary",
+    "rating": "B",
+    "miles": 0.1,
+    "city": "Ennis",
+    "sameDistrict": true
+   },
+   {
+    "name": "Alamo MS",
+    "district": "Ennis ISD",
+    "level": "Middle",
+    "rating": "B",
+    "miles": 0.5,
+    "city": "Ennis",
+    "sameDistrict": true
+   },
+   {
+    "name": "Ennis HS",
+    "district": "Ennis ISD",
+    "level": "High",
+    "rating": "B",
+    "miles": 1.9,
+    "city": "Ennis",
+    "sameDistrict": true
+   }
+  ]
+ }
+}

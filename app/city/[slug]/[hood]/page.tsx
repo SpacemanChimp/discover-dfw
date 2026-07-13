@@ -22,6 +22,7 @@ import {
   HoodRef,
 } from "@/lib/hoods";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
+import { nearbySchoolsFor, NEARBY_SCHOOLS_META } from "@/lib/content/nearby-schools";
 import { isLiveMls } from "@/lib/mls";
 import { getApprovedPhotos, photoKey } from "@/lib/content/editorial-photos";
 import { getNewBuildInventory } from "@/lib/content/new-build-stats";
@@ -520,12 +521,14 @@ export default async function HoodPage({
             ) : (
               <QuickFact k="DT DALLAS" v={`${c.commute[0]} min drive`} last />
             )}
-            <div
-              className="font-mono"
-              style={{ marginTop: 10, fontSize: 9, letterSpacing: ".16em", color: "#D9481F" }}
-            >
-              PLACEHOLDER FIGURES — VERIFY BEFORE PUBLISHING
-            </div>
+            {!nb && (
+              <div
+                className="font-mono"
+                style={{ marginTop: 10, fontSize: 9, letterSpacing: ".16em", color: "rgba(29,25,19,.45)" }}
+              >
+                DRIVE TIME: OFF-PEAK ESTIMATE · OPENSTREETMAP ROUTING
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -560,7 +563,7 @@ export default async function HoodPage({
                 marginBottom: 6,
               }}
             >
-              PLACEHOLDERS — VERIFY WITH SALES OFFICES
+              EDITORIAL FIGURES — VERIFY WITH SALES OFFICES
             </span>
           </div>
 
@@ -806,10 +809,97 @@ export default async function HoodPage({
         </div>
       </section>
 
-      {/* 04 · FAQ */}
+      {/* 04 · nearby schools — proximity context ONLY (no boundary data):
+          nearest rated neighborhood campus per level, measured from the city
+          centroid because hoods carry no coordinates of their own. Copy must
+          never claim assignment; section hides cleanly when the dataset has
+          nothing for this city. */}
+      {nearbySchoolsFor(c.slug).length > 0 && (
+        <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw 0" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(min(400px,90vw),1fr))",
+              gap: 48,
+              alignItems: "start",
+            }}
+          >
+            <div data-reveal="1">
+              <Eyebrow>04 — NEARBY SCHOOLS</Eyebrow>
+              <SectionH2 style={{ marginBottom: 16 }}>
+                A few schools near {h.name}.
+              </SectionH2>
+              <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.75, color: "rgba(29,25,19,.7)" }}>
+                School assignments can vary by address. Use this as nearby
+                context, then verify current boundaries with the district.
+              </p>
+              <div
+                className="font-mono"
+                style={{ marginTop: 16, fontSize: 9, letterSpacing: ".16em", color: "rgba(29,25,19,.45)" }}
+              >
+                TEA {NEARBY_SCHOOLS_META.ratingYear} A–F RATINGS · TXSCHOOLS.GOV · RETRIEVED{" "}
+                {NEARBY_SCHOOLS_META.retrieved} · NEAREST RATED CAMPUS PER LEVEL
+              </div>
+            </div>
+            <div
+              data-reveal="1"
+              style={{ border: "2px solid #1D1913", borderRadius: 18, background: "#FBF7EE", overflow: "hidden" }}
+            >
+              {nearbySchoolsFor(c.slug).map((s, i, arr) => (
+                <div
+                  key={s.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    padding: "17px 22px",
+                    borderBottom: i === arr.length - 1 ? undefined : "1px solid rgba(29,25,19,.14)",
+                  }}
+                >
+                  <span
+                    className="font-serif"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      border: "2px solid #1D1913",
+                      borderRadius: 999,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 900,
+                      fontSize: 16,
+                      background: s.rating === "A" ? "#1D1913" : "#FBF7EE",
+                      color: s.rating === "A" ? "#F6F1E6" : "#1D1913",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {s.rating}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span className="font-serif" style={{ display: "block", fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>
+                      {s.name}
+                    </span>
+                    <span
+                      className="font-mono"
+                      style={{ display: "block", marginTop: 4, fontSize: 9, letterSpacing: ".14em", color: "rgba(29,25,19,.55)" }}
+                    >
+                      {s.district.toUpperCase()} · {s.miles.toFixed(1)} MI FROM {c.name.toUpperCase()} CENTER
+                    </span>
+                  </span>
+                  <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".18em", color: "rgba(29,25,19,.55)" }}>
+                    {s.level.toUpperCase()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 05 · FAQ */}
       <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
         <div data-reveal="1" style={{ marginBottom: 30 }}>
-          <Eyebrow>04 — GOOD QUESTIONS</Eyebrow>
+          <Eyebrow>05 — GOOD QUESTIONS</Eyebrow>
           <SectionH2>Asked about {h.name}, answered straight.</SectionH2>
         </div>
         <div data-reveal="1" style={{ display: "grid", gap: 0, border: "2px solid #1D1913", borderRadius: 18, background: "#FBF7EE", overflow: "hidden" }}>
@@ -843,7 +933,7 @@ export default async function HoodPage({
               className="font-mono"
               style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".32em", color: "#E88D6B", marginBottom: 14 }}
             >
-              05 — KEEP EXPLORING
+              06 — KEEP EXPLORING
             </div>
             <SectionH2 light>More of {c.name} worth a look.</SectionH2>
           </div>
