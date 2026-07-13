@@ -157,7 +157,7 @@ export default async function CityPage({
     c.pop >= 1000000
       ? (c.pop / 1000000).toFixed(2) + "M"
       : Math.round(c.pop / 1000) + "K";
-  const popFull = c.pop.toLocaleString("en-US") + " (placeholder)";
+  const popFull = c.pop.toLocaleString("en-US") + " (2024 est.)";
   const coords =
     Math.abs(c.ll[1]).toFixed(3) + "° N · " + Math.abs(c.ll[0]).toFixed(3) + "° W";
   const paceNote = domDays <= 32 ? "MOVES FAST — COME READY" : "ROOM TO NEGOTIATE";
@@ -531,9 +531,9 @@ export default async function CityPage({
             <QuickFact k="DT DALLAS" v={`${c.commute[0]} min drive`} last />
             <div
               className="font-mono"
-              style={{ marginTop: 10, fontSize: 9, letterSpacing: ".16em", color: "#D9481F" }}
+              style={{ marginTop: 10, fontSize: 9, letterSpacing: ".16em", color: "rgba(29,25,19,.45)" }}
             >
-              PLACEHOLDER FIGURES — VERIFY BEFORE PUBLISHING
+              POPULATION: U.S. CENSUS 2024 EST. · DRIVE TIME: OFF-PEAK
             </div>
           </div>
         </div>
@@ -627,7 +627,7 @@ export default async function CityPage({
               className="font-mono"
               style={{ fontSize: 9, letterSpacing: ".16em", color: "rgba(246,241,230,.5)", marginTop: 8 }}
             >
-              ILLUSTRATIVE CURVE · PLACEHOLDER
+              ILLUSTRATIVE CURVE · EDITORIAL ESTIMATE
             </div>
           </div>
         </div>
@@ -716,14 +716,14 @@ export default async function CityPage({
         >
           <div data-reveal="1">
             <Eyebrow>04 — SCHOOLS</Eyebrow>
-            <SectionH2 style={{ marginBottom: 16 }}>Zoned to {c.isd}.</SectionH2>
+            <SectionH2 style={{ marginBottom: 16 }}>A few schools in {c.isd}.</SectionH2>
             <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.75, color: "rgba(29,25,19,.7)" }}>
               Boundary lines shift and ratings age fast — treat these as a
               starting point and verify the exact address with the district
               before you write an offer.
             </p>
-            <div className="font-mono" style={{ marginTop: 16, fontSize: 9, letterSpacing: ".16em", color: "#D9481F" }}>
-              RATINGS ARE PLACEHOLDERS
+            <div className="font-mono" style={{ marginTop: 16, fontSize: 9, letterSpacing: ".16em", color: "rgba(29,25,19,.45)" }}>
+              TEA 2025 A–F ACCOUNTABILITY RATINGS · TXSCHOOLS.GOV
             </div>
           </div>
           <div
@@ -836,7 +836,7 @@ export default async function CityPage({
             className="font-mono"
             style={{ marginTop: 18, fontSize: 9.5, letterSpacing: ".18em", color: "rgba(246,241,230,.45)" }}
           >
-            OFF-PEAK ESTIMATES · PLACEHOLDER — ADD LIVE DRIVE-TIME DATA
+            OFF-PEAK ESTIMATES · OPENSTREETMAP ROUTING — RUSH HOUR ADDS TIME
           </div>
         </div>
       </section>

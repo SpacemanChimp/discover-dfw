@@ -28,6 +28,8 @@ import type {
 } from "./types";
 import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
 import { boundingBox, polygonBounds, type LonLat } from "./geo";
+import { RESO_SCHOOL_FIELDS, schoolsFromReso } from "./school-fields";
+import type { ListingSchools } from "./types";
 
 import { TRESTLE_ODATA_BASE_URL, TRESTLE_TOKEN_URL, trestleCredentials } from "./trestle-env";
 
@@ -40,6 +42,8 @@ const DEFAULT_PAGE_SIZE = 24;
 const REVALIDATE_SEARCH = 900;
 const REVALIDATE_COUNTS = 1800;
 const REVALIDATE_SNAPSHOT = 3600;
+/* school fields change ~never during a listing's life — cache long */
+const REVALIDATE_SCHOOLS = 21600;
 
 
 /* Statuses shown when the visitor doesn't filter — everything except sold.
@@ -56,6 +60,7 @@ const SELECT = [
   "PropertyType", "PropertySubType", "UnparsedAddress", "City", "PostalCode",
   "SubdivisionName", "Latitude", "Longitude", "PhotosCount", "CumulativeDaysOnMarket",
   "ModificationTimestamp", "ListOfficeName", "PublicRemarks", "NewConstructionYN",
+  ...RESO_SCHOOL_FIELDS,
 ].join(",");
 
 /* ---- auth ---- */
@@ -274,6 +279,7 @@ function toListing(p: any): Listing {
     photoCount: p.PhotosCount ?? media.length,
     photoLabel: media[0]?.caption || `${cityName} — ${p.PhotosCount ?? 0} photos`,
     publicRemarks: p.PublicRemarks ?? undefined,
+    schools: schoolsFromReso(p),
     editorialNote: editorialNote(p, badge, cityName, hood),
     listingBrokerName: null,
     listingOfficeName: p.ListOfficeName ?? null,
@@ -328,6 +334,24 @@ export async function getOpenHouses(listingKey: string): Promise<OpenHouse[]> {
   } catch {
     // open houses are decoration — never fail a listing page over them
     return [];
+  }
+}
+
+/** Exported for the local provider path — rows replicated before the school
+    fields joined the sync SELECT lack them in `raw`, so detail pages fetch
+    the six fields live (tiny $select, 6h cache) until a full backfill runs.
+    Degrades to null on any hiccup — never fails a listing page. */
+export async function getListingSchools(listingKey: string): Promise<ListingSchools | null> {
+  if (!/^\d+$/.test(listingKey)) return null; // mock keys never hit the feed
+  if (!trestleCredentials()) return null;
+  try {
+    const query =
+      `Property?$filter=${encodeURIComponent(`ListingKey eq ${q(listingKey)}`)}` +
+      `&$select=${RESO_SCHOOL_FIELDS.join(",")}`;
+    const j = await odata(query, REVALIDATE_SCHOOLS);
+    return schoolsFromReso((j.value as any[])[0]) ?? null;
+  } catch {
+    return null;
   }
 }
 

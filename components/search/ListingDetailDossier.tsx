@@ -1,4 +1,4 @@
-import type { Listing } from "@/lib/mls/types";
+import type { Listing, ListingSchools } from "@/lib/mls/types";
 import type { City } from "@/lib/dfw-data";
 import { DISCLAIMER_RESERVED } from "@/lib/compliance";
 import { badgeStyle, money } from "./format";
@@ -7,6 +7,7 @@ import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
 import ListingPhotoGallery from "@/components/listing/ListingPhotoGallery";
 import ListingFactsLedger from "@/components/listing/ListingFactsLedger";
 import ListingCityContext from "@/components/listing/ListingCityContext";
+import ListingSchoolsCard from "@/components/listing/ListingSchoolsCard";
 import ListingLeadCTA from "@/components/listing/ListingLeadCTA";
 
 /* "The Dossier" — editorial listing detail: gallery hero, serif price,
@@ -17,10 +18,15 @@ export default function ListingDetailDossier({
   listing,
   city,
   countyName,
+  schools = null,
+  liveMls = false,
 }: {
   listing: Listing;
   city: City;
   countyName: string;
+  /** MLS-reported schools (listing record or live supplement) — null hides/notes. */
+  schools?: ListingSchools | null;
+  liveMls?: boolean;
 }) {
   const b = badgeStyle(listing);
   const ppsf = listing.livingAreaSqft > 0 ? Math.round(listing.listPrice / listing.livingAreaSqft) : null;
@@ -89,6 +95,7 @@ export default function ListingDetailDossier({
 
         <ListingFactsLedger listing={listing} />
         <ListingCityContext listing={listing} city={city} countyName={countyName} />
+        <ListingSchoolsCard schools={schools} live={liveMls} />
 
         {/* compliance reservations: attribution, source, last updated, disclaimer */}
         <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 6 }}>

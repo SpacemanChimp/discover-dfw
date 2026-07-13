@@ -24,6 +24,7 @@ import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { boundingBox, milesBetween, pointInPolygon, polygonBounds, type LonLat } from "./geo";
 import { getOpenHouses, openHouseBadge } from "./trestle";
+import { schoolsFromReso } from "./school-fields";
 
 const DEFAULT_PAGE_SIZE = 24;
 const DEFAULT_STATUSES: ListingStatus[] = ["Active", "ActiveUnderContract", "ComingSoon", "Pending"];
@@ -83,6 +84,10 @@ function toListing(r: any): Listing {
     photoCount: r.photos_count ?? media.length,
     photoLabel: `${cityName} — ${r.photos_count ?? media.length} photos`,
     publicRemarks: r.public_remarks ?? undefined,
+    // derived scalars off `raw` (established pattern) — absent for rows
+    // replicated before the school fields joined the sync SELECT; detail
+    // pages then supplement via trestle getListingSchools()
+    schools: schoolsFromReso((r.raw as Record<string, unknown>) ?? undefined),
     editorialNote:
       badge === "NEW"
         ? `New to the ${cityName} market — day ${Math.max(dom, 1)} on the books.`
