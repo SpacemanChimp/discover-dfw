@@ -301,10 +301,13 @@ export default function LiveMapPanel({
     }
     // big set: every pin gets a canvas dot; bubbles overlay the ones in view
     const dots = L.layerGroup();
+    // fat-finger allowance: 5px dots are near-untappable on phones
+    const dotRadius =
+      typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? 8 : 5;
     for (const p of pins) {
       const m = L.circleMarker([p.lat, p.lon], {
         renderer: canvasRef.current ?? undefined,
-        radius: 5,
+        radius: dotRadius,
         color: "#1D1913",
         weight: 1,
         fillColor: "#D9481F",
@@ -379,18 +382,21 @@ export default function LiveMapPanel({
     const poly = polyFromQs(p.fitQs);
     if (poly) {
       const b = polygonBounds(poly);
+      // animate:false — fits run when the pane appears (mobile flip) or the
+      // filters change; a jump cut is deterministic even where the browser
+      // throttles animation frames
       map.fitBounds(
         L.latLngBounds([
           [b.minLat, b.minLon],
           [b.maxLat, b.maxLon],
         ]).pad(0.05),
-        { maxZoom: 15 }
+        { maxZoom: 15, animate: false }
       );
     } else if (p.pins.length) {
       const bounds = L.latLngBounds(
         p.pins.map((pin) => [pin.lat, pin.lon] as [number, number])
       ).pad(0.1);
-      map.fitBounds(bounds, { maxZoom: 15 });
+      map.fitBounds(bounds, { maxZoom: 15, animate: false });
     }
   }
 
@@ -485,6 +491,7 @@ export default function LiveMapPanel({
   useEffect(() => {
     let cancelled = false;
     let resizeObs: ResizeObserver | null = null;
+    let onViewFlip: (() => void) | null = null;
     (async () => {
       const mod = await import("leaflet");
       const L: Leaflet = ((mod as { default?: Leaflet }).default ?? mod) as Leaflet;
@@ -548,8 +555,7 @@ export default function LiveMapPanel({
       // display:none pane, so Leaflet initializes at 0x0 and renders blank.
       // Any resize gets invalidateSize; the 0x0 -> visible transition also
       // refits the camera, since the original fit ran against a zero box.
-      const container = mapDivRef.current!;
-      resizeObs = new ResizeObserver(() => {
+      const remeasure = () => {
         const m = mapRef.current;
         const el = mapDivRef.current;
         if (!m || !el) return;
@@ -561,14 +567,25 @@ export default function LiveMapPanel({
           lastFitQsRef.current = null;
           fitCameraForPayload(payloadRef.current);
         }
-      });
+        // bubbles depend on real bounds — resync now instead of waiting for
+        // a moveend that a hidden->visible flip may never fire
+        if (hasSize) syncBubbles();
+      };
+      const container = mapDivRef.current!;
+      resizeObs = new ResizeObserver(remeasure);
       resizeObs.observe(container);
+      // belt and braces: the mobile LIST<->MAP toggle announces the flip
+      // (HomesSplit) — observer timing/support must never be the only path
+      // to a working map. 60ms lets the display flip finish layout.
+      onViewFlip = () => window.setTimeout(remeasure, 60);
+      window.addEventListener("ddfw:homes-view", onViewFlip);
 
       setReady(true);
     })();
     return () => {
       cancelled = true;
       resizeObs?.disconnect();
+      if (onViewFlip) window.removeEventListener("ddfw:homes-view", onViewFlip);
       if (moveTimerRef.current !== null) window.clearTimeout(moveTimerRef.current);
       if (viewTimerRef.current !== null) window.clearTimeout(viewTimerRef.current);
       if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);

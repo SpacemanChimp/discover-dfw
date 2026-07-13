@@ -20,6 +20,19 @@ export default function HomesSplit({
 }) {
   const [view, setView] = useState<"list" | "map">("list");
 
+  /* The map pane mounts display:none on phones, so Leaflet inits at 0x0.
+     A ResizeObserver in LiveMapPanel usually catches the reveal, but the
+     flip is announced explicitly too — observer timing must never be the
+     only thing between the user and a working map. */
+  function flip() {
+    const next = view === "map" ? "list" : "map";
+    setView(next);
+    window.setTimeout(
+      () => window.dispatchEvent(new CustomEvent("ddfw:homes-view", { detail: next })),
+      0
+    );
+  }
+
   return (
     <div className={`homes-split${view === "map" ? " homes-view-map" : ""}`}>
       <div className={`homes-rail${railDesktopOnly ? " desktop-only-flex" : ""}`}>{rail}</div>
@@ -28,7 +41,7 @@ export default function HomesSplit({
       <button
         type="button"
         className="homes-map-toggle mobile-only font-mono"
-        onClick={() => setView(view === "map" ? "list" : "map")}
+        onClick={flip}
         style={{
           position: "fixed",
           bottom: "calc(18px + env(safe-area-inset-bottom))",
