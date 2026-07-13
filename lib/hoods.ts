@@ -83,12 +83,22 @@ export interface HoodContent {
 
 const hoodContent = contentRaw as Record<string, HoodContent>;
 
+/* Deterministic per-page pick so the ~200 fallback pages don't all ask the
+   exact same FAQ questions — same page always gets the same phrasing
+   (stable across builds), different pages spread across the variants. */
+function pickVariant(slug: string, variants: string[]): string {
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
+  return variants[hash % variants.length];
+}
+
 /** Editorial content for a hood; falls back to data-derived copy so a page
     never renders empty if a content key is missing. */
 export function contentFor(c: City, h: HoodRef): HoodContent {
   const hit = hoodContent[`${c.slug}/${h.slug}`];
   if (hit) return hit;
   const countyName = countyById[c.county]?.name ?? c.county;
+  const slugSeed = `${c.slug}/${h.slug}`;
   return {
     tagline: h.note,
     intro: [
@@ -104,11 +114,20 @@ export function contentFor(c: City, h: HoodRef): HoodContent {
     ],
     faq: [
       {
-        q: `Where is ${h.name}?`,
+        q: pickVariant(slugSeed, [
+          `Where is ${h.name}?`,
+          `Where exactly is ${h.name}?`,
+          `Where is ${h.name} located?`,
+          `What part of the metroplex is ${h.name} in?`,
+        ]),
         a: `${h.name} is a ${h.newBuild ? "new-build community" : "neighborhood"} in ${c.name}, Texas, in ${countyName} County on the ${c.name} side of the Dallas–Fort Worth metroplex.`,
       },
       {
-        q: `What school district serves ${h.name}?`,
+        q: pickVariant(slugSeed + "|schools", [
+          `What school district serves ${h.name}?`,
+          `Which school district covers ${h.name}?`,
+          `What are the schools for ${h.name}?`,
+        ]),
         a: `${h.name} is served by ${c.isd}. Boundary lines shift, so verify the exact address with the district before writing an offer.`,
       },
     ],
