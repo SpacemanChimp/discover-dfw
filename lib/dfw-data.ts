@@ -1,6 +1,8 @@
 /* Discover DFW — shared geography + city data (ported from the design bundle's dfw-data.js).
-   ALL market figures (prices, $/sqft, DOM, YoY, populations, ratings, commute minutes)
-   are PLACEHOLDERS to be replaced with live data. */
+   Verified (2026-07): populations = U.S. Census Vintage 2024 estimates (Lantana: ACS 2024
+   5-yr, it's a CDP); school ratings = TEA 2025 A–F accountability (txschools.gov); commute
+   minutes = OSRM/OpenStreetMap off-peak estimates (calibrated ×0.85, floor 5 min).
+   Market figures (prices, $/sqft, DOM, YoY) remain EDITORIAL PLACEHOLDERS pending MLS. */
 import raw from "./dfw.data.json";
 
 export type LonLat = [number, number];
