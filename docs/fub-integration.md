@@ -34,8 +34,8 @@ paper trail and failures are queryable for manual replay.
 | Variable | Required | Purpose |
 |---|---|---|
 | `FUB_API_KEY` | to enable | API key from FUB → Admin → API. Unset = integration disabled; leads still store + email. |
-| `FUB_SYSTEM` | recommended | Registered system name → `X-System` header + event `system`. |
-| `FUB_SYSTEM_KEY` | recommended | Registered system key → `X-System-Key` header. |
+| `FUB_SYSTEM` | recommended | Registered system name → `X-System` header + event `system`. Registered 2026-07-15 as `A-Field-Guide-To-North-Texas-Real-Estate`. |
+| `FUB_SYSTEM_KEY` | recommended | Registered system key → `X-System-Key` header (issued by FUB at registration; server-only). |
 | `FUB_SOURCE` | no (default `DiscoverDFW`) | Lead source label. FUB applies it to **new** contacts only — it never overwrites an existing contact's source. |
 | `FUB_DRY_RUN` | no | `1` forces dry-run **anywhere**, including production (kill switch). |
 | `FUB_SEND_IN_DEV` | no | `1` deliberately sends real events from a non-production environment. Otherwise dev/preview always dry-run, mirroring `EMAIL_SEND_IN_DEV`. |
@@ -119,13 +119,16 @@ redaction). No network, no credentials.
 
 ## Configuration checklist (owner)
 
-1. Register the system at <https://apps.followupboss.com/system-registration>
-   (name: `DiscoverDFW`) and note the system key FUB issues.
+1. ~~Register the system~~ **Done 2026-07-15** — registered at
+   <https://apps.followupboss.com/system-registration> as
+   `A-Field-Guide-To-North-Texas-Real-Estate`; the issued system key lives
+   in `.env.local` (and must be mirrored to Vercel).
 2. In FUB → Admin → API, create an API key for the account that owns lead
    routing.
 3. In Vercel → Settings → Environment Variables (Production), set:
-   `FUB_API_KEY`, `FUB_SYSTEM=DiscoverDFW`, `FUB_SYSTEM_KEY`. Optionally
-   `FUB_SOURCE` if a different source label is wanted.
+   `FUB_API_KEY`, `FUB_SYSTEM=A-Field-Guide-To-North-Texas-Real-Estate`,
+   `FUB_SYSTEM_KEY` (same value as `.env.local`). Optionally `FUB_SOURCE`
+   if a different source label is wanted.
 4. In FUB, confirm the lead flow for source "DiscoverDFW" is active and
    routed to the intended agent/pond (the integration does not assign).
 5. Review action plans triggered by `Property Inquiry` / `Registration`:
