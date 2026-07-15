@@ -17,6 +17,7 @@ import {
 } from "react";
 import type { SavedHome, SavedSearchFilter } from "./mls/types";
 import { getSupabaseBrowser } from "./db/client";
+import { getSessionId } from "./session-id";
 
 const LS_KEY = "ddfw.shelf.v1";
 
@@ -371,7 +372,13 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
     fetch("/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "account", email }),
+      body: JSON.stringify({
+        type: "account",
+        email,
+        sourcePage: window.location.pathname + window.location.search,
+        referrer: document.referrer || undefined,
+        sessionId: getSessionId(),
+      }),
     }).catch(() => {});
   };
 

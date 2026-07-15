@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { currentUserId, EMAIL_RE, looksLikeSpam, recordLeadEvent } from "@/lib/leads";
 import { sendShowingRequestEmails } from "@/lib/email/lead-emails";
+import { pushLeadToFub } from "@/lib/crm/fub";
 
 /* Showing requests — a REQUEST, not a confirmed booking; a local guide
    confirms. Guests submit with name/email; signed-in users get attached
@@ -22,6 +23,7 @@ interface Body {
   phone?: string;
   message?: string;
   sourcePage?: string;
+  referrer?: string;
   sessionId?: string;
   hp?: string;
   openedAt?: number;
@@ -102,6 +104,27 @@ export async function POST(req: Request) {
     email,
     phone: row.phone,
     message: row.message,
+  });
+
+  // CRM push last — the lead is already stored + emailed, so a Follow Up
+  // Boss outage can only cost the sync, never the lead. Never throws.
+  await pushLeadToFub(admin, {
+    kind: "showing_request",
+    name,
+    email,
+    phone: row.phone,
+    message: row.message,
+    listingKey: body.listingKey,
+    address: (body.address || "").trim() || null,
+    citySlug: (body.citySlug || "").trim() || null,
+    sourcePage: (body.sourcePage || "").slice(0, 300) || null,
+    referrer: (body.referrer || "").slice(0, 300) || null,
+    sessionId: (body.sessionId || "").trim() || null,
+    userId,
+    submittedAt: new Date().toISOString(),
+    requestedDay: day,
+    timeWindow: body.timeWindow,
+    tourMode: body.mode,
   });
 
   return NextResponse.json({ ok: true });

@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { getSupabaseServer } from "@/lib/db/server";
+import { pushLeadToFub, type NormalizedLead } from "@/lib/crm/fub";
 
 /* Lead intake — showing requests, listing questions, and account signups.
    Persists to the Supabase `leads` table via the secret-key client (the
    table has no client RLS policies, so this route is the only door in).
    Falls back to server logging when the secret key isn't configured.
-   CRM/agent-routing webhook remains a follow-up. */
+   After storage, each lead is pushed to Follow Up Boss (lib/crm/fub —
+   dry-run outside production; contact dedupe handled by FUB /events). */
 
 const TYPES = new Set(["showing", "question", "account"]);
 
@@ -23,6 +25,9 @@ interface LeadBody {
   timeOfDay?: string;
   tourMode?: string;
   replyPref?: string;
+  sourcePage?: string;
+  referrer?: string;
+  sessionId?: string;
 }
 
 export async function POST(req: Request) {
@@ -62,18 +67,20 @@ export async function POST(req: Request) {
     timeOfDay: body.timeOfDay || null,
     tourMode: body.tourMode || null,
     replyPref: body.replyPref || null,
+    sourcePage: (body.sourcePage || "").slice(0, 300) || null,
+    referrer: (body.referrer || "").slice(0, 300) || null,
   };
 
   const admin = getSupabaseAdmin();
+  // attach the signed-in user when there is one (guests stay null)
+  let userId: string | null = null;
+  try {
+    const session = await getSupabaseServer();
+    userId = (await session?.auth.getUser())?.data.user?.id ?? null;
+  } catch {
+    /* no session — guest lead */
+  }
   if (admin) {
-    // attach the signed-in user when there is one (guests stay null)
-    let userId: string | null = null;
-    try {
-      const session = await getSupabaseServer();
-      userId = (await session?.auth.getUser())?.data.user?.id ?? null;
-    } catch {
-      /* no session — guest lead */
-    }
     const { error } = await admin.from("leads").insert({
       user_id: userId,
       type: lead.type,
@@ -88,6 +95,32 @@ export async function POST(req: Request) {
     // secret key not configured — keep the paper trail in the logs
     console.log("[lead]", JSON.stringify(lead));
   }
+
+  // CRM push last — the lead is already persisted above. Never throws.
+  const KIND: Record<string, NormalizedLead["kind"]> = {
+    showing: "showing_request",
+    question: "listing_question",
+    account: "account_signup",
+  };
+  await pushLeadToFub(admin, {
+    kind: KIND[lead.type] ?? "account_signup",
+    name: lead.name,
+    email: lead.email,
+    phone: lead.phone,
+    message: lead.message,
+    listingKey: lead.listingKey,
+    address: lead.address,
+    citySlug: lead.citySlug,
+    sourcePage: lead.sourcePage,
+    referrer: lead.referrer,
+    sessionId: (body.sessionId || "").trim() || null,
+    userId,
+    submittedAt: lead.receivedAt,
+    requestedDay: lead.day,
+    timeWindow: lead.timeOfDay,
+    tourMode: lead.tourMode,
+    replyPref: lead.replyPref,
+  });
 
   return NextResponse.json({ ok: true });
 }
