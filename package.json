@@ -11,7 +11,8 @@
     "content:find-photo-candidates": "node --env-file=.env.local scripts/content/find-photo-candidates.mjs",
     "content:score-photo-candidates": "node --env-file=.env.local scripts/content/score-photo-candidates.mjs",
     "content:seed-new-builds": "node --env-file=.env.local scripts/content/seed-new-build-communities.mjs",
-    "content:export-drafts": "node --env-file=.env.local scripts/content/export-community-drafts.mjs"
+    "content:export-drafts": "node --env-file=.env.local scripts/content/export-community-drafts.mjs",
+    "audit:public-content": "node --env-file-if-exists=.env.local scripts/checks/public-content-audit.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
