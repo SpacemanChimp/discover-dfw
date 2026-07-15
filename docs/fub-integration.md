@@ -123,12 +123,17 @@ redaction). No network, no credentials.
    <https://apps.followupboss.com/system-registration> as
    `A-Field-Guide-To-North-Texas-Real-Estate`; the issued system key lives
    in `.env.local` (and must be mirrored to Vercel).
-2. In FUB → Admin → API, create an API key for the account that owns lead
-   routing.
+2. ~~Create an API key~~ **Done 2026-07-15** — key verified against
+   `GET /v1/me` (200, admin). It lives in `.env.local` alongside a
+   `FUB_DRY_RUN=1` guard: local `next start` servers run with
+   `NODE_ENV=production`, so without the guard a local server could push
+   real events. Remove the guard locally only for the approved
+   supervised test.
 3. In Vercel → Settings → Environment Variables (Production), set:
    `FUB_API_KEY`, `FUB_SYSTEM=A-Field-Guide-To-North-Texas-Real-Estate`,
-   `FUB_SYSTEM_KEY` (same value as `.env.local`). Optionally `FUB_SOURCE`
-   if a different source label is wanted.
+   `FUB_SYSTEM_KEY` (same values as `.env.local` — do **not** set
+   `FUB_DRY_RUN` there, or set it to empty). This is the step that turns
+   the integration on in production.
 4. In FUB, confirm the lead flow for source "DiscoverDFW" is active and
    routed to the intended agent/pond (the integration does not assign).
 5. Review action plans triggered by `Property Inquiry` / `Registration`:
