@@ -2,7 +2,10 @@
    Verified (2026-07): populations = U.S. Census Vintage 2024 estimates (Lantana: ACS 2024
    5-yr, it's a CDP); school ratings = TEA 2025 A–F accountability (txschools.gov); commute
    minutes = OSRM/OpenStreetMap off-peak estimates (calibrated ×0.85, floor 5 min).
-   Market figures (prices, $/sqft, DOM, YoY) remain EDITORIAL PLACEHOLDERS pending MLS. */
+   Market figures: price/$sqft/DOM are seeded from NTREIS replica snapshot medians
+   (scripts/content/refresh-city-market-figures.mjs, last run 2026-07-15) and serve as
+   the static/fallback layer; live surfaces still query snapshots directly. YoY remains
+   an EDITORIAL ESTIMATE until a year of snapshot history exists. */
 import raw from "./dfw.data.json";
 
 export type LonLat = [number, number];

@@ -1,7 +1,8 @@
 /* City dataset bridge for the MLS layer — reuses the editorial geography
    dataset (lib/dfw-data) rather than duplicating it, and shapes city rows
-   into CityMarketSnapshot objects. Market figures remain PLACEHOLDERS from
-   the editorial dataset until live market data lands. */
+   into CityMarketSnapshot objects. Price/$sqft/DOM come from the dataset's
+   snapshot-seeded figures (see lib/dfw-data.ts header); YoY is an editorial
+   estimate. Used as the fallback when no live snapshot is available. */
 import { cities, bySlug, countyById, type City } from "@/lib/dfw-data";
 import type { CityMarketSnapshot } from "@/lib/mls/types";
 

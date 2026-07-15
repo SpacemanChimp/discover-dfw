@@ -105,7 +105,7 @@ export function contentFor(c: City, h: HoodRef): HoodContent {
       `${h.name} sits in ${c.name}, ${countyName} County — ${h.note.replace(/\.$/, "")}. ${c.tagline}.`,
       c.vibe,
     ],
-    homes: `Homes in ${h.name} follow ${c.name}'s broader pattern — ${c.tagline.toLowerCase()}. Schools run through ${c.isd}. Figures on this page are placeholders; verify current listings and pricing before you tour.`,
+    homes: `Homes in ${h.name} follow ${c.name}'s broader pattern — ${c.tagline.toLowerCase()}. Schools run through ${c.isd}. Listings and pricing move quickly in North Texas — confirm current details before you tour.`,
     highlights: [
       { title: "The setting", note: h.note },
       { title: "Schools", note: c.isd },

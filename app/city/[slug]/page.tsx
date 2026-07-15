@@ -874,7 +874,8 @@ export default async function CityPage({
         </section>
       )}
 
-      {/* 07 · listings */}
+      {/* 06/07 · listings — takes 06 when the gallery is hidden so the
+          visible section numbering never skips */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
           <div
@@ -889,7 +890,7 @@ export default async function CityPage({
             }}
           >
             <div>
-              <Eyebrow>07 — ON THE MARKET</Eyebrow>
+              <Eyebrow>{approvedGallery.length > 0 ? "07" : "06"} — ON THE MARKET</Eyebrow>
               <SectionH2>Three ways to buy {c.name}.</SectionH2>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
