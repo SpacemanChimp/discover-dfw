@@ -1,3 +1,25 @@
+/* conversion panels: step reveal + SR-only text; the reveal stills itself
+   under prefers-reduced-motion */
+.cv-step {
+  animation: fadeUp 0.45s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cv-step {
+    animation: none;
+  }
+}
+.cv-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :root {
   --ink: #1d1913;
   --cream: #f6f1e6;

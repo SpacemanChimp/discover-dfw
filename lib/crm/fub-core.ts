@@ -11,7 +11,7 @@
    contact's timeline). We deliberately never send assignedTo/assignedUserId
    or stage, so account ownership/routing rules stay in charge. */
 
-export type LeadKind = "showing_request" | "listing_question" | "account_signup";
+export type LeadKind = "showing_request" | "listing_question" | "account_signup" | "guide_request";
 
 /** The normalized shape every DiscoverDFW intake route produces. */
 export interface NormalizedLead {
@@ -39,7 +39,9 @@ export interface NormalizedLead {
   tourMode?: string | null;
   /* listing-question specifics */
   replyPref?: string | null; // "text" | "email"
-  /* not collected by current forms — mapped when present */
+  /* guide-request specifics (contextual conversion components) */
+  intent?: string | null; // e.g. "build-my-shortlist" — becomes the offer tag
+  comparingWith?: string | null;
   budget?: string | null;
   timeline?: string | null;
 }
@@ -129,7 +131,13 @@ const OFFER_SLUGS: Record<LeadKind, string> = {
   showing_request: "showing-request",
   listing_question: "listing-question",
   account_signup: "account-signup",
+  guide_request: "guide-request",
 };
+
+/** Guide requests carry their specific intent as the offer slug. */
+export function offerSlug(lead: Pick<NormalizedLead, "kind" | "intent">): string {
+  return (lead.kind === "guide_request" && lead.intent) || OFFER_SLUGS[lead.kind];
+}
 
 const PAGE_TAGS: Record<PageType, string | null> = {
   homepage: "ddfw:homepage",
@@ -143,7 +151,7 @@ const PAGE_TAGS: Record<PageType, string | null> = {
 
 export function buildTags(lead: NormalizedLead, page: PageContext): string[] {
   const consent = deriveConsent(lead);
-  const tags = ["ddfw:lead", `offer:${OFFER_SLUGS[lead.kind]}`];
+  const tags = ["ddfw:lead", `offer:${offerSlug(lead)}`];
   const pageTag = PAGE_TAGS[page.pageType];
   if (pageTag) tags.push(pageTag);
   const citySlug = lead.citySlug || page.citySlug;
@@ -159,6 +167,7 @@ const KIND_LABEL: Record<LeadKind, string> = {
   showing_request: "Showing request",
   listing_question: "Listing question",
   account_signup: "Account signup",
+  guide_request: "Guide request",
 };
 
 const MODE_LABEL: Record<string, string> = {
@@ -170,7 +179,12 @@ const MODE_LABEL: Record<string, string> = {
     context an agent needs at a glance; the person's own words go in the
     event `message`, not here. */
 export function buildSummary(lead: NormalizedLead, page: PageContext): string {
-  const lines: string[] = [`${KIND_LABEL[lead.kind]} via DiscoverDFW.`];
+  const kindLine =
+    lead.kind === "guide_request" && lead.intent
+      ? `Guide request (${lead.intent}) via DiscoverDFW.`
+      : `${KIND_LABEL[lead.kind]} via DiscoverDFW.`;
+  const lines: string[] = [kindLine];
+  if (lead.comparingWith) lines.push(`Comparing with: ${lead.comparingWith}`);
   if (lead.address || lead.listingKey) {
     lines.push(`Property: ${lead.address || "MLS #" + lead.listingKey}${lead.address && lead.listingKey ? ` (MLS #${lead.listingKey})` : ""}`);
   }
@@ -199,6 +213,7 @@ const EVENT_TYPE: Record<LeadKind, string> = {
   showing_request: "Property Inquiry",
   listing_question: "Property Inquiry",
   account_signup: "Registration",
+  guide_request: "General Inquiry",
 };
 
 export interface FubEventPayload {

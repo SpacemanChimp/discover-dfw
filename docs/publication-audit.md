@@ -3,7 +3,7 @@
 > GENERATED FILE — do not hand-edit. Regenerate with `npm run audit:public-content`.
 > Internal working document; not a public route.
 
-- Generated: 2026-07-16T16:43:40.716Z
+- Generated: 2026-07-16T22:26:01.126Z
 - Base URL: http://localhost:4319 · MLS mode: `local` (live)
 - Pages crawled: 805 (city-report: 90, neighborhood-report: 341, homepage: 1, new-build-report: 34, city-homes-search: 210, homes-search: 129)
 - Fail condition: critical = internal-production phrase visibly rendered on an indexable page
@@ -13,7 +13,7 @@
 | critical | 0 |
 | high | 0 |
 | medium | 408 |
-| low | 463 |
+| low | 467 |
 
 Notes on route coverage: About and The Letter (newsletter) are homepage sections, audited under `/`. County pages do not exist as routes — counties render as homepage map regions and city-index groupings. Listing pages are sampled (high-churn, never in the sitemap).
 
@@ -45,7 +45,7 @@ _34 pages affected — full list in `data/publication-audit.json`._
 - Can remain public during remediation: yes
 - Sample pages: `/city/anna/anacapri`, `/city/anna/churchill`, `/city/anna/parks-at-foster-crossing`, `/city/argyle/harvest`, `/city/arlington/viridian`, `/city/aubrey/sandbrock-ranch`, `/city/celina/light-farms`, `/city/celina/mosaic`, `/city/celina/ramble`, `/city/celina/the-parks-at-wilson-creek` …
 
-## LOW (463)
+## LOW (467)
 
 ### generated-fallback-copy (154)
 
@@ -74,7 +74,7 @@ _34 pages affected — full list in `data/publication-audit.json`._
 - Can remain public during remediation: yes
 - Sample pages: `/city/anna/anacapri`, `/city/anna/churchill`, `/city/anna/parks-at-foster-crossing`, `/city/argyle/harvest`, `/city/arlington/viridian`, `/city/aubrey/sandbrock-ranch`, `/city/celina/light-farms`, `/city/celina/mosaic`, `/city/celina/ramble`, `/city/celina/the-parks-at-wilson-creek` …
 
-### mls-data-artifact (66)
+### mls-data-artifact (70)
 
 | URL | Page type | City / community | Phrase / finding | Rendered | Indexable | Stay public? |
 |---|---|---|---|---|---|---|
@@ -101,7 +101,9 @@ _34 pages affected — full list in `data/publication-audit.json`._
 | `/city/kaufman/homes?page=2` | city-homes-search | Kaufman | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/city/keller/homes` | city-homes-search | Keller | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/city/lucas/homes` | city-homes-search | Lucas | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
+| `/city/lucas/homes?page=2` | city-homes-search | Lucas | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/city/mansfield/homes?page=2` | city-homes-search | Mansfield | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
+| `/city/mckinney/homes` | city-homes-search | McKinney | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/city/melissa/homes` | city-homes-search | Melissa | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/city/midlothian/homes?page=2` | city-homes-search | Midlothian | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/city/nevada/homes` | city-homes-search | Nevada | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
@@ -135,6 +137,8 @@ _34 pages affected — full list in `data/publication-audit.json`._
 | `/homes?city=kaufman` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/homes?city=keller` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/homes?city=lucas` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
+| `/homes?city=lucas&page=2` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
+| `/homes?city=mckinney` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/homes?city=melissa` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/homes?city=nevada` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/homes?city=nevada&page=2` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
@@ -145,23 +149,23 @@ _34 pages affected — full list in `data/publication-audit.json`._
 | `/homes?city=sanger&page=2` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 | `/homes?city=waxahachie` | homes-search | — | MLS-provided "TBD <street>" address on listing card(s) | yes | yes | yes |
 
-- **PA-819** `/city/anna/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-821** `/city/anna/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “TE SERVICES MLS# 21108939 · NTREIS ♡ MLS PHOTO — ANNA — 22 PHOTOS NEW — 0 DAYS $1,500,000 TBD Cr-915 WOODLAND MEADOWS · ANNA ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Anna market — day 1”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-858** `/city/argyle/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-861** `/city/argyle/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “H CENTRAL METRO 2 MLS# 21308655 · NTREIS ♡ MLS PHOTO — ARGYLE — 4 PHOTOS 18 DAYS $650,000 TBD Meadow View Drive CANYON OAKS 2 PH 2 · ARGYLE ↗ 0 BD 0 BA 0 SQFT 0 BUILT Canyon Oaks 2 Ph”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-792** `/city/aubrey/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “mmission Consumer Protection Notice ♡ MLS PHOTO — AUBREY — 0 PHOTOS NEW — 0 DAYS $799,000 tbd Caddell Street D COWAN · AUBREY ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Aubrey market — day”
+- **PA-793** `/city/aubrey/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “MES AND LAND MLS# 21285065 · NTREIS ♡ MLS PHOTO — AUBREY — 0 PHOTOS NEW — 0 DAYS $799,000 tbd Caddell Street D COWAN · AUBREY ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Aubrey market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-190** `/city/aurora/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-205** `/city/aurora/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ission Consumer Protection Notice ♡ MLS PHOTO — AURORA — 2 PHOTOS NEW — 5 DAYS $2,100,000 TBD Airfield Road NONE · AURORA ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Aurora market — day 5 o”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-211** `/city/boyd/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-180** `/city/boyd/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “T REALTY, LLC MLS# 21319480 · NTREIS ♡ MLS PHOTO — BOYD — 20 PHOTOS NEW — 0 DAYS $350,000 TBD 1 Timber Oaks Lane TIMBER OAKS · BOYD ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Boyd market —”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
@@ -173,119 +177,127 @@ _34 pages affected — full list in `data/publication-audit.json`._
   - excerpt: “IDGEPORT MLS# 21230066 · NTREIS ♡ MLS PHOTO — BRIDGEPORT — 3 PHOTOS NEW — 0 DAYS $525,000 TBD 13th Street LAWDWIN ADD · BRIDGEPORT ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Bridgeport mar”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-864** `/city/bridgeport/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “EALTY PARTNERS MLS# 21301724 · NTREIS ♡ MLS PHOTO — BRIDGEPORT — 3 PHOTOS 17 DAYS $75,000 TBD Fm 920 A-3 AUSTIN & WILLIAMS · BRIDGEPORT ↗ 0 BD 0 BA 0 SQFT 0 BUILT A-3 AUSTIN & WILLIAM”
+- **PA-867** `/city/bridgeport/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “REAL ESTATE MLS# 21297498 · NTREIS ♡ MLS PHOTO — BRIDGEPORT — 20 PHOTOS 15 DAYS $850,000 TBD FM 1658 0 · BRIDGEPORT ↗ 0 BD 0 BA 0 SQFT 0 BUILT 0, Bridgeport — 15 days on the market.”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-837** `/city/burleson/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-840** `/city/burleson/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “SIONALS MLS# 21299857 · NTREIS ♡ MLS PHOTO — BURLESON — 21 PHOTOS NEW — 0 DAYS $4,615,930 TBD County Road 1021 NA · BURLESON ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Burleson market — da”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-835** `/city/colleyville/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-838** `/city/colleyville/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “LIAMS REALTY MLS# 21310332 · NTREIS ♡ MLS PHOTO — COLLEYVILLE — 40 PHOTOS 8 DAYS $850,000 TBD Bettinger Drive GILMORE JOHN ADD · COLLEYVILLE ↗ 0 BD 0 BA 0 SQFT 1965 BUILT Gilmore John”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-154** `/city/decatur/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-166** `/city/decatur/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “BOWMAN, INC. MLS# 21310707 · NTREIS ♡ MLS PHOTO — DECATUR — 1 PHOTOS NEW — 0 DAYS $5,000 TBD Shady Lane NONE · DECATUR ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Decatur market — day 1 on”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-803** `/city/decatur/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-805** `/city/decatur/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ASSOCIATES MLS# 21259140 · NTREIS ♡ MLS PHOTO — DECATUR — 10 PHOTOS NEW — 1 DAYS $185,000 TBD Lot 1 FM 455 PORTER · DECATUR ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Decatur market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-857** `/city/denton/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-860** `/city/denton/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “WMAN, INC. MLS# 21278898 · NTREIS ♡ MLS PHOTO — DENTON — 4 PHOTOS NEW — 0 DAYS $1,400,000 TBD Shoreline Drive UNICORN LAKE · DENTON ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Denton market”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-783** `/city/ennis/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-785** `/city/ennis/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ANKER REALTY MLS# 21323251 · NTREIS ♡ MLS PHOTO — ENNIS — 16 PHOTOS NEW — 0 DAYS $500,000 TBD Lot 23 B Alsdorf Road A GARZA · ENNIS ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Ennis market”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-854** `/city/ennis/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-857** `/city/ennis/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “END HOME CORP MLS# 21293259 · NTREIS ♡ MLS PHOTO — ENNIS — 6 PHOTOS NEW — 1 DAYS $150,000 TBD Lot 7R Valek Road CAMODO ADDITION · ENNIS ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Ennis mar”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-870** `/city/farmersville/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-875** `/city/farmersville/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “TORS MLS# 21285027 · NTREIS ♡ MLS PHOTO — FARMERSVILLE — 2 PHOTOS NEW — 0 DAYS $1,053,650 tbd CR 571 ABS A0658 J C NEILL SURVEY · FARMERSVILLE ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Fa”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-135** `/city/flower-mound/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-131** `/city/flower-mound/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ION MLS# 21308776 · NTREIS ♡ MLS PHOTO — FLOWER MOUND — 13 PHOTOS NEW — 0 DAYS $3,250,000 TBD Scenic Drive TODD ADD · FLOWER MOUND ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Flower Mound m”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-800** `/city/flower-mound/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “S NEWEST FIRST · MOCK FEED ♡ MLS PHOTO — FLOWER MOUND — 13 PHOTOS NEW — 0 DAYS $6,935,000 TBD Fm 1171 MCGOWAN & PITCOCK · FLOWER MOUND ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Flower Mou”
+- **PA-803** `/city/flower-mound/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “Consumer Protection Notice ♡ MLS PHOTO — FLOWER MOUND — 13 PHOTOS NEW — 0 DAYS $6,935,000 TBD Fm 1171 MCGOWAN & PITCOCK · FLOWER MOUND ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Flower Mou”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-867** `/city/frisco/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-871** `/city/frisco/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “REAL ESTATE MLS# 21262403 · NTREIS ♡ MLS PHOTO — FRISCO — 1 PHOTOS NEW — 0 DAYS $118,000 TBD Cedar Lane BOYD ACRES · FRISCO ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Frisco market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-752** `/city/kaufman/homes` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “ROCK REALTY MLS# 21291375 · NTREIS ♡ MLS PHOTO — KAUFMAN — 2 PHOTOS NEW — 0 DAYS $270,765 TBD Lot 12 Fm 2860 A0217 · KAUFMAN ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Kaufman market — day”
+- **PA-761** `/city/kaufman/homes` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “REALTY LLC MLS# 21305926 · NTREIS ♡ MLS PHOTO — KAUFMAN — 2 PHOTOS NEW — 0 DAYS $270,765 TBD Lot 12 Fm 2860 A0217 · KAUFMAN ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Kaufman market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-847** `/city/kaufman/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-855** `/city/kaufman/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “S# 21293165 · NTREIS ♡ MLS PHOTO — KAUFMAN — 18 PHOTOS NEW — 2 DAYS $269,997 $ 127 / SQFT TBD Lagitas Court VALENCIA · KAUFMAN ↗ 5 BD 3 BA 2,128 SQFT 2025 BUILT New to the Kaufman mar”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-441** `/city/keller/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-434** `/city/keller/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “EALTY LLC MLS# 21320089 · NTREIS ♡ MLS PHOTO — KELLER — 40 PHOTOS NEW — 0 DAYS $5,800,000 TBD Keller Smithfield THE BIRCH ADDITION · KELLER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Kelle”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-296** `/city/lucas/homes` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “Commission Consumer Protection Notice ♡ MLS PHOTO — LUCAS — 5 PHOTOS NEW — 0 DAYS $1,000 TBD CR-890 TRINITY PARK ADD · LUCAS ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Lucas market — day”
+- **PA-287** `/city/lucas/homes` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “DALLAS SUBURBS MLS# 21332853 · NTREIS ♡ MLS PHOTO — LUCAS — 5 PHOTOS NEW — 0 DAYS $1,000 TBD CR-890 TRINITY PARK ADD · LUCAS ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Lucas market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-836** `/city/mansfield/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-827** `/city/lucas/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “MARKET — 24 HOMES NEWEST FIRST · MOCK FEED ♡ MLS PHOTO — LUCAS — 5 PHOTOS 8 DAYS $64,999 TBD County Road 890 TRINITY PARK ADD · LUCAS ↗ 0 BD 0 BA 0 SQFT 0 BUILT Trinity Park Add, Luc”
+  - source: NTREIS feed data (UnparsedAddress) — not site copy
+  - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
+- **PA-839** `/city/mansfield/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “Y FRISCO MLS# 21185125 · NTREIS ♡ MLS PHOTO — MANSFIELD — 14 PHOTOS NEW — 0 DAYS $112,585 TBD Sam Booker Road NA · MANSFIELD ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Mansfield market — d”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-246** `/city/melissa/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-263** `/city/mckinney/homes` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “WEEKLEY MLS# 21333502 · NTREIS ♡ MLS PHOTO — MCKINNEY — 22 PHOTOS NEW — 0 DAYS $6,000,000 TBD Parker Street A0085 · MCKINNEY ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the McKinney market — da”
+  - source: NTREIS feed data (UnparsedAddress) — not site copy
+  - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
+- **PA-238** `/city/melissa/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ESUSA.COM MLS# 21287906 · NTREIS ♡ MLS PHOTO — MELISSA — 4 PHOTOS NEW — 0 DAYS $2,265,000 TBD County Road 413 NA · MELISSA ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Melissa market — day 1”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-850** `/city/midlothian/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-854** `/city/midlothian/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “REALTY MLS# 21295975 · NTREIS ♡ MLS PHOTO — MIDLOTHIAN — 23 PHOTOS NEW — 0 DAYS $450,000 TBD Waterworks Road WM BELL · MIDLOTHIAN ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Midlothian mar”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-386** `/city/nevada/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-389** `/city/nevada/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “AVIS REALTY MLS# 21285997 · NTREIS ♡ MLS PHOTO — NEVADA — 20 PHOTOS NEW — 0 DAYS $729,900 TBD County Road 541 M C DUPEY SURV ABS #269 · NEVADA ↗ 0 BD 0 BA 0 SQFT 1984 BUILT New to the”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-827** `/city/nevada/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-830** `/city/nevada/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “AMS REALTY ALLEN MLS# 21286376 · NTREIS ♡ MLS PHOTO — NEVADA — 10 PHOTOS 15 DAYS $135,000 TBD CR 637-Lot 1 HARVEST BEND · NEVADA ↗ 0 BD 0 BA 0 SQFT 0 BUILT Harvest Bend, Nevada — 15 d”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-829** `/city/north-richland-hills/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-832** `/city/north-richland-hills/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “LS# 21290551 · NTREIS ♡ MLS PHOTO — NORTH RICHLAND HILLS — 4 PHOTOS NEW — 1 DAYS $369,000 TBD Kirk Lane NEWTON, W C SURVEY ABSTRACT 1182 TRACT 2A2 · NORTH RICHLAND HILLS ↗ 0 BD 0 BA 0”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-782** `/city/ovilla/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-783** `/city/ovilla/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ATHOM REALTY LLC MLS# 21314777 · NTREIS ♡ MLS PHOTO — OVILLA — 22 PHOTOS 21 DAYS $350,000 TBD Highland Road TANGLE WOOD HOLLOW · OVILLA ↗ 0 BD 0 BA 0 SQFT 0 BUILT Tangle wood Hollow,”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-826** `/city/princeton/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-829** `/city/princeton/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ES REALTY MLS# 21327289 · NTREIS ♡ MLS PHOTO — PRINCETON — 1 PHOTOS NEW — 0 DAYS $375,000 TBD County Road 947 SHAMROCK PARK · PRINCETON ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Princeton”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-871** `/city/princeton/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “CORNERS MLS# 21290095 · NTREIS ♡ MLS PHOTO — PRINCETON — 3 PHOTOS NEW — 0 DAYS $1,089,000 TBD Monte Carlo BLVD Boulevard SHOPPES AT MONTICELLO · PRINCETON ↗ 0 BD 0 BA 0 SQFT 0 BUILT N”
+- **PA-874** `/city/princeton/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “CORNERS MLS# 21290095 · NTREIS ♡ MLS PHOTO — PRINCETON — 3 PHOTOS NEW — 0 DAYS $1,254,528 TBD Monte Carlo Boulevard SHOPPES AT MONTICELLO · PRINCETON ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-175** `/city/rhome/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-167** `/city/rhome/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “CORPORATION MLS# 21311883 · NTREIS ♡ MLS PHOTO — RHOME — 12 PHOTOS NEW — 0 DAYS $225,000 TBD Savanna Drive ESTATES AT CHISHOLM RIDGE · RHOME ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Rho”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-865** `/city/rhome/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-869** `/city/rhome/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “PRO REALTY LLC MLS# 21223682 · NTREIS ♡ MLS PHOTO — RHOME — 13 PHOTOS 75 DAYS $6,250,000 TBD Hwy 287 Highway S NONE · RHOME ↗ 0 BD 0 BA 0 SQFT 0 BUILT None, Rhome — 75 days on the ma”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-862** `/city/roanoke/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-865** `/city/roanoke/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ONX REAL ESTATE MLS# 21227532 · NTREIS ♡ MLS PHOTO — ROANOKE — 31 PHOTOS 248 DAYS $94,900 TBD Sycamore Lane MARSHALL CREEK · ROANOKE ↗ 0 BD 0 BA 0 SQFT 1983 BUILT Marshall Creek, Roan”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-845** `/city/royse-city/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-850** `/city/royse-city/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “Y LLC MLS# 21268896 · NTREIS ♡ MLS PHOTO — ROYSE CITY — 17 PHOTOS NEW — 0 DAYS $8,900,000 TBD Fm 1777 A0512 · ROYSE CITY ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Royse City market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
@@ -293,23 +305,23 @@ _34 pages affected — full list in `data/publication-audit.json`._
   - excerpt: “TLE REALTY MLS# 21276317 · NTREIS ♡ MLS PHOTO — SANGER — 3 PHOTOS NEW — 0 DAYS $2,750,000 TBD Metz Road WM MASON · SANGER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Sanger market — day 1 o”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-785** `/city/sanger/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “24 HOMES NEWEST FIRST · MOCK FEED ♡ MLS PHOTO — SANGER — 1 PHOTOS NEW — 0 DAYS $3,999,999 TBD I35 TIERWESTER · SANGER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Sanger market — day 1 on th”
+- **PA-786** `/city/sanger/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “ission Consumer Protection Notice ♡ MLS PHOTO — SANGER — 1 PHOTOS NEW — 0 DAYS $3,999,999 TBD I35 TIERWESTER · SANGER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Sanger market — day 1 on th”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-856** `/city/sanger/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-859** `/city/sanger/homes?page=3` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “AMS, REALTORS MLS# 21316849 · NTREIS ♡ MLS PHOTO — SANGER — 4 PHOTOS NEW — 7 DAYS $50,000 TBD Bobcat Rd BOBCAT RD · SANGER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Sanger market — day 7”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-834** `/city/southlake/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-837** `/city/southlake/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “289018 · NTREIS ♡ MLS PHOTO — SOUTHLAKE — 15 PHOTOS NEW — 7 DAYS $9,995,000 $ 1083 / SQFT TBD Sunshine Lane SUNSHINE PLACE · SOUTHLAKE ↗ 6 BD 8 BA 9,230 SQFT 2026 BUILT New to the Sou”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-849** `/city/terrell/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “mission Consumer Protection Notice ♡ MLS PHOTO — TERRELL — 1 PHOTOS NEW — 0 DAYS $350,000 TBD Cr-301 C & C RANCH, BLOCK A, LOT 3 · TERRELL ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Terrel”
+- **PA-848** `/city/terrell/homes?page=2` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “STATE, INC. MLS# 21170124 · NTREIS ♡ MLS PHOTO — TERRELL — 1 PHOTOS NEW — 0 DAYS $350,000 TBD Cr-301 C & C RANCH, BLOCK A, LOT 3 · TERRELL ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Terrel”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-781** `/city/waxahachie/homes` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-782** `/city/waxahachie/homes` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “P REALTY MLS# 21330254 · NTREIS ♡ MLS PHOTO — WAXAHACHIE — 1 PHOTOS NEW — 0 DAYS $189,900 TBD 2.88 acres Nash-Howard Road HOWARD HILLS · WAXAHACHIE ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to t”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
@@ -317,11 +329,11 @@ _34 pages affected — full list in `data/publication-audit.json`._
   - excerpt: “S REALTY MLS# 21323804 · NTREIS ♡ MLS PHOTO — WAXAHACHIE — 3 PHOTOS NEW — 0 DAYS $250,000 TBD E FM 55 B3R ESTATES · WAXAHACHIE ↗ 0 BD 0 BA 0 SQFT 2026 BUILT New to the Waxahachie mark”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-866** `/homes?city=anna&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-868** `/homes?city=anna&page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “TE SERVICES MLS# 21108939 · NTREIS ♡ MLS PHOTO — ANNA — 22 PHOTOS NEW — 0 DAYS $1,500,000 TBD Cr-915 WOODLAND MEADOWS · ANNA ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Anna market — day 1”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-855** `/homes?city=aubrey&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-858** `/homes?city=aubrey&page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “MES AND LAND MLS# 21285065 · NTREIS ♡ MLS PHOTO — AUBREY — 0 PHOTOS NEW — 0 DAYS $799,000 tbd Caddell Street D COWAN · AUBREY ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Aubrey market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
@@ -333,67 +345,75 @@ _34 pages affected — full list in `data/publication-audit.json`._
   - excerpt: “T REALTY, LLC MLS# 21319480 · NTREIS ♡ MLS PHOTO — BOYD — 20 PHOTOS NEW — 0 DAYS $350,000 TBD 1 Timber Oaks Lane TIMBER OAKS · BOYD ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Boyd market —”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-863** `/homes?city=boyd&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-866** `/homes?city=boyd&page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “F ULTIMA REAL ESTATE MLS# 21304918 · NTREIS ♡ MLS PHOTO — BOYD — 6 PHOTOS 25 DAYS $70,000 TBD Boyd Avenue ORIGINAL TOWN OF BOYD · BOYD ↗ 0 BD 0 BA 0 SQFT 0 BUILT Original Town of Boyd”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-861** `/homes?city=bridgeport&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-863** `/homes?city=bridgeport&page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “IDGEPORT MLS# 21230066 · NTREIS ♡ MLS PHOTO — BRIDGEPORT — 3 PHOTOS NEW — 0 DAYS $525,000 TBD 13th Street LAWDWIN ADD · BRIDGEPORT ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Bridgeport mar”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-798** `/homes?city=decatur` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-799** `/homes?city=decatur` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “BOWMAN, INC. MLS# 21310707 · NTREIS ♡ MLS PHOTO — DECATUR — 1 PHOTOS NEW — 0 DAYS $5,000 TBD Shady Lane NONE · DECATUR ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Decatur market — day 1 on”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-860** `/homes?city=decatur&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-864** `/homes?city=decatur&page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ASSOCIATES MLS# 21259140 · NTREIS ♡ MLS PHOTO — DECATUR — 10 PHOTOS NEW — 1 DAYS $185,000 TBD Lot 1 FM 455 PORTER · DECATUR ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Decatur market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-851** `/homes?city=ennis` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-853** `/homes?city=ennis` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ANKER REALTY MLS# 21323251 · NTREIS ♡ MLS PHOTO — ENNIS — 16 PHOTOS NEW — 0 DAYS $500,000 TBD Lot 23 B Alsdorf Road A GARZA · ENNIS ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Ennis market”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-797** `/homes?city=flower-mound` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-798** `/homes?city=flower-mound` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ION MLS# 21308776 · NTREIS ♡ MLS PHOTO — FLOWER MOUND — 13 PHOTOS NEW — 0 DAYS $3,250,000 TBD Scenic Drive TODD ADD · FLOWER MOUND ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Flower Mound m”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-859** `/homes?city=flower-mound&page=2` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “38 READ THE CITY REPORT → ♡ MLS PHOTO — FLOWER MOUND — 13 PHOTOS NEW — 0 DAYS $6,935,000 TBD Fm 1171 MCGOWAN & PITCOCK · FLOWER MOUND ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Flower Mou”
+- **PA-862** `/homes?city=flower-mound&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “LLC MLS# 21249965 · NTREIS ♡ MLS PHOTO — FLOWER MOUND — 13 PHOTOS NEW — 0 DAYS $6,935,000 TBD Fm 1171 MCGOWAN & PITCOCK · FLOWER MOUND ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Flower Mou”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-844** `/homes?city=kaufman` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “ROCK REALTY MLS# 21291375 · NTREIS ♡ MLS PHOTO — KAUFMAN — 2 PHOTOS NEW — 0 DAYS $270,765 TBD Lot 12 Fm 2860 A0217 · KAUFMAN ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Kaufman market — day”
+- **PA-847** `/homes?city=kaufman` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “REALTY LLC MLS# 21305926 · NTREIS ♡ MLS PHOTO — KAUFMAN — 2 PHOTOS NEW — 0 DAYS $270,765 TBD Lot 12 Fm 2860 A0217 · KAUFMAN ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Kaufman market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-828** `/homes?city=keller` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-831** `/homes?city=keller` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “EALTY LLC MLS# 21320089 · NTREIS ♡ MLS PHOTO — KELLER — 40 PHOTOS NEW — 0 DAYS $5,800,000 TBD Keller Smithfield THE BIRCH ADDITION · KELLER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Kelle”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-820** `/homes?city=lucas` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-824** `/homes?city=lucas` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “DALLAS SUBURBS MLS# 21332853 · NTREIS ♡ MLS PHOTO — LUCAS — 5 PHOTOS NEW — 0 DAYS $1,000 TBD CR-890 TRINITY PARK ADD · LUCAS ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Lucas market — day”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-805** `/homes?city=melissa` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-870** `/homes?city=lucas&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “$/SQFT $ 310 DOM 61 READ THE CITY REPORT → ♡ MLS PHOTO — LUCAS — 5 PHOTOS 8 DAYS $64,999 TBD County Road 890 TRINITY PARK ADD · LUCAS ↗ 0 BD 0 BA 0 SQFT 0 BUILT Trinity Park Add, Luc”
+  - source: NTREIS feed data (UnparsedAddress) — not site copy
+  - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
+- **PA-818** `/homes?city=mckinney` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “WEEKLEY MLS# 21333502 · NTREIS ♡ MLS PHOTO — MCKINNEY — 22 PHOTOS NEW — 0 DAYS $6,000,000 TBD Parker Street A0085 · MCKINNEY ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the McKinney market — da”
+  - source: NTREIS feed data (UnparsedAddress) — not site copy
+  - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
+- **PA-817** `/homes?city=melissa` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ESUSA.COM MLS# 21287906 · NTREIS ♡ MLS PHOTO — MELISSA — 4 PHOTOS NEW — 0 DAYS $2,265,000 TBD County Road 413 NA · MELISSA ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Melissa market — day 1”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-825** `/homes?city=nevada` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-828** `/homes?city=nevada` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “AVIS REALTY MLS# 21285997 · NTREIS ♡ MLS PHOTO — NEVADA — 20 PHOTOS NEW — 0 DAYS $729,900 TBD County Road 541 M C DUPEY SURV ABS #269 · NEVADA ↗ 0 BD 0 BA 0 SQFT 1984 BUILT New to the”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-869** `/homes?city=nevada&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-873** `/homes?city=nevada&page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “AMS REALTY ALLEN MLS# 21286376 · NTREIS ♡ MLS PHOTO — NEVADA — 10 PHOTOS 15 DAYS $135,000 TBD CR 637-Lot 1 HARVEST BEND · NEVADA ↗ 0 BD 0 BA 0 SQFT 0 BUILT Harvest Bend, Nevada — 15 d”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-848** `/homes?city=ovilla` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-851** `/homes?city=ovilla` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ATHOM REALTY LLC MLS# 21314777 · NTREIS ♡ MLS PHOTO — OVILLA — 22 PHOTOS 21 DAYS $350,000 TBD Highland Road TANGLE WOOD HOLLOW · OVILLA ↗ 0 BD 0 BA 0 SQFT 0 BUILT Tangle wood Hollow,”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-868** `/homes?city=princeton&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-872** `/homes?city=princeton&page=2` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “ES REALTY MLS# 21327289 · NTREIS ♡ MLS PHOTO — PRINCETON — 1 PHOTOS NEW — 0 DAYS $375,000 TBD County Road 947 SHAMROCK PARK · PRINCETON ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Princeton”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-799** `/homes?city=rhome` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-800** `/homes?city=rhome` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “CORPORATION MLS# 21311883 · NTREIS ♡ MLS PHOTO — RHOME — 12 PHOTOS NEW — 0 DAYS $225,000 TBD Savanna Drive ESTATES AT CHISHOLM RIDGE · RHOME ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Rho”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
@@ -401,11 +421,11 @@ _34 pages affected — full list in `data/publication-audit.json`._
   - excerpt: “TLE REALTY MLS# 21276317 · NTREIS ♡ MLS PHOTO — SANGER — 3 PHOTOS NEW — 0 DAYS $2,750,000 TBD Metz Road WM MASON · SANGER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Sanger market — day 1 o”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-853** `/homes?city=sanger&page=2` — MLS-provided "TBD <street>" address on listing card(s)
-  - excerpt: “188 DOM 57 READ THE CITY REPORT → ♡ MLS PHOTO — SANGER — 1 PHOTOS NEW — 0 DAYS $3,999,999 TBD I35 TIERWESTER · SANGER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Sanger market — day 1 on th”
+- **PA-856** `/homes?city=sanger&page=2` — MLS-provided "TBD <street>" address on listing card(s)
+  - excerpt: “PROPERTIES MLS# 21233973 · NTREIS ♡ MLS PHOTO — SANGER — 1 PHOTOS NEW — 0 DAYS $3,999,999 TBD I35 TIERWESTER · SANGER ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Sanger market — day 1 on th”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
-- **PA-846** `/homes?city=waxahachie` — MLS-provided "TBD <street>" address on listing card(s)
+- **PA-849** `/homes?city=waxahachie` — MLS-provided "TBD <street>" address on listing card(s)
   - excerpt: “P REALTY MLS# 21330254 · NTREIS ♡ MLS PHOTO — WAXAHACHIE — 1 PHOTOS NEW — 0 DAYS $189,900 TBD 2.88 acres Nash-Howard Road HOWARD HILLS · WAXAHACHIE ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to t”
   - source: NTREIS feed data (UnparsedAddress) — not site copy
   - remediation: Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.
@@ -498,6 +518,7 @@ These phrases exist in runtime source but did not appear in any crawled page's v
 | `lib/content/editorial-photos.ts` | 6 | PLACEHOLDER | `empty map so the surface renders its editorial placeholder, never a` |
 | `lib/content/editorial-photos.ts` | 98 | PLACEHOLDER | `console.warn(`editorial photos: read failed (${entityType}) — rendering placeholders`);` |
 | `lib/content/editorial-photos.ts` | 117 | PLACEHOLDER | `console.warn(`editorial photos: read aborted (${entityType}) — rendering placeholders`);` |
+| `lib/convert/intents.ts` | 27 | PLACEHOLDER | `/** example hint rendered UNDER the field (never placeholder-only) */` |
 | `lib/email/letter-issue.ts` | 3 | PLACEHOLDER | `placeholder (%%UNSUB_URL%%) that the send loop substitutes with each` |
 | `lib/mls/mock-provider.ts` | 1 | FICTIONAL (mock-inventory banner) | `/* Mock MLS provider — serves the fictional inventory in data/mock-listings.` |
 | `lib/mls/trestle.ts` | 15 | PENDING BROKER/LEGAL REVIEW | `// Compliance copy — single source of truth, PENDING BROKER/NTREIS/LEGAL REVIEW` |
