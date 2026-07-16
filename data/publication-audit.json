@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-07-16T22:26:01.126Z",
+  "generatedAt": "2026-07-16T22:46:15.846Z",
   "command": "npm run audit:public-content",
   "baseUrl": "http://localhost:4319",
   "mlsProvider": "local",
   "liveMode": true,
   "pagesCrawled": 805,
-  "routeCoverage": "city-report: 90, neighborhood-report: 341, homepage: 1, new-build-report: 34, city-homes-search: 210, homes-search: 129",
+  "routeCoverage": "city-report: 90, other: 1, neighborhood-report: 341, homepage: 1, new-build-report: 34, homes-search: 130, city-homes-search: 208",
   "summary": {
     "critical": 0,
     "high": 0,
     "medium": 408,
-    "low": 467
+    "low": 465
   },
   "failCondition": "critical = internal-production phrase visibly rendered on an indexable page",
   "issues": [
@@ -143,7 +143,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-184",
+      "id": "PA-182",
       "url": "/city/anna/anacapri",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -159,7 +159,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-185",
+      "id": "PA-183",
       "url": "/city/anna/anacapri",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -175,7 +175,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-196",
+      "id": "PA-195",
       "url": "/city/anna/churchill",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -191,7 +191,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-197",
+      "id": "PA-196",
       "url": "/city/anna/churchill",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -207,7 +207,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-192",
+      "id": "PA-191",
       "url": "/city/anna/parks-at-foster-crossing",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -223,7 +223,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-193",
+      "id": "PA-192",
       "url": "/city/anna/parks-at-foster-crossing",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -239,7 +239,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-187",
+      "id": "PA-185",
       "url": "/city/anna/sherley-farms",
       "pageType": "neighborhood-report",
       "city": "Anna",
@@ -255,7 +255,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-189",
+      "id": "PA-188",
       "url": "/city/anna/villages-of-hurricane-creek",
       "pageType": "neighborhood-report",
       "city": "Anna",
@@ -271,7 +271,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-181",
+      "id": "PA-179",
       "url": "/city/anna/west-crossing",
       "pageType": "neighborhood-report",
       "city": "Anna",
@@ -527,7 +527,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-156",
+      "id": "PA-157",
       "url": "/city/aurora/114-frontage",
       "pageType": "neighborhood-report",
       "city": "Aurora",
@@ -543,7 +543,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-152",
+      "id": "PA-155",
       "url": "/city/aurora/fm-1141-acreage",
       "pageType": "neighborhood-report",
       "city": "Aurora",
@@ -559,7 +559,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-150",
+      "id": "PA-151",
       "url": "/city/aurora/old-aurora",
       "pageType": "neighborhood-report",
       "city": "Aurora",
@@ -575,7 +575,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-154",
+      "id": "PA-153",
       "url": "/city/aurora/pecan-creek-lots",
       "pageType": "neighborhood-report",
       "city": "Aurora",
@@ -911,7 +911,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-125",
+      "id": "PA-128",
       "url": "/city/bridgeport/downtown-halsell",
       "pageType": "neighborhood-report",
       "city": "Bridgeport",
@@ -927,7 +927,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-129",
+      "id": "PA-130",
       "url": "/city/bridgeport/east-380-corridor",
       "pageType": "neighborhood-report",
       "city": "Bridgeport",
@@ -943,7 +943,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-123",
+      "id": "PA-124",
       "url": "/city/bridgeport/lake-bridgeport-shores",
       "pageType": "neighborhood-report",
       "city": "Bridgeport",
@@ -959,7 +959,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-127",
+      "id": "PA-126",
       "url": "/city/bridgeport/runaway-bay-edge",
       "pageType": "neighborhood-report",
       "city": "Bridgeport",
@@ -1103,7 +1103,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-835",
+      "id": "PA-834",
       "url": "/city/cedar-hill/bear-creek",
       "pageType": "neighborhood-report",
       "city": "Cedar Hill",
@@ -1135,7 +1135,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-810",
+      "id": "PA-812",
       "url": "/city/cedar-hill/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Cedar Hill",
@@ -1167,7 +1167,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-164",
+      "id": "PA-165",
       "url": "/city/celina/cambridge-crossing",
       "pageType": "neighborhood-report",
       "city": "Celina",
@@ -1183,27 +1183,11 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-168",
+      "id": "PA-167",
       "url": "/city/celina/downtown-celina",
       "pageType": "neighborhood-report",
       "city": "Celina",
       "community": "downtown celina",
-      "category": "missing-images",
-      "severity": "medium",
-      "phrase": "no real images render on this page",
-      "excerpt": "",
-      "sourceFile": "photo pipeline: lib/content/editorial-photos.ts + admin Photo Desk",
-      "visiblyRendered": true,
-      "indexable": true,
-      "recommendation": "Approve photos for this page's slots via the Photo Desk (photo_candidates → approve). Page may stay public — layout is designed to hold without photos.",
-      "canRemainPublic": true
-    },
-    {
-      "id": "PA-159",
-      "url": "/city/celina/light-farms",
-      "pageType": "new-build-report",
-      "city": "Celina",
-      "community": "Light Farms",
       "category": "missing-images",
       "severity": "medium",
       "phrase": "no real images render on this page",
@@ -1220,6 +1204,22 @@
       "pageType": "new-build-report",
       "city": "Celina",
       "community": "Light Farms",
+      "category": "missing-images",
+      "severity": "medium",
+      "phrase": "no real images render on this page",
+      "excerpt": "",
+      "sourceFile": "photo pipeline: lib/content/editorial-photos.ts + admin Photo Desk",
+      "visiblyRendered": true,
+      "indexable": true,
+      "recommendation": "Approve photos for this page's slots via the Photo Desk (photo_candidates → approve). Page may stay public — layout is designed to hold without photos.",
+      "canRemainPublic": true
+    },
+    {
+      "id": "PA-161",
+      "url": "/city/celina/light-farms",
+      "pageType": "new-build-report",
+      "city": "Celina",
+      "community": "Light Farms",
       "category": "unverified-newbuild-figures",
       "severity": "medium",
       "phrase": "from $500s · 8 builders · FINAL PHASE — no verification date in dataset",
@@ -1231,7 +1231,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-171",
+      "id": "PA-170",
       "url": "/city/celina/mosaic",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -1247,7 +1247,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-172",
+      "id": "PA-171",
       "url": "/city/celina/mosaic",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -1263,11 +1263,27 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-162",
+      "id": "PA-163",
       "url": "/city/celina/mustang-lakes",
       "pageType": "neighborhood-report",
       "city": "Celina",
       "community": "mustang lakes",
+      "category": "missing-images",
+      "severity": "medium",
+      "phrase": "no real images render on this page",
+      "excerpt": "",
+      "sourceFile": "photo pipeline: lib/content/editorial-photos.ts + admin Photo Desk",
+      "visiblyRendered": true,
+      "indexable": true,
+      "recommendation": "Approve photos for this page's slots via the Photo Desk (photo_candidates → approve). Page may stay public — layout is designed to hold without photos.",
+      "canRemainPublic": true
+    },
+    {
+      "id": "PA-176",
+      "url": "/city/celina/ramble",
+      "pageType": "new-build-report",
+      "city": "Celina",
+      "community": "Ramble",
       "category": "missing-images",
       "severity": "medium",
       "phrase": "no real images render on this page",
@@ -1284,22 +1300,6 @@
       "pageType": "new-build-report",
       "city": "Celina",
       "community": "Ramble",
-      "category": "missing-images",
-      "severity": "medium",
-      "phrase": "no real images render on this page",
-      "excerpt": "",
-      "sourceFile": "photo pipeline: lib/content/editorial-photos.ts + admin Photo Desk",
-      "visiblyRendered": true,
-      "indexable": true,
-      "recommendation": "Approve photos for this page's slots via the Photo Desk (photo_candidates → approve). Page may stay public — layout is designed to hold without photos.",
-      "canRemainPublic": true
-    },
-    {
-      "id": "PA-178",
-      "url": "/city/celina/ramble",
-      "pageType": "new-build-report",
-      "city": "Celina",
-      "community": "Ramble",
       "category": "unverified-newbuild-figures",
       "severity": "medium",
       "phrase": "from $460s · 3 builders · NOW SELLING — no verification date in dataset",
@@ -1311,7 +1311,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-174",
+      "id": "PA-173",
       "url": "/city/celina/the-parks-at-wilson-creek",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -1327,7 +1327,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-175",
+      "id": "PA-174",
       "url": "/city/celina/the-parks-at-wilson-creek",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -1759,7 +1759,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-009",
+      "id": "PA-011",
       "url": "/city/denton/oak-hickory-district",
       "pageType": "neighborhood-report",
       "city": "Denton",
@@ -1807,7 +1807,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-011",
+      "id": "PA-009",
       "url": "/city/denton/southridge",
       "pageType": "neighborhood-report",
       "city": "Denton",
@@ -1839,7 +1839,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-833",
+      "id": "PA-832",
       "url": "/city/desoto/meadow-creek",
       "pageType": "neighborhood-report",
       "city": "DeSoto",
@@ -1967,7 +1967,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-814",
+      "id": "PA-816",
       "url": "/city/ennis/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Ennis",
@@ -2079,7 +2079,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-243",
+      "id": "PA-242",
       "url": "/city/fairview/ascot-heath",
       "pageType": "neighborhood-report",
       "city": "Fairview",
@@ -2095,7 +2095,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-245",
+      "id": "PA-244",
       "url": "/city/fairview/fairview-meadows",
       "pageType": "neighborhood-report",
       "city": "Fairview",
@@ -2111,7 +2111,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-239",
+      "id": "PA-238",
       "url": "/city/fairview/heritage-ranch",
       "pageType": "neighborhood-report",
       "city": "Fairview",
@@ -2127,7 +2127,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-241",
+      "id": "PA-240",
       "url": "/city/fairview/sloan-creek",
       "pageType": "neighborhood-report",
       "city": "Fairview",
@@ -2239,7 +2239,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-806",
+      "id": "PA-808",
       "url": "/city/farmersville/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Farmersville",
@@ -2383,7 +2383,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-791",
+      "id": "PA-790",
       "url": "/city/flower-mound/canyon-falls",
       "pageType": "neighborhood-report",
       "city": "Flower Mound",
@@ -2911,7 +2911,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-843",
+      "id": "PA-842",
       "url": "/city/glenn-heights/stone-creek",
       "pageType": "neighborhood-report",
       "city": "Glenn Heights",
@@ -3999,7 +3999,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-808",
+      "id": "PA-810",
       "url": "/city/mansfield/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Mansfield",
@@ -4143,7 +4143,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-199",
+      "id": "PA-198",
       "url": "/city/melissa/liberty",
       "pageType": "neighborhood-report",
       "city": "Melissa",
@@ -4175,7 +4175,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-206",
+      "id": "PA-205",
       "url": "/city/melissa/villages-of-melissa",
       "pageType": "neighborhood-report",
       "city": "Melissa",
@@ -4399,7 +4399,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-290",
+      "id": "PA-289",
       "url": "/city/murphy/maxwell-creek",
       "pageType": "neighborhood-report",
       "city": "Murphy",
@@ -4607,7 +4607,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-788",
+      "id": "PA-787",
       "url": "/city/northlake/harvest",
       "pageType": "new-build-report",
       "city": "Northlake",
@@ -4623,7 +4623,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-789",
+      "id": "PA-788",
       "url": "/city/northlake/harvest",
       "pageType": "new-build-report",
       "city": "Northlake",
@@ -4751,7 +4751,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-264",
+      "id": "PA-263",
       "url": "/city/parker/kings-crossing",
       "pageType": "neighborhood-report",
       "city": "Parker",
@@ -4767,7 +4767,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-268",
+      "id": "PA-267",
       "url": "/city/parker/rolling-meadows-estates",
       "pageType": "neighborhood-report",
       "city": "Parker",
@@ -4783,7 +4783,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-266",
+      "id": "PA-265",
       "url": "/city/parker/southfork-corridor",
       "pageType": "neighborhood-report",
       "city": "Parker",
@@ -4815,7 +4815,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-288",
+      "id": "PA-287",
       "url": "/city/plano/lakeside-on-preston",
       "pageType": "neighborhood-report",
       "city": "Plano",
@@ -4975,7 +4975,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-214",
+      "id": "PA-212",
       "url": "/city/prosper/star-trail",
       "pageType": "neighborhood-report",
       "city": "Prosper",
@@ -4991,7 +4991,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-212",
+      "id": "PA-214",
       "url": "/city/prosper/whitley-place",
       "pageType": "neighborhood-report",
       "city": "Prosper",
@@ -5039,7 +5039,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-753",
+      "id": "PA-754",
       "url": "/city/red-oak/garden-valley",
       "pageType": "neighborhood-report",
       "city": "Red Oak",
@@ -5055,7 +5055,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-759",
+      "id": "PA-760",
       "url": "/city/red-oak/live-oak-trails",
       "pageType": "neighborhood-report",
       "city": "Red Oak",
@@ -5071,7 +5071,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-757",
+      "id": "PA-758",
       "url": "/city/red-oak/old-red-oak",
       "pageType": "neighborhood-report",
       "city": "Red Oak",
@@ -5087,7 +5087,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-755",
+      "id": "PA-756",
       "url": "/city/red-oak/the-meadows",
       "pageType": "neighborhood-report",
       "city": "Red Oak",
@@ -5455,7 +5455,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-822",
+      "id": "PA-821",
       "url": "/city/royse-city/hidden-creek",
       "pageType": "neighborhood-report",
       "city": "Royse City",
@@ -5583,7 +5583,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-825",
+      "id": "PA-824",
       "url": "/city/sachse/woodbridge",
       "pageType": "neighborhood-report",
       "city": "Sachse",
@@ -5663,7 +5663,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-003",
+      "id": "PA-001",
       "url": "/city/sanger/downtown-sanger",
       "pageType": "neighborhood-report",
       "city": "Sanger",
@@ -5695,7 +5695,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-005",
+      "id": "PA-003",
       "url": "/city/sanger/ray-roberts-edge",
       "pageType": "neighborhood-report",
       "city": "Sanger",
@@ -5711,7 +5711,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-001",
+      "id": "PA-005",
       "url": "/city/sanger/sable-creek",
       "pageType": "neighborhood-report",
       "city": "Sanger",
@@ -6015,7 +6015,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-841",
+      "id": "PA-840",
       "url": "/city/terrell/breezy-hill",
       "pageType": "neighborhood-report",
       "city": "Terrell",
@@ -6047,7 +6047,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-812",
+      "id": "PA-814",
       "url": "/city/terrell/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Terrell",
@@ -6111,7 +6111,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-041",
+      "id": "PA-040",
       "url": "/city/the-colony/the-tribute",
       "pageType": "neighborhood-report",
       "city": "The Colony",
@@ -6271,7 +6271,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-845",
+      "id": "PA-844",
       "url": "/city/waxahachie/downtown-square",
       "pageType": "neighborhood-report",
       "city": "Waxahachie",
@@ -6671,7 +6671,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-183",
+      "id": "PA-181",
       "url": "/city/anna/anacapri",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -6687,7 +6687,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-186",
+      "id": "PA-184",
       "url": "/city/anna/anacapri",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -6703,7 +6703,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-195",
+      "id": "PA-194",
       "url": "/city/anna/churchill",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -6719,7 +6719,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-198",
+      "id": "PA-197",
       "url": "/city/anna/churchill",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -6735,8 +6735,8 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-821",
-      "url": "/city/anna/homes?page=2",
+      "id": "PA-868",
+      "url": "/city/anna/homes?page=3",
       "pageType": "city-homes-search",
       "city": "Anna",
       "community": "",
@@ -6751,7 +6751,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-191",
+      "id": "PA-190",
       "url": "/city/anna/parks-at-foster-crossing",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -6767,7 +6767,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-194",
+      "id": "PA-193",
       "url": "/city/anna/parks-at-foster-crossing",
       "pageType": "new-build-report",
       "city": "Anna",
@@ -6783,7 +6783,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-188",
+      "id": "PA-186",
       "url": "/city/anna/sherley-farms",
       "pageType": "neighborhood-report",
       "city": "Anna",
@@ -6799,7 +6799,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-190",
+      "id": "PA-189",
       "url": "/city/anna/villages-of-hurricane-creek",
       "pageType": "neighborhood-report",
       "city": "Anna",
@@ -6815,7 +6815,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-182",
+      "id": "PA-180",
       "url": "/city/anna/west-crossing",
       "pageType": "neighborhood-report",
       "city": "Anna",
@@ -6895,7 +6895,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-861",
+      "id": "PA-860",
       "url": "/city/argyle/homes?page=3",
       "pageType": "city-homes-search",
       "city": "Argyle",
@@ -7103,7 +7103,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-157",
+      "id": "PA-158",
       "url": "/city/aurora/114-frontage",
       "pageType": "neighborhood-report",
       "city": "Aurora",
@@ -7119,7 +7119,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-153",
+      "id": "PA-156",
       "url": "/city/aurora/fm-1141-acreage",
       "pageType": "neighborhood-report",
       "city": "Aurora",
@@ -7135,7 +7135,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-205",
+      "id": "PA-200",
       "url": "/city/aurora/homes",
       "pageType": "city-homes-search",
       "city": "Aurora",
@@ -7151,7 +7151,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-151",
+      "id": "PA-152",
       "url": "/city/aurora/old-aurora",
       "pageType": "neighborhood-report",
       "city": "Aurora",
@@ -7167,7 +7167,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-155",
+      "id": "PA-154",
       "url": "/city/aurora/pecan-creek-lots",
       "pageType": "neighborhood-report",
       "city": "Aurora",
@@ -7455,7 +7455,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-180",
+      "id": "PA-187",
       "url": "/city/boyd/homes",
       "pageType": "city-homes-search",
       "city": "Boyd",
@@ -7471,7 +7471,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-816",
+      "id": "PA-807",
       "url": "/city/boyd/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Boyd",
@@ -7535,7 +7535,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-126",
+      "id": "PA-129",
       "url": "/city/bridgeport/downtown-halsell",
       "pageType": "neighborhood-report",
       "city": "Bridgeport",
@@ -7551,7 +7551,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-130",
+      "id": "PA-131",
       "url": "/city/bridgeport/east-380-corridor",
       "pageType": "neighborhood-report",
       "city": "Bridgeport",
@@ -7567,7 +7567,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-804",
+      "id": "PA-805",
       "url": "/city/bridgeport/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Bridgeport",
@@ -7583,7 +7583,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-867",
+      "id": "PA-866",
       "url": "/city/bridgeport/homes?page=3",
       "pageType": "city-homes-search",
       "city": "Bridgeport",
@@ -7599,7 +7599,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-124",
+      "id": "PA-125",
       "url": "/city/bridgeport/lake-bridgeport-shores",
       "pageType": "neighborhood-report",
       "city": "Bridgeport",
@@ -7615,7 +7615,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-128",
+      "id": "PA-127",
       "url": "/city/bridgeport/runaway-bay-edge",
       "pageType": "neighborhood-report",
       "city": "Bridgeport",
@@ -7647,7 +7647,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-840",
+      "id": "PA-839",
       "url": "/city/burleson/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Burleson",
@@ -7775,7 +7775,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-836",
+      "id": "PA-835",
       "url": "/city/cedar-hill/bear-creek",
       "pageType": "neighborhood-report",
       "city": "Cedar Hill",
@@ -7807,7 +7807,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-811",
+      "id": "PA-813",
       "url": "/city/cedar-hill/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Cedar Hill",
@@ -7839,7 +7839,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-165",
+      "id": "PA-166",
       "url": "/city/celina/cambridge-crossing",
       "pageType": "neighborhood-report",
       "city": "Celina",
@@ -7855,7 +7855,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-169",
+      "id": "PA-168",
       "url": "/city/celina/downtown-celina",
       "pageType": "neighborhood-report",
       "city": "Celina",
@@ -7871,7 +7871,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-158",
+      "id": "PA-159",
       "url": "/city/celina/light-farms",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -7887,7 +7887,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-161",
+      "id": "PA-162",
       "url": "/city/celina/light-farms",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -7903,7 +7903,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-170",
+      "id": "PA-169",
       "url": "/city/celina/mosaic",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -7919,7 +7919,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-163",
+      "id": "PA-164",
       "url": "/city/celina/mustang-lakes",
       "pageType": "neighborhood-report",
       "city": "Celina",
@@ -7935,7 +7935,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-176",
+      "id": "PA-175",
       "url": "/city/celina/ramble",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -7951,7 +7951,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-179",
+      "id": "PA-178",
       "url": "/city/celina/ramble",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -7967,7 +7967,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-173",
+      "id": "PA-172",
       "url": "/city/celina/the-parks-at-wilson-creek",
       "pageType": "new-build-report",
       "city": "Celina",
@@ -8015,7 +8015,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-838",
+      "id": "PA-837",
       "url": "/city/colleyville/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Colleyville",
@@ -8351,7 +8351,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-166",
+      "id": "PA-150",
       "url": "/city/decatur/homes",
       "pageType": "city-homes-search",
       "city": "Decatur",
@@ -8367,7 +8367,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-805",
+      "id": "PA-804",
       "url": "/city/decatur/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Decatur",
@@ -8431,7 +8431,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-860",
+      "id": "PA-859",
       "url": "/city/denton/homes?page=3",
       "pageType": "city-homes-search",
       "city": "Denton",
@@ -8463,7 +8463,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-010",
+      "id": "PA-012",
       "url": "/city/denton/oak-hickory-district",
       "pageType": "neighborhood-report",
       "city": "Denton",
@@ -8511,7 +8511,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-012",
+      "id": "PA-010",
       "url": "/city/denton/southridge",
       "pageType": "neighborhood-report",
       "city": "Denton",
@@ -8543,7 +8543,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-834",
+      "id": "PA-833",
       "url": "/city/desoto/meadow-creek",
       "pageType": "neighborhood-report",
       "city": "DeSoto",
@@ -8671,7 +8671,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-815",
+      "id": "PA-817",
       "url": "/city/ennis/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Ennis",
@@ -8703,7 +8703,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-857",
+      "id": "PA-856",
       "url": "/city/ennis/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Ennis",
@@ -8815,7 +8815,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-244",
+      "id": "PA-243",
       "url": "/city/fairview/ascot-heath",
       "pageType": "neighborhood-report",
       "city": "Fairview",
@@ -8831,7 +8831,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-246",
+      "id": "PA-245",
       "url": "/city/fairview/fairview-meadows",
       "pageType": "neighborhood-report",
       "city": "Fairview",
@@ -8847,7 +8847,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-240",
+      "id": "PA-239",
       "url": "/city/fairview/heritage-ranch",
       "pageType": "neighborhood-report",
       "city": "Fairview",
@@ -8863,7 +8863,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-242",
+      "id": "PA-241",
       "url": "/city/fairview/sloan-creek",
       "pageType": "neighborhood-report",
       "city": "Fairview",
@@ -8975,7 +8975,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-807",
+      "id": "PA-809",
       "url": "/city/farmersville/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Farmersville",
@@ -8988,22 +8988,6 @@
       "visiblyRendered": true,
       "indexable": true,
       "recommendation": "Replace generated copy with reviewed editorial content via the Content Desk export. Page may remain public — fallback copy is deterministic and claim-safe by design.",
-      "canRemainPublic": true
-    },
-    {
-      "id": "PA-875",
-      "url": "/city/farmersville/homes?page=3",
-      "pageType": "city-homes-search",
-      "city": "Farmersville",
-      "community": "",
-      "category": "mls-data-artifact",
-      "severity": "low",
-      "phrase": "MLS-provided \"TBD <street>\" address on listing card(s)",
-      "excerpt": "TORS MLS# 21285027 · NTREIS ♡ MLS PHOTO — FARMERSVILLE — 2 PHOTOS NEW — 0 DAYS $1,053,650 tbd CR 571 ABS A0658 J C NEILL SURVEY · FARMERSVILLE ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Fa",
-      "sourceFile": "NTREIS feed data (UnparsedAddress) — not site copy",
-      "visiblyRendered": true,
-      "indexable": true,
-      "recommendation": "Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.",
       "canRemainPublic": true
     },
     {
@@ -9119,7 +9103,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-792",
+      "id": "PA-791",
       "url": "/city/flower-mound/canyon-falls",
       "pageType": "neighborhood-report",
       "city": "Flower Mound",
@@ -9135,7 +9119,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-131",
+      "id": "PA-123",
       "url": "/city/flower-mound/homes",
       "pageType": "city-homes-search",
       "city": "Flower Mound",
@@ -9151,7 +9135,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-803",
+      "id": "PA-800",
       "url": "/city/flower-mound/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Flower Mound",
@@ -9159,7 +9143,7 @@
       "category": "mls-data-artifact",
       "severity": "low",
       "phrase": "MLS-provided \"TBD <street>\" address on listing card(s)",
-      "excerpt": "Consumer Protection Notice ♡ MLS PHOTO — FLOWER MOUND — 13 PHOTOS NEW — 0 DAYS $6,935,000 TBD Fm 1171 MCGOWAN & PITCOCK · FLOWER MOUND ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Flower Mou",
+      "excerpt": "LLC MLS# 21249965 · NTREIS ♡ MLS PHOTO — FLOWER MOUND — 13 PHOTOS NEW — 0 DAYS $6,935,000 TBD Fm 1171 MCGOWAN & PITCOCK · FLOWER MOUND ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Flower Mou",
       "sourceFile": "NTREIS feed data (UnparsedAddress) — not site copy",
       "visiblyRendered": true,
       "indexable": true,
@@ -9503,7 +9487,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-871",
+      "id": "PA-870",
       "url": "/city/frisco/homes?page=3",
       "pageType": "city-homes-search",
       "city": "Frisco",
@@ -9679,7 +9663,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-844",
+      "id": "PA-843",
       "url": "/city/glenn-heights/stone-creek",
       "pageType": "neighborhood-report",
       "city": "Glenn Heights",
@@ -10111,7 +10095,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-761",
+      "id": "PA-753",
       "url": "/city/kaufman/homes",
       "pageType": "city-homes-search",
       "city": "Kaufman",
@@ -10127,7 +10111,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-855",
+      "id": "PA-850",
       "url": "/city/kaufman/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Kaufman",
@@ -10719,7 +10703,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-287",
+      "id": "PA-291",
       "url": "/city/lucas/homes",
       "pageType": "city-homes-search",
       "city": "Lucas",
@@ -10735,7 +10719,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-827",
+      "id": "PA-826",
       "url": "/city/lucas/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Lucas",
@@ -10783,7 +10767,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-809",
+      "id": "PA-811",
       "url": "/city/mansfield/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Mansfield",
@@ -10799,7 +10783,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-839",
+      "id": "PA-838",
       "url": "/city/mansfield/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Mansfield",
@@ -10895,7 +10879,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-263",
+      "id": "PA-269",
       "url": "/city/mckinney/homes",
       "pageType": "city-homes-search",
       "city": "McKinney",
@@ -10959,7 +10943,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-238",
+      "id": "PA-246",
       "url": "/city/melissa/homes",
       "pageType": "city-homes-search",
       "city": "Melissa",
@@ -10975,7 +10959,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-200",
+      "id": "PA-199",
       "url": "/city/melissa/liberty",
       "pageType": "neighborhood-report",
       "city": "Melissa",
@@ -11007,7 +10991,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-207",
+      "id": "PA-206",
       "url": "/city/melissa/villages-of-melissa",
       "pageType": "neighborhood-report",
       "city": "Melissa",
@@ -11119,7 +11103,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-854",
+      "id": "PA-852",
       "url": "/city/midlothian/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Midlothian",
@@ -11231,7 +11215,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-291",
+      "id": "PA-290",
       "url": "/city/murphy/maxwell-creek",
       "pageType": "neighborhood-report",
       "city": "Murphy",
@@ -11391,7 +11375,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-832",
+      "id": "PA-831",
       "url": "/city/north-richland-hills/homes?page=2",
       "pageType": "city-homes-search",
       "city": "North Richland Hills",
@@ -11487,7 +11471,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-787",
+      "id": "PA-786",
       "url": "/city/northlake/harvest",
       "pageType": "new-build-report",
       "city": "Northlake",
@@ -11503,7 +11487,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-790",
+      "id": "PA-789",
       "url": "/city/northlake/harvest",
       "pageType": "new-build-report",
       "city": "Northlake",
@@ -11647,7 +11631,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-265",
+      "id": "PA-264",
       "url": "/city/parker/kings-crossing",
       "pageType": "neighborhood-report",
       "city": "Parker",
@@ -11663,7 +11647,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-269",
+      "id": "PA-268",
       "url": "/city/parker/rolling-meadows-estates",
       "pageType": "neighborhood-report",
       "city": "Parker",
@@ -11679,7 +11663,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-267",
+      "id": "PA-266",
       "url": "/city/parker/southfork-corridor",
       "pageType": "neighborhood-report",
       "city": "Parker",
@@ -11711,7 +11695,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-289",
+      "id": "PA-288",
       "url": "/city/plano/lakeside-on-preston",
       "pageType": "neighborhood-report",
       "city": "Plano",
@@ -11791,7 +11775,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-829",
+      "id": "PA-828",
       "url": "/city/princeton/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Princeton",
@@ -11800,22 +11784,6 @@
       "severity": "low",
       "phrase": "MLS-provided \"TBD <street>\" address on listing card(s)",
       "excerpt": "ES REALTY MLS# 21327289 · NTREIS ♡ MLS PHOTO — PRINCETON — 1 PHOTOS NEW — 0 DAYS $375,000 TBD County Road 947 SHAMROCK PARK · PRINCETON ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Princeton",
-      "sourceFile": "NTREIS feed data (UnparsedAddress) — not site copy",
-      "visiblyRendered": true,
-      "indexable": true,
-      "recommendation": "Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.",
-      "canRemainPublic": true
-    },
-    {
-      "id": "PA-874",
-      "url": "/city/princeton/homes?page=3",
-      "pageType": "city-homes-search",
-      "city": "Princeton",
-      "community": "",
-      "category": "mls-data-artifact",
-      "severity": "low",
-      "phrase": "MLS-provided \"TBD <street>\" address on listing card(s)",
-      "excerpt": "CORNERS MLS# 21290095 · NTREIS ♡ MLS PHOTO — PRINCETON — 3 PHOTOS NEW — 0 DAYS $1,254,528 TBD Monte Carlo Boulevard SHOPPES AT MONTICELLO · PRINCETON ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to",
       "sourceFile": "NTREIS feed data (UnparsedAddress) — not site copy",
       "visiblyRendered": true,
       "indexable": true,
@@ -11887,7 +11855,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-215",
+      "id": "PA-213",
       "url": "/city/prosper/star-trail",
       "pageType": "neighborhood-report",
       "city": "Prosper",
@@ -11903,7 +11871,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-213",
+      "id": "PA-215",
       "url": "/city/prosper/whitley-place",
       "pageType": "neighborhood-report",
       "city": "Prosper",
@@ -11951,7 +11919,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-754",
+      "id": "PA-755",
       "url": "/city/red-oak/garden-valley",
       "pageType": "neighborhood-report",
       "city": "Red Oak",
@@ -11967,7 +11935,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-760",
+      "id": "PA-761",
       "url": "/city/red-oak/live-oak-trails",
       "pageType": "neighborhood-report",
       "city": "Red Oak",
@@ -11983,7 +11951,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-758",
+      "id": "PA-759",
       "url": "/city/red-oak/old-red-oak",
       "pageType": "neighborhood-report",
       "city": "Red Oak",
@@ -11999,7 +11967,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-756",
+      "id": "PA-757",
       "url": "/city/red-oak/the-meadows",
       "pageType": "neighborhood-report",
       "city": "Red Oak",
@@ -12047,7 +12015,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-167",
+      "id": "PA-207",
       "url": "/city/rhome/homes",
       "pageType": "city-homes-search",
       "city": "Rhome",
@@ -12063,7 +12031,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-869",
+      "id": "PA-867",
       "url": "/city/rhome/homes?page=3",
       "pageType": "city-homes-search",
       "city": "Rhome",
@@ -12223,7 +12191,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-865",
+      "id": "PA-864",
       "url": "/city/roanoke/homes?page=3",
       "pageType": "city-homes-search",
       "city": "Roanoke",
@@ -12415,7 +12383,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-823",
+      "id": "PA-822",
       "url": "/city/royse-city/hidden-creek",
       "pageType": "neighborhood-report",
       "city": "Royse City",
@@ -12431,7 +12399,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-850",
+      "id": "PA-847",
       "url": "/city/royse-city/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Royse City",
@@ -12559,7 +12527,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-826",
+      "id": "PA-825",
       "url": "/city/sachse/woodbridge",
       "pageType": "neighborhood-report",
       "city": "Sachse",
@@ -12639,7 +12607,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-004",
+      "id": "PA-002",
       "url": "/city/sanger/downtown-sanger",
       "pageType": "neighborhood-report",
       "city": "Sanger",
@@ -12655,7 +12623,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-040",
+      "id": "PA-042",
       "url": "/city/sanger/homes",
       "pageType": "city-homes-search",
       "city": "Sanger",
@@ -12671,7 +12639,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-786",
+      "id": "PA-792",
       "url": "/city/sanger/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Sanger",
@@ -12687,7 +12655,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-859",
+      "id": "PA-858",
       "url": "/city/sanger/homes?page=3",
       "pageType": "city-homes-search",
       "city": "Sanger",
@@ -12719,7 +12687,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-006",
+      "id": "PA-004",
       "url": "/city/sanger/ray-roberts-edge",
       "pageType": "neighborhood-report",
       "city": "Sanger",
@@ -12735,7 +12703,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-002",
+      "id": "PA-006",
       "url": "/city/sanger/sable-creek",
       "pageType": "neighborhood-report",
       "city": "Sanger",
@@ -12831,7 +12799,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-837",
+      "id": "PA-836",
       "url": "/city/southlake/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Southlake",
@@ -13039,7 +13007,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-842",
+      "id": "PA-841",
       "url": "/city/terrell/breezy-hill",
       "pageType": "neighborhood-report",
       "city": "Terrell",
@@ -13071,7 +13039,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-813",
+      "id": "PA-815",
       "url": "/city/terrell/historic-downtown",
       "pageType": "neighborhood-report",
       "city": "Terrell",
@@ -13087,7 +13055,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-848",
+      "id": "PA-849",
       "url": "/city/terrell/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Terrell",
@@ -13151,7 +13119,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-042",
+      "id": "PA-041",
       "url": "/city/the-colony/the-tribute",
       "pageType": "neighborhood-report",
       "city": "The Colony",
@@ -13311,7 +13279,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-846",
+      "id": "PA-845",
       "url": "/city/waxahachie/downtown-square",
       "pageType": "neighborhood-report",
       "city": "Waxahachie",
@@ -13359,7 +13327,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-852",
+      "id": "PA-854",
       "url": "/city/waxahachie/homes?page=2",
       "pageType": "city-homes-search",
       "city": "Waxahachie",
@@ -13615,23 +13583,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-868",
-      "url": "/homes?city=anna&page=2",
-      "pageType": "homes-search",
-      "city": "",
-      "community": "",
-      "category": "mls-data-artifact",
-      "severity": "low",
-      "phrase": "MLS-provided \"TBD <street>\" address on listing card(s)",
-      "excerpt": "TE SERVICES MLS# 21108939 · NTREIS ♡ MLS PHOTO — ANNA — 22 PHOTOS NEW — 0 DAYS $1,500,000 TBD Cr-915 WOODLAND MEADOWS · ANNA ↗ 0 BD 0 BA 0 SQFT 0 BUILT New to the Anna market — day 1",
-      "sourceFile": "NTREIS feed data (UnparsedAddress) — not site copy",
-      "visiblyRendered": true,
-      "indexable": true,
-      "recommendation": "Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.",
-      "canRemainPublic": true
-    },
-    {
-      "id": "PA-858",
+      "id": "PA-857",
       "url": "/homes?city=aubrey&page=2",
       "pageType": "homes-search",
       "city": "",
@@ -13647,7 +13599,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-801",
+      "id": "PA-802",
       "url": "/homes?city=aurora",
       "pageType": "homes-search",
       "city": "",
@@ -13663,7 +13615,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-802",
+      "id": "PA-801",
       "url": "/homes?city=boyd",
       "pageType": "homes-search",
       "city": "",
@@ -13679,7 +13631,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-866",
+      "id": "PA-865",
       "url": "/homes?city=boyd&page=2",
       "pageType": "homes-search",
       "city": "",
@@ -13695,7 +13647,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-863",
+      "id": "PA-861",
       "url": "/homes?city=bridgeport&page=2",
       "pageType": "homes-search",
       "city": "",
@@ -13727,7 +13679,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-864",
+      "id": "PA-863",
       "url": "/homes?city=decatur&page=2",
       "pageType": "homes-search",
       "city": "",
@@ -13791,7 +13743,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-847",
+      "id": "PA-846",
       "url": "/homes?city=kaufman",
       "pageType": "homes-search",
       "city": "",
@@ -13807,7 +13759,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-831",
+      "id": "PA-829",
       "url": "/homes?city=keller",
       "pageType": "homes-search",
       "city": "",
@@ -13823,7 +13775,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-824",
+      "id": "PA-823",
       "url": "/homes?city=lucas",
       "pageType": "homes-search",
       "city": "",
@@ -13839,7 +13791,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-870",
+      "id": "PA-869",
       "url": "/homes?city=lucas&page=2",
       "pageType": "homes-search",
       "city": "",
@@ -13871,7 +13823,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-817",
+      "id": "PA-806",
       "url": "/homes?city=melissa",
       "pageType": "homes-search",
       "city": "",
@@ -13887,7 +13839,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-828",
+      "id": "PA-827",
       "url": "/homes?city=nevada",
       "pageType": "homes-search",
       "city": "",
@@ -13903,7 +13855,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-873",
+      "id": "PA-872",
       "url": "/homes?city=nevada&page=2",
       "pageType": "homes-search",
       "city": "",
@@ -13912,6 +13864,22 @@
       "severity": "low",
       "phrase": "MLS-provided \"TBD <street>\" address on listing card(s)",
       "excerpt": "AMS REALTY ALLEN MLS# 21286376 · NTREIS ♡ MLS PHOTO — NEVADA — 10 PHOTOS 15 DAYS $135,000 TBD CR 637-Lot 1 HARVEST BEND · NEVADA ↗ 0 BD 0 BA 0 SQFT 0 BUILT Harvest Bend, Nevada — 15 d",
+      "sourceFile": "NTREIS feed data (UnparsedAddress) — not site copy",
+      "visiblyRendered": true,
+      "indexable": true,
+      "recommendation": "Feed-supplied address for land/new construction. Cosmetic only; optionally normalize to “Address to be assigned” in the listing-card formatter.",
+      "canRemainPublic": true
+    },
+    {
+      "id": "PA-873",
+      "url": "/homes?city=north-richland-hills&page=2",
+      "pageType": "homes-search",
+      "city": "",
+      "community": "",
+      "category": "mls-data-artifact",
+      "severity": "low",
+      "phrase": "MLS-provided \"TBD <street>\" address on listing card(s)",
+      "excerpt": "LS# 21290551 · NTREIS ♡ MLS PHOTO — NORTH RICHLAND HILLS — 4 PHOTOS NEW — 1 DAYS $369,000 TBD Kirk Lane NEWTON, W C SURVEY ABSTRACT 1182 TRACT 2A2 · NORTH RICHLAND HILLS ↗ 0 BD 0 BA 0",
       "sourceFile": "NTREIS feed data (UnparsedAddress) — not site copy",
       "visiblyRendered": true,
       "indexable": true,
@@ -13935,7 +13903,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-872",
+      "id": "PA-871",
       "url": "/homes?city=princeton&page=2",
       "pageType": "homes-search",
       "city": "",
@@ -13951,7 +13919,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-800",
+      "id": "PA-803",
       "url": "/homes?city=rhome",
       "pageType": "homes-search",
       "city": "",
@@ -13983,7 +13951,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-856",
+      "id": "PA-855",
       "url": "/homes?city=sanger&page=2",
       "pageType": "homes-search",
       "city": "",
@@ -13999,7 +13967,7 @@
       "canRemainPublic": true
     },
     {
-      "id": "PA-849",
+      "id": "PA-848",
       "url": "/homes?city=waxahachie",
       "pageType": "homes-search",
       "city": "",
@@ -14024,79 +13992,79 @@
     },
     {
       "file": "app/city/[slug]/homes/page.tsx",
-      "line": 90,
+      "line": 92,
       "phrase": "SAMPLE INVENTORY",
       "snippet": "SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED"
     },
     {
       "file": "app/city/[slug]/homes/page.tsx",
-      "line": 90,
+      "line": 92,
       "phrase": "FICTIONAL (mock-inventory banner)",
       "snippet": "SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED"
     },
     {
       "file": "app/city/[slug]/page.tsx",
-      "line": 817,
+      "line": 830,
       "phrase": "PLACEHOLDER",
       "snippet": "none exist (no public \"DROP PHOTO\" placeholders; the Photo Desk keeps"
     },
     {
       "file": "app/city/[slug]/page.tsx",
-      "line": 817,
+      "line": 830,
       "phrase": "DROP PHOTO",
       "snippet": "none exist (no public \"DROP PHOTO\" placeholders; the Photo Desk keeps"
     },
     {
       "file": "app/city/[slug]/page.tsx",
-      "line": 880,
+      "line": 893,
       "phrase": "PLACEHOLDER",
       "snippet": "{isLiveMls ? \"LIVE FROM THE NTREIS FEED\" : \"PLACEHOLDER LISTINGS — CONNECT MLS\"}"
     },
     {
       "file": "app/city/[slug]/page.tsx",
-      "line": 880,
+      "line": 893,
       "phrase": "CONNECT MLS",
       "snippet": "{isLiveMls ? \"LIVE FROM THE NTREIS FEED\" : \"PLACEHOLDER LISTINGS — CONNECT MLS\"}"
     },
     {
       "file": "app/city/[slug]/page.tsx",
-      "line": 1258,
+      "line": 1286,
       "phrase": "PLACEHOLDER",
       "snippet": "© MMXXVI · {isLiveMls ? \"LISTINGS LIVE FROM NTREIS\" : \"ALL FIGURES ARE PLACEHOLDERS\"}"
     },
     {
       "file": "app/city/[slug]/[hood]/page.tsx",
-      "line": 140,
+      "line": 146,
       "phrase": "DROP PHOTO",
       "snippet": "means the text layout simply owns the row (no public \"DROP PHOTO\" box;"
     },
     {
       "file": "app/city/[slug]/[hood]/page.tsx",
-      "line": 746,
+      "line": 752,
       "phrase": "PLACEHOLDER",
       "snippet": "MARKET FIGURES ARE PLACEHOLDERS — CONNECT MLS"
     },
     {
       "file": "app/city/[slug]/[hood]/page.tsx",
-      "line": 746,
+      "line": 752,
       "phrase": "CONNECT MLS",
       "snippet": "MARKET FIGURES ARE PLACEHOLDERS — CONNECT MLS"
     },
     {
       "file": "app/city/[slug]/[hood]/page.tsx",
-      "line": 1177,
+      "line": 1208,
       "phrase": "PLACEHOLDER",
       "snippet": "© MMXXVI · {isLiveMls ? \"LISTINGS LIVE FROM NTREIS\" : \"ALL FIGURES ARE PLACEHOLDERS\"}"
     },
     {
       "file": "app/homes/page.tsx",
-      "line": 6,
+      "line": 7,
       "phrase": "FICTIONAL (mock-inventory banner)",
       "snippet": "/* Indexable only on the live NTREIS feed — fictional mock inventory must"
     },
     {
       "file": "app/homes/page.tsx",
-      "line": 17,
+      "line": 18,
       "phrase": "FICTIONAL (mock-inventory banner)",
       "snippet": "fictional mock inventory never gets structured data. */"
     },
@@ -14306,25 +14274,25 @@
     },
     {
       "file": "components/search/AskQuestionSheet.tsx",
-      "line": 232,
+      "line": 233,
       "phrase": "PLACEHOLDER",
       "snippet": "placeholder=\"Or ask it your way…\""
     },
     {
       "file": "components/search/AskQuestionSheet.tsx",
-      "line": 269,
+      "line": 270,
       "phrase": "PLACEHOLDER",
       "snippet": "placeholder=\"Your name\""
     },
     {
       "file": "components/search/AskQuestionSheet.tsx",
-      "line": 279,
+      "line": 280,
       "phrase": "PLACEHOLDER",
       "snippet": "placeholder=\"Your email\""
     },
     {
       "file": "components/search/AskQuestionSheet.tsx",
-      "line": 291,
+      "line": 292,
       "phrase": "PLACEHOLDER",
       "snippet": "placeholder=\"The number to text you back at\""
     },
@@ -14342,31 +14310,31 @@
     },
     {
       "file": "components/search/MapRoom.tsx",
-      "line": 179,
+      "line": 186,
       "phrase": "PLACEHOLDER",
       "snippet": "<span>{isLiveMls ? \"LIVE MLS FEED — NTREIS\" : \"LIVE MLS FEED — PLACEHOLDER\"}</span>"
     },
     {
       "file": "components/search/MapRoom.tsx",
-      "line": 220,
+      "line": 227,
       "phrase": "SAMPLE INVENTORY",
       "snippet": "SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED"
     },
     {
       "file": "components/search/MapRoom.tsx",
-      "line": 220,
+      "line": 227,
       "phrase": "FICTIONAL (mock-inventory banner)",
       "snippet": "SAMPLE INVENTORY — EVERY LISTING IS FICTIONAL UNTIL MLS APPROVAL &amp; THE LIVE IDX FEED"
     },
     {
       "file": "components/search/MapRoom.tsx",
-      "line": 270,
+      "line": 282,
       "phrase": "PLACEHOLDER",
       "snippet": "/* Index-shaped placeholder while city counts stream — mirrors the"
     },
     {
       "file": "components/search/MapRoom.tsx",
-      "line": 340,
+      "line": 352,
       "phrase": "PLACEHOLDER",
       "snippet": "/* Rail-shaped placeholder while the ledger streams in — same card"
     },
@@ -14378,25 +14346,25 @@
     },
     {
       "file": "components/search/RequestShowingSheet.tsx",
-      "line": 243,
+      "line": 244,
       "phrase": "PLACEHOLDER",
       "snippet": "placeholder=\"Your name\""
     },
     {
       "file": "components/search/RequestShowingSheet.tsx",
-      "line": 249,
+      "line": 250,
       "phrase": "PLACEHOLDER",
       "snippet": "<input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder=\"Phone (optional)\" aria-label=\"Phone (optional)\" style={{ ...input, flex: 1 }} />"
     },
     {
       "file": "components/search/RequestShowingSheet.tsx",
-      "line": 255,
+      "line": 256,
       "phrase": "PLACEHOLDER",
       "snippet": "placeholder=\"Email\""
     },
     {
       "file": "components/search/RequestShowingSheet.tsx",
-      "line": 275,
+      "line": 276,
       "phrase": "PLACEHOLDER",
       "snippet": "placeholder=\"Anything we should know? (optional)\""
     },
@@ -14568,13 +14536,13 @@
       "issueCount": 0
     },
     {
-      "url": "/city/sanger/sable-creek",
+      "url": "/how-we-research",
       "status": 200,
-      "pageType": "neighborhood-report",
+      "pageType": "other",
       "indexable": true,
-      "title": "Sable Creek — Sanger, TX Neighborhood Guide & Homes | Discover DFW",
+      "title": "How we research — sources, cadence & rules | Discover DFW",
       "images": 0,
-      "issueCount": 2
+      "issueCount": 0
     },
     {
       "url": "/city/sanger/downtown-sanger",
@@ -14604,6 +14572,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/sanger/sable-creek",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Sable Creek — Sanger, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
+    },
+    {
       "url": "/city/sanger/indian-springs",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -14622,20 +14599,20 @@
       "issueCount": 0
     },
     {
-      "url": "/city/denton/oak-hickory-district",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Oak-Hickory district — Denton, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
       "url": "/city/denton/southridge",
       "status": 200,
       "pageType": "neighborhood-report",
       "indexable": true,
       "title": "Southridge — Denton, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
+    },
+    {
+      "url": "/city/denton/oak-hickory-district",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Oak-Hickory district — Denton, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
     },
@@ -14721,6 +14698,15 @@
       "issueCount": 0
     },
     {
+      "url": "/homes",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
       "url": "/city/little-elm/union-park",
       "status": 200,
       "pageType": "new-build-report",
@@ -14766,24 +14752,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/sanger/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Sanger, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/aubrey/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Aubrey, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/the-colony/the-tribute",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -14793,13 +14761,13 @@
       "issueCount": 2
     },
     {
-      "url": "/city/denton/homes",
+      "url": "/city/sanger/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Denton, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
+      "title": "Homes for Sale in Sanger, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
     },
     {
       "url": "/city/the-colony/austin-ranch",
@@ -14827,24 +14795,6 @@
       "title": "Legend Crest — The Colony, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/homes",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/little-elm/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Little Elm, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
     },
     {
       "url": "/city/argyle",
@@ -14892,6 +14842,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/denton/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Denton, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/northlake",
       "status": 200,
       "pageType": "city-report",
@@ -14919,15 +14878,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/lantana",
-      "status": 200,
-      "pageType": "city-report",
-      "indexable": true,
-      "title": "Lantana, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
-      "images": 3,
-      "issueCount": 0
-    },
-    {
       "url": "/city/northlake/fm-407-corridor",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -14937,6 +14887,24 @@
       "issueCount": 2
     },
     {
+      "url": "/city/aubrey/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Aubrey, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/lantana",
+      "status": 200,
+      "pageType": "city-report",
+      "indexable": true,
+      "title": "Lantana, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
+      "images": 3,
+      "issueCount": 0
+    },
+    {
       "url": "/city/lantana/bandera",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -14944,15 +14912,6 @@
       "title": "Bandera — Lantana, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/the-colony/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in The Colony, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
     },
     {
       "url": "/city/lantana/reata",
@@ -14991,6 +14950,24 @@
       "issueCount": 0
     },
     {
+      "url": "/city/little-elm/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Little Elm, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/argyle/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Argyle, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/highland-village/highland-shores",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15018,6 +14995,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/northlake/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Northlake, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
       "url": "/city/highland-village/the-shops-district",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15043,6 +15029,15 @@
       "title": "The Highlands — Trophy Club, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/the-colony/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in The Colony, TX — Search Listings | Discover DFW",
+      "images": 22,
+      "issueCount": 0
     },
     {
       "url": "/city/trophy-club/hogan-s-glen",
@@ -15081,15 +15076,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/argyle/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Argyle, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/roanoke/oak-street-district",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15097,15 +15083,6 @@
       "title": "Oak Street district — Roanoke, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/northlake/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Northlake, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
     },
     {
       "url": "/city/roanoke/fairway-ranch",
@@ -15162,6 +15139,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/lantana/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Lantana, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/flower-mound/wellington",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15177,15 +15163,6 @@
       "indexable": true,
       "title": "Lewisville, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/highland-village/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Highland Village, TX — Search Listings | Discover DFW",
-      "images": 24,
       "issueCount": 0
     },
     {
@@ -15225,30 +15202,21 @@
       "issueCount": 2
     },
     {
-      "url": "/city/lantana/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Lantana, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/trophy-club/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Trophy Club, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/decatur",
       "status": 200,
       "pageType": "city-report",
       "indexable": true,
       "title": "Decatur, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/highland-village/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Highland Village, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -15297,20 +15265,38 @@
       "issueCount": 0
     },
     {
+      "url": "/city/roanoke/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Roanoke, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/trophy-club/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Trophy Club, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/flower-mound/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Flower Mound, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
+    },
+    {
       "url": "/city/bridgeport/lake-bridgeport-shores",
       "status": 200,
       "pageType": "neighborhood-report",
       "indexable": true,
       "title": "Lake Bridgeport shores — Bridgeport, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
-      "url": "/city/bridgeport/downtown-halsell",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Downtown Halsell — Bridgeport, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
     },
@@ -15324,6 +15310,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/bridgeport/downtown-halsell",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Downtown Halsell — Bridgeport, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
+    },
+    {
       "url": "/city/bridgeport/east-380-corridor",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15331,15 +15326,6 @@
       "title": "East 380 corridor — Bridgeport, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/roanoke/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Roanoke, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
     },
     {
       "url": "/city/rhome",
@@ -15351,15 +15337,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/flower-mound/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Flower Mound, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
       "url": "/city/rhome/shale-creek",
       "status": 200,
       "pageType": "new-build-report",
@@ -15367,6 +15344,15 @@
       "title": "Shale Creek in Rhome, TX — New Homes From the $330s | Discover DFW",
       "images": 0,
       "issueCount": 4
+    },
+    {
+      "url": "/city/lewisville/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Lewisville, TX — Search Listings | Discover DFW",
+      "images": 21,
+      "issueCount": 0
     },
     {
       "url": "/city/rhome/old-rhome",
@@ -15450,13 +15436,13 @@
       "issueCount": 0
     },
     {
-      "url": "/city/lewisville/homes",
+      "url": "/city/decatur/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Lewisville, TX — Search Listings | Discover DFW",
-      "images": 21,
-      "issueCount": 0
+      "title": "Homes for Sale in Decatur, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
     },
     {
       "url": "/city/aurora/old-aurora",
@@ -15468,13 +15454,13 @@
       "issueCount": 2
     },
     {
-      "url": "/city/bridgeport/homes",
+      "url": "/city/aurora/pecan-creek-lots",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "neighborhood-report",
       "indexable": true,
-      "title": "Homes for Sale in Bridgeport, TX — Search Listings | Discover DFW",
-      "images": 16,
-      "issueCount": 0
+      "title": "Pecan Creek lots — Aurora, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
     },
     {
       "url": "/city/aurora/fm-1141-acreage",
@@ -15482,15 +15468,6 @@
       "pageType": "neighborhood-report",
       "indexable": true,
       "title": "FM 1141 acreage — Aurora, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
-      "url": "/city/aurora/pecan-creek-lots",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Pecan Creek lots — Aurora, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
     },
@@ -15531,6 +15508,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/bridgeport/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Bridgeport, TX — Search Listings | Discover DFW",
+      "images": 16,
+      "issueCount": 0
+    },
+    {
       "url": "/city/celina/cambridge-crossing",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15538,24 +15524,6 @@
       "title": "Cambridge Crossing — Celina, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/decatur/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Decatur, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/rhome/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Rhome, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 1
     },
     {
       "url": "/city/celina/downtown-celina",
@@ -15594,15 +15562,6 @@
       "issueCount": 4
     },
     {
-      "url": "/city/boyd/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Boyd, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 1
-    },
-    {
       "url": "/city/anna",
       "status": 200,
       "pageType": "city-report",
@@ -15637,6 +15596,15 @@
       "title": "Sherley Farms — Anna, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/boyd/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Boyd, TX — Search Listings | Discover DFW",
+      "images": 22,
+      "issueCount": 1
     },
     {
       "url": "/city/anna/villages-of-hurricane-creek",
@@ -15684,6 +15652,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/aurora/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Aurora, TX — Search Listings | Discover DFW",
+      "images": 10,
+      "issueCount": 1
+    },
+    {
       "url": "/city/melissa/north-creek",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15702,15 +15679,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/aurora/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Aurora, TX — Search Listings | Discover DFW",
-      "images": 10,
-      "issueCount": 1
-    },
-    {
       "url": "/city/melissa/villages-of-melissa",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15720,12 +15688,30 @@
       "issueCount": 2
     },
     {
+      "url": "/city/rhome/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Rhome, TX — Search Listings | Discover DFW",
+      "images": 22,
+      "issueCount": 1
+    },
+    {
       "url": "/city/prosper",
       "status": 200,
       "pageType": "city-report",
       "indexable": true,
       "title": "Prosper, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/celina/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Celina, TX — Search Listings | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -15738,20 +15724,20 @@
       "issueCount": 4
     },
     {
-      "url": "/city/prosper/whitley-place",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Whitley Place — Prosper, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
       "url": "/city/prosper/star-trail",
       "status": 200,
       "pageType": "neighborhood-report",
       "indexable": true,
       "title": "Star Trail — Prosper, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
+    },
+    {
+      "url": "/city/prosper/whitley-place",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Whitley Place — Prosper, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
     },
@@ -15801,15 +15787,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/celina/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Celina, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/mckinney/trinity-falls",
       "status": 200,
       "pageType": "new-build-report",
@@ -15846,6 +15823,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/anna/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Anna, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/frisco/phillips-creek-ranch",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -15871,24 +15857,6 @@
       "title": "Fairview, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
       "issueCount": 0
-    },
-    {
-      "url": "/city/anna/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Anna, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/melissa/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Melissa, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 1
     },
     {
       "url": "/city/fairview/heritage-ranch",
@@ -15941,8 +15909,17 @@
       "pageType": "city-homes-search",
       "indexable": true,
       "title": "Homes for Sale in Prosper, TX — Search Listings | Discover DFW",
-      "images": 24,
+      "images": 23,
       "issueCount": 0
+    },
+    {
+      "url": "/city/melissa/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Melissa, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
     },
     {
       "url": "/city/allen/twin-creeks",
@@ -16008,6 +15985,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/frisco/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Frisco, TX — Search Listings | Discover DFW",
+      "images": 22,
+      "issueCount": 0
+    },
+    {
       "url": "/city/lucas/stinson-highlands",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -16024,15 +16010,6 @@
       "title": "Lovejoy corridor — Lucas, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/mckinney/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in McKinney, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
     },
     {
       "url": "/city/parker",
@@ -16062,15 +16039,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/frisco/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Frisco, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
-    },
-    {
       "url": "/city/parker/rolling-meadows-estates",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -16078,6 +16046,15 @@
       "title": "Rolling Meadows Estates — Parker, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/mckinney/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in McKinney, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
     },
     {
       "url": "/city/parker/hidden-creek",
@@ -16116,6 +16093,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/fairview/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Fairview, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/st-paul/fm-982-corridor",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -16123,15 +16109,6 @@
       "title": "FM 982 corridor — St. Paul, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/allen/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Allen, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
     },
     {
       "url": "/city/st-paul/lakeview-lanes",
@@ -16179,15 +16156,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/lucas/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Lucas, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 1
-    },
-    {
       "url": "/city/plano/lakeside-on-preston",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -16206,12 +16174,12 @@
       "issueCount": 0
     },
     {
-      "url": "/city/fairview/homes",
+      "url": "/city/allen/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Fairview, TX — Search Listings | Discover DFW",
-      "images": 24,
+      "title": "Homes for Sale in Allen, TX — Search Listings | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -16222,6 +16190,15 @@
       "title": "Maxwell Creek — Murphy, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/lucas/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Lucas, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
     },
     {
       "url": "/city/murphy/rolling-ridge",
@@ -16287,12 +16264,12 @@
       "issueCount": 2
     },
     {
-      "url": "/city/st-paul/homes",
+      "url": "/city/parker/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in St. Paul, TX — Search Listings | Discover DFW",
-      "images": 0,
+      "title": "Homes for Sale in Parker, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -16314,6 +16291,15 @@
       "issueCount": 0
     },
     {
+      "url": "/city/st-paul/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in St. Paul, TX — Search Listings | Discover DFW",
+      "images": 0,
+      "issueCount": 0
+    },
+    {
       "url": "/city/princeton/whitewing-trails",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -16321,15 +16307,6 @@
       "title": "Whitewing Trails — Princeton, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/parker/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Parker, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
     },
     {
       "url": "/city/princeton/brookside",
@@ -16357,6 +16334,15 @@
       "title": "Old Princeton — Princeton, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/plano/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Plano, TX — Search Listings | Discover DFW",
+      "images": 21,
+      "issueCount": 0
     },
     {
       "url": "/city/princeton/eastridge",
@@ -16404,15 +16390,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/plano/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Plano, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
-    },
-    {
       "url": "/city/farmersville/lakehaven",
       "status": 200,
       "pageType": "new-build-report",
@@ -16449,15 +16426,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/murphy/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Murphy, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/lavon/traditions",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -16483,6 +16451,15 @@
       "title": "Elevon in Lavon, TX — Master-Plan Homes From the $240s | Discover DFW",
       "images": 0,
       "issueCount": 3
+    },
+    {
+      "url": "/city/murphy/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Murphy, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/nevada",
@@ -16557,15 +16534,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/fort-worth/arlington-heights",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Arlington Heights — Fort Worth, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
       "url": "/city/princeton/homes",
       "status": 200,
       "pageType": "city-homes-search",
@@ -16573,6 +16541,15 @@
       "title": "Homes for Sale in Princeton, TX — Search Listings | Discover DFW",
       "images": 22,
       "issueCount": 0
+    },
+    {
+      "url": "/city/fort-worth/arlington-heights",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Arlington Heights — Fort Worth, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
     },
     {
       "url": "/city/fort-worth/tanglewood",
@@ -16620,15 +16597,6 @@
       "issueCount": 4
     },
     {
-      "url": "/city/farmersville/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Farmersville, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
-    },
-    {
       "url": "/city/arlington",
       "status": 200,
       "pageType": "city-report",
@@ -16674,6 +16642,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/north-richland-hills",
+      "status": 200,
+      "pageType": "city-report",
+      "indexable": true,
+      "title": "North Richland Hills, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
+      "images": 3,
+      "issueCount": 0
+    },
+    {
       "url": "/city/lavon/homes",
       "status": 200,
       "pageType": "city-homes-search",
@@ -16683,12 +16660,12 @@
       "issueCount": 0
     },
     {
-      "url": "/city/north-richland-hills",
+      "url": "/city/farmersville/homes",
       "status": 200,
-      "pageType": "city-report",
+      "pageType": "city-homes-search",
       "indexable": true,
-      "title": "North Richland Hills, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
-      "images": 3,
+      "title": "Homes for Sale in Farmersville, TX — Search Listings | Discover DFW",
+      "images": 22,
       "issueCount": 0
     },
     {
@@ -16809,15 +16786,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/fort-worth/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Fort Worth, TX — Search Listings | Discover DFW",
-      "images": 20,
-      "issueCount": 0
-    },
-    {
       "url": "/city/azle/cross-timbers-acreage",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -16842,6 +16810,24 @@
       "indexable": true,
       "title": "Keller, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/arlington/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Arlington, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/fort-worth/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Fort Worth, TX — Search Listings | Discover DFW",
+      "images": 20,
       "issueCount": 0
     },
     {
@@ -16890,24 +16876,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/arlington/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Arlington, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/north-richland-hills/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in North Richland Hills, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/southlake/timarron",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -16924,6 +16892,24 @@
       "title": "Carillon — Southlake, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/lake-worth/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Lake Worth, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/north-richland-hills/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in North Richland Hills, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/southlake/shady-oaks",
@@ -16950,15 +16936,6 @@
       "indexable": true,
       "title": "Grapevine, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/lake-worth/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Lake Worth, TX — Search Listings | Discover DFW",
-      "images": 23,
       "issueCount": 0
     },
     {
@@ -17043,15 +17020,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/azle/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Azle, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/bedford",
       "status": 200,
       "pageType": "city-report",
@@ -17115,6 +17083,15 @@
       "issueCount": 0
     },
     {
+      "url": "/city/southlake/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Southlake, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/euless/parks-at-texas-star",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -17131,6 +17108,15 @@
       "title": "Bear Creek — Euless, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/grapevine/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Grapevine, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/euless/glade-parks",
@@ -17160,15 +17146,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/southlake/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Southlake, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/hurst/bellaire-park",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -17178,20 +17155,11 @@
       "issueCount": 2
     },
     {
-      "url": "/city/colleyville/homes",
+      "url": "/city/azle/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Colleyville, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/grapevine/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Grapevine, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Azle, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -17241,6 +17209,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/colleyville/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Colleyville, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/westlake/glenwyck-farms",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -17266,6 +17243,15 @@
       "title": "Quail Hollow — Westlake, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/bedford/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Bedford, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/mansfield",
@@ -17295,15 +17281,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/bedford/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Bedford, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/benbrook",
       "status": 200,
       "pageType": "city-report",
@@ -17322,15 +17299,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/euless/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Euless, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/benbrook/timbercreek",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -17338,6 +17306,15 @@
       "title": "Timbercreek — Benbrook, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/euless/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Euless, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/benbrook/westpark",
@@ -17466,15 +17443,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/crowley/deer-creek",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Deer Creek — Crowley, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
       "url": "/city/mansfield/homes",
       "status": 200,
       "pageType": "city-homes-search",
@@ -17482,6 +17450,15 @@
       "title": "Homes for Sale in Mansfield, TX — Search Listings | Discover DFW",
       "images": 23,
       "issueCount": 0
+    },
+    {
+      "url": "/city/crowley/deer-creek",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Deer Creek — Crowley, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
     },
     {
       "url": "/city/crowley/karis",
@@ -17520,6 +17497,15 @@
       "issueCount": 0
     },
     {
+      "url": "/city/watauga/capp-smith-park",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Capp Smith Park — Watauga, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
+    },
+    {
       "url": "/city/benbrook/homes",
       "status": 200,
       "pageType": "city-homes-search",
@@ -17529,13 +17515,13 @@
       "issueCount": 0
     },
     {
-      "url": "/city/watauga/capp-smith-park",
+      "url": "/city/burleson/homes",
       "status": 200,
-      "pageType": "neighborhood-report",
+      "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Capp Smith Park — Watauga, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
+      "title": "Homes for Sale in Burleson, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/watauga/park-vista",
@@ -17571,15 +17557,6 @@
       "indexable": true,
       "title": "Haltom City, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/burleson/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Burleson, TX — Search Listings | Discover DFW",
-      "images": 24,
       "issueCount": 0
     },
     {
@@ -17700,24 +17677,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/coppell/riverchase",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Riverchase — Coppell, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
-      "url": "/city/coppell/lakes-of-coppell",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Lakes of Coppell — Coppell, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
       "url": "/city/crowley/homes",
       "status": 200,
       "pageType": "city-homes-search",
@@ -17727,6 +17686,15 @@
       "issueCount": 0
     },
     {
+      "url": "/city/coppell/riverchase",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Riverchase — Coppell, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
+    },
+    {
       "url": "/city/irving",
       "status": 200,
       "pageType": "city-report",
@@ -17734,6 +17702,15 @@
       "title": "Irving, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
       "issueCount": 0
+    },
+    {
+      "url": "/city/coppell/lakes-of-coppell",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Lakes of Coppell — Coppell, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
     },
     {
       "url": "/city/irving/las-colinas",
@@ -17772,21 +17749,21 @@
       "issueCount": 1
     },
     {
-      "url": "/city/haltom-city/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Haltom City, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/dallas",
       "status": 200,
       "pageType": "city-report",
       "indexable": true,
       "title": "Dallas, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/watauga/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Watauga, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -17808,12 +17785,12 @@
       "issueCount": 1
     },
     {
-      "url": "/city/watauga/homes",
+      "url": "/city/haltom-city/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Watauga, TX — Search Listings | Discover DFW",
-      "images": 24,
+      "title": "Homes for Sale in Haltom City, TX — Search Listings | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -17824,6 +17801,15 @@
       "title": "M Streets — Dallas, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/white-settlement/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in White Settlement, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
     },
     {
       "url": "/city/dallas/preston-hollow",
@@ -17853,15 +17839,6 @@
       "issueCount": 4
     },
     {
-      "url": "/city/white-settlement/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in White Settlement, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/sachse/jackson-meadows",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -17878,6 +17855,15 @@
       "title": "Heritage Park — Sachse, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/coppell/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Coppell, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/rowlett",
@@ -17905,15 +17891,6 @@
       "title": "Waterview — Rowlett, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/coppell/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Coppell, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
     },
     {
       "url": "/city/rowlett/harmony-hill",
@@ -18069,6 +18046,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/sachse/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Sachse, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/richardson/heights-park",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18096,22 +18082,13 @@
       "issueCount": 0
     },
     {
-      "url": "/city/rowlett/homes",
+      "url": "/city/carrollton/downtown-carrollton",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "neighborhood-report",
       "indexable": true,
-      "title": "Homes for Sale in Rowlett, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/sachse/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Sachse, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
+      "title": "Downtown Carrollton — Carrollton, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
     },
     {
       "url": "/city/grand-prairie/homes",
@@ -18123,15 +18100,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/carrollton/downtown-carrollton",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Downtown Carrollton — Carrollton, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
       "url": "/city/carrollton/austin-waters",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18139,6 +18107,15 @@
       "title": "Austin Waters — Carrollton, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/garland/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Garland, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/carrollton/rosemeade",
@@ -18157,6 +18134,15 @@
       "title": "Josey Ranch — Carrollton, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/rowlett/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Rowlett, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
     },
     {
       "url": "/city/farmers-branch",
@@ -18222,15 +18208,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/garland/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Garland, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/addison/vitruvian-park",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18267,15 +18244,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/mesquite/creek-crossing",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Creek Crossing — Mesquite, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
       "url": "/city/richardson/homes",
       "status": 200,
       "pageType": "city-homes-search",
@@ -18283,6 +18251,15 @@
       "title": "Homes for Sale in Richardson, TX — Search Listings | Discover DFW",
       "images": 22,
       "issueCount": 0
+    },
+    {
+      "url": "/city/mesquite/creek-crossing",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Creek Crossing — Mesquite, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
     },
     {
       "url": "/city/mesquite/palos-verdes",
@@ -18327,15 +18304,6 @@
       "indexable": true,
       "title": "Duncanville, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/carrollton/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Carrollton, TX — Search Listings | Discover DFW",
-      "images": 22,
       "issueCount": 0
     },
     {
@@ -18384,6 +18352,15 @@
       "issueCount": 0
     },
     {
+      "url": "/city/carrollton/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Carrollton, TX — Search Listings | Discover DFW",
+      "images": 22,
+      "issueCount": 0
+    },
+    {
       "url": "/city/desoto/thorntree",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18400,6 +18377,15 @@
       "title": "Windmill Hill — DeSoto, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/farmers-branch/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Farmers Branch, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
     },
     {
       "url": "/city/desoto/frost-farms",
@@ -18420,15 +18406,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/farmers-branch/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Farmers Branch, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/cedar-hill/lake-ridge",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18438,15 +18415,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/addison/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Addison, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/cedar-hill/high-pointe",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18454,6 +18422,15 @@
       "title": "High Pointe — Cedar Hill, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/mesquite/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Mesquite, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
     },
     {
       "url": "/city/lancaster",
@@ -18474,12 +18451,12 @@
       "issueCount": 2
     },
     {
-      "url": "/city/mesquite/homes",
+      "url": "/city/addison/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Mesquite, TX — Search Listings | Discover DFW",
-      "images": 23,
+      "title": "Homes for Sale in Addison, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -18499,6 +18476,15 @@
       "title": "Bear Creek Ranch — Lancaster, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/duncanville/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Duncanville, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
     },
     {
       "url": "/city/lancaster/rolling-meadows",
@@ -18555,15 +18541,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/duncanville/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Duncanville, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/sunnyvale",
       "status": 200,
       "pageType": "city-report",
@@ -18600,15 +18577,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/desoto/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in DeSoto, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/sunnyvale/tripp-road",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18616,6 +18584,15 @@
       "title": "Tripp Road — Sunnyvale, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/desoto/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in DeSoto, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
     },
     {
       "url": "/city/seagoville",
@@ -18636,24 +18613,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/seagoville/highland-meadows",
-      "status": 200,
-      "pageType": "neighborhood-report",
-      "indexable": true,
-      "title": "Highland Meadows — Seagoville, TX Neighborhood Guide & Homes | Discover DFW",
-      "images": 0,
-      "issueCount": 2
-    },
-    {
-      "url": "/city/lancaster/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Lancaster, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
-    },
-    {
       "url": "/city/cedar-hill/homes",
       "status": 200,
       "pageType": "city-homes-search",
@@ -18661,6 +18620,15 @@
       "title": "Homes for Sale in Cedar Hill, TX — Search Listings | Discover DFW",
       "images": 22,
       "issueCount": 0
+    },
+    {
+      "url": "/city/seagoville/highland-meadows",
+      "status": 200,
+      "pageType": "neighborhood-report",
+      "indexable": true,
+      "title": "Highland Meadows — Seagoville, TX Neighborhood Guide & Homes | Discover DFW",
+      "images": 0,
+      "issueCount": 2
     },
     {
       "url": "/city/seagoville/simonds-road",
@@ -18717,6 +18685,24 @@
       "issueCount": 2
     },
     {
+      "url": "/city/lancaster/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Lancaster, TX — Search Listings | Discover DFW",
+      "images": 22,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/balch-springs/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Balch Springs, TX — Search Listings | Discover DFW",
+      "images": 22,
+      "issueCount": 0
+    },
+    {
       "url": "/city/rockwall/stone-creek",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18742,15 +18728,6 @@
       "title": "Buffalo Creek — Heath, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/balch-springs/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Balch Springs, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
     },
     {
       "url": "/city/heath/heath-golf-and-yacht-club",
@@ -18786,6 +18763,15 @@
       "indexable": true,
       "title": "Fate, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/sunnyvale/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Sunnyvale, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -18834,12 +18820,12 @@
       "issueCount": 0
     },
     {
-      "url": "/city/sunnyvale/homes",
+      "url": "/city/seagoville/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Sunnyvale, TX — Search Listings | Discover DFW",
-      "images": 24,
+      "title": "Homes for Sale in Seagoville, TX — Search Listings | Discover DFW",
+      "images": 21,
       "issueCount": 0
     },
     {
@@ -18850,15 +18836,6 @@
       "title": "Main Street District — Royse City, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
-    },
-    {
-      "url": "/city/seagoville/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Seagoville, TX — Search Listings | Discover DFW",
-      "images": 21,
-      "issueCount": 0
     },
     {
       "url": "/city/royse-city/verandah",
@@ -18906,15 +18883,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/rockwall/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Rockwall, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/forney/windmill-farms",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18951,6 +18919,15 @@
       "issueCount": 0
     },
     {
+      "url": "/city/rockwall/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Rockwall, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
       "url": "/city/terrell/ben-gill-park",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -18969,15 +18946,6 @@
       "issueCount": 2
     },
     {
-      "url": "/city/heath/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Heath, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/kaufman",
       "status": 200,
       "pageType": "city-report",
@@ -18987,11 +18955,11 @@
       "issueCount": 0
     },
     {
-      "url": "/city/fate/homes",
+      "url": "/city/heath/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Fate, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Heath, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -19032,6 +19000,15 @@
       "issueCount": 2
     },
     {
+      "url": "/city/fate/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Fate, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/crandall",
       "status": 200,
       "pageType": "city-report",
@@ -19048,6 +19025,15 @@
       "title": "Heartland — Crandall, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/royse-city/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Royse City, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/crandall/wildcat-ranch",
@@ -19068,21 +19054,21 @@
       "issueCount": 2
     },
     {
+      "url": "/city/forney/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Forney, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
       "url": "/city/midlothian",
       "status": 200,
       "pageType": "city-report",
       "indexable": true,
       "title": "Midlothian, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/royse-city/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Royse City, TX — Search Listings | Discover DFW",
-      "images": 24,
       "issueCount": 0
     },
     {
@@ -19093,15 +19079,6 @@
       "title": "MidTowne — Midlothian's Walkable New-Build Blocks | Discover DFW",
       "images": 0,
       "issueCount": 4
-    },
-    {
-      "url": "/city/terrell/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Terrell, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
     },
     {
       "url": "/city/midlothian/lawson-farms",
@@ -19149,12 +19126,12 @@
       "issueCount": 2
     },
     {
-      "url": "/city/forney/homes",
+      "url": "/city/terrell/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Forney, TX — Search Listings | Discover DFW",
-      "images": 23,
+      "title": "Homes for Sale in Terrell, TX — Search Listings | Discover DFW",
+      "images": 22,
       "issueCount": 0
     },
     {
@@ -19192,6 +19169,15 @@
       "title": "Red Oak, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
       "issueCount": 0
+    },
+    {
+      "url": "/city/kaufman/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Kaufman, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
     },
     {
       "url": "/city/red-oak/garden-valley",
@@ -19239,24 +19225,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/crandall/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Crandall, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/kaufman/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Kaufman, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 1
-    },
-    {
       "url": "/city/ovilla/ovilla-parc",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -19293,11 +19261,11 @@
       "issueCount": 2
     },
     {
-      "url": "/city/midlothian/homes",
+      "url": "/city/crandall/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Midlothian, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Crandall, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -19308,6 +19276,15 @@
       "indexable": true,
       "title": "Glenn Heights, TX — Neighborhoods, Homes & Living Guide | Discover DFW",
       "images": 3,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/midlothian/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Midlothian, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -19401,21 +19378,21 @@
       "issueCount": 1
     },
     {
+      "url": "/city/glenn-heights/homes",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Glenn Heights, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/homes?city=sanger",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/ennis/homes",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Ennis, TX — Search Listings | Discover DFW",
-      "images": 24,
       "issueCount": 1
     },
     {
@@ -19428,13 +19405,13 @@
       "issueCount": 0
     },
     {
-      "url": "/city/glenn-heights/homes",
+      "url": "/city/ennis/homes",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Glenn Heights, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Ennis, TX — Search Listings | Discover DFW",
       "images": 24,
-      "issueCount": 0
+      "issueCount": 1
     },
     {
       "url": "/homes?city=aubrey",
@@ -19455,33 +19432,6 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=the-colony",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 22,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/sanger/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Sanger, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/denton/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Denton, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/northlake/harvest",
       "status": 200,
       "pageType": "new-build-report",
@@ -19489,6 +19439,15 @@
       "title": "Harvest — New Construction Homes in Northlake, TX | Discover DFW",
       "images": 0,
       "issueCount": 4
+    },
+    {
+      "url": "/homes?page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 23,
+      "issueCount": 0
     },
     {
       "url": "/city/flower-mound/canyon-falls",
@@ -19500,39 +19459,30 @@
       "issueCount": 2
     },
     {
-      "url": "/city/aubrey/homes?page=2",
+      "url": "/city/sanger/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Aubrey, TX — Search Listings | Discover DFW",
-      "images": 23,
+      "title": "Homes for Sale in Sanger, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 1
     },
     {
-      "url": "/homes?page=2",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 19,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/little-elm/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Little Elm, TX — Search Listings | Discover DFW",
-      "images": 21,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=northlake",
+      "url": "/homes?city=the-colony",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 22,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/denton/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Denton, TX — Search Listings | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -19545,22 +19495,22 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=highland-village",
+      "url": "/homes?city=northlake",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
+      "images": 23,
       "issueCount": 0
     },
     {
-      "url": "/city/the-colony/homes?page=2",
+      "url": "/city/aubrey/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in The Colony, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Aubrey, TX — Search Listings | Discover DFW",
       "images": 23,
-      "issueCount": 0
+      "issueCount": 1
     },
     {
       "url": "/homes?city=lantana",
@@ -19572,7 +19522,16 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=trophy-club",
+      "url": "/city/little-elm/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Little Elm, TX — Search Listings | Discover DFW",
+      "images": 21,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=highland-village",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -19581,12 +19540,30 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=roanoke",
+      "url": "/city/northlake/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Northlake, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/argyle/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Argyle, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=trophy-club",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 23,
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -19608,21 +19585,21 @@
       "issueCount": 2
     },
     {
-      "url": "/city/argyle/homes?page=2",
+      "url": "/city/the-colony/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Argyle, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in The Colony, TX — Search Listings | Discover DFW",
       "images": 23,
       "issueCount": 0
     },
     {
-      "url": "/city/northlake/homes?page=2",
+      "url": "/homes?city=roanoke",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Northlake, TX — Search Listings | Discover DFW",
-      "images": 24,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -19640,26 +19617,8 @@
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
+      "images": 23,
       "issueCount": 1
-    },
-    {
-      "url": "/city/highland-village/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Highland Village, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/trophy-club/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Trophy Club, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
     },
     {
       "url": "/city/lantana/homes?page=2",
@@ -19689,6 +19648,15 @@
       "issueCount": 1
     },
     {
+      "url": "/city/highland-village/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Highland Village, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/roanoke/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
@@ -19698,7 +19666,25 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=rhome",
+      "url": "/city/trophy-club/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Trophy Club, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/flower-mound/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Flower Mound, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
+    },
+    {
+      "url": "/homes?city=boyd",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -19716,21 +19702,12 @@
       "issueCount": 1
     },
     {
-      "url": "/homes?city=boyd",
+      "url": "/homes?city=rhome",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 22,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/flower-mound/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Flower Mound, TX — Search Listings | Discover DFW",
-      "images": 23,
       "issueCount": 1
     },
     {
@@ -19741,15 +19718,6 @@
       "title": "Homes for Sale in Lewisville, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
-    },
-    {
-      "url": "/city/bridgeport/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Bridgeport, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
     },
     {
       "url": "/homes?city=celina",
@@ -19770,13 +19738,40 @@
       "issueCount": 1
     },
     {
-      "url": "/city/rhome/homes?page=2",
+      "url": "/city/bridgeport/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Rhome, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Bridgeport, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
+      "url": "/homes?city=melissa",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
+      "issueCount": 1
+    },
+    {
+      "url": "/homes?city=anna",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
       "issueCount": 0
+    },
+    {
+      "url": "/city/boyd/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Boyd, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
     },
     {
       "url": "/city/farmersville/historic-downtown",
@@ -19797,12 +19792,12 @@
       "issueCount": 2
     },
     {
-      "url": "/homes?city=anna",
+      "url": "/homes?city=prosper",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -19813,6 +19808,15 @@
       "title": "Historic Downtown — Cedar Hill, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/city/rhome/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Rhome, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
     },
     {
       "url": "/city/terrell/historic-downtown",
@@ -19833,29 +19837,11 @@
       "issueCount": 2
     },
     {
-      "url": "/city/boyd/homes?page=2",
+      "url": "/city/celina/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Boyd, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=melissa",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 23,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=prosper",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "title": "Homes for Sale in Celina, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -19869,21 +19855,12 @@
       "issueCount": 1
     },
     {
-      "url": "/city/celina/homes?page=2",
+      "url": "/city/anna/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Celina, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=fairview",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
+      "title": "Homes for Sale in Anna, TX — Search Listings | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -19896,6 +19873,15 @@
       "issueCount": 2
     },
     {
+      "url": "/homes?city=fairview",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/homes?city=frisco",
       "status": 200,
       "pageType": "homes-search",
@@ -19905,30 +19891,21 @@
       "issueCount": 0
     },
     {
-      "url": "/city/melissa/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Melissa, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/anna/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Anna, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 1
-    },
-    {
       "url": "/homes?city=allen",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/prosper/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Prosper, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -19950,30 +19927,12 @@
       "issueCount": 1
     },
     {
-      "url": "/city/prosper/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Prosper, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/homes?city=st-paul",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 0,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=parker",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
       "issueCount": 0
     },
     {
@@ -19995,11 +19954,20 @@
       "issueCount": 0
     },
     {
-      "url": "/city/allen/homes?page=2",
+      "url": "/homes?city=parker",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/melissa/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Allen, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Melissa, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -20009,7 +19977,7 @@
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 22,
+      "images": 21,
       "issueCount": 0
     },
     {
@@ -20022,30 +19990,12 @@
       "issueCount": 2
     },
     {
-      "url": "/city/lucas/homes?page=2",
+      "url": "/city/fairview/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Lucas, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Fairview, TX — Search Listings | Discover DFW",
       "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=murphy",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=princeton",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 22,
       "issueCount": 0
     },
     {
@@ -20058,6 +20008,42 @@
       "issueCount": 0
     },
     {
+      "url": "/city/allen/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Allen, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=murphy",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/lucas/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Lucas, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
+      "url": "/homes?city=princeton",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 22,
+      "issueCount": 0
+    },
+    {
       "url": "/homes?city=farmersville",
       "status": 200,
       "pageType": "homes-search",
@@ -20067,20 +20053,11 @@
       "issueCount": 0
     },
     {
-      "url": "/city/parker/homes?page=2",
+      "url": "/city/plano/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Parker, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/fairview/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Fairview, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Plano, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -20094,11 +20071,11 @@
       "issueCount": 0
     },
     {
-      "url": "/city/plano/homes?page=2",
+      "url": "/city/parker/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Plano, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Parker, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -20121,6 +20098,15 @@
       "issueCount": 1
     },
     {
+      "url": "/homes?city=fort-worth",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 20,
+      "issueCount": 0
+    },
+    {
       "url": "/city/wylie/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
@@ -20130,21 +20116,12 @@
       "issueCount": 0
     },
     {
-      "url": "/city/princeton/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Princeton, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=fort-worth",
+      "url": "/homes?city=north-richland-hills",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 20,
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -20157,13 +20134,13 @@
       "issueCount": 0
     },
     {
-      "url": "/city/farmersville/homes?page=2",
+      "url": "/city/princeton/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Farmersville, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Princeton, TX — Search Listings | Discover DFW",
       "images": 24,
-      "issueCount": 0
+      "issueCount": 1
     },
     {
       "url": "/city/lavon/homes?page=2",
@@ -20175,11 +20152,11 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=north-richland-hills",
+      "url": "/city/farmersville/homes?page=2",
       "status": 200,
-      "pageType": "homes-search",
+      "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "title": "Homes for Sale in Farmersville, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -20202,6 +20179,15 @@
       "issueCount": 0
     },
     {
+      "url": "/homes?city=keller",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
       "url": "/city/nevada/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
@@ -20209,6 +20195,15 @@
       "title": "Homes for Sale in Nevada, TX — Search Listings | Discover DFW",
       "images": 21,
       "issueCount": 1
+    },
+    {
+      "url": "/city/arlington/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Arlington, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/homes?city=southlake",
@@ -20220,15 +20215,6 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=keller",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
       "url": "/city/fort-worth/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
@@ -20238,12 +20224,12 @@
       "issueCount": 0
     },
     {
-      "url": "/city/arlington/homes?page=2",
+      "url": "/city/lake-worth/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Arlington, TX — Search Listings | Discover DFW",
-      "images": 24,
+      "title": "Homes for Sale in Lake Worth, TX — Search Listings | Discover DFW",
+      "images": 15,
       "issueCount": 0
     },
     {
@@ -20256,15 +20242,6 @@
       "issueCount": 1
     },
     {
-      "url": "/homes?city=grapevine",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/desoto/meadow-creek",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -20274,12 +20251,12 @@
       "issueCount": 2
     },
     {
-      "url": "/city/lake-worth/homes?page=2",
+      "url": "/homes?city=grapevine",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Lake Worth, TX — Search Listings | Discover DFW",
-      "images": 15,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -20301,25 +20278,7 @@
       "issueCount": 0
     },
     {
-      "url": "/city/azle/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Azle, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/homes?city=bedford",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=euless",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -20337,12 +20296,30 @@
       "issueCount": 0
     },
     {
+      "url": "/homes?city=euless",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/homes?city=hurst",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/grapevine/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Grapevine, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -20355,12 +20332,30 @@
       "issueCount": 1
     },
     {
+      "url": "/city/azle/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Azle, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/homes?city=westlake",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=benbrook",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -20382,11 +20377,11 @@
       "issueCount": 0
     },
     {
-      "url": "/city/grapevine/homes?page=2",
+      "url": "/homes?city=burleson",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Grapevine, TX — Search Listings | Discover DFW",
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -20396,24 +20391,6 @@
       "pageType": "city-homes-search",
       "indexable": true,
       "title": "Homes for Sale in Bedford, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=benbrook",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=burleson",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -20436,6 +20413,15 @@
       "issueCount": 0
     },
     {
+      "url": "/city/westlake/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Westlake, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/hurst/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
@@ -20451,15 +20437,6 @@
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 22,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/westlake/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Westlake, TX — Search Listings | Discover DFW",
-      "images": 24,
       "issueCount": 0
     },
     {
@@ -20481,21 +20458,21 @@
       "issueCount": 0
     },
     {
-      "url": "/city/benbrook/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Benbrook, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/homes?city=haltom-city",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/benbrook/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Benbrook, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -20553,12 +20530,12 @@
       "issueCount": 0
     },
     {
-      "url": "/city/haltom-city/homes?page=2",
+      "url": "/city/watauga/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Haltom City, TX — Search Listings | Discover DFW",
-      "images": 23,
+      "title": "Homes for Sale in Watauga, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -20571,12 +20548,21 @@
       "issueCount": 0
     },
     {
-      "url": "/city/watauga/homes?page=2",
+      "url": "/city/white-settlement/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Watauga, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in White Settlement, TX — Search Listings | Discover DFW",
       "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/haltom-city/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Haltom City, TX — Search Listings | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -20589,11 +20575,11 @@
       "issueCount": 0
     },
     {
-      "url": "/city/white-settlement/homes?page=2",
+      "url": "/city/coppell/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in White Settlement, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Coppell, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -20607,12 +20593,12 @@
       "issueCount": 0
     },
     {
-      "url": "/city/coppell/homes?page=2",
+      "url": "/homes?city=grand-prairie",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Coppell, TX — Search Listings | Discover DFW",
-      "images": 24,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 22,
       "issueCount": 0
     },
     {
@@ -20625,7 +20611,7 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=grand-prairie",
+      "url": "/homes?city=richardson",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -20639,15 +20625,6 @@
       "pageType": "city-homes-search",
       "indexable": true,
       "title": "Homes for Sale in Irving, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=richardson",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 22,
       "issueCount": 0
     },
@@ -20679,11 +20656,11 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=farmers-branch",
+      "url": "/city/garland/homes?page=2",
       "status": 200,
-      "pageType": "homes-search",
+      "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "title": "Homes for Sale in Garland, TX — Search Listings | Discover DFW",
       "images": 23,
       "issueCount": 0
     },
@@ -20697,11 +20674,20 @@
       "issueCount": 0
     },
     {
-      "url": "/city/grand-prairie/homes?page=2",
+      "url": "/homes?city=farmers-branch",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Grand Prairie, TX — Search Listings | Discover DFW",
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=mesquite",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
       "issueCount": 0
     },
@@ -20715,16 +20701,16 @@
       "issueCount": 0
     },
     {
-      "url": "/city/garland/homes?page=2",
+      "url": "/city/richardson/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Garland, TX — Search Listings | Discover DFW",
-      "images": 23,
+      "title": "Homes for Sale in Richardson, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
-      "url": "/homes?city=mesquite",
+      "url": "/homes?city=duncanville",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -20739,24 +20725,6 @@
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=duncanville",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/richardson/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Richardson, TX — Search Listings | Discover DFW",
-      "images": 24,
       "issueCount": 0
     },
     {
@@ -20787,15 +20755,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/mesquite/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Mesquite, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/homes?city=lancaster",
       "status": 200,
       "pageType": "homes-search",
@@ -20805,12 +20764,21 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=balch-springs",
+      "url": "/city/mesquite/homes?page=2",
       "status": 200,
-      "pageType": "homes-search",
+      "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 22,
+      "title": "Homes for Sale in Mesquite, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/grand-prairie/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Grand Prairie, TX — Search Listings | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -20819,15 +20787,6 @@
       "pageType": "city-homes-search",
       "indexable": true,
       "title": "Homes for Sale in Addison, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=sunnyvale",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -20841,6 +20800,24 @@
       "issueCount": 0
     },
     {
+      "url": "/homes?city=balch-springs",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 22,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/desoto/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in DeSoto, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
       "url": "/city/terrell/breezy-hill",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -20848,6 +20825,15 @@
       "title": "Breezy Hill — Terrell, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/homes?city=sunnyvale",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/city/glenn-heights/stone-creek",
@@ -20865,24 +20851,6 @@
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 21,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/lancaster/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Lancaster, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/desoto/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in DeSoto, TX — Search Listings | Discover DFW",
-      "images": 23,
       "issueCount": 0
     },
     {
@@ -20904,15 +20872,6 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=heath",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/balch-springs/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
@@ -20922,7 +20881,16 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=royse-city",
+      "url": "/city/lancaster/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Lancaster, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=fate",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -20931,7 +20899,16 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=fate",
+      "url": "/homes?city=heath",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=royse-city",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -20958,15 +20935,6 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=forney",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/city/waxahachie/downtown-square",
       "status": 200,
       "pageType": "neighborhood-report",
@@ -20974,6 +20942,15 @@
       "title": "Downtown Square — Waxahachie, TX Neighborhood Guide & Homes | Discover DFW",
       "images": 0,
       "issueCount": 2
+    },
+    {
+      "url": "/homes?city=terrell",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 22,
+      "issueCount": 0
     },
     {
       "url": "/city/rockwall/homes?page=2",
@@ -20985,12 +20962,12 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=terrell",
+      "url": "/homes?city=forney",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 22,
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -21003,15 +20980,6 @@
       "issueCount": 1
     },
     {
-      "url": "/homes?city=crandall",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/heath/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
@@ -21021,12 +20989,12 @@
       "issueCount": 0
     },
     {
-      "url": "/city/fate/homes?page=2",
+      "url": "/homes?city=crandall",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Fate, TX — Search Listings | Discover DFW",
-      "images": 23,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -21039,29 +21007,11 @@
       "issueCount": 0
     },
     {
-      "url": "/city/terrell/homes?page=2",
+      "url": "/city/fate/homes?page=2",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Terrell, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=waxahachie",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=red-oak",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "title": "Homes for Sale in Fate, TX — Search Listings | Discover DFW",
       "images": 23,
       "issueCount": 0
     },
@@ -21084,6 +21034,51 @@
       "issueCount": 0
     },
     {
+      "url": "/homes?city=waxahachie",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
+      "url": "/city/terrell/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Terrell, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
+      "url": "/homes?city=red-oak",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=glenn-heights",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/kaufman/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Kaufman, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
       "url": "/homes?city=ovilla",
       "status": 200,
       "pageType": "homes-search",
@@ -21098,35 +21093,8 @@
       "pageType": "city-homes-search",
       "indexable": true,
       "title": "Homes for Sale in Crandall, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=glenn-heights",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 24,
       "issueCount": 0
-    },
-    {
-      "url": "/city/waxahachie/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Waxahachie, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=ennis",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 1
     },
     {
       "url": "/city/midlothian/homes?page=2",
@@ -21138,40 +21106,13 @@
       "issueCount": 1
     },
     {
-      "url": "/city/kaufman/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Kaufman, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=sanger&page=2",
+      "url": "/homes?city=ennis",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 24,
       "issueCount": 1
-    },
-    {
-      "url": "/city/ennis/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Ennis, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/ovilla/homes?page=2",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Ovilla, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 0
     },
     {
       "url": "/city/glenn-heights/homes?page=2",
@@ -21192,6 +21133,24 @@
       "issueCount": 0
     },
     {
+      "url": "/city/waxahachie/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Waxahachie, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
+    },
+    {
+      "url": "/city/ovilla/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Ovilla, TX — Search Listings | Discover DFW",
+      "images": 22,
+      "issueCount": 0
+    },
+    {
       "url": "/homes?city=denton&page=2",
       "status": 200,
       "pageType": "homes-search",
@@ -21199,6 +21158,24 @@
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
       "issueCount": 0
+    },
+    {
+      "url": "/homes?city=sanger&page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
+      "url": "/city/ennis/homes?page=2",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Ennis, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
     },
     {
       "url": "/homes?city=aubrey&page=2",
@@ -21219,7 +21196,7 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=the-colony&page=2",
+      "url": "/homes?page=3",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -21237,39 +21214,12 @@
       "issueCount": 1
     },
     {
-      "url": "/city/aubrey/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Aubrey, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/denton/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Denton, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?page=3",
+      "url": "/homes?city=the-colony&page=2",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 19,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/little-elm/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Little Elm, TX — Search Listings | Discover DFW",
-      "images": 24,
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -21291,43 +21241,34 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=highland-village&page=2",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/the-colony/homes?page=3",
+      "url": "/city/denton/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in The Colony, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Denton, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
+      "url": "/city/aubrey/homes?page=3",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Aubrey, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
     {
-      "url": "/homes?city=roanoke&page=2",
+      "url": "/city/little-elm/homes?page=3",
       "status": 200,
-      "pageType": "homes-search",
+      "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "title": "Homes for Sale in Little Elm, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
     {
       "url": "/homes?city=lantana&page=2",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=trophy-club&page=2",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -21354,7 +21295,7 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=lewisville&page=2",
+      "url": "/homes?city=highland-village&page=2",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -21363,12 +21304,30 @@
       "issueCount": 0
     },
     {
-      "url": "/city/trophy-club/homes?page=3",
+      "url": "/homes?city=trophy-club&page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/the-colony/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Trophy Club, TX — Search Listings | Discover DFW",
-      "images": 20,
+      "title": "Homes for Sale in The Colony, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=roanoke&page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -21381,20 +21340,11 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=flower-mound&page=2",
+      "url": "/homes?city=lewisville&page=2",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 23,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/highland-village/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Highland Village, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -21408,6 +21358,15 @@
       "issueCount": 1
     },
     {
+      "url": "/homes?city=flower-mound&page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 23,
+      "issueCount": 1
+    },
+    {
       "url": "/homes?city=decatur&page=2",
       "status": 200,
       "pageType": "homes-search",
@@ -21417,6 +21376,15 @@
       "issueCount": 1
     },
     {
+      "url": "/city/highland-village/homes?page=3",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Highland Village, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
       "url": "/city/roanoke/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
@@ -21424,6 +21392,15 @@
       "title": "Homes for Sale in Roanoke, TX — Search Listings | Discover DFW",
       "images": 21,
       "issueCount": 1
+    },
+    {
+      "url": "/city/trophy-club/homes?page=3",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Trophy Club, TX — Search Listings | Discover DFW",
+      "images": 20,
+      "issueCount": 0
     },
     {
       "url": "/homes?city=boyd&page=2",
@@ -21444,22 +21421,13 @@
       "issueCount": 0
     },
     {
-      "url": "/city/flower-mound/homes?page=3",
+      "url": "/city/lewisville/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Flower Mound, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Lewisville, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
-    },
-    {
-      "url": "/city/bridgeport/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Bridgeport, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 1
     },
     {
       "url": "/homes?city=celina&page=2",
@@ -21471,13 +21439,13 @@
       "issueCount": 0
     },
     {
-      "url": "/city/lewisville/homes?page=3",
+      "url": "/city/bridgeport/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Lewisville, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
+      "title": "Homes for Sale in Bridgeport, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
     },
     {
       "url": "/city/decatur/homes?page=3",
@@ -21495,24 +21463,24 @@
       "indexable": true,
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
-      "issueCount": 1
+      "issueCount": 0
     },
     {
-      "url": "/city/rhome/homes?page=3",
+      "url": "/homes?city=melissa&page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/flower-mound/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Rhome, TX — Search Listings | Discover DFW",
-      "images": 23,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/boyd/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Boyd, TX — Search Listings | Discover DFW",
-      "images": 23,
+      "title": "Homes for Sale in Flower Mound, TX — Search Listings | Discover DFW",
+      "images": 24,
       "issueCount": 0
     },
     {
@@ -21525,11 +21493,29 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=melissa&page=2",
+      "url": "/city/boyd/homes?page=3",
       "status": 200,
-      "pageType": "homes-search",
+      "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "title": "Homes for Sale in Boyd, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/rhome/homes?page=3",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Rhome, TX — Search Listings | Discover DFW",
+      "images": 23,
+      "issueCount": 1
+    },
+    {
+      "url": "/city/celina/homes?page=3",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Celina, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -21543,16 +21529,16 @@
       "issueCount": 0
     },
     {
-      "url": "/city/celina/homes?page=3",
+      "url": "/city/anna/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Celina, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Anna, TX — Search Listings | Discover DFW",
       "images": 24,
-      "issueCount": 0
+      "issueCount": 1
     },
     {
-      "url": "/homes?city=fairview&page=2",
+      "url": "/homes?city=frisco&page=2",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -21561,16 +21547,7 @@
       "issueCount": 0
     },
     {
-      "url": "/city/anna/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Anna, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/homes?city=frisco&page=2",
+      "url": "/homes?city=fairview&page=2",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -21597,11 +21574,11 @@
       "issueCount": 1
     },
     {
-      "url": "/city/melissa/homes?page=3",
+      "url": "/city/prosper/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Melissa, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Prosper, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -21615,24 +21592,6 @@
       "issueCount": 1
     },
     {
-      "url": "/homes?city=parker&page=2",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/prosper/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Prosper, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
       "url": "/city/mckinney/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
@@ -21642,7 +21601,7 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=plano&page=2",
+      "url": "/homes?city=parker&page=2",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -21651,16 +21610,16 @@
       "issueCount": 0
     },
     {
-      "url": "/city/allen/homes?page=3",
+      "url": "/city/melissa/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Allen, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Melissa, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
     {
-      "url": "/homes?city=farmersville&page=2",
+      "url": "/homes?city=plano&page=2",
       "status": 200,
       "pageType": "homes-search",
       "indexable": true,
@@ -21678,13 +21637,22 @@
       "issueCount": 0
     },
     {
-      "url": "/homes?city=princeton&page=2",
+      "url": "/city/fairview/homes?page=3",
       "status": 200,
-      "pageType": "homes-search",
+      "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "title": "Homes for Sale in Fairview, TX — Search Listings | Discover DFW",
       "images": 24,
-      "issueCount": 1
+      "issueCount": 0
+    },
+    {
+      "url": "/city/allen/homes?page=3",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Allen, TX — Search Listings | Discover DFW",
+      "images": 24,
+      "issueCount": 0
     },
     {
       "url": "/homes?city=murphy&page=2",
@@ -21696,12 +21664,39 @@
       "issueCount": 0
     },
     {
+      "url": "/homes?city=farmersville&page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/homes?city=princeton&page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 1
+    },
+    {
       "url": "/city/lucas/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
       "title": "Homes for Sale in Lucas, TX — Search Listings | Discover DFW",
       "images": 24,
+      "issueCount": 0
+    },
+    {
+      "url": "/city/plano/homes?page=3",
+      "status": 200,
+      "pageType": "city-homes-search",
+      "indexable": true,
+      "title": "Homes for Sale in Plano, TX — Search Listings | Discover DFW",
+      "images": 23,
       "issueCount": 0
     },
     {
@@ -21723,11 +21718,11 @@
       "issueCount": 0
     },
     {
-      "url": "/city/fairview/homes?page=3",
+      "url": "/city/murphy/homes?page=3",
       "status": 200,
       "pageType": "city-homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Fairview, TX — Search Listings | Discover DFW",
+      "title": "Homes for Sale in Murphy, TX — Search Listings | Discover DFW",
       "images": 24,
       "issueCount": 0
     },
@@ -21741,20 +21736,11 @@
       "issueCount": 1
     },
     {
-      "url": "/city/murphy/homes?page=3",
+      "url": "/homes?city=fort-worth&page=2",
       "status": 200,
-      "pageType": "city-homes-search",
+      "pageType": "homes-search",
       "indexable": true,
-      "title": "Homes for Sale in Murphy, TX — Search Listings | Discover DFW",
-      "images": 24,
-      "issueCount": 0
-    },
-    {
-      "url": "/city/plano/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Plano, TX — Search Listings | Discover DFW",
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 23,
       "issueCount": 0
     },
@@ -21768,33 +21754,6 @@
       "issueCount": 0
     },
     {
-      "url": "/city/princeton/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Princeton, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 1
-    },
-    {
-      "url": "/city/farmersville/homes?page=3",
-      "status": 200,
-      "pageType": "city-homes-search",
-      "indexable": true,
-      "title": "Homes for Sale in Farmersville, TX — Search Listings | Discover DFW",
-      "images": 22,
-      "issueCount": 1
-    },
-    {
-      "url": "/homes?city=fort-worth&page=2",
-      "status": 200,
-      "pageType": "homes-search",
-      "indexable": true,
-      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
-      "images": 23,
-      "issueCount": 0
-    },
-    {
       "url": "/homes?city=arlington&page=2",
       "status": 200,
       "pageType": "homes-search",
@@ -21802,6 +21761,15 @@
       "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
       "images": 24,
       "issueCount": 0
+    },
+    {
+      "url": "/homes?city=north-richland-hills&page=2",
+      "status": 200,
+      "pageType": "homes-search",
+      "indexable": true,
+      "title": "Search Homes for Sale in DFW — The Map Room | Discover DFW",
+      "images": 24,
+      "issueCount": 1
     }
   ]
 }

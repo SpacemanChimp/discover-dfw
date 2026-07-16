@@ -11,6 +11,8 @@ import MLSComplianceFooter from "@/components/search/MLSComplianceFooter";
 import CityHomesHero from "@/components/city-homes/CityHomesHero";
 import CityMarketMiniSnapshot from "@/components/city-homes/CityMarketMiniSnapshot";
 import { getCityMarketMetricSet } from "@/lib/market/metrics";
+import SearchHelpSlot from "@/components/convert/SearchHelpSlot";
+import { leadBackendReady } from "@/lib/convert/config";
 import CityHomesList from "@/components/city-homes/CityHomesList";
 import type { NearbyCityCount } from "@/components/city-homes/CityHomesEmptyState";
 
@@ -114,6 +116,8 @@ export default async function CityHomesPage({
           basePath={`/city/${slug}/homes`}
           qs={searchFiltersToQueryString(filters, true)}
         />
+        {/* delayed human-help ask — inline at list end, never over results */}
+        {leadBackendReady() && <SearchHelpSlot citySlug={slug} />}
       </div>
 
       <MLSComplianceFooter asOf={result.mlsLastUpdated} />

@@ -21,6 +21,11 @@ import { getApprovedPhotos, photoKey } from "@/lib/content/editorial-photos";
 import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
 import EditorialPhoto from "@/components/EditorialPhoto";
+import ConvertSlot from "@/components/convert/ConvertSlot";
+import CompareThisCity from "@/components/convert/CompareThisCity";
+import CuratedHomes from "@/components/convert/CuratedHomes";
+import HomeownerEquityPlan from "@/components/convert/HomeownerEquityPlan";
+import { leadBackendReady } from "@/lib/convert/config";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
 
@@ -526,6 +531,14 @@ export default async function CityPage({
           </div>
         </div>
       </section>
+
+      {/* conversion: comparison ask after the vibe, before the numbers —
+          secondary to the editorial flow, no other CTA in this region */}
+      {leadBackendReady() && (
+        <ConvertSlot>
+          <CompareThisCity citySlug={c.slug} />
+        </ConvertSlot>
+      )}
 
       {/* 02 · market */}
       <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw 72px" }}>
@@ -1088,6 +1101,13 @@ export default async function CityPage({
         </div>
       </section>
 
+      {/* conversion: curated-homes ask after the live listings tier */}
+      {leadBackendReady() && (
+        <ConvertSlot>
+          <CuratedHomes citySlug={c.slug} />
+        </ConvertSlot>
+      )}
+
       {/* nearby cities — real geographic neighbors, for buyers comparing
           towns; every card is a full city guide, not a doorway page */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
@@ -1214,6 +1234,14 @@ export default async function CityPage({
           </Link>
         </div>
       </section>
+
+      {/* conversion: equity ask for people who already own here — last
+          word before the footer, well clear of the listings CTA */}
+      {leadBackendReady() && (
+        <ConvertSlot>
+          <HomeownerEquityPlan citySlug={c.slug} />
+        </ConvertSlot>
+      )}
 
       {/* footer */}
       <footer style={{ background: "#1D1913", color: "#F6F1E6" }}>

@@ -12,6 +12,7 @@ import SearchMapPanel from "./SearchMapPanel";
 import LiveMapPanel from "./LiveMapPanel";
 import MobileCitySearchIndex from "./MobileCitySearchIndex";
 import MLSComplianceFooter from "./MLSComplianceFooter";
+import SearchHelpSlot from "@/components/convert/SearchHelpSlot";
 import HomesSplit from "./HomesSplit";
 
 /* "The Map Room" — desktop: listing rail + city-aware map panel. Mobile:
@@ -28,12 +29,15 @@ export default async function MapRoom({
   query,
   citySlug,
   authFailed,
+  leadHelp = false,
 }: {
   query: SearchFilters;
   /** Set when rendered from /city/[slug]/homes — city fixed by the path. */
   citySlug?: string;
   /** True when /auth/callback bounced here after a failed link exchange. */
   authFailed?: boolean;
+  /** Mount the delayed HumanSearchHelp slot (lead backend configured). */
+  leadHelp?: boolean;
 }) {
   const provider = getMlsProvider();
   const effective: SearchFilters = { ...query, citySlug: citySlug || query.citySlug };
@@ -64,6 +68,7 @@ export default async function MapRoom({
                 basePath={basePath}
                 qs={pagerQs}
               />
+              {leadHelp && <SearchHelpSlot citySlug={effective.citySlug} />}
             </>
           }
           map={
@@ -113,6 +118,8 @@ export default async function MapRoom({
               countyName={county?.name}
               basePath={basePath}
               qs={pagerQs}
+              leadHelp={leadHelp}
+              leadCitySlug={effective.citySlug}
             />
           </Suspense>
         }
@@ -236,12 +243,16 @@ async function RailResults({
   countyName,
   basePath,
   qs,
+  leadHelp,
+  leadCitySlug,
 }: {
   resultPromise: Promise<SearchResult>;
   city?: City;
   countyName?: string;
   basePath: string;
   qs: string;
+  leadHelp?: boolean;
+  leadCitySlug?: string;
 }) {
   const result = await resultPromise;
   return (
@@ -254,6 +265,7 @@ async function RailResults({
         basePath={basePath}
         qs={qs}
       />
+      {leadHelp && <SearchHelpSlot citySlug={leadCitySlug} />}
     </>
   );
 }

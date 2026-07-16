@@ -10,6 +10,7 @@ import { pushLeadToFub } from "@/lib/crm/fub";
 interface Body {
   listingKey?: string;
   citySlug?: string;
+  community?: string;
   address?: string;
   question?: string;
   name?: string;
@@ -96,6 +97,7 @@ export async function POST(req: Request) {
     listingKey: body.listingKey,
     address: (body.address || "").trim() || null,
     citySlug: (body.citySlug || "").trim() || null,
+    community: (body.community || "").trim().slice(0, 120) || null,
     sourcePage: (body.sourcePage || "").slice(0, 300) || null,
     referrer: (body.referrer || "").slice(0, 300) || null,
     sessionId: (body.sessionId || "").trim() || null,

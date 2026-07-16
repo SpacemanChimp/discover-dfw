@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { isLiveMls, parseSearchFilters } from "@/lib/mls";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import MapRoom from "@/components/search/MapRoom";
+import { leadBackendReady } from "@/lib/convert/config";
 
 /* Indexable only on the live NTREIS feed — fictional mock inventory must
    never enter the index. Filtered query URLs canonicalize to /homes. */
@@ -39,7 +40,7 @@ export default async function HomesPage({
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
-      <MapRoom query={parseSearchFilters(params)} authFailed={authFailed} />
+      <MapRoom query={parseSearchFilters(params)} authFailed={authFailed} leadHelp={leadBackendReady()} />
     </>
   );
 }

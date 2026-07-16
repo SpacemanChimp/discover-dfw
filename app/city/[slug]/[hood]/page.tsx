@@ -31,6 +31,12 @@ import CityNav from "@/components/city/CityNav";
 import EditorialPhoto from "@/components/EditorialPhoto";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
+import ConvertSlot from "@/components/convert/ConvertSlot";
+import CuratedHomes from "@/components/convert/CuratedHomes";
+import NewBuildIncentives from "@/components/convert/NewBuildIncentives";
+import PlanBuilderTour from "@/components/convert/PlanBuilderTour";
+import InventoryRequestBand from "@/components/convert/InventoryRequestBand";
+import { leadBackendReady } from "@/lib/convert/config";
 
 export function generateStaticParams() {
   return cities.flatMap((c) =>
@@ -769,6 +775,19 @@ export default async function HoodPage({
         </section>
       )}
 
+      {/* conversion: one panel after the housing/resources overview —
+          curated homes for neighborhoods, verified intel for new builds */}
+      {leadBackendReady() &&
+        (nb ? (
+          <ConvertSlot>
+            <NewBuildIncentives citySlug={c.slug} community={h.slug} />
+          </ConvertSlot>
+        ) : (
+          <ConvertSlot id="hood-curated">
+            <CuratedHomes citySlug={c.slug} community={h.slug} />
+          </ConvertSlot>
+        ))}
+
       {/* 03 · highlights */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
@@ -924,6 +943,18 @@ export default async function HoodPage({
           ))}
         </div>
       </section>
+
+      {/* conversion before keep-exploring: tour planning for new builds; a
+          compact anchor back to the single curated panel for neighborhoods
+          (restrained repetition — never a second form on the page) */}
+      {leadBackendReady() &&
+        (nb ? (
+          <ConvertSlot>
+            <PlanBuilderTour citySlug={c.slug} community={h.slug} />
+          </ConvertSlot>
+        ) : (
+          <InventoryRequestBand hoodName={h.name} targetId="hood-curated" />
+        ))}
 
       {/* 05 · keep exploring */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#1D1913", color: "#F6F1E6" }}>

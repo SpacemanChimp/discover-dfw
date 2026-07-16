@@ -215,6 +215,7 @@ export async function POST(req: Request) {
     listingKey: lead.listingKey,
     address: lead.address,
     citySlug: lead.citySlug,
+    community: lead.community,
     sourcePage: lead.sourcePage,
     referrer: lead.referrer,
     sessionId: (body.sessionId || "").trim() || null,

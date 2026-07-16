@@ -103,6 +103,7 @@ export default function RequestShowingSheet({
         body: JSON.stringify({
           listingKey: listing.listingKey,
           citySlug: listing.citySlug,
+          community: listing.neighborhood || undefined,
           address: `${listing.unparsedAddress}, ${cityName}`,
           requestedDay: days[day].key,
           timeWindow: time,

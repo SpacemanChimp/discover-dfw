@@ -88,6 +88,7 @@ export default function AskQuestionSheet({
         body: JSON.stringify({
           listingKey: listing.listingKey,
           citySlug: listing.citySlug,
+          community: listing.neighborhood || undefined,
           address: `${listing.unparsedAddress}, ${cityName}`,
           question: q,
           name,

@@ -14,6 +14,10 @@ import About from "@/components/About";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 import Reveals from "@/components/Reveals";
+import HumanTrust from "@/components/HumanTrust";
+import BuildMyShortlist from "@/components/convert/BuildMyShortlist";
+import ConvertSlot from "@/components/convert/ConvertSlot";
+import { leadBackendReady } from "@/lib/convert/config";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -111,10 +115,18 @@ export default async function Home() {
         pricesLive={pricesLive}
         pricesAsOf={pricesAsOf}
       />
+      {/* shortlist ask sits BELOW the map, visually secondary (constrained
+          width, quiet spacing) — map browsing is never interrupted */}
+      {leadBackendReady() && (
+        <ConvertSlot>
+          <BuildMyShortlist />
+        </ConvertSlot>
+      )}
       <EditorsPicks />
       <StatsBand prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />
       <NewBuilds liveMls={isLiveMls} />
       <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />
+      <HumanTrust />
       <About />
       <Newsletter />
       <Footer />

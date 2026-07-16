@@ -14,6 +14,7 @@ const MODES = new Set(["in_person", "live_video"]);
 interface Body {
   listingKey?: string;
   citySlug?: string;
+  community?: string;
   address?: string;
   requestedDay?: string;
   timeWindow?: string;
@@ -117,6 +118,7 @@ export async function POST(req: Request) {
     listingKey: body.listingKey,
     address: (body.address || "").trim() || null,
     citySlug: (body.citySlug || "").trim() || null,
+    community: (body.community || "").trim().slice(0, 120) || null,
     sourcePage: (body.sourcePage || "").slice(0, 300) || null,
     referrer: (body.referrer || "").slice(0, 300) || null,
     sessionId: (body.sessionId || "").trim() || null,

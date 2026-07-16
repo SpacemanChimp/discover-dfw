@@ -7,6 +7,7 @@ import { SITE_URL } from "@/lib/site";
 export default function sitemap(): MetadataRoute.Sitemap {
   const entries: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
+    { url: `${SITE_URL}/how-we-research`, changeFrequency: "monthly", priority: 0.3 },
   ];
   // search surfaces join the sitemap only once inventory is real —
   // individual /listing/* pages stay out (tens of thousands, high churn)

@@ -116,3 +116,31 @@ test("guide_request rides the normalized model into FUB with intent tags", () =>
   // mobile-only contact ⇒ text consent; email-only ⇒ none
   assert.ok(payload.person.tags.includes("ddfw:sms-consent:none"));
 });
+
+test("listing leads tag the MLS community even when the URL doesn't carry it", () => {
+  const payload = buildEventPayload(
+    {
+      kind: "showing_request",
+      name: "Pat Example",
+      email: "pat@example.com",
+      phone: null,
+      message: null,
+      listingKey: "1177002678",
+      address: "12464 Lost Valley Drive",
+      citySlug: "frisco",
+      cityName: "Frisco",
+      community: "Panther Creek Ph 1 & 2",
+      sourcePage: "/listing/1177002678",
+      referrer: null,
+      sessionId: null,
+      submittedAt: "2026-07-16T12:00:00.000Z",
+      requestedDay: "2026-07-18",
+      timeWindow: "Morning",
+      tourMode: "in_person",
+    },
+    { source: "DiscoverDFW", newBuildSlugs: new Set() }
+  );
+  assert.ok(payload.person.tags.includes("community:panther-creek-ph-1-and-2"), "MLS subdivision slugified into a tag");
+  assert.match(payload.description, /Neighborhood: Panther Creek Ph 1 & 2/);
+  assert.ok(payload.person.tags.includes("ddfw:listing"));
+});

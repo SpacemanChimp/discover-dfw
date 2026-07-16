@@ -26,6 +26,9 @@ export interface NormalizedLead {
   citySlug: string | null;
   /** Resolved display name for citySlug (server binding fills this). */
   cityName?: string | null;
+  /** Neighborhood/community context: MLS subdivision on listing leads,
+      hood slug on guide leads. Tagged when the page URL doesn't carry it. */
+  community?: string | null;
   /** Path + query as captured in the browser (may carry utm_*). */
   sourcePage: string | null;
   referrer: string | null;
@@ -149,6 +152,13 @@ const PAGE_TAGS: Record<PageType, string | null> = {
   other: null,
 };
 
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
 export function buildTags(lead: NormalizedLead, page: PageContext): string[] {
   const consent = deriveConsent(lead);
   const tags = ["ddfw:lead", `offer:${offerSlug(lead)}`];
@@ -156,7 +166,8 @@ export function buildTags(lead: NormalizedLead, page: PageContext): string[] {
   if (pageTag) tags.push(pageTag);
   const citySlug = lead.citySlug || page.citySlug;
   if (citySlug) tags.push(`city:${citySlug}`);
-  if (page.hoodSlug) tags.push(`community:${page.hoodSlug}`);
+  const communitySlug = page.hoodSlug || (lead.community ? slugify(lead.community) : null);
+  if (communitySlug) tags.push(`community:${communitySlug}`);
   tags.push(`ddfw:email-consent:${consent.email}`, `ddfw:sms-consent:${consent.sms}`);
   return tags;
 }
@@ -190,7 +201,8 @@ export function buildSummary(lead: NormalizedLead, page: PageContext): string {
   }
   const cityBit = lead.cityName || lead.citySlug || page.citySlug;
   if (cityBit) lines.push(`City: ${cityBit}`);
-  if (page.hoodSlug) lines.push(`${page.pageType === "new-build" ? "Community" : "Neighborhood"}: ${page.hoodSlug}`);
+  const communityBit = lead.community || page.hoodSlug;
+  if (communityBit) lines.push(`${page.pageType === "new-build" ? "Community" : "Neighborhood"}: ${communityBit}`);
   if (lead.kind === "showing_request" && lead.requestedDay) {
     lines.push(
       `Requested: ${lead.requestedDay}, ${lead.timeWindow || "any time"}${lead.tourMode ? `, ${MODE_LABEL[lead.tourMode] || lead.tourMode}` : ""}`
