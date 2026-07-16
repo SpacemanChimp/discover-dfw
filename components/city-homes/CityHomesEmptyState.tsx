@@ -29,7 +29,7 @@ export default function CityHomesEmptyState({
         className="font-serif"
         style={{ fontStyle: "italic", fontSize: 21, color: "rgba(29,25,19,.7)", marginTop: 10 }}
       >
-        No active homes in {cityName} match — yet.
+        No listings in {cityName} match — yet.
       </div>
       <p style={{ margin: "8px auto 0", maxWidth: 420, fontSize: 13.5, lineHeight: 1.6, color: "rgba(29,25,19,.65)" }}>
         Loosen a filter, save the search and we&rsquo;ll watch {cityName} for you — or look one town

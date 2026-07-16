@@ -2,8 +2,22 @@ import Link from "next/link";
 import type { CityMarketSnapshot } from "@/lib/mls/types";
 
 /* City homes hero — the field-guide masthead for a city's inventory, with
-   the road back to the editorial city report and over to the map room. */
-export default function CityHomesHero({ snapshot }: { snapshot: CityMarketSnapshot }) {
+   the road back to the editorial city report and over to the map room.
+   The chip shows the SEARCH-RESULT total under the current filters (the
+   default search spans Active + other on-market statuses) — it is NOT the
+   canonical Active count, which the mini snapshot below carries with full
+   provenance. Never label this count "active". */
+export default function CityHomesHero({
+  snapshot,
+  total,
+  scopeNote,
+}: {
+  snapshot: CityMarketSnapshot;
+  /** listings matching the current search filters */
+  total: number;
+  /** what the total covers when no status filter is applied */
+  scopeNote?: string;
+}) {
   return (
     <header style={{ maxWidth: 1280, margin: "0 auto", padding: "42px 4vw 10px" }}>
       <div
@@ -63,8 +77,16 @@ export default function CityHomesHero({ snapshot }: { snapshot: CityMarketSnapsh
               padding: "8px 16px",
             }}
           >
-            {snapshot.activeListings} ACTIVE {snapshot.activeListings === 1 ? "HOME" : "HOMES"}
+            {total.toLocaleString("en-US")} MATCHING {total === 1 ? "LISTING" : "LISTINGS"}
           </span>
+          {scopeNote && (
+            <span
+              className="font-mono"
+              style={{ fontSize: 8.5, letterSpacing: ".16em", color: "rgba(29,25,19,.55)" }}
+            >
+              {scopeNote}
+            </span>
+          )}
           <Link
             href={`/city/${snapshot.citySlug}`}
             className="link-underline font-mono"

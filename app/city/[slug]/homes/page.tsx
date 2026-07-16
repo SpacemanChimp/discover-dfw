@@ -91,7 +91,13 @@ export default async function CityHomesPage({
         </div>
       )}
 
-      <CityHomesHero snapshot={{ ...snapshot, activeListings: result.total }} />
+      <CityHomesHero
+        snapshot={snapshot}
+        total={result.total}
+        // default search spans everything-but-sold; a visitor-chosen status
+        // filter is already visible in the toolbar, so the note drops
+        scopeNote={filters.statuses?.length ? undefined : "ACTIVE + OTHER ON-MARKET LISTINGS"}
+      />
       <CityMarketMiniSnapshot set={marketSet} statusCounts={snapshot.statusCounts} isd={city.isd} />
       <CityHomesList
         listings={result.listings}
