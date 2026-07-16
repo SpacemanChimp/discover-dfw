@@ -388,15 +388,23 @@ function sourceFor(pageType, phraseLabel, sourceFindings) {
 
 /* MLS listings for land/new construction often carry a literal "TBD <street>"
    address. That is feed data, not unfinished site copy — reclassified. */
-const STREET_SUFFIX_RE =
-  /^\s+(?:[A-Za-z0-9'.-]+\s+){0,4}(?:street|st|drive|dr|road|rd|lane|ln|court|ct|trail|trl|circle|cir|avenue|ave|blvd|boulevard|way|pkwy|parkway|hwy|highway|fm|cr)\b/i;
+const STREET_SUFFIX =
+  "street|st|drive|dr|road|rd|lane|ln|court|ct|trail|trl|circle|cir|avenue|ave|blvd|boulevard|way|pkwy|parkway|hwy|highway|fm|cr|ranch|surv\\w*|acres?";
+const STREET_AFTER_RE = new RegExp(`^\\s+(?:[A-Za-z0-9'.-]+\\s+){0,4}(?:${STREET_SUFFIX})\\b`, "i");
+const STREET_BEFORE_RE = new RegExp(`\\b(?:${STREET_SUFFIX})\\s*$`, "i");
 function tbdIsMlsAddress(text) {
   const matches = [...text.matchAll(/\btbd\b/gi)];
   if (!matches.length) return { any: false, allAddresses: false };
   const allAddresses = matches.every((m) => {
-    const before = text.slice(Math.max(0, m.index - 24), m.index);
+    const before = text.slice(Math.max(0, m.index - 120), m.index);
     const after = text.slice(m.index + m[0].length, m.index + m[0].length + 60);
-    return /\$[\d,]+\s*$/.test(before) || STREET_SUFFIX_RE.test(after) || /^\s+(?:CR|FM|HWY)-?\d/i.test(after);
+    return (
+      /\$[\d,]+[^$]{0,20}$/.test(before) || // "$350,000 TBD …" (price precedes address)
+      STREET_AFTER_RE.test(after) || // "TBD Lot 4 West End Street"
+      /^\s+(?:CR|FM|HWY)-?\d/i.test(after) || // "TBD Cr-301 …"
+      STREET_BEFORE_RE.test(before) || // "… FM 2728 Road TBD" (subdivision field = TBD)
+      /MLS PHOTO|MLS#/i.test(before) // inside a listing card — feed data by construction
+    );
   });
   return { any: true, allAddresses };
 }
@@ -691,36 +699,100 @@ function checkPage(page, sourceFindings) {
   }
 }
 
-/* homepage static prices vs live medians on /city/{slug}/homes */
+/* Cross-surface market consistency: every surface consumes the canonical
+   metric layer (lib/market), so the RENDERED median for a city must agree
+   across the homepage (Ticker + CityIndex), the city report hero, and the
+   city home-search band. Small tolerance covers ISR timing skew only. */
+const PRICE_TOKEN = /\$(\d+(?:\.\d+)?)([KM])/;
+const parsePrice = (num, unit) => Number(num) * (unit === "M" ? 1_000_000 : 1000);
+
 function checkMarketConflicts(pages) {
-  const done = new Set(); // one finding per city (pagination variants repeat the band)
+  const home = pages.find((p) => p.path === "/" && p.status === 200);
+  const homePrices = new Map(); // slug → [values rendered on the homepage]
+  if (home) {
+    for (const m of home.html.matchAll(
+      /href="\/city\/([a-z0-9-]+)"(?:(?!<\/a>)[\s\S]){0,800}?\$(\d+(?:\.\d+)?)([KM])/g
+    )) {
+      const list = homePrices.get(m[1]) ?? [];
+      list.push(parsePrice(m[2], m[3]));
+      homePrices.set(m[1], list);
+    }
+  }
+
+  const surfaceValues = new Map(); // slug → {surface: value}
   for (const pg of pages) {
-    if (pg.pageType !== "city-homes-search" || pg.status !== 200) continue;
-    const m = pg.path.match(/^\/city\/([^/]+)\/homes/);
-    const c = m && cityBySlug.get(m[1]);
-    if (!c || done.has(c.slug)) continue;
-    done.add(c.slug);
-    const t = pg.text.match(/MEDIAN LIST\s*\n?\s*\$(\d+(?:\.\d+)?)K/i);
-    if (!t) continue;
-    const live = Number(t[1]) * 1000;
-    const editorial = c.price;
-    const drift = Math.abs(live - editorial) / editorial;
-    if (drift > 0.1) {
-      addIssue({
-        url: "/",
-        pageType: "homepage",
-        city: c.name,
-        community: "",
-        category: "market-figure-conflict",
-        severity: "high",
-        phrase: `homepage/static price $${Math.round(editorial / 1000)}K vs live median $${Math.round(live / 1000)}K (${(drift * 100).toFixed(0)}% apart) — see /city/${c.slug}/homes`,
-        excerpt: "",
-        sourceFile: `lib/dfw.data.json (cities.${c.slug}.price) → components/Ticker.tsx, components/CityIndex.tsx`,
-        visiblyRendered: true,
-        indexable: true,
-        recommendation: "Homepage Ticker/CityIndex show the static editorial price while live search shows a materially different median. Refresh the editorial figure or source homepage prices from city_market_snapshots.",
-        canRemainPublic: true,
-      });
+    if (pg.status !== 200) continue;
+    let m = pg.path.match(/^\/city\/([^/?]+)\/homes$/);
+    if (m) {
+      const t = pg.text.match(new RegExp(`MEDIAN LIST\\s*\\n?\\s*${PRICE_TOKEN.source}`, "i"));
+      if (t) {
+        const v = surfaceValues.get(m[1]) ?? {};
+        v["city-homes-search"] = parsePrice(t[1], t[2]);
+        surfaceValues.set(m[1], v);
+      }
+      continue;
+    }
+    m = pg.path.match(/^\/city\/([^/?]+)$/);
+    if (m) {
+      // anchor on the market card's full label — bare "MEDIAN LIST" also
+      // appears in nearby-city chips and must not be parsed as this city's
+      const t = pg.text.match(new RegExp(`MEDIAN ACTIVE LIST PRICE\\s*\\n?\\s*${PRICE_TOKEN.source}`, "i"));
+      if (t) {
+        const v = surfaceValues.get(m[1]) ?? {};
+        v["city-report"] = parsePrice(t[1], t[2]);
+        surfaceValues.set(m[1], v);
+      }
+    }
+  }
+
+  for (const [slug, v] of surfaceValues) {
+    const c = cityBySlug.get(slug);
+    if (!c) continue;
+    const values = { ...v };
+    const hp = homePrices.get(slug);
+    if (hp?.length) {
+      values["homepage"] = hp[0];
+      // Ticker and CityIndex must agree with each other too
+      if (hp.some((x) => Math.abs(x - hp[0]) / hp[0] > 0.001)) {
+        addIssue({
+          url: "/",
+          pageType: "homepage",
+          city: c.name,
+          community: "",
+          category: "cross-surface-market-conflict",
+          severity: "high",
+          phrase: `homepage renders multiple different medians for ${c.name}: ${hp.map((x) => "$" + Math.round(x / 1000) + "K").join(" vs ")}`,
+          excerpt: "",
+          sourceFile: "lib/market/metrics.ts consumers (Ticker/CityIndex/InteractiveMap)",
+          visiblyRendered: true,
+          indexable: true,
+          recommendation: "All homepage surfaces must render the same canonical median for a city.",
+          canRemainPublic: true,
+        });
+      }
+    }
+    const entries = Object.entries(values);
+    if (entries.length < 2) continue;
+    const [refSurface, refVal] = entries[0];
+    for (const [surface, val] of entries.slice(1)) {
+      const drift = Math.abs(val - refVal) / refVal;
+      if (drift > 0.02) {
+        addIssue({
+          url: `/city/${slug}`,
+          pageType: "city-report",
+          city: c.name,
+          community: "",
+          category: "cross-surface-market-conflict",
+          severity: "high",
+          phrase: `median differs across surfaces: ${refSurface} $${Math.round(refVal / 1000)}K vs ${surface} $${Math.round(val / 1000)}K (${(drift * 100).toFixed(1)}% apart)`,
+          excerpt: "",
+          sourceFile: "lib/market/metrics.ts (canonical layer) — a surface is bypassing it",
+          visiblyRendered: true,
+          indexable: true,
+          recommendation: "Every surface must consume the canonical metric layer; no surface may hold its own copy of a market statistic.",
+          canRemainPublic: true,
+        });
+      }
     }
   }
 }

@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { cities, fmtK } from "@/lib/dfw-data";
+import { cities } from "@/lib/dfw-data";
+import { fmtPrice } from "@/lib/market/core";
 
-export default function Ticker() {
-  const base = cities.map((c) => ({
-    t: c.name.toUpperCase(),
-    p: fmtK(c.price),
-    href: `/city/${c.slug}`,
-  }));
+/* Prices come from the canonical metric layer via the homepage (live NTREIS
+   medians with editorial fallback decided INSIDE the layer). When the layer
+   omits a city's median (e.g. zero active inventory), the city is skipped —
+   never silently backfilled with a stale figure. */
+export default function Ticker({ prices }: { prices?: Record<string, number> }) {
+  const base = cities.flatMap((c) => {
+    const v = prices ? prices[c.slug] : c.price;
+    return v ? [{ t: c.name.toUpperCase(), p: fmtPrice(v), href: `/city/${c.slug}` }] : [];
+  });
   const list = base.concat(base);
   return (
     <div

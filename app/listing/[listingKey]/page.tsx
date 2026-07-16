@@ -6,6 +6,7 @@ import { getMlsProvider, isLiveMls } from "@/lib/mls";
 import { getListingSchools } from "@/lib/mls/trestle";
 import { mockListings } from "@/data/mock-listings";
 import ListingDetailDossier from "@/components/search/ListingDetailDossier";
+import { getCityMarketMetricSet } from "@/lib/market/metrics";
 import NearbyListings from "@/components/listing/NearbyListings";
 import SearchNav from "@/components/search/SearchNav";
 import MLSComplianceFooter from "@/components/search/MLSComplianceFooter";
@@ -79,6 +80,7 @@ export default async function ListingPage({
         countyName={county.name}
         schools={schools}
         liveMls={isLiveMls}
+        cityMedian={(await getCityMarketMetricSet(city.slug))?.metrics.median_active_list_price ?? null}
       />
       <NearbyListings listing={listing} />
       <MLSComplianceFooter asOf={listing.mlsLastUpdated} />

@@ -1,23 +1,27 @@
 import Link from "next/link";
 import type { City } from "@/lib/dfw-data";
-import { fmtK } from "@/lib/dfw-data";
 import type { Listing } from "@/lib/mls/types";
-import { isLiveMls } from "@/lib/mls";
+import type { CityMarketMetric } from "@/lib/market/core";
+import { fmtPrice, fmtAsOf } from "@/lib/market/core";
 
 /* "02 — KNOW THE CITY" — ties the listing back to the editorial city
-   report with the this-home-vs-city-median bar. */
+   report. The vs-median bar uses the CANONICAL city median (lib/market) —
+   the same value the city report and homepage display — and hides entirely
+   when no median is available (never a guessed figure). */
 export default function ListingCityContext({
   listing,
   city,
   countyName,
+  cityMedian = null,
 }: {
   listing: Listing;
   city: City;
   countyName: string;
+  cityMedian?: CityMarketMetric | null;
 }) {
-  const ratio = listing.listPrice / city.price;
-  const barW = Math.max(18, Math.min(92, Math.round(50 * ratio)));
-  const deltaPct = Math.round((ratio - 1) * 100);
+  const ratio = cityMedian ? listing.listPrice / cityMedian.value : null;
+  const barW = ratio ? Math.max(18, Math.min(92, Math.round(50 * ratio))) : 0;
+  const deltaPct = ratio ? Math.round((ratio - 1) * 100) : 0;
 
   return (
     <>
@@ -48,15 +52,20 @@ export default function ListingCityContext({
             FULL CITY REPORT →
           </Link>
         </div>
-        <div className="font-mono" style={{ marginTop: 12, fontSize: 8.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)" }}>
-          THIS HOME VS CITY MEDIAN ({fmtK(city.price)} · {isLiveMls ? "EDITORIAL EST." : "PLACEHOLDER"})
-        </div>
-        <div style={{ position: "relative", height: 8, borderRadius: 99, background: "rgba(29,25,19,.14)", marginTop: 8 }}>
-          <span
-            style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${barW}%`, borderRadius: 99, background: "#1D1913" }}
-          />
-          <span style={{ position: "absolute", left: "50%", top: -3, width: 3, height: 14, background: "#D9481F", borderRadius: 2 }} />
-        </div>
+        {cityMedian && ratio !== null && (
+          <>
+            <div className="font-mono" style={{ marginTop: 12, fontSize: 8.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)" }}>
+              THIS HOME VS CITY MEDIAN ACTIVE LIST ({fmtPrice(cityMedian.value)} ·{" "}
+              {cityMedian.verified ? `${fmtAsOf(cityMedian.asOf)} · NTREIS` : "EDITORIAL"})
+            </div>
+            <div style={{ position: "relative", height: 8, borderRadius: 99, background: "rgba(29,25,19,.14)", marginTop: 8 }}>
+              <span
+                style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${barW}%`, borderRadius: 99, background: "#1D1913" }}
+              />
+              <span style={{ position: "absolute", left: "50%", top: -3, width: 3, height: 14, background: "#D9481F", borderRadius: 2 }} />
+            </div>
+          </>
+        )}
         <div
           className="font-mono"
           style={{
@@ -70,10 +79,12 @@ export default function ListingCityContext({
             flexWrap: "wrap",
           }}
         >
-          <span>
-            {deltaPct >= 0 ? "+" : ""}
-            {deltaPct}% VS MEDIAN
-          </span>
+          {cityMedian && ratio !== null && (
+            <span>
+              {deltaPct >= 0 ? "+" : ""}
+              {deltaPct}% VS MEDIAN
+            </span>
+          )}
           <span>
             {city.isd.toUpperCase()} · {countyName.toUpperCase()} COUNTY · {city.commute[0]} MIN TO DT DALLAS
           </span>

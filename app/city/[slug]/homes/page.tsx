@@ -10,6 +10,7 @@ import SearchToolbar from "@/components/search/SearchToolbar";
 import MLSComplianceFooter from "@/components/search/MLSComplianceFooter";
 import CityHomesHero from "@/components/city-homes/CityHomesHero";
 import CityMarketMiniSnapshot from "@/components/city-homes/CityMarketMiniSnapshot";
+import { getCityMarketMetricSet } from "@/lib/market/metrics";
 import CityHomesList from "@/components/city-homes/CityHomesList";
 import type { NearbyCityCount } from "@/components/city-homes/CityHomesEmptyState";
 
@@ -51,10 +52,12 @@ export default async function CityHomesPage({
 
   const provider = getMlsProvider();
   const filters: SearchFilters = { ...parseSearchFilters(sp), citySlug: slug };
-  const [result, snapshot, countsBySlug] = await Promise.all([
+  const [result, snapshot, countsBySlug, marketSet] = await Promise.all([
     provider.searchListings(filters),
     provider.getCityMarketSnapshot(slug),
     provider.getActiveCountsByCity(),
+    // canonical metric layer — same figures as the city report and homepage
+    getCityMarketMetricSet(slug),
   ]);
   if (!snapshot) notFound();
 
@@ -89,7 +92,7 @@ export default async function CityHomesPage({
       )}
 
       <CityHomesHero snapshot={{ ...snapshot, activeListings: result.total }} />
-      <CityMarketMiniSnapshot snapshot={snapshot} />
+      <CityMarketMiniSnapshot set={marketSet} statusCounts={snapshot.statusCounts} isd={city.isd} />
       <CityHomesList
         listings={result.listings}
         cityName={city.name}

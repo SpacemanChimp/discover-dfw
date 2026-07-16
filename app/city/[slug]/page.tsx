@@ -11,11 +11,10 @@ import {
   newBuilds,
   project,
   pts,
-  fmtK,
-  City,
 } from "@/lib/dfw-data";
 import { hoodsForCity } from "@/lib/hoods";
 import { getMlsProvider, isLiveMls } from "@/lib/mls";
+import { getAllCityMarketMetricSets, fmtMetricValue, fmtPrice, fmtAsOf, provenanceLabel } from "@/lib/market/metrics";
 import type { Listing } from "@/lib/mls/types";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { getApprovedPhotos, photoKey } from "@/lib/content/editorial-photos";
@@ -75,28 +74,10 @@ export async function generateMetadata({
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
-function buildSparkline(c: City) {
-  let seed = 0;
-  for (let i = 0; i < c.slug.length; i++) seed += c.slug.charCodeAt(i) * (i + 7);
-  let s = seed;
-  const rnd = () => {
-    s = (s * 9301 + 49297) % 233280;
-    return s / 233280;
-  };
-  const yoyF = parseFloat(c.yoy) / 100;
-  const start = c.price * (1 - yoyF);
-  const vals: number[] = [];
-  for (let i = 0; i < 12; i++) {
-    const base = start + (c.price - start) * (i / 11);
-    vals.push(i === 11 ? c.price : base + (rnd() - 0.5) * c.price * 0.022);
-  }
-  const mn = Math.min(...vals);
-  const mx = Math.max(...vals);
-  const px = (i: number) => 10 + (i / 11) * 300;
-  const py = (v: number) => 82 - ((v - mn) / (mx - mn || 1)) * 62;
-  const spark = vals.map((v, i) => Math.round(px(i)) + "," + r1(py(v))).join(" ");
-  return { spark, sparkX: Math.round(px(11)), sparkY: r1(py(vals[11])) };
-}
+/* The synthetic 12-month sparkline and editorial YoY figure were removed
+   (2026-07): a trend curve derived from an estimated YoY is fabricated
+   history. YoY returns automatically — via the canonical metric layer —
+   once the snapshot table holds a comparable year-old row per city. */
 
 export default async function CityPage({
   params,
@@ -129,7 +110,6 @@ export default async function CityPage({
     .slice(0, 4)
     .map(({ city }) => city);
 
-  const { spark, sparkX, sparkY } = buildSparkline(c);
   const p = project(c.ll);
   const curX = r1(p[0]);
   const curY = r1(p[1]);
@@ -137,22 +117,29 @@ export default async function CityPage({
   const nameUpper = c.name.toUpperCase();
   const countyUpper = county.name.toUpperCase();
 
-  /* Live market numbers where the store has them; editorial figures stay
-     the fallback (and YoY/trend stay editorial estimates — computing real
-     YoY needs a year of snapshot history). ⚠ Public market-stat display
-     must be verified with the broker/NTREIS before launch is considered
-     compliant — noted in the build plan. No sold-data stats are shown. */
-  let liveSnap = null;
-  if (isLiveMls) {
-    try {
-      liveSnap = await getMlsProvider().getCityMarketSnapshot(c.slug);
-    } catch {
-      liveSnap = null; // editorial fallback — a feed hiccup never breaks the page
-    }
-  }
-  const price = fmtK(liveSnap?.medianListPrice ?? c.price);
-  const ppsf = "$" + (liveSnap?.pricePerSqft ?? c.ppsf);
-  const domDays = liveSnap?.medianDaysOnMarket ?? c.dom;
+  /* Canonical market metrics — the same authoritative layer the homepage
+     and search consume (lib/market). Editorial fallback happens inside the
+     layer; a feed hiccup never breaks the page. Unavailable metrics are
+     OMITTED, never zero-filled. No sold-data stats are shown.
+     ⚠ Public market-stat display must be verified with the broker/NTREIS
+     before launch is considered compliant — noted in the build plan.
+     Definitions: docs/market-data-methodology.md. */
+  const allMarketSets = await getAllCityMarketMetricSets();
+  const marketSet = allMarketSets[c.slug] ?? null;
+  const mPrice = marketSet?.metrics.median_active_list_price ?? null;
+  const mPpsf = marketSet?.metrics.median_price_per_sqft ?? null;
+  const mDom = marketSet?.metrics.median_days_on_market ?? null;
+  const mCount = marketSet?.metrics.active_listing_count ?? null;
+  const mYoy = marketSet?.metrics.yoy_median_list_price_change ?? null;
+  const price = mPrice ? fmtMetricValue(mPrice) : null;
+  const ppsf = mPpsf ? fmtMetricValue(mPpsf) : null;
+  const domDays = mDom ? fmtMetricValue(mDom) : null;
+  // canonical only — when the layer omits a neighbor's median, the chip
+  // shows no figure rather than a stale one
+  const nearbyPrice = (slug: string): string | null => {
+    const v = allMarketSets[slug]?.metrics.median_active_list_price?.value;
+    return v ? fmtPrice(v) : null;
+  };
   const popShort =
     c.pop >= 1000000
       ? (c.pop / 1000000).toFixed(2) + "M"
@@ -160,7 +147,7 @@ export default async function CityPage({
   const popFull = c.pop.toLocaleString("en-US") + " (2024 est.)";
   const coords =
     Math.abs(c.ll[1]).toFixed(3) + "° N · " + Math.abs(c.ll[0]).toFixed(3) + "° W";
-  const paceNote = domDays <= 32 ? "MOVES FAST — COME READY" : "ROOM TO NEGOTIATE";
+  const paceNote = mDom ? (mDom.value <= 32 ? "MOVES FAST — COME READY" : "ROOM TO NEGOTIATE") : "";
 
   const hoods = hoodsForCity(c).map((h, i) => ({
     num: "N°" + (i + 1),
@@ -397,10 +384,11 @@ export default async function CityPage({
               animation: "fadeUp .7s ease .45s both",
             }}
           >
-            <HeroStat label="MEDIAN" value={price} color="#D9481F" />
-            <HeroStat label="$ / SQFT" value={ppsf} />
-            <HeroStat label="DAYS ON MKT" value={String(domDays)} />
-            <HeroStat label={liveSnap ? "YOY (EST.)" : "YOY"} value={c.yoy} />
+            {price && <HeroStat label="MEDIAN LIST" value={price} color="#D9481F" />}
+            {ppsf && <HeroStat label="$ / SQFT" value={ppsf} />}
+            {domDays && <HeroStat label="DAYS ON MKT" value={domDays} />}
+            {mCount && <HeroStat label="ACTIVE NOW" value={fmtMetricValue(mCount)} />}
+            {mYoy && <HeroStat label="YOY MEDIAN" value={fmtMetricValue(mYoy)} />}
             <HeroStat label="POPULATION" value={popShort} />
           </div>
         </div>
@@ -568,68 +556,52 @@ export default async function CityPage({
               marginBottom: 6,
             }}
           >
-            {liveSnap
-              ? "LIVE NTREIS DATA · YOY & TREND ARE EDITORIAL ESTIMATES"
-              : "PLACEHOLDER DATA — SWAP FOR MLS FEED"}
+            {marketSet ? provenanceLabel(marketSet) : "MARKET DATA UNAVAILABLE"}
           </span>
         </div>
         <div
           data-reveal="1"
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 18 }}
         >
-          <MarketCard label="MEDIAN LIST PRICE" value={price} sub={`${c.yoy} YEAR OVER YEAR (EST.)`} valColor="#D9481F" />
-          <MarketCard label="PRICE PER SQFT" value={ppsf} sub="METRO AVG ≈ $210" />
-          <MarketCard label="DAYS ON MARKET" value={String(domDays)} sub={paceNote} />
-          <div
-            style={{
-              border: "2px solid #1D1913",
-              borderRadius: 18,
-              background: "#1D1913",
-              color: "#F6F1E6",
-              padding: "22px 24px",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span
+          {price && (
+            <MarketCard
+              label="MEDIAN ACTIVE LIST PRICE"
+              value={price}
+              sub={mYoy ? `${fmtMetricValue(mYoy)} VS MEDIAN ONE YEAR AGO` : "MEDIAN OF CURRENT LIST PRICES"}
+              valColor="#D9481F"
+            />
+          )}
+          {ppsf && <MarketCard label="MEDIAN $ / SQFT" value={ppsf} sub="LIST PRICE ÷ LIVING AREA" />}
+          {domDays && <MarketCard label="MEDIAN DAYS ON MARKET" value={domDays} sub={paceNote} />}
+          {mCount && (
+            <div
+              style={{
+                border: "2px solid #1D1913",
+                borderRadius: 18,
+                background: "#1D1913",
+                color: "#F6F1E6",
+                padding: "22px 24px",
+              }}
+            >
+              <div
                 className="font-mono"
                 style={{ fontSize: 9.5, letterSpacing: ".2em", color: "rgba(246,241,230,.6)" }}
               >
-                12-MO TREND{liveSnap ? " (EST.)" : ""}
-              </span>
-              <span className="font-mono" style={{ fontSize: 10.5, color: "#E88D6B", fontWeight: 700 }}>
-                {c.yoy}
-              </span>
+                ACTIVE LISTINGS NOW
+              </div>
+              <div className="font-serif" style={{ fontWeight: 900, fontSize: 46, lineHeight: 1.1, marginTop: 10 }}>
+                {fmtMetricValue(mCount)}
+              </div>
+              <div
+                className="font-mono"
+                style={{ fontSize: 9, letterSpacing: ".16em", color: "rgba(246,241,230,.5)", marginTop: 12, lineHeight: 1.8 }}
+              >
+                HOMES, INCOME PROPERTIES & LAND · MLS CITY = {c.name.toUpperCase()}
+                <br />
+                COUNTED {fmtAsOf(mCount.asOf)} · SOURCE: NTREIS
+              </div>
             </div>
-            <svg viewBox="0 0 320 92" style={{ width: "100%", display: "block", marginTop: 12 }}>
-              <line x1="10" y1="78" x2="310" y2="78" style={{ stroke: "rgba(246,241,230,.2)", strokeWidth: 1 }} />
-              <line
-                x1="10"
-                y1="44"
-                x2="310"
-                y2="44"
-                style={{ stroke: "rgba(246,241,230,.1)", strokeWidth: 1, strokeDasharray: "3 4" }}
-              />
-              <polyline
-                points={spark}
-                style={{
-                  fill: "none",
-                  stroke: "#E8865F",
-                  strokeWidth: 2.6,
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  strokeDasharray: 600,
-                  animation: "drawIn 1.6s ease-out both",
-                }}
-              />
-              <circle cx={sparkX} cy={sparkY} r={4.4} style={{ fill: "#D9481F", stroke: "#F6F1E6", strokeWidth: 2 }} />
-            </svg>
-            <div
-              className="font-mono"
-              style={{ fontSize: 9, letterSpacing: ".16em", color: "rgba(246,241,230,.5)", marginTop: 8 }}
-            >
-              ILLUSTRATIVE CURVE · EDITORIAL ESTIMATE
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -1147,7 +1119,8 @@ export default async function CityPage({
                   className="font-mono"
                   style={{ fontSize: 9, letterSpacing: ".2em", color: "#D9481F", fontWeight: 700 }}
                 >
-                  {countyById[n.county].name.toUpperCase()} CO · MEDIAN {fmtK(n.price)}
+                  {countyById[n.county].name.toUpperCase()} CO
+                  {nearbyPrice(n.slug) ? ` · MEDIAN LIST ${nearbyPrice(n.slug)}` : ""}
                 </div>
                 <div className="font-serif" style={{ fontWeight: 800, fontSize: 21, marginTop: 8, lineHeight: 1.15 }}>
                   {n.name} →

@@ -1,7 +1,23 @@
 import Link from "next/link";
-import { counties, citiesInCounty, fmtK, median } from "@/lib/dfw-data";
+import { counties, citiesInCounty } from "@/lib/dfw-data";
+import { fmtPrice, fmtAsOf, medianOf } from "@/lib/market/core";
 
-export default function CityIndex() {
+/* Prices come from the canonical metric layer via the homepage. The county
+   header figure is a MEDIAN OF CITY MEDIANS (labeled as such) — we do not
+   compute metro/county-wide listing medians client-side. */
+export default function CityIndex({
+  prices,
+  pricesLive,
+  pricesAsOf,
+}: {
+  prices?: Record<string, number>;
+  pricesLive?: boolean;
+  pricesAsOf?: string;
+}) {
+  // when a prices map is supplied, it is the whole truth: a missing entry
+  // means the canonical layer omitted the metric — render nothing for it
+  const priceOf = (slug: string, fallback: number): number | undefined =>
+    prices ? prices[slug] : fallback;
   return (
     <section id="cities" style={{ maxWidth: 1380, margin: "0 auto", padding: "96px 4vw 60px" }}>
       <div data-reveal="1" style={{ marginBottom: 44 }}>
@@ -28,6 +44,14 @@ export default function CityIndex() {
         >
           Every city, county by county.
         </h2>
+        <div
+          className="font-mono"
+          style={{ marginTop: 12, fontSize: 9.5, letterSpacing: ".18em", color: "rgba(29,25,19,.5)" }}
+        >
+          {pricesLive && pricesAsOf
+            ? `CITY FIGURES: MEDIAN ACTIVE LIST PRICE · UPDATED ${fmtAsOf(pricesAsOf)} · SOURCE: NTREIS`
+            : "CITY FIGURES: EDITORIAL MEDIANS, SEEDED FROM NTREIS SNAPSHOTS"}
+        </div>
       </div>
 
       {counties.map((co) => {
@@ -61,9 +85,15 @@ export default function CityIndex() {
               <span style={{ flex: 1 }} />
               <span
                 className="font-mono"
+                title="Median of this county's city medians — not a county-wide listing median"
                 style={{ fontSize: 10.5, letterSpacing: ".14em", color: "#D9481F", fontWeight: 700 }}
               >
-                MEDIAN {fmtK(median(cs.map((c) => c.price)))}
+                {(() => {
+                  const v = medianOf(
+                    cs.map((c) => priceOf(c.slug, c.price)).filter((x): x is number => typeof x === "number" && x > 0)
+                  );
+                  return v ? `MEDIAN CITY LIST ${fmtPrice(v)}` : "";
+                })()}
               </span>
             </div>
             <div
@@ -100,9 +130,14 @@ export default function CityIndex() {
                       transform: "translateY(-4px)",
                     }}
                   />
-                  <span className="font-mono" style={{ fontSize: 11, color: "rgba(29,25,19,.6)" }}>
-                    {fmtK(c.price)}
-                  </span>
+                  {(() => {
+                    const v = priceOf(c.slug, c.price);
+                    return v ? (
+                      <span className="font-mono" style={{ fontSize: 11, color: "rgba(29,25,19,.6)" }}>
+                        {fmtPrice(v)}
+                      </span>
+                    ) : null;
+                  })()}
                   <span style={{ fontSize: 13, color: "inherit" }}>→</span>
                 </Link>
               ))}

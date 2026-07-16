@@ -1,5 +1,6 @@
 import type { Listing, ListingSchools } from "@/lib/mls/types";
 import type { City } from "@/lib/dfw-data";
+import type { CityMarketMetric } from "@/lib/market/core";
 import { DISCLAIMER_RESERVED } from "@/lib/compliance";
 import { badgeStyle, money } from "./format";
 import MLSAttribution from "./MLSAttribution";
@@ -20,6 +21,7 @@ export default function ListingDetailDossier({
   countyName,
   schools = null,
   liveMls = false,
+  cityMedian = null,
 }: {
   listing: Listing;
   city: City;
@@ -27,6 +29,8 @@ export default function ListingDetailDossier({
   /** MLS-reported schools (listing record or live supplement) — null hides/notes. */
   schools?: ListingSchools | null;
   liveMls?: boolean;
+  /** Canonical city median (lib/market) — null hides the vs-median bar. */
+  cityMedian?: CityMarketMetric | null;
 }) {
   const b = badgeStyle(listing);
   const ppsf = listing.livingAreaSqft > 0 ? Math.round(listing.listPrice / listing.livingAreaSqft) : null;
@@ -94,7 +98,7 @@ export default function ListingDetailDossier({
         </div>
 
         <ListingFactsLedger listing={listing} />
-        <ListingCityContext listing={listing} city={city} countyName={countyName} />
+        <ListingCityContext listing={listing} city={city} countyName={countyName} cityMedian={cityMedian} />
         <ListingSchoolsCard schools={schools} live={liveMls} />
 
         {/* compliance reservations: attribution, source, last updated, disclaimer */}

@@ -1,19 +1,36 @@
-import { cities, counties } from "@/lib/dfw-data";
-import { isLiveMls } from "@/lib/mls";
+import { cities, counties, fmtPop } from "@/lib/dfw-data";
+import { fmtPrice, fmtAsOf, medianOf } from "@/lib/market/core";
 
-/* The band's figures stay editorial even on the live feed (metro-wide
-   median isn't computed yet) — live mode must not call them placeholders
-   while the footer declares live NTREIS data, but must not claim live
-   either. */
-const estNote = isLiveMls ? "EDITORIAL ESTIMATE" : "PLACEHOLDER";
-const STATS: [string, string][] = [
-  ["$528K", `METRO MEDIAN LIST · ${estNote}`],
-  [String(cities.length), "CITIES PROFILED IN FULL"],
-  [String(counties.length), "COUNTIES ON THE MAP"],
-  ["8.4M", `METRO RESIDENTS · ${estNote}`],
-];
-
-export default function StatsBand() {
+/* Every figure here is derived, never hardcoded: the price is the MEDIAN OF
+   the 90 CITY MEDIANS from the canonical metric layer (labeled as exactly
+   that — it is not a metro-wide listing median), and residents is the sum of
+   the profiled cities' Census populations (not the full metro total). */
+export default function StatsBand({
+  prices,
+  pricesLive,
+  pricesAsOf,
+}: {
+  prices?: Record<string, number>;
+  pricesLive?: boolean;
+  pricesAsOf?: string;
+}) {
+  // prices map (when supplied) is the whole truth — cities the canonical
+  // layer omitted are excluded from the aggregate, never backfilled
+  const cityMedians = cities
+    .map((c) => (prices ? prices[c.slug] : c.price))
+    .filter((v): v is number => typeof v === "number" && v > 0);
+  const medianOfMedians = medianOf(cityMedians);
+  const residents = cities.reduce((sum, c) => sum + c.pop, 0);
+  const priceNote =
+    pricesLive && pricesAsOf
+      ? `MEDIAN OF CITY MEDIANS · ${fmtAsOf(pricesAsOf)} · NTREIS`
+      : "MEDIAN OF CITY MEDIANS · EDITORIAL";
+  const STATS: [string, string][] = [
+    ...(medianOfMedians ? ([[fmtPrice(medianOfMedians), priceNote]] as [string, string][]) : []),
+    [String(cities.length), "CITIES PROFILED IN FULL"],
+    [String(counties.length), "COUNTIES ON THE MAP"],
+    [fmtPop(residents), "RESIDENTS IN PROFILED CITIES · CENSUS 2024"],
+  ];
   return (
     <section style={{ background: "#1D1913", color: "#F6F1E6" }}>
       <div

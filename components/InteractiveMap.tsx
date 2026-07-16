@@ -12,19 +12,37 @@ import {
   citiesInCounty,
   project,
   pts,
-  fmtK,
   fmtPop,
   median,
   VB_W,
   VB_H,
 } from "@/lib/dfw-data";
+import { fmtPrice, fmtAsOf } from "@/lib/market/core";
 import { pal } from "@/lib/theme";
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
 /* liveMls arrives as a prop — process.env.MLS_PROVIDER is server-only, so
    the server parent (app/page.tsx) passes the flag across the boundary. */
-export default function InteractiveMap({ liveMls = false }: { liveMls?: boolean }) {
+export default function InteractiveMap({
+  liveMls = false,
+  prices,
+  stats,
+  pricesLive = false,
+  pricesAsOf,
+}: {
+  liveMls?: boolean;
+  /* canonical city figures from the homepage's metric fetch — the map holds
+     no market numbers of its own (editorial fallback per city) */
+  prices?: Record<string, number>;
+  stats?: Record<string, { ppsf?: number; dom?: number }>;
+  pricesLive?: boolean;
+  pricesAsOf?: string;
+}) {
+  // the prices map (when supplied) is the whole truth — a missing entry
+  // means the canonical layer omitted the median; render nothing for it
+  const priceOf = (slug: string): number | undefined =>
+    prices ? prices[slug] : bySlug[slug]?.price;
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
@@ -482,7 +500,10 @@ export default function InteractiveMap({ liveMls = false }: { liveMls?: boolean 
                   color: "rgba(246,241,230,.85)",
                 }}
               >
-                {spotObj ? fmtK(spotObj.price) : ""} median ·{" "}
+                {(() => {
+                  const v = spotObj ? priceOf(spotObj.slug) : undefined;
+                  return v ? `${fmtPrice(v)} median · ` : "";
+                })()}
                 <span style={{ color: "#E88D6B" }}>open report →</span>
               </div>
             </div>
@@ -502,10 +523,18 @@ export default function InteractiveMap({ liveMls = false }: { liveMls?: boolean 
             background: pal.side,
           }}
         >
-          {spotObj && <Spotlight slug={spotObj.slug} />}
+          {spotObj && (
+            <Spotlight
+              slug={spotObj.slug}
+              price={priceOf(spotObj.slug)}
+              ppsf={stats?.[spotObj.slug]?.ppsf}
+              dom={stats?.[spotObj.slug]?.dom}
+            />
+          )}
           {selObj && (
             <CountyPanel
               id={selObj.id}
+              priceOf={priceOf}
               onClear={() => {
                 setSelCounty(null);
                 setHoverCounty(null);
@@ -523,6 +552,7 @@ export default function InteractiveMap({ liveMls = false }: { liveMls?: boolean 
           )}
           {listShow && (
             <CountyList
+              priceOf={priceOf}
               onEnter={setHoverCounty}
               onLeave={() => setHoverCounty(null)}
               onClick={setSelCounty}
@@ -547,8 +577,10 @@ export default function InteractiveMap({ liveMls = false }: { liveMls?: boolean 
       >
         <span>SIMPLIFIED COUNTY GEOMETRY · NOT FOR NAVIGATION</span>
         <span style={{ color: "#D9481F" }}>
-          {liveMls
-            ? "FIGURES ARE EDITORIAL ESTIMATES — LIVE LISTINGS ON CITY PAGES"
+          {pricesLive && pricesAsOf
+            ? `CITY MEDIANS: ACTIVE LIST PRICES · ${fmtAsOf(pricesAsOf)} · NTREIS`
+            : liveMls
+            ? "CITY FIGURES: EDITORIAL MEDIANS — LIVE LISTINGS ON CITY PAGES"
             : "ALL FIGURES ARE PLACEHOLDERS — REPLACE WITH LIVE MLS DATA"}
         </span>
       </div>
@@ -575,7 +607,17 @@ const statCell = (label: string, value: string, color: string) => (
   </div>
 );
 
-function Spotlight({ slug }: { slug: string }) {
+function Spotlight({
+  slug,
+  price,
+  ppsf,
+  dom,
+}: {
+  slug: string;
+  price?: number;
+  ppsf?: number;
+  dom?: number;
+}) {
   const c = bySlug[slug];
   const county = countyById[c.county];
   return (
@@ -627,10 +669,10 @@ function Spotlight({ slug }: { slug: string }) {
           marginTop: 22,
         }}
       >
-        {statCell("MEDIAN", fmtK(c.price), "#D9481F")}
-        {statCell("$ / SQFT", "$" + c.ppsf, pal.text)}
+        {price ? statCell("MEDIAN LIST", fmtPrice(price), "#D9481F") : null}
+        {ppsf ? statCell("$ / SQFT", "$" + Math.round(ppsf), pal.text) : null}
         {statCell("POPULATION", fmtPop(c.pop), pal.text)}
-        {statCell("DAYS ON MKT", String(c.dom), pal.text)}
+        {dom !== undefined ? statCell("DAYS ON MKT", String(Math.round(dom)), pal.text) : null}
       </div>
       <a
         href={`/city/${c.slug}`}
@@ -660,11 +702,13 @@ function Spotlight({ slug }: { slug: string }) {
 
 function CountyPanel({
   id,
+  priceOf,
   onClear,
   onCityEnter,
   onCityLeave,
 }: {
   id: string;
+  priceOf: (slug: string) => number | undefined;
   onClear: () => void;
   onCityEnter: (slug: string) => void;
   onCityLeave: () => void;
@@ -725,7 +769,10 @@ function CountyPanel({
               {c.name}
             </div>
             <div className="font-mono" style={{ fontSize: 10.5, color: "#D9481F", marginTop: 3 }}>
-              {fmtK(c.price)}
+              {(() => {
+                const v = priceOf(c.slug);
+                return v ? fmtPrice(v) : "—";
+              })()}
             </div>
           </a>
         ))}
@@ -735,10 +782,12 @@ function CountyPanel({
 }
 
 function CountyList({
+  priceOf,
   onEnter,
   onLeave,
   onClick,
 }: {
+  priceOf: (slug: string) => number | undefined;
   onEnter: (id: string) => void;
   onLeave: () => void;
   onClick: (id: string) => void;
@@ -800,9 +849,13 @@ function CountyList({
             </span>
             <span
               className="font-mono"
+              title="Median of this county's city medians"
               style={{ fontSize: 10.5, color: "#D9481F", fontWeight: 700 }}
             >
-              {fmtK(median(cs.map((c) => c.price)))}
+              {(() => {
+                const vals = cs.map((c) => priceOf(c.slug)).filter((v): v is number => typeof v === "number" && v > 0);
+                return vals.length ? fmtPrice(median(vals)) : "";
+              })()}
             </span>
           </div>
         );

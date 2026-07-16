@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { isLiveMls } from "@/lib/mls";
+import { getAllCityMarketMetricSets } from "@/lib/market/metrics";
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import Ticker from "@/components/Ticker";
@@ -17,6 +18,10 @@ import Reveals from "@/components/Reveals";
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
+
+/* Homepage market figures come from the canonical metric layer (same
+   source as city reports and search) — ISR keeps them on the sync cadence. */
+export const revalidate = 900;
 
 /* SearchAction mirrors the REAL hero search (it routes to /homes?q=…) —
    never declare schema the page can't actually do. */
@@ -44,7 +49,31 @@ const jsonLd = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  /* One canonical read feeds Ticker, the map, StatsBand, and CityIndex —
+     no surface keeps its own copy of a market number (see
+     docs/market-data-methodology.md). Editorial fallback per city when a
+     snapshot is missing; a total read failure degrades to all-editorial. */
+  const marketSets = await getAllCityMarketMetricSets();
+  const priceBySlug: Record<string, number> = {};
+  const statsBySlug: Record<string, { ppsf?: number; dom?: number }> = {};
+  let live = 0;
+  let liveAsOf = "";
+  for (const [slug, set] of Object.entries(marketSets)) {
+    const m = set.metrics.median_active_list_price;
+    if (m) priceBySlug[slug] = m.value;
+    statsBySlug[slug] = {
+      ppsf: set.metrics.median_price_per_sqft?.value,
+      dom: set.metrics.median_days_on_market?.value,
+    };
+    if (set.sourceType === "mls_replica") {
+      live++;
+      if (set.asOf > liveAsOf) liveAsOf = set.asOf;
+    }
+  }
+  const pricesLive = live > 0;
+  const pricesAsOf = pricesLive ? liveAsOf : undefined;
+
   return (
     <div
       id="top"
@@ -74,12 +103,18 @@ export default function Home() {
 
       <Nav />
       <Hero />
-      <Ticker />
-      <InteractiveMap liveMls={isLiveMls} />
+      <Ticker prices={priceBySlug} />
+      <InteractiveMap
+        liveMls={isLiveMls}
+        prices={priceBySlug}
+        stats={statsBySlug}
+        pricesLive={pricesLive}
+        pricesAsOf={pricesAsOf}
+      />
       <EditorsPicks />
-      <StatsBand />
+      <StatsBand prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />
       <NewBuilds liveMls={isLiveMls} />
-      <CityIndex />
+      <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />
       <About />
       <Newsletter />
       <Footer />
