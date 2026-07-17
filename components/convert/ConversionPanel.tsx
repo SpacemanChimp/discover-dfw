@@ -147,7 +147,7 @@ const input: React.CSSProperties = {
 const hint: React.CSSProperties = { marginTop: 5, fontSize: 9.5, letterSpacing: ".1em", color: "rgba(29,25,19,.5)" };
 const errStyle: React.CSSProperties = { marginTop: 5, fontSize: 9.5, letterSpacing: ".08em", fontWeight: 700, color: ORANGE_A11Y };
 
-function ConversionSheet({
+export function ConversionSheet({
   intent,
   citySlug,
   community,

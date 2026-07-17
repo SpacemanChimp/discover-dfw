@@ -121,15 +121,20 @@ try {
     return { status: res.status, text: vis(await res.text()) };
   };
 
-  // ---- homepage ----
+  // ---- homepage: NO cta at all (Build My Shortlist removed, not replaced) ----
   {
     const { status, text } = await get("/");
     console.log("homepage /");
     if (status !== 200) fail("/", `HTTP ${status}`);
-    assertOnce("/", text, "BUILD MY SHORTLIST");
-    assertOrder("/", text, ["SIMPLIFIED COUNTY GEOMETRY", "BUILD MY SHORTLIST", "CITIES PROFILED IN FULL"]);
     assertOrder("/", text, ["HOW WE RESEARCH", "WHY DISCOVER DFW"]);
-    for (const k of ["CURATED HOMES", "COMPARE THIS CITY", "HOMEOWNER EQUITY PLAN"]) assertAbsent("/", text, k);
+    for (const k of [
+      "BUILD MY SHORTLIST",
+      "Build my shortlist",
+      "CURATED HOMES",
+      "COMPARE THIS CITY",
+      "HOMEOWNER EQUITY PLAN",
+    ])
+      assertAbsent("/", text, k);
   }
 
   // ---- how-we-research ----
@@ -141,30 +146,35 @@ try {
     assertOnce("/how-we-research", text, "Texas Real Estate Commission Information About Brokerage Services");
   }
 
-  // ---- city report ----
+  // ---- city report: ONE cta (primary + one secondary), cleaner-list gone ----
   {
     const { status, text } = await get("/city/frisco");
     console.log("/city/frisco");
     if (status !== 200) fail("/city/frisco", `HTTP ${status}`);
-    assertOnce("/city/frisco", text, "COMPARE THIS CITY");
-    assertOnce("/city/frisco", text, "CURATED HOMES");
-    assertOnce("/city/frisco", text, "HOMEOWNER EQUITY PLAN");
-    assertOrder("/city/frisco", text, ["01 — THE VIBE", "COMPARE THIS CITY", "02 — MARKET SNAPSHOT"]);
-    assertOrder("/city/frisco", text, ["ON THE MARKET", "CURATED HOMES", "NEXT STOP"]);
-    assertOrder("/city/frisco", text, ["NEXT STOP", "HOMEOWNER EQUITY PLAN", "© MMXXVI"]);
-    assertSpacing("/city/frisco", text, ["COMPARE THIS CITY", "CURATED HOMES", "HOMEOWNER EQUITY PLAN"]);
+    assertOnce("/city/frisco", text, "Compare cities");
+    assertOnce("/city/frisco", text, "I already own here");
+    assertOrder("/city/frisco", text, ["01 — THE VIBE", "Compare cities", "02 — MARKET SNAPSHOT"]);
+    // the removed asks leave nothing behind
+    for (const k of [
+      "A cleaner list than the entire market",
+      "CURATED HOMES",
+      "Get a curated list",
+      "HOMEOWNER EQUITY PLAN",
+      "BUILD MY SHORTLIST",
+    ])
+      assertAbsent("/city/frisco", text, k);
   }
 
-  // ---- neighborhood report ----
+  // ---- neighborhood report: ONE cta ----
   {
     const { status, text } = await get("/city/addison/les-lacs");
     console.log("/city/addison/les-lacs (neighborhood)");
     if (status !== 200) fail("les-lacs", `HTTP ${status}`);
-    assertOnce("les-lacs", text, "CURATED HOMES");
-    assertOrder("les-lacs", text, ["02 — THE REAL ESTATE", "CURATED HOMES", "03 — WHY PEOPLE LOOK HERE"]);
-    assertOrder("les-lacs", text, ["INVENTORY PICTURE? REQUEST IT", "KEEP EXPLORING"]);
-    assertAbsent("les-lacs", text, "NEW BUILD INTEL");
-    assertAbsent("les-lacs", text, "PLAN A BUILDER TOUR");
+    assertOnce("les-lacs", text, "Get a curated list");
+    assertOnce("les-lacs", text, "Ask a Question");
+    assertOrder("les-lacs", text, ["02 — THE REAL ESTATE", "Get a curated list", "03 — WHY PEOPLE LOOK HERE"]);
+    for (const k of ["NEW BUILD INTEL", "PLAN A BUILDER TOUR", "Discover Builder Incentives", "INVENTORY PICTURE? REQUEST IT"])
+      assertAbsent("les-lacs", text, k);
   }
 
   // ---- new-build community report (Pecan Square is a real newBuilds entry) ----
@@ -173,12 +183,11 @@ try {
     const { status, text } = await get(p);
     console.log(`${p} (new build)`);
     if (status !== 200) fail(p, `HTTP ${status}`);
-    assertOnce(p, text, "NEW BUILD INTEL");
-    assertOnce(p, text, "PLAN A BUILDER TOUR");
-    assertOrder(p, text, ["02 — NEW BUILD RESOURCES", "NEW BUILD INTEL", "03 — WHY BUYERS LOOK HERE"]);
-    assertOrder(p, text, ["PLAN A BUILDER TOUR", "06 — KEEP EXPLORING"]);
-    assertAbsent(p, text, "CURATED HOMES");
-    assertSpacing(p, text, ["NEW BUILD INTEL", "PLAN A BUILDER TOUR"]);
+    assertOnce(p, text, "Discover Builder Incentives");
+    assertOnce(p, text, "Ask a Question");
+    assertOrder(p, text, ["02 — NEW BUILD RESOURCES", "Discover Builder Incentives", "03 — WHY BUYERS LOOK HERE"]);
+    for (const k of ["PLAN A BUILDER TOUR", "Plan my tour", "CURATED HOMES", "Get a curated list"])
+      assertAbsent(p, text, k);
   }
 
   // ---- live search: delayed, non-obstructive help ----

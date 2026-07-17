@@ -1,15 +1,28 @@
 "use client";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /* Client shell for the map-room split. The rail/map/index arrive
    server-rendered as ReactNode slots, so the only client weight here is the
-   mobile list <-> map toggle — desktop layout (globals.css .homes-*) is
-   untouched and the toggle button never renders above 940px. */
+   mobile list <-> map toggle plus the sticky-header measurement.
+
+   --homes-head: the panes used to hardcode "138px" (nav 66 + toolbar 74) —
+   the SCROLLED header height. At scroll 0 the un-stuck feed strip pushed the
+   real offset to 169px, so the rail/map overhung the viewport by 31px and the
+   whole document scrolled before the rail ever did — on every entry point
+   (/homes, city search, filter links…). We now measure whichever header bars
+   are ACTUALLY sticky at this breakpoint and publish the total, so the panes
+   are exactly viewport-bounded beneath the real header at any width, with any
+   toolbar wrap, on any entry path. */
+
+/* the bars that can sit above the split, top-down */
+const HEAD_SELECTORS = [".homes-search-nav", ".homes-head-strip", ".ddfw-toolbar"];
+
 export default function HomesSplit({
   rail,
   map,
   extra,
   railDesktopOnly,
+  initialView = "map",
 }: {
   rail: ReactNode;
   map: ReactNode;
@@ -17,24 +30,71 @@ export default function HomesSplit({
   extra?: ReactNode;
   /** No city chosen: mobile list view shows the index, not the rail. */
   railDesktopOnly?: boolean;
+  /** Phones open on the map unless the URL asked for a view (?view=list). */
+  initialView?: "list" | "map";
 }) {
-  const [view, setView] = useState<"list" | "map">("list");
+  const [view, setView] = useState<"list" | "map">(initialView);
+  const splitRef = useRef<HTMLDivElement>(null);
+
+  /* Measure the real sticky header. A stale React tree can leave duplicate
+     0-height copies of these bars in the DOM, so take the first LAID-OUT
+     match, and only count bars that are genuinely sticky right now (phones
+     make the nav static, so it must not be added there). */
+  useEffect(() => {
+    const el = splitRef.current;
+    if (!el) return;
+    const pick = (sel: string) =>
+      [...document.querySelectorAll<HTMLElement>(sel)].find((n) => n.getBoundingClientRect().height > 0) ?? null;
+
+    const measure = () => {
+      let h = 0;
+      for (const sel of HEAD_SELECTORS) {
+        const n = pick(sel);
+        if (n && getComputedStyle(n).position === "sticky") h += n.getBoundingClientRect().height;
+      }
+      if (h > 0) el.style.setProperty("--homes-head", `${Math.round(h)}px`);
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    for (const sel of HEAD_SELECTORS) {
+      const n = pick(sel);
+      if (n) ro.observe(n);
+    }
+    window.addEventListener("resize", measure);
+    window.addEventListener("orientationchange", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
+    };
+  }, []);
 
   /* The map pane mounts display:none on phones, so Leaflet inits at 0x0.
      A ResizeObserver in LiveMapPanel usually catches the reveal, but the
      flip is announced explicitly too — observer timing must never be the
-     only thing between the user and a working map. */
-  function flip() {
-    const next = view === "map" ? "list" : "map";
-    setView(next);
+     only thing between the user and a working map. Also fired on mount so a
+     map-first phone load reveals correctly. */
+  function announce(next: "list" | "map") {
     window.setTimeout(
       () => window.dispatchEvent(new CustomEvent("ddfw:homes-view", { detail: next })),
       0
     );
   }
+  useEffect(() => {
+    announce(view);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  function flip() {
+    const next = view === "map" ? "list" : "map";
+    setView(next);
+    announce(next);
+  }
+
+  const mapMode = view === "map";
   return (
-    <div className={`homes-split${view === "map" ? " homes-view-map" : ""}`}>
+    <div ref={splitRef} className={`homes-split${mapMode ? " homes-view-map" : ""}`}>
       <div className={`homes-rail${railDesktopOnly ? " desktop-only-flex" : ""}`}>{rail}</div>
       <div className="homes-map">{map}</div>
       {extra}
@@ -42,9 +102,13 @@ export default function HomesSplit({
         type="button"
         className="homes-map-toggle mobile-only font-mono"
         onClick={flip}
+        /* toggle semantics: pressed === the map is the active view; the label
+           says what pressing it does, so both state and action are spoken */
+        aria-pressed={mapMode}
+        aria-label={mapMode ? "Showing map. Switch to list view." : "Showing list. Switch to map view."}
         style={{
           position: "fixed",
-          bottom: "calc(18px + env(safe-area-inset-bottom))",
+          bottom: "calc(20px + env(safe-area-inset-bottom))",
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 1400,
@@ -60,7 +124,7 @@ export default function HomesSplit({
           cursor: "pointer",
         }}
       >
-        {view === "map" ? (
+        {mapMode ? (
           <>
             <span aria-hidden="true">☰</span> LIST
           </>

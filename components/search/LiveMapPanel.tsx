@@ -48,6 +48,23 @@ const BUBBLE_ZOOM = 13; // at/after this zoom, visible pins always get bubbles
 const BUBBLE_HARD_CAP = 400; // max DOM price bubbles at once — extras stay dots underneath
 const CARD_W = 260;
 const CARD_EST_H = 268; // photo 150 + body — used only for the flip-below heuristic
+const CARD_GAP = 16; // breathing room between the pin and the card
+
+/* The map box the card must stay inside. Leaflet's zoom controls sit top-left
+   and the attribution bottom-right; on phones the floating LIST/MAP switch
+   (bottom-centre) and the home-indicator safe area also have to clear. */
+function cardInsets(): { top: number; right: number; bottom: number; left: number } {
+  const phone = typeof window !== "undefined" && window.matchMedia("(max-width: 940px)").matches;
+  const safeBottom =
+    typeof window !== "undefined"
+      ? parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue("--safe-bottom") || "0",
+          10
+        ) || 0
+      : 0;
+  // phones: switch (~48) + its 20px offset + safe area + attribution
+  return { top: 8, right: 8, bottom: phone ? 84 + safeBottom : 34, left: 8 };
+}
 const PAYLOAD_CACHE_MAX = 40;
 
 /* Module-level caches — survive remounts, shared across panels. */
@@ -209,8 +226,28 @@ export default function LiveMapPanel({
     if (!map) return;
     cancelCardClose();
     overPinRef.current = true;
-    const pt = map.latLngToContainerPoint([p.lat, p.lon]);
     const size = map.getSize();
+    let pt = map.latLngToContainerPoint([p.lat, p.lon]);
+
+    /* Keep the WHOLE card on-screen for edge pins. Leaflet's autoPan only
+       applies to its own popups (this card is a React overlay), so do what
+       autoPan does: pan by exactly the overflow — never recentre, never
+       zoom. The usable box excludes the zoom controls, the attribution, and
+       on phones the floating LIST/MAP switch + safe-area inset. */
+    const ins = cardInsets();
+    const wantLeft = pt.x - CARD_W / 2;
+    const flipBelow = pt.y < CARD_EST_H + ins.top + CARD_GAP;
+    const wantTop = flipBelow ? pt.y + CARD_GAP : pt.y - CARD_GAP - CARD_EST_H;
+    let dx = 0;
+    let dy = 0;
+    if (wantLeft < ins.left) dx = wantLeft - ins.left;
+    else if (wantLeft + CARD_W > size.x - ins.right) dx = wantLeft + CARD_W - (size.x - ins.right);
+    if (wantTop < ins.top) dy = wantTop - ins.top;
+    else if (wantTop + CARD_EST_H > size.y - ins.bottom) dy = wantTop + CARD_EST_H - (size.y - ins.bottom);
+    if (dx || dy) {
+      map.panBy([dx, dy], { animate: true, duration: 0.2 });
+      pt = { x: pt.x - dx, y: pt.y - dy } as typeof pt;
+    }
     setHovered({ pin: p, x: pt.x, y: pt.y, cw: size.x, ch: size.y });
   }
 
@@ -704,11 +741,15 @@ export default function LiveMapPanel({
      flipped below the pin when the pin rides too close to the top edge */
   let cardPos: React.CSSProperties | null = null;
   if (hovered) {
-    const left = Math.max(4, Math.min(hovered.x - CARD_W / 2, hovered.cw - CARD_W - 8));
-    const flipBelow = hovered.y < CARD_EST_H + 24;
+    /* openCardForPin has already panned so the card fits; these clamps use
+       the SAME insets so the two can never disagree (and still hold if the
+       pan was refused, e.g. mid-gesture). */
+    const ins = cardInsets();
+    const left = Math.max(ins.left, Math.min(hovered.x - CARD_W / 2, hovered.cw - CARD_W - ins.right));
+    const flipBelow = hovered.y < CARD_EST_H + ins.top + CARD_GAP;
     cardPos = flipBelow
-      ? { left, top: Math.max(8, Math.min(hovered.y + 16, hovered.ch - 120)) }
-      : { left, bottom: hovered.ch - hovered.y + 16 };
+      ? { left, top: Math.max(ins.top, Math.min(hovered.y + CARD_GAP, hovered.ch - ins.bottom - CARD_EST_H)) }
+      : { left, bottom: Math.max(ins.bottom, hovered.ch - hovered.y + CARD_GAP) };
   }
 
   const imgs = cardData?.imgs ?? [];

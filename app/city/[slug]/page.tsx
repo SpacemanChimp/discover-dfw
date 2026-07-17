@@ -22,9 +22,7 @@ import { PinSvg } from "@/components/Logo";
 import CityNav from "@/components/city/CityNav";
 import EditorialPhoto from "@/components/EditorialPhoto";
 import ConvertSlot from "@/components/convert/ConvertSlot";
-import CompareThisCity from "@/components/convert/CompareThisCity";
-import CuratedHomes from "@/components/convert/CuratedHomes";
-import HomeownerEquityPlan from "@/components/convert/HomeownerEquityPlan";
+import ConversionDuo from "@/components/convert/ConversionDuo";
 import { leadBackendReady } from "@/lib/convert/config";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
@@ -532,11 +530,16 @@ export default async function CityPage({
         </div>
       </section>
 
-      {/* conversion: comparison ask after the vibe, before the numbers —
-          secondary to the editorial flow, no other CTA in this region */}
+      {/* The city report's ONE CTA — listing-page treatment (primary +
+          one smaller secondary), after the vibe and before the numbers. */}
       {leadBackendReady() && (
         <ConvertSlot>
-          <CompareThisCity citySlug={c.slug} />
+          <ConversionDuo
+            primary="compare-this-city"
+            secondary="homeowner-equity-plan"
+            secondaryLabel="I already own here"
+            citySlug={c.slug}
+          />
         </ConvertSlot>
       )}
 
@@ -1101,12 +1104,8 @@ export default async function CityPage({
         </div>
       </section>
 
-      {/* conversion: curated-homes ask after the live listings tier */}
-      {leadBackendReady() && (
-        <ConvertSlot>
-          <CuratedHomes citySlug={c.slug} />
-        </ConvertSlot>
-      )}
+      {/* the curated-homes ("a cleaner list than the entire market") ask was
+          removed here — one CTA per page, and nothing replaces it */}
 
       {/* nearby cities — real geographic neighbors, for buyers comparing
           towns; every card is a full city guide, not a doorway page */}
@@ -1235,13 +1234,8 @@ export default async function CityPage({
         </div>
       </section>
 
-      {/* conversion: equity ask for people who already own here — last
-          word before the footer, well clear of the listings CTA */}
-      {leadBackendReady() && (
-        <ConvertSlot>
-          <HomeownerEquityPlan citySlug={c.slug} />
-        </ConvertSlot>
-      )}
+      {/* the equity ask now rides as the secondary action on the single CTA
+          above — one CTA section per page */}
 
       {/* footer */}
       <footer style={{ background: "#1D1913", color: "#F6F1E6" }}>

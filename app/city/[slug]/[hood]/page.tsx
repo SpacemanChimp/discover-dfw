@@ -32,10 +32,7 @@ import EditorialPhoto from "@/components/EditorialPhoto";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
 import ConvertSlot from "@/components/convert/ConvertSlot";
-import CuratedHomes from "@/components/convert/CuratedHomes";
-import NewBuildIncentives from "@/components/convert/NewBuildIncentives";
-import PlanBuilderTour from "@/components/convert/PlanBuilderTour";
-import InventoryRequestBand from "@/components/convert/InventoryRequestBand";
+import ConversionDuo from "@/components/convert/ConversionDuo";
 import { leadBackendReady } from "@/lib/convert/config";
 
 export function generateStaticParams() {
@@ -775,18 +772,31 @@ export default async function HoodPage({
         </section>
       )}
 
-      {/* conversion: one panel after the housing/resources overview —
-          curated homes for neighborhoods, verified intel for new builds */}
-      {leadBackendReady() &&
-        (nb ? (
-          <ConvertSlot>
-            <NewBuildIncentives citySlug={c.slug} community={h.slug} />
-          </ConvertSlot>
-        ) : (
-          <ConvertSlot id="hood-curated">
-            <CuratedHomes citySlug={c.slug} community={h.slug} />
-          </ConvertSlot>
-        ))}
+      {/* The page's ONE CTA, in the listing-page treatment (primary + one
+          smaller secondary): builder incentives for new builds, a curated
+          list for standard neighborhoods. */}
+      {leadBackendReady() && (
+        <ConvertSlot id="hood-cta">
+          {nb ? (
+            <ConversionDuo
+              primary="new-build-incentives"
+              primaryLabel="Discover Builder Incentives"
+              secondary="ask-a-question"
+              secondaryLabel="Ask a Question"
+              citySlug={c.slug}
+              community={h.slug}
+            />
+          ) : (
+            <ConversionDuo
+              primary="curated-homes"
+              secondary="ask-a-question"
+              secondaryLabel="Ask a Question"
+              citySlug={c.slug}
+              community={h.slug}
+            />
+          )}
+        </ConvertSlot>
+      )}
 
       {/* 03 · highlights */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
@@ -944,17 +954,8 @@ export default async function HoodPage({
         </div>
       </section>
 
-      {/* conversion before keep-exploring: tour planning for new builds; a
-          compact anchor back to the single curated panel for neighborhoods
-          (restrained repetition — never a second form on the page) */}
-      {leadBackendReady() &&
-        (nb ? (
-          <ConvertSlot>
-            <PlanBuilderTour citySlug={c.slug} community={h.slug} />
-          </ConvertSlot>
-        ) : (
-          <InventoryRequestBand hoodName={h.name} targetId="hood-curated" />
-        ))}
+      {/* second CTA region removed — one CTA section per page. The builder
+          tour / inventory repeat both collapsed into the single ask above. */}
 
       {/* 05 · keep exploring */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#1D1913", color: "#F6F1E6" }}>

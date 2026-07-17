@@ -31,6 +31,7 @@ export default async function MapRoom({
   citySlug,
   authFailed,
   leadHelp = false,
+  view = "map",
 }: {
   query: SearchFilters;
   /** Set when rendered from /city/[slug]/homes — city fixed by the path. */
@@ -39,6 +40,8 @@ export default async function MapRoom({
   authFailed?: boolean;
   /** Mount the delayed HumanSearchHelp slot (lead backend configured). */
   leadHelp?: boolean;
+  /** ?view= from the URL. Phones open on the map unless it says otherwise. */
+  view?: "list" | "map";
 }) {
   const provider = getMlsProvider();
   const effective: SearchFilters = { ...query, citySlug: citySlug || query.citySlug };
@@ -61,6 +64,7 @@ export default async function MapRoom({
     return (
       <Shell effective={effective} citySlug={citySlug} authFailed={authFailed}>
         <HomesSplit
+          initialView={view}
           railDesktopOnly={!city}
           rail={
             <>
@@ -113,6 +117,7 @@ export default async function MapRoom({
   return (
     <Shell effective={effective} citySlug={citySlug} authFailed={authFailed}>
       <HomesSplit
+        initialView={view}
         railDesktopOnly={!city}
         rail={
           <Suspense fallback={<RailSkeleton />}>
@@ -170,10 +175,10 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
+    <div className="homes-shell" style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
       <SearchNav />
       <div
-        className="font-mono"
+        className="font-mono homes-head-strip"
         style={{
           display: "flex",
           justifyContent: "space-between",

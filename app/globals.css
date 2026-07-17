@@ -24,6 +24,9 @@
   --ink: #1d1913;
   --cream: #f6f1e6;
   --orange: #d9481f;
+  /* env() can't be read from JS — mirror it so the map card can keep clear
+     of the iPhone home indicator when it pans an edge pin into view */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -238,6 +241,30 @@ body {
 /* map city label lift its parent link cursor */
 .map-city { cursor: pointer; }
 
+/* ---------- the one CTA per page (listing-page treatment) ---------- */
+/* primary + one smaller secondary, adjacent on wider screens and a clean
+   compact stack on phones — no nested cards, no horizontal overflow */
+.cta-duo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cta-duo > button {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+@media (max-width: 560px) {
+  .cta-duo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .cta-duo > button {
+    width: 100%;
+  }
+}
+
 /* ---------- the map room (/homes) ---------- */
 .homes-split { display: flex; align-items: stretch; }
 .homes-rail {
@@ -254,17 +281,15 @@ body {
 .homes-map {
   flex: 1;
   position: sticky;
-  /* below the sticky SearchNav (66px) + stuck toolbar (74px single-row) */
-  top: 138px;
-  height: calc(100vh - 138px);
+  /* --homes-head is MEASURED at runtime by HomesSplit: the real combined
+     height of whichever header bars are actually sticky at this breakpoint
+     (nav + feed strip + toolbar). It replaces the old hardcoded 138/190px
+     guesses, which assumed the SCROLLED state — at scroll 0 the un-stuck
+     feed strip made the real offset 169px, so both panes overhung the
+     viewport and forced a document scroll on every /homes entry point. */
+  top: var(--homes-head, 169px);
+  height: calc(100dvh - var(--homes-head, 169px));
   min-height: 480px;
-}
-/* 941–1249px the toolbar wraps to two rows (126px) — drop the map further */
-@media (max-width: 1249px) {
-  .homes-map {
-    top: 190px;
-    height: calc(100vh - 190px);
-  }
 }
 /* DESKTOP ONLY (>940px): the results list scrolls inside its own panel next
    to the fixed map, instead of growing the page to ~11,000px and driving a
@@ -272,8 +297,23 @@ body {
    panes align. Mobile (<=940px, below) keeps the natural single-column flow —
    that fragile map/list flip is deliberately left untouched. */
 @media (min-width: 941px) {
+  /* The feed strip joins the sticky stack (Map Room shell only) so the
+     header height is CONSTANT — the panes can then be exactly
+     viewport-bounded at every scroll position instead of only once the
+     strip has scrolled away. The toolbar tucks 2px under it, same trick as
+     before. Scoped to .homes-shell so /city/[slug]/homes (no strip) keeps
+     its own 64px tuck. */
+  .homes-shell .homes-head-strip {
+    position: sticky;
+    top: 64px;
+    z-index: 56;
+    background: #f6f1e6;
+  }
+  .homes-shell .ddfw-toolbar {
+    top: 93px;
+  }
   .homes-rail {
-    height: calc(100vh - 138px);
+    height: calc(100dvh - var(--homes-head, 169px));
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain; /* reaching the end doesn't scroll the page */
@@ -298,11 +338,6 @@ body {
     background: rgba(29, 25, 19, 0.45);
   }
 }
-@media (min-width: 941px) and (max-width: 1249px) {
-  .homes-rail {
-    height: calc(100vh - 190px);
-  }
-}
 .mobile-only { display: none; }
 .rail-skeleton-card { animation: railPulse 1.6s ease-in-out infinite; }
 @media (max-width: 940px) {
@@ -318,7 +353,8 @@ body {
     display: block;
     /* the desktop sticky pane stays desktop-only */
     position: static;
-    height: calc(100dvh - 120px);
+    /* measured header (phones: the toolbar alone is sticky) — not a guess */
+    height: calc(100dvh - var(--homes-head, 120px));
     min-height: 0;
   }
   /* the toggle itself survives both views (beats the .mobile-only hide) */

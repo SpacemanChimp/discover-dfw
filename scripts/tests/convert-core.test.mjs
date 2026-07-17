@@ -22,8 +22,8 @@ const SPEC_COPY = {
   "human-search-help": "Too many results? Tell us what matters and we'll help narrow the map.",
 };
 
-test("all seven intents exist with complete, spec-matching config", () => {
-  assert.equal(INTENT_KEYS.length, 7);
+test("all intents exist with complete, spec-matching config", () => {
+  assert.equal(INTENT_KEYS.length, 8);
   for (const key of INTENT_KEYS) {
     const cfg = INTENTS[key];
     for (const f of ["kicker", "headline", "body", "cta", "primaryLabel", "primaryHint", "success"]) {

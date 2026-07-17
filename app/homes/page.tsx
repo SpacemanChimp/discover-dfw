@@ -35,12 +35,15 @@ export default async function HomesPage({
 }) {
   const params = await searchParams;
   const authFailed = (Array.isArray(params.auth) ? params.auth[0] : params.auth) === "failed";
+  /* ?view=list|map is the explicit request; phones otherwise open on the map */
+  const rawView = Array.isArray(params.view) ? params.view[0] : params.view;
+  const view = rawView === "list" || rawView === "map" ? rawView : "map";
   return (
     <>
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
-      <MapRoom query={parseSearchFilters(params)} authFailed={authFailed} leadHelp={leadBackendReady()} />
+      <MapRoom query={parseSearchFilters(params)} authFailed={authFailed} leadHelp={leadBackendReady()} view={view} />
     </>
   );
 }

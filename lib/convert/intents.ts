@@ -14,7 +14,8 @@ export type IntentKey =
   | "new-build-incentives"
   | "plan-builder-tour"
   | "homeowner-equity-plan"
-  | "human-search-help";
+  | "human-search-help"
+  | "ask-a-question";
 
 export interface IntentConfig {
   key: IntentKey;
@@ -99,6 +100,19 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     primaryHint: "e.g. whether selling now covers a move up to Prosper",
     step2: { timeline: true, message: true },
     success: "Request received — a guide runs the numbers on your equity and timing before anyone talks listings.",
+  },
+  /* the smaller, secondary ask that sits beside a primary action (e.g. the
+     new-build CTA's "Ask a Question") — an open question, not a request */
+  "ask-a-question": {
+    key: "ask-a-question",
+    kicker: "ASK A QUESTION",
+    headline: "Ask a local guide anything about this one.",
+    body: "Builders, lots, timelines, trade-offs — ask what you actually want to know. A person answers.",
+    cta: "Send my question",
+    primaryLabel: "Your question",
+    primaryHint: "e.g. which builders still have greenbelt lots, and what's the wait?",
+    step2: { timeline: true, message: true },
+    success: "Question received — a local guide answers from what they've actually seen, not a brochure.",
   },
   "human-search-help": {
     key: "human-search-help",
