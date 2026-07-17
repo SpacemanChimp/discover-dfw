@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
-import { dfwCities } from "@/data/dfw-cities";
+import { dfwCities, dfwCountyNames } from "@/data/dfw-cities";
 import {
   TRESTLE_ODATA_BASE_URL as API_BASE,
   TRESTLE_TOKEN_URL as TOKEN_URL,
@@ -63,6 +63,14 @@ const SELECT = [
 ].join(",");
 
 const q = (s: string) => `'${s.replace(/'/g, "''")}'`;
+
+/* Ingestion geographic boundary: the 8 DFW-metro counties, UNION the 90
+   curated city names (belt-and-suspenders so no curated-city listing is ever
+   dropped if its CountyOrParish is blank/variant). This replaces the old
+   90-city-only clause so every municipality in the metro — Corinth, Copper
+   Canyon, Bartonville, Double Oak, … — is replicated and therefore findable
+   by a school/district search, without adding city-profile pages for them. */
+const GEO_CLAUSE = `(CountyOrParish in (${dfwCountyNames.map(q).join(",")}) or City in (${dfwCities.map((c) => q(c.name)).join(",")}))`;
 
 async function getToken(): Promise<string> {
   const creds = trestleCredentials();
@@ -187,13 +195,12 @@ export async function GET(req: Request) {
 
     /* ---- reconcile mode: catch hard-deleted feed records ---- */
     if (reconcile) {
-      const cityClause = `City in (${dfwCities.map((c) => q(c.name)).join(",")})`;
       const feedKeys = new Set<string>();
       let lastKey = "";
       // walk all on-market keys, keyset on ListingKey
       for (;;) {
         const filter =
-          `${cityClause} and PropertyType in ('Residential','ResidentialIncome','Land')` +
+          `${GEO_CLAUSE} and PropertyType in ('Residential','ResidentialIncome','Land')` +
           ` and StandardStatus in (${ONMARKET.map(q).join(",")})` +
           (lastKey ? ` and ListingKey gt ${q(lastKey)}` : "");
         const res = await fetch(
@@ -293,7 +300,6 @@ export async function GET(req: Request) {
       }
     }
 
-    const cityClause = `City in (${dfwCities.map((c) => q(c.name)).join(",")})`;
     const typeClause = "PropertyType in ('Residential','ResidentialIncome','Land')";
     const statusClause = incremental ? "" : ` and StandardStatus in (${ONMARKET.map(q).join(",")})`;
 
@@ -302,7 +308,7 @@ export async function GET(req: Request) {
       const cursorClause = cursorKey
         ? `(ModificationTimestamp gt ${cursorTs} or (ModificationTimestamp eq ${cursorTs} and ListingKey gt ${q(cursorKey)}))`
         : `ModificationTimestamp gt ${cursorTs}`;
-      const filter = `${cityClause} and ${typeClause}${statusClause} and ${cursorClause}`;
+      const filter = `${GEO_CLAUSE} and ${typeClause}${statusClause} and ${cursorClause}`;
       const url =
         `${API_BASE}/Property?$filter=${encodeURIComponent(filter)}` +
         `&$orderby=${encodeURIComponent("ModificationTimestamp asc,ListingKey asc")}&$top=${pageSize}` +

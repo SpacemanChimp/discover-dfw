@@ -90,6 +90,9 @@ export interface Listing {
   unparsedAddress: string;
   citySlug: string;
   cityName: string;
+  /** MLS-reported county (RESO CountyOrParish) — honest fallback context for
+      listings whose municipality has no editorial city profile. */
+  county?: string;
   neighborhood: string;
   postalCode?: string;
   /** [lon, lat] — mock data pins to the city centroid; Trestle supplies real coords. */

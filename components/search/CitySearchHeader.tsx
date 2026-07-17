@@ -7,10 +7,13 @@ export default function CitySearchHeader({
   city,
   countyName,
   activeCount,
+  scopeNoun = "MATCHING LISTINGS",
 }: {
   city: City;
   countyName: string;
   activeCount: number;
+  /** Honest scope word for the count (default search ≠ "active"). */
+  scopeNoun?: string;
 }) {
   return (
     <div
@@ -27,7 +30,7 @@ export default function CitySearchHeader({
           {countyName.toUpperCase()} COUNTY · CITY REPORT
         </div>
         <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".18em", color: "rgba(246,241,230,.6)" }}>
-          {activeCount} ACTIVE
+          {activeCount.toLocaleString("en-US")} {scopeNoun.replace(/ LISTINGS$/, "")}
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, marginTop: 8, flexWrap: "wrap" }}>

@@ -77,6 +77,7 @@ function toListing(r: any): Listing {
     unparsedAddress: r.unparsed_address || "Address withheld",
     citySlug: known?.slug ?? cityName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
     cityName,
+    county: r.county ?? (r.raw?.CountyOrParish as string | undefined) ?? undefined,
     neighborhood: hood,
     postalCode: r.postal_code ?? undefined,
     lonLat: r.longitude != null && r.latitude != null ? [r.longitude, r.latitude] : undefined,
@@ -111,7 +112,14 @@ function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean 
   } else if (f.citySlug) {
     const city = cityBySlug[f.citySlug];
     query = query.eq("city", city ? city.name : f.citySlug);
+  } else if (f.school || f.district) {
+    // School/district search is metro-wide: it must return EVERY reported
+    // match in the ingested inventory (the 8 DFW counties), including
+    // municipalities with no editorial city profile (Corinth, Copper Canyon,
+    // …). So no city restriction — the school/district clause below is the
+    // filter, and the store is already county-bounded by the sync.
   } else {
+    // default browse keeps its curated DFW scope (the 90 city profiles)
     query = query.in("city", dfwCities.map((c) => c.name));
   }
   if (f.minPrice != null) query = query.gte("list_price", f.minPrice);

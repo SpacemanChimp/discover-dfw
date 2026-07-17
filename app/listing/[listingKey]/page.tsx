@@ -29,7 +29,7 @@ export async function generateMetadata({
   if (!l) return { title: "Listing" };
   const city = bySlug[l.citySlug];
   return {
-    title: `${l.unparsedAddress}, ${city?.name || l.citySlug}, TX — $${l.listPrice.toLocaleString("en-US")}`,
+    title: `${l.unparsedAddress}, ${city?.name || l.cityName}, TX — $${l.listPrice.toLocaleString("en-US")}`,
     description: `${l.bedsTotal} bed, ${l.bathsTotal} bath, ${l.livingAreaSqft.toLocaleString("en-US")} sqft ${l.propertyType.toLowerCase()} in ${l.neighborhood}. ${l.editorialNote}`,
     alternates: { canonical: `/listing/${l.listingKey}` },
     /* Indexable only on the live NTREIS feed — mock addresses are fiction. */
@@ -45,9 +45,16 @@ export default async function ListingPage({
   const { listingKey } = await params;
   const listing = await getMlsProvider().getListingByKey(listingKey);
   if (!listing) notFound();
-  const city = bySlug[listing.citySlug];
-  if (!city) notFound();
-  const county = countyById[city.county];
+  // A listing in a metro municipality WITHOUT an editorial city profile
+  // (Corinth, Copper Canyon, …) is still a valid listing — render it with
+  // honest fallback context (its own city/county), not a 404. City-profile
+  // modules (median, "know the city") are omitted rather than fabricated.
+  const city = bySlug[listing.citySlug] ?? null;
+  const county = city ? countyById[city.county] : null;
+  const countyName = county?.name ?? listing.county ?? "";
+  const cityMedian = city
+    ? (await getCityMarketMetricSet(city.slug))?.metrics.median_active_list_price ?? null
+    : null;
 
   /* MLS-reported schools: the provider carries them when the record (or the
      replicated raw) has them; otherwise supplement with a live six-field
@@ -60,7 +67,7 @@ export default async function ListingPage({
       <SearchNav />
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "16px 4vw 0" }}>
         <Link
-          href={`/city/${city.slug}/homes`}
+          href={city ? `/city/${city.slug}/homes` : "/homes"}
           className="city-back font-mono"
           style={{
             fontSize: 10,
@@ -71,16 +78,16 @@ export default async function ListingPage({
             padding: "10px 0",
           }}
         >
-          ← ALL {city.name.toUpperCase()} HOMES
+          ← {city ? `ALL ${city.name.toUpperCase()} HOMES` : "BACK TO SEARCH"}
         </Link>
       </div>
       <ListingDetailDossier
         listing={listing}
         city={city}
-        countyName={county.name}
+        countyName={countyName}
         schools={schools}
         liveMls={isLiveMls}
-        cityMedian={(await getCityMarketMetricSet(city.slug))?.metrics.median_active_list_price ?? null}
+        cityMedian={cityMedian}
       />
       <NearbyListings listing={listing} />
       <MLSComplianceFooter asOf={listing.mlsLastUpdated} />

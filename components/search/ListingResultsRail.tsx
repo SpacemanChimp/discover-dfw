@@ -1,6 +1,7 @@
 import { bySlug, type City } from "@/lib/dfw-data";
 import { isLiveMls } from "@/lib/mls";
-import type { SearchResult } from "@/lib/mls/types";
+import type { ListingStatus, SearchResult } from "@/lib/mls/types";
+import { resultScopeLabel } from "@/lib/mls/url";
 import CitySearchHeader from "./CitySearchHeader";
 import ListingCardLedger from "./ListingCardLedger";
 import EmptyResultsState from "./EmptyResultsState";
@@ -11,18 +12,22 @@ export default function ListingResultsRail({
   result,
   city,
   countyName,
+  statuses,
   sourceNote,
 }: {
   result: SearchResult;
   city?: City;
   countyName?: string;
+  /** Active status filter — drives the honest result-total noun. */
+  statuses?: ListingStatus[];
   /** Source-qualification shown when a school/district filter is active. */
   sourceNote?: string;
 }) {
+  const scope = resultScopeLabel(statuses);
   return (
     <>
       {city && countyName ? (
-        <CitySearchHeader city={city} countyName={countyName} activeCount={result.total} />
+        <CitySearchHeader city={city} countyName={countyName} activeCount={result.total} scopeNoun={scope.noun} />
       ) : (
         <div
           className="font-mono"
@@ -35,7 +40,12 @@ export default function ListingResultsRail({
             paddingBottom: 10,
           }}
         >
-          ALL OF DFW — {result.total} ACTIVE {result.total === 1 ? "HOME" : "HOMES"}
+          ALL OF DFW — {result.total.toLocaleString("en-US")} {scope.noun}
+          {scope.note && (
+            <span style={{ display: "block", marginTop: 4, fontSize: 8.5, letterSpacing: ".14em", color: "rgba(29,25,19,.55)", fontWeight: 400 }}>
+              {scope.note}
+            </span>
+          )}
         </div>
       )}
       {sourceNote && (
@@ -70,9 +80,9 @@ export default function ListingResultsRail({
         }}
       >
         {city
-          ? `▾ ${result.total} IN ${city.name.toUpperCase()} · ${isLiveMls ? "NTREIS IDX" : "MOCK FEED"}`
+          ? `▾ ${result.total.toLocaleString("en-US")} IN ${city.name.toUpperCase()} · ${isLiveMls ? "NTREIS IDX" : "MOCK FEED"}`
           : isLiveMls
-            ? `▾ ${result.total} ACTIVE ACROSS THE METROPLEX · NTREIS IDX`
+            ? `▾ ${result.total.toLocaleString("en-US")} ${scope.noun} ACROSS THE METROPLEX · NTREIS IDX`
             : "▾ MORE INVENTORY ARRIVES WITH THE LIVE FEED"}
       </div>
     </>

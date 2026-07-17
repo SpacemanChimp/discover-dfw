@@ -96,6 +96,22 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
   return params.toString();
 }
 
+/* Honest noun for a result total. The default search spans four on-market
+   statuses (Active/AUC/ComingSoon/Pending), so it is NOT "active homes" —
+   only an Active-only filter earns "ACTIVE LISTINGS". */
+export function resultScopeLabel(
+  statuses?: ListingStatus[]
+): { noun: string; note?: string } {
+  const s = statuses ?? [];
+  if (s.length === 1) {
+    if (s[0] === "Active") return { noun: "ACTIVE LISTINGS" };
+    const words = s[0].replace(/([A-Z])/g, " $1").trim().toUpperCase();
+    return { noun: `${words} LISTINGS` };
+  }
+  // default combined on-market scope (or an explicit multi-status set)
+  return { noun: "MATCHING LISTINGS", note: "ACTIVE + OTHER ON-MARKET STATUSES" };
+}
+
 export function searchFiltersLabel(f: SearchFilters, cityName?: string): string {
   const parts: string[] = [cityName || "All of DFW"];
   if (f.minBeds) parts.push(`${f.minBeds}+ bd`);

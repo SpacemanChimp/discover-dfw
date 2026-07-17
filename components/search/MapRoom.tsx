@@ -64,7 +64,7 @@ export default async function MapRoom({
           railDesktopOnly={!city}
           rail={
             <>
-              <ListingResultsRail result={result} city={city} countyName={county?.name} sourceNote={sourceNote} />
+              <ListingResultsRail result={result} city={city} countyName={county?.name} statuses={effective.statuses} sourceNote={sourceNote} />
               <Pager
                 total={result.total}
                 page={result.page}
@@ -124,6 +124,7 @@ export default async function MapRoom({
               qs={pagerQs}
               leadHelp={leadHelp}
               leadCitySlug={effective.citySlug}
+              statuses={effective.statuses}
               sourceNote={sourceNote}
             />
           </Suspense>
@@ -250,6 +251,7 @@ async function RailResults({
   qs,
   leadHelp,
   leadCitySlug,
+  statuses,
   sourceNote,
 }: {
   resultPromise: Promise<SearchResult>;
@@ -259,12 +261,13 @@ async function RailResults({
   qs: string;
   leadHelp?: boolean;
   leadCitySlug?: string;
+  statuses?: SearchFilters["statuses"];
   sourceNote?: string;
 }) {
   const result = await resultPromise;
   return (
     <>
-      <ListingResultsRail result={result} city={city} countyName={countyName} sourceNote={sourceNote} />
+      <ListingResultsRail result={result} city={city} countyName={countyName} statuses={statuses} sourceNote={sourceNote} />
       <Pager
         total={result.total}
         page={result.page}

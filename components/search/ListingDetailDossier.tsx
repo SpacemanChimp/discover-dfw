@@ -24,7 +24,9 @@ export default function ListingDetailDossier({
   cityMedian = null,
 }: {
   listing: Listing;
-  city: City;
+  /** null for a metro listing whose municipality has no editorial profile —
+      the city-context module is omitted (never fabricated). */
+  city: City | null;
   countyName: string;
   /** MLS-reported schools (listing record or live supplement) — null hides/notes. */
   schools?: ListingSchools | null;
@@ -70,7 +72,7 @@ export default function ListingDetailDossier({
             {money(listing.listPrice)}
           </h1>
           <div style={{ fontSize: 17, fontWeight: 600, marginTop: 6 }}>
-            {listing.unparsedAddress}, {city.name}, TX{listing.postalCode ? ` ${listing.postalCode}` : ""}
+            {listing.unparsedAddress}, {city?.name ?? listing.cityName}, TX{listing.postalCode ? ` ${listing.postalCode}` : ""}
           </div>
           <div className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".14em", color: "rgba(29,25,19,.62)", marginTop: 6 }}>
             {listing.bedsTotal} BD · {listing.bathsTotal} BA · {listing.livingAreaSqft.toLocaleString("en-US")} SQFT
@@ -98,7 +100,18 @@ export default function ListingDetailDossier({
         </div>
 
         <ListingFactsLedger listing={listing} />
-        <ListingCityContext listing={listing} city={city} countyName={countyName} cityMedian={cityMedian} />
+        {city ? (
+          <ListingCityContext listing={listing} city={city} countyName={countyName} cityMedian={cityMedian} />
+        ) : (
+          // out-of-roster: honest county context, no editorial profile / median
+          <div
+            className="font-mono"
+            style={{ marginTop: 22, fontSize: 10, letterSpacing: ".14em", color: "rgba(29,25,19,.6)", borderTop: "1px solid rgba(29,25,19,.16)", paddingTop: 14 }}
+          >
+            {listing.cityName.toUpperCase()}{countyName ? ` · ${countyName.toUpperCase()} COUNTY` : ""} — NORTH TEXAS.
+            NO DISCOVER DFW CITY GUIDE FOR THIS MUNICIPALITY YET.
+          </div>
+        )}
         <ListingSchoolsCard schools={schools} live={liveMls} />
 
         {/* compliance reservations: attribution, source, last updated, disclaimer */}
@@ -116,7 +129,7 @@ export default function ListingDetailDossier({
           </div>
         </div>
 
-        <ListingLeadCTA listing={listing} cityName={city.name} />
+        <ListingLeadCTA listing={listing} cityName={city?.name ?? listing.cityName} />
       </div>
     </div>
   );

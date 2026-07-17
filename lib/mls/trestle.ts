@@ -26,7 +26,7 @@ import type {
   SearchResult,
   SortKey,
 } from "./types";
-import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
+import { dfwCities, cityBySlug, cityMarketSnapshot, dfwCountyNames } from "@/data/dfw-cities";
 import { boundingBox, polygonBounds, type LonLat } from "./geo";
 import { RESO_SCHOOL_FIELDS, schoolsFromReso, schoolMatchToken } from "./school-fields";
 import type { ListingSchools } from "./types";
@@ -57,7 +57,7 @@ const q = (s: string) => `'${s.replace(/'/g, "''")}'`;
 const SELECT = [
   "ListingKey", "ListingId", "StandardStatus", "ListPrice", "OriginalListPrice",
   "BedroomsTotal", "BathroomsTotalInteger", "LivingArea", "LotSizeAcres", "YearBuilt",
-  "PropertyType", "PropertySubType", "UnparsedAddress", "City", "PostalCode",
+  "PropertyType", "PropertySubType", "UnparsedAddress", "City", "CountyOrParish", "PostalCode",
   "SubdivisionName", "Latitude", "Longitude", "PhotosCount", "CumulativeDaysOnMarket",
   "ModificationTimestamp", "ListOfficeName", "PublicRemarks", "NewConstructionYN",
   ...RESO_SCHOOL_FIELDS,
@@ -172,6 +172,11 @@ function buildFilter(f: SearchFilters): string {
   } else if (f.citySlug) {
     const city = cityBySlug[f.citySlug];
     parts.push(`City eq ${q(city ? city.name : f.citySlug)}`);
+  } else if (f.school || f.district) {
+    // metro-wide school/district search — bound to the 8 DFW counties (the
+    // ingestion scope), NOT the 90 curated cities, so out-of-roster matches
+    // (Corinth, etc.) are included
+    parts.push(`CountyOrParish in (${dfwCountyNames.map(q).join(",")})`);
   } else {
     parts.push(`City in (${dfwCities.map((c) => q(c.name)).join(",")})`);
   }
@@ -291,6 +296,7 @@ function toListing(p: any): Listing {
     unparsedAddress: p.UnparsedAddress || "Address withheld",
     citySlug: known?.slug ?? cityName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
     cityName,
+    county: p.CountyOrParish ?? undefined,
     neighborhood: hood,
     postalCode: p.PostalCode ?? undefined,
     lonLat: p.Longitude != null && p.Latitude != null ? [p.Longitude, p.Latitude] : undefined,
