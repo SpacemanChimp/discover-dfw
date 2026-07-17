@@ -86,12 +86,19 @@ category `cross-surface-market-conflict`, severity high.
 ## Labels (rule: say what the median measures)
 
 Live: `ACTIVE LISTINGS (HOMES, INCOME & LAND) · MEDIANS OF LIST PRICES ·
-UPDATED {date} · SOURCE: NTREIS`. Editorial: `EDITORIAL FIGURES · SEEDED
-FROM NTREIS SNAPSHOT MEDIANS · AS OF {date}`. County/metro aggregates are
-labeled `MEDIAN CITY LIST` / `MEDIAN OF CITY MEDIANS` with a title
-attribute spelling out the definition. Formatting is centralized
-(`fmtPrice`, `fmtMetricValue`, `fmtAsOf`) so a value renders identically on
-every surface ($415K under $1M, $1.45M above).
+SOURCE: NTREIS`. Editorial: `EDITORIAL FIGURES · SEEDED FROM NTREIS SNAPSHOT
+MEDIANS`. County/metro aggregates are labeled `MEDIAN CITY LIST` /
+`MEDIAN OF CITY MEDIANS` with a title attribute spelling out the definition.
+Formatting is centralized (`fmtPrice`, `fmtMetricValue`) so a value renders
+identically on every surface ($415K under $1M, $1.45M above).
+
+**No retrieval date (owner decision, 2026-07):** the market-stat labels
+deliberately carry no "updated/as-of/counted" date — users are not shown
+when the data was pulled. The model still tracks `asOf`/`lastUpdatedAt`
+internally (used for YoY comparability and freshness logic); it is simply
+not rendered. This does NOT touch the per-listing IDX freshness stamp
+(`components/compliance/LastUpdatedStamp`), which remains for IDX
+compliance.
 
 ## Tests
 

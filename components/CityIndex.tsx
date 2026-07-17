@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { counties, citiesInCounty } from "@/lib/dfw-data";
-import { fmtPrice, fmtAsOf, medianOf } from "@/lib/market/core";
+import { fmtPrice, medianOf } from "@/lib/market/core";
 
 /* Prices come from the canonical metric layer via the homepage. The county
    header figure is a MEDIAN OF CITY MEDIANS (labeled as such) — we do not
@@ -48,8 +48,8 @@ export default function CityIndex({
           className="font-mono"
           style={{ marginTop: 12, fontSize: 9.5, letterSpacing: ".18em", color: "rgba(29,25,19,.5)" }}
         >
-          {pricesLive && pricesAsOf
-            ? `CITY FIGURES: MEDIAN ACTIVE LIST PRICE · UPDATED ${fmtAsOf(pricesAsOf)} · SOURCE: NTREIS`
+          {pricesLive
+            ? "CITY FIGURES: MEDIAN ACTIVE LIST PRICE · SOURCE: NTREIS"
             : "CITY FIGURES: EDITORIAL MEDIANS, SEEDED FROM NTREIS SNAPSHOTS"}
         </div>
       </div>

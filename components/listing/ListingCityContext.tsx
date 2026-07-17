@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { City } from "@/lib/dfw-data";
 import type { Listing } from "@/lib/mls/types";
 import type { CityMarketMetric } from "@/lib/market/core";
-import { fmtPrice, fmtAsOf } from "@/lib/market/core";
+import { fmtPrice } from "@/lib/market/core";
 
 /* "02 — KNOW THE CITY" — ties the listing back to the editorial city
    report. The vs-median bar uses the CANONICAL city median (lib/market) —
@@ -56,7 +56,7 @@ export default function ListingCityContext({
           <>
             <div className="font-mono" style={{ marginTop: 12, fontSize: 8.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)" }}>
               THIS HOME VS CITY MEDIAN ACTIVE LIST ({fmtPrice(cityMedian.value)} ·{" "}
-              {cityMedian.verified ? `${fmtAsOf(cityMedian.asOf)} · NTREIS` : "EDITORIAL"})
+              {cityMedian.verified ? "NTREIS" : "EDITORIAL"})
             </div>
             <div style={{ position: "relative", height: 8, borderRadius: 99, background: "rgba(29,25,19,.14)", marginTop: 8 }}>
               <span

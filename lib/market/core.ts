@@ -223,20 +223,21 @@ export function fmtAsOf(iso: string): string {
 
 /* ---------------- provenance labels (rule 6) ---------------- */
 
-/** Compact one-line data label, e.g.
-    "ACTIVE LISTINGS (HOMES, INCOME & LAND) · MEDIANS OF LIST PRICES · UPDATED JUL 15, 2026 · SOURCE: NTREIS" */
+/** Compact one-line data label. Deliberately carries NO "pulled/updated on"
+    date — an owner decision (2026-07): the retrieval date is not shown to
+    users. Source attribution stays. (The IDX per-listing freshness stamp in
+    components/compliance/LastUpdatedStamp is a separate, compliance-required
+    element and is unaffected by this.) */
 export function provenanceLabel(set: CityMarketMetricSet): string {
   if (set.sourceType === "mls_replica") {
-    return `ACTIVE LISTINGS (HOMES, INCOME & LAND) · MEDIANS OF LIST PRICES · UPDATED ${fmtAsOf(set.asOf)} · SOURCE: NTREIS`;
+    return "ACTIVE LISTINGS (HOMES, INCOME & LAND) · MEDIANS OF LIST PRICES · SOURCE: NTREIS";
   }
-  return `EDITORIAL FIGURES · SEEDED FROM NTREIS SNAPSHOT MEDIANS · AS OF ${fmtAsOf(set.asOf)}`;
+  return "EDITORIAL FIGURES · SEEDED FROM NTREIS SNAPSHOT MEDIANS";
 }
 
-/** Short variant for tight surfaces (index headers, chips). */
-export function provenanceLabelShort(set: Pick<CityMarketMetricSet, "sourceType" | "asOf">): string {
-  return set.sourceType === "mls_replica"
-    ? `ACTIVE-LISTING MEDIANS · ${fmtAsOf(set.asOf)} · NTREIS`
-    : `EDITORIAL FIGURES · AS OF ${fmtAsOf(set.asOf)}`;
+/** Short variant for tight surfaces (index headers, chips) — also dateless. */
+export function provenanceLabelShort(set: Pick<CityMarketMetricSet, "sourceType">): string {
+  return set.sourceType === "mls_replica" ? "ACTIVE-LISTING MEDIANS · NTREIS" : "EDITORIAL FIGURES";
 }
 
 /* ---------------- aggregates ---------------- */

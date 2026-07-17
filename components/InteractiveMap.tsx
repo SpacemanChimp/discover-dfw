@@ -17,7 +17,7 @@ import {
   VB_W,
   VB_H,
 } from "@/lib/dfw-data";
-import { fmtPrice, fmtAsOf } from "@/lib/market/core";
+import { fmtPrice } from "@/lib/market/core";
 import { pal } from "@/lib/theme";
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
@@ -577,8 +577,8 @@ export default function InteractiveMap({
       >
         <span>SIMPLIFIED COUNTY GEOMETRY · NOT FOR NAVIGATION</span>
         <span style={{ color: "#D9481F" }}>
-          {pricesLive && pricesAsOf
-            ? `CITY MEDIANS: ACTIVE LIST PRICES · ${fmtAsOf(pricesAsOf)} · NTREIS`
+          {pricesLive
+            ? "CITY MEDIANS: ACTIVE LIST PRICES · NTREIS"
             : liveMls
             ? "CITY FIGURES: EDITORIAL MEDIANS — LIVE LISTINGS ON CITY PAGES"
             : "ALL FIGURES ARE PLACEHOLDERS — REPLACE WITH LIVE MLS DATA"}

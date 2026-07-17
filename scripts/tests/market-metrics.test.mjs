@@ -87,12 +87,14 @@ for (const slug of CITY_SLUGS) {
     assert.equal(cityReport, searchBand);
     assert.equal(searchBand, listingChip);
 
-    // the label says what the median measures, when, and from where
+    // the label says what the median measures and from where — and, per the
+    // 2026-07 owner decision, carries NO retrieval date
     const label = provenanceLabel(set);
     assert.match(label, /ACTIVE LISTINGS/);
     assert.match(label, /MEDIANS OF LIST PRICES/);
-    assert.match(label, /UPDATED JUL 15, 2026/);
     assert.match(label, /SOURCE: NTREIS/);
+    assert.doesNotMatch(label, /\d{4}/, "no year/date in the market-stat label");
+    assert.doesNotMatch(label, /UPDATED|AS OF|COUNTED/i);
   });
 
   test(`${slug}: editorial fallback is unverified and never fabricates`, () => {

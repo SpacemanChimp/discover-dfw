@@ -1,5 +1,5 @@
 import { cities, counties, fmtPop } from "@/lib/dfw-data";
-import { fmtPrice, fmtAsOf, medianOf } from "@/lib/market/core";
+import { fmtPrice, medianOf } from "@/lib/market/core";
 
 /* Every figure here is derived, never hardcoded: the price is the MEDIAN OF
    the 90 CITY MEDIANS from the canonical metric layer (labeled as exactly
@@ -21,10 +21,7 @@ export default function StatsBand({
     .filter((v): v is number => typeof v === "number" && v > 0);
   const medianOfMedians = medianOf(cityMedians);
   const residents = cities.reduce((sum, c) => sum + c.pop, 0);
-  const priceNote =
-    pricesLive && pricesAsOf
-      ? `MEDIAN OF CITY MEDIANS · ${fmtAsOf(pricesAsOf)} · NTREIS`
-      : "MEDIAN OF CITY MEDIANS · EDITORIAL";
+  const priceNote = pricesLive ? "MEDIAN OF CITY MEDIANS · NTREIS" : "MEDIAN OF CITY MEDIANS · EDITORIAL";
   const STATS: [string, string][] = [
     ...(medianOfMedians ? ([[fmtPrice(medianOfMedians), priceNote]] as [string, string][]) : []),
     [String(cities.length), "CITIES PROFILED IN FULL"],

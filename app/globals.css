@@ -152,8 +152,17 @@ body {
 .btn-outline { transition: all 0.25s; }
 .btn-outline:hover { background: #1d1913; color: #f6f1e6; transform: translateY(-3px); }
 
-.marquee { animation: marqueeMove 60s linear infinite; }
+/* city ticker — calmer, readable pace (owner feedback: 60s felt too fast).
+   Narrow screens slow further since each label crosses the smaller viewport
+   quicker at the same px/s. */
+.marquee { animation: marqueeMove 88s linear infinite; }
 .marquee:hover { animation-play-state: paused; }
+@media (max-width: 700px) {
+  .marquee { animation-duration: 120s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee { animation-duration: 160s; }
+}
 .ticker-item { transition: transform 0.2s; }
 .ticker-item:hover { transform: translateY(-1px); }
 
@@ -254,6 +263,37 @@ body {
 @media (max-width: 1249px) {
   .homes-map {
     top: 190px;
+    height: calc(100vh - 190px);
+  }
+}
+/* DESKTOP ONLY (>940px): the results list scrolls inside its own panel next
+   to the fixed map, instead of growing the page to ~11,000px and driving a
+   full-window scrollbar. Mirrors the map's viewport-height offsets so the two
+   panes align. Mobile (<=940px, below) keeps the natural single-column flow —
+   that fragile map/list flip is deliberately left untouched. */
+@media (min-width: 941px) {
+  .homes-rail {
+    height: calc(100vh - 138px);
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain; /* reaching the end doesn't scroll the page */
+    scrollbar-width: thin; /* Firefox: slim, not the chunky default */
+    scrollbar-color: rgba(29, 25, 19, 0.32) transparent;
+  }
+  .homes-rail::-webkit-scrollbar {
+    width: 9px;
+  }
+  .homes-rail::-webkit-scrollbar-thumb {
+    background: rgba(29, 25, 19, 0.28);
+    border-radius: 99px;
+    border: 3px solid #f6f1e6; /* inset so the thumb reads as a slim pill */
+  }
+  .homes-rail::-webkit-scrollbar-thumb:hover {
+    background: rgba(29, 25, 19, 0.45);
+  }
+}
+@media (min-width: 941px) and (max-width: 1249px) {
+  .homes-rail {
     height: calc(100vh - 190px);
   }
 }

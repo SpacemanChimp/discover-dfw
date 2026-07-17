@@ -22,6 +22,8 @@ export interface IntentConfig {
   kicker: string;
   headline: string;
   body: string;
+  /** button label on the inline trigger card that opens the form modal */
+  cta: string;
   /** visible label for the required primary-request field */
   primaryLabel: string;
   /** example hint rendered UNDER the field (never placeholder-only) */
@@ -37,6 +39,7 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     kicker: "BUILD MY SHORTLIST",
     headline: "Ninety cities is too many. Let's get you to three.",
     body: "Tell us your budget, commute, and priorities. We'll narrow North Texas to a practical shortlist.",
+    cta: "Build my shortlist",
     primaryLabel: "What matters most",
     primaryHint: "e.g. under $550K, 30 min to DFW Airport, room for a shop",
     step2: { budget: true, timeline: true, message: true },
@@ -47,6 +50,7 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     kicker: "COMPARE THIS CITY",
     headline: "Torn between two towns? Put them side by side.",
     body: "Tell us what you're weighing. We'll line up prices, commutes, schools, and the trade-offs the brochures skip.",
+    cta: "Compare cities",
     primaryLabel: "What you're deciding between",
     primaryHint: "e.g. here vs. Prosper — schools and yard size matter most",
     step2: { compareCity: true, budget: true, message: true },
@@ -57,6 +61,7 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     kicker: "CURATED HOMES",
     headline: "A cleaner list than the entire market.",
     body: "Want a cleaner list than the entire market? Get homes selected around your budget, location, and must-haves.",
+    cta: "Get a curated list",
     primaryLabel: "Your must-haves",
     primaryHint: "e.g. single story, real backyard, no busy road",
     step2: { budget: true, timeline: true, message: true },
@@ -67,6 +72,7 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     kicker: "NEW BUILD INTEL",
     headline: "Know the incentives before you visit the models.",
     body: "Get the currently verified builder, inventory, and incentive information before visiting the models.",
+    cta: "Get the current intel",
     primaryLabel: "What you want to know",
     primaryHint: "e.g. current rate buydowns and which builders have spec homes",
     step2: { budget: true, timeline: true, message: true },
@@ -77,6 +83,7 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     kicker: "PLAN A BUILDER TOUR",
     headline: "One efficient route through the right models.",
     body: "Plan one efficient route through the builders and communities that fit your budget.",
+    cta: "Plan my tour",
     primaryLabel: "What you're building toward",
     primaryHint: "e.g. 4 bed under $500K, ready within 6 months",
     step2: { budget: true, timeline: true, message: true },
@@ -87,6 +94,7 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     kicker: "HOMEOWNER EQUITY PLAN",
     headline: "Already own here? Do the math before you move.",
     body: "Already own here? See what your equity and timing could make possible elsewhere.",
+    cta: "See my options",
     primaryLabel: "What you're weighing",
     primaryHint: "e.g. whether selling now covers a move up to Prosper",
     step2: { timeline: true, message: true },
@@ -97,6 +105,7 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     kicker: "HUMAN SEARCH HELP",
     headline: "Too many results? Borrow a local brain.",
     body: "Too many results? Tell us what matters and we'll help narrow the map.",
+    cta: "Get human help",
     primaryLabel: "What matters",
     primaryHint: "e.g. quiet street, newer roof, under $450K",
     step2: { budget: true, message: true },

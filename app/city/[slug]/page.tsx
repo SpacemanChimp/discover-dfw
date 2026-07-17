@@ -14,7 +14,7 @@ import {
 } from "@/lib/dfw-data";
 import { hoodsForCity } from "@/lib/hoods";
 import { getMlsProvider, isLiveMls } from "@/lib/mls";
-import { getAllCityMarketMetricSets, fmtMetricValue, fmtPrice, fmtAsOf, provenanceLabel } from "@/lib/market/metrics";
+import { getAllCityMarketMetricSets, fmtMetricValue, fmtPrice, provenanceLabel } from "@/lib/market/metrics";
 import type { Listing } from "@/lib/mls/types";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { getApprovedPhotos, photoKey } from "@/lib/content/editorial-photos";
@@ -611,7 +611,7 @@ export default async function CityPage({
               >
                 HOMES, INCOME PROPERTIES & LAND · MLS CITY = {c.name.toUpperCase()}
                 <br />
-                COUNTED {fmtAsOf(mCount.asOf)} · SOURCE: NTREIS
+                SOURCE: NTREIS
               </div>
             </div>
           )}

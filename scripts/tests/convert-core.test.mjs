@@ -26,7 +26,7 @@ test("all seven intents exist with complete, spec-matching config", () => {
   assert.equal(INTENT_KEYS.length, 7);
   for (const key of INTENT_KEYS) {
     const cfg = INTENTS[key];
-    for (const f of ["kicker", "headline", "body", "primaryLabel", "primaryHint", "success"]) {
+    for (const f of ["kicker", "headline", "body", "cta", "primaryLabel", "primaryHint", "success"]) {
       assert.ok(cfg[f] && cfg[f].length > 4, `${key}.${f} populated`);
     }
     assert.ok(Object.keys(cfg.step2).length >= 1, `${key} has an optional step`);
