@@ -14,7 +14,8 @@ const MOST_READ = [
 
 const EXPLORE = [
   ["/#map", "The map"],
-  ["/#new-builds", "New builds"],
+  ["/new-builds", "New construction"],
+  ["/land", "Land for sale"],
   ["/#cities", "The index"],
   ["/#about", "About"],
   ["/#newsletter", "The newsletter"],
