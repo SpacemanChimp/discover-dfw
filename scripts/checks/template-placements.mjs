@@ -185,7 +185,16 @@ try {
     if (status !== 200) fail(p, `HTTP ${status}`);
     assertOnce(p, text, "Discover Builder Incentives");
     assertOnce(p, text, "Ask a Question");
-    assertOrder(p, text, ["02 — NEW BUILD RESOURCES", "Discover Builder Incentives", "03 — WHY BUYERS LOOK HERE"]);
+    assertOnce(p, text, "BUILDER HELP"); // the editorial CTA band
+    // the ONE CTA now sits AFTER the reasons and BEFORE nearby schools
+    assertOrder(p, text, [
+      "03 — WHY BUYERS LOOK HERE",
+      "BUILDER HELP",
+      "Discover Builder Incentives",
+      "04 — NEARBY SCHOOLS",
+    ]);
+    // and NOT in its old spot before the reasons
+    assertOrder(p, text, ["02 — NEW BUILD RESOURCES", "03 — WHY BUYERS LOOK HERE", "BUILDER HELP"]);
     for (const k of ["PLAN A BUILDER TOUR", "Plan my tour", "CURATED HOMES", "Get a curated list"])
       assertAbsent(p, text, k);
   }

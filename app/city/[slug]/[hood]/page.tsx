@@ -33,6 +33,7 @@ import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
 import ConvertSlot from "@/components/convert/ConvertSlot";
 import ConversionDuo from "@/components/convert/ConversionDuo";
+import NewBuildCTA from "@/components/convert/NewBuildCTA";
 import { leadBackendReady } from "@/lib/convert/config";
 
 export function generateStaticParams() {
@@ -772,29 +773,19 @@ export default async function HoodPage({
         </section>
       )}
 
-      {/* The page's ONE CTA, in the listing-page treatment (primary + one
-          smaller secondary): builder incentives for new builds, a curated
-          list for standard neighborhoods. */}
-      {leadBackendReady() && (
+      {/* Standard-neighborhood CTA keeps its place here (unchanged). New-build
+          communities move their CTA below the "why buyers look here" reasons
+          (see NewBuildCTA after section 03) so the buyer reads the case first
+          — one conversion section per page either way. */}
+      {!nb && leadBackendReady() && (
         <ConvertSlot id="hood-cta">
-          {nb ? (
-            <ConversionDuo
-              primary="new-build-incentives"
-              primaryLabel="Discover Builder Incentives"
-              secondary="ask-a-question"
-              secondaryLabel="Ask a Question"
-              citySlug={c.slug}
-              community={h.slug}
-            />
-          ) : (
-            <ConversionDuo
-              primary="curated-homes"
-              secondary="ask-a-question"
-              secondaryLabel="Ask a Question"
-              citySlug={c.slug}
-              community={h.slug}
-            />
-          )}
+          <ConversionDuo
+            primary="curated-homes"
+            secondary="ask-a-question"
+            secondaryLabel="Ask a Question"
+            citySlug={c.slug}
+            community={h.slug}
+          />
         </ConvertSlot>
       )}
 
@@ -837,6 +828,11 @@ export default async function HoodPage({
           </div>
         </div>
       </section>
+
+      {/* New-build's ONE conversion moment — an editorial band placed AFTER
+          the reasons above and BEFORE nearby schools, so the case is made
+          before the ask. Shared across every new-build community. */}
+      {nb && leadBackendReady() && <NewBuildCTA citySlug={c.slug} community={h.slug} />}
 
       {/* 04 · nearby schools — proximity context ONLY (no boundary data):
           nearest rated neighborhood campus per level, measured from the city
