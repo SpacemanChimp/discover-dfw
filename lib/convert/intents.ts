@@ -2,10 +2,11 @@
    no server-only) so the panel engine stays thin and every rule here is
    unit-tested (scripts/tests/convert-core.test.mjs).
 
-   Seven intents, one engine (components/convert/ConversionPanel.tsx), one
+   Nine intents, one engine (components/convert/ConversionPanel.tsx), one
    intake door (/api/leads, type "guide") → normalized lead service → FUB.
-   None of these render on public templates yet — the dev harness at
-   /dev/convert (blocked in production) is the only mount point. */
+   Most surface only via the dev harness at /dev/convert (blocked in
+   production); the exceptions are the new-build CTA (new-build-incentives +
+   ask-a-question) and the /land CTA (build-land-shortlist + ask-a-question). */
 
 export type IntentKey =
   | "build-my-shortlist"
@@ -15,7 +16,8 @@ export type IntentKey =
   | "plan-builder-tour"
   | "homeowner-equity-plan"
   | "human-search-help"
-  | "ask-a-question";
+  | "ask-a-question"
+  | "build-land-shortlist";
 
 export interface IntentConfig {
   key: IntentKey;
@@ -113,6 +115,18 @@ export const INTENTS: Record<IntentKey, IntentConfig> = {
     primaryHint: "e.g. which builders still have greenbelt lots, and what's the wait?",
     step2: { timeline: true, message: true },
     success: "Question received — a local guide answers from what they've actually seen, not a brochure.",
+  },
+  /* the /land conversion — help vetting a parcel (access/utilities/surveys) */
+  "build-land-shortlist": {
+    key: "build-land-shortlist",
+    kicker: "LAND BUYER HELP",
+    headline: "Need help vetting a parcel?",
+    body: "We'll help you compare access, utilities, restrictions, surveys, and the questions worth asking before you make an offer.",
+    cta: "Build My Land Shortlist",
+    primaryLabel: "What you're looking for",
+    primaryHint: "e.g. 5–20 acres in Wise County, ag exemption, well already in",
+    step2: { budget: true, timeline: true, message: true },
+    success: "Land request received — a local guide reads every one and replies with parcels worth a closer look, never a mailing list.",
   },
   "human-search-help": {
     key: "human-search-help",

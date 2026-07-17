@@ -14,6 +14,7 @@ export default function ListingResultsRail({
   countyName,
   statuses,
   sourceNote,
+  land = false,
 }: {
   result: SearchResult;
   city?: City;
@@ -22,8 +23,11 @@ export default function ListingResultsRail({
   statuses?: ListingStatus[];
   /** Source-qualification shown when a school/district filter is active. */
   sourceNote?: string;
+  /** Land mode (/land): land-aware cards, header noun, and empty state. */
+  land?: boolean;
 }) {
   const scope = resultScopeLabel(statuses);
+  const noun = land ? (result.total === 1 ? "land listing" : "land listings") : scope.noun;
   return (
     <>
       {city && countyName ? (
@@ -40,8 +44,8 @@ export default function ListingResultsRail({
             paddingBottom: 10,
           }}
         >
-          ALL OF DFW — {result.total.toLocaleString("en-US")} {scope.noun}
-          {scope.note && (
+          ALL OF DFW — {result.total.toLocaleString("en-US")} {noun}
+          {!land && scope.note && (
             <span style={{ display: "block", marginTop: 4, fontSize: 8.5, letterSpacing: ".14em", color: "rgba(29,25,19,.55)", fontWeight: 400 }}>
               {scope.note}
             </span>
@@ -66,9 +70,10 @@ export default function ListingResultsRail({
           key={l.listingKey}
           listing={l}
           cityName={bySlug[l.citySlug]?.name || l.cityName}
+          land={land}
         />
       ))}
-      {result.total === 0 && <EmptyResultsState cityName={city?.name} />}
+      {result.total === 0 && <EmptyResultsState cityName={city?.name} land={land} />}
       <div
         className="font-mono"
         style={{
@@ -82,7 +87,7 @@ export default function ListingResultsRail({
         {city
           ? `▾ ${result.total.toLocaleString("en-US")} IN ${city.name.toUpperCase()} · ${isLiveMls ? "NTREIS IDX" : "MOCK FEED"}`
           : isLiveMls
-            ? `▾ ${result.total.toLocaleString("en-US")} ${scope.noun} ACROSS THE METROPLEX · NTREIS IDX`
+            ? `▾ ${result.total.toLocaleString("en-US")} ${noun.toUpperCase()} ACROSS THE METROPLEX · NTREIS IDX`
             : "▾ MORE INVENTORY ARRIVES WITH THE LIVE FEED"}
       </div>
     </>

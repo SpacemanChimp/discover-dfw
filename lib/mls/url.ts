@@ -5,6 +5,7 @@
    poly (drawn boundary, "lon,lat;lon,lat;…"). */
 import type { ListingStatus, PropertyType, SearchFilters, SortKey } from "./types";
 import { parsePolygon, serializePolygon } from "./geo";
+import { isLandCategory } from "@/lib/land/land";
 
 const SORT_KEYS: SortKey[] = ["newest", "price-asc", "price-desc", "sqft-desc"];
 
@@ -32,6 +33,12 @@ export function parseSearchFilters(
     const v = one(k);
     if (!v) return undefined;
     const n = parseInt(v, 10);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  };
+  const floatNum = (k: string) => {
+    const v = one(k);
+    if (!v) return undefined;
+    const n = parseFloat(v);
     return Number.isFinite(n) && n > 0 ? n : undefined;
   };
   const sort = one("sort") as SortKey | undefined;
@@ -62,6 +69,12 @@ export function parseSearchFilters(
     // District is a standalone, city-independent filter (0017): matches the
     // MLS-reported school district across any of the three district fields.
     district: (one("district") || "").trim().slice(0, 120) || undefined,
+    // land search (/land): land flag + acreage/category/county
+    land: one("land") === "1" || undefined,
+    landCategory: isLandCategory(one("cat")) ? (one("cat") as SearchFilters["landCategory"]) : undefined,
+    minAcres: floatNum("minac"),
+    maxAcres: floatNum("maxac"),
+    county: (one("county") || "").trim().slice(0, 40) || undefined,
     radiusMiles: [5, 10, 15, 25].includes(num("r") ?? 0) ? num("r") : undefined,
     // invalid poly strings parse to undefined silently — junk URLs just
     // fall back to the non-polygon search
@@ -91,6 +104,12 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
   }
   // district (0017) — city-independent, serializes on its own
   if (f.district) params.set("district", f.district);
+  // land search params
+  if (f.land) params.set("land", "1");
+  if (f.landCategory) params.set("cat", f.landCategory);
+  if (f.minAcres) params.set("minac", String(f.minAcres));
+  if (f.maxAcres) params.set("maxac", String(f.maxAcres));
+  if (f.county) params.set("county", f.county);
   if (f.radiusMiles) params.set("r", String(f.radiusMiles));
   if (f.polygon?.length) params.set("poly", serializePolygon(f.polygon));
   return params.toString();

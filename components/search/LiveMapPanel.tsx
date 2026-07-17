@@ -6,6 +6,7 @@ import type { Map as LeafletMap, LayerGroup, Renderer, Layer, Polyline, Polygon,
 import type { MapPin } from "@/lib/mls/local";
 import { parsePolygon, serializePolygon, simplifyPolygon, polygonBounds, type LonLat } from "@/lib/mls/geo";
 import { bySlug } from "@/lib/dfw-data";
+import { formatAcres, formatPricePerAcre, pricePerAcre, landSubtypeLabel } from "@/lib/land/land";
 
 /* The Map Room's live pane: a real geographic map (Leaflet + Carto Voyager
    raster tiles) with branded price pins fed by /api/map-pins. Leaflet itself
@@ -38,6 +39,11 @@ type PinCard = {
   sqft: number;
   address: string;
   city: string;
+  /** land scalars — the land popup renders these instead of beds/baths/sqft. */
+  county: string;
+  acres: number | null;
+  isLand: boolean;
+  subtype: string | null;
   imgs: string[];
 };
 
@@ -142,12 +148,18 @@ export default function LiveMapPanel({
   qs,
   activeCitySlug,
   total = 0,
+  land = false,
+  basePath = "/homes",
 }: {
   /** Serialized current filters (searchFiltersToQueryString output, no page). */
   qs: string;
   activeCitySlug?: string;
   /** Chip fallback before the first payload lands — parents may omit it. */
   total?: number;
+  /** Land mode (/land): land-aware hover popup (acreage/$-per-acre/subtype). */
+  land?: boolean;
+  /** Route the draw/clear-boundary pushes land on — "/land" keeps land mode. */
+  basePath?: string;
 }) {
   const router = useRouter();
   const mapDivRef = useRef<HTMLDivElement | null>(null);
@@ -515,13 +527,13 @@ export default function LiveMapPanel({
     const params = new URLSearchParams(qs);
     params.set("poly", serialized);
     params.delete("page");
-    router.push("/homes?" + params.toString());
+    router.push(basePath + "?" + params.toString());
   }
 
   function clearBoundary() {
     const params = new URLSearchParams(qs);
     params.delete("poly");
-    router.push("/homes?" + params.toString());
+    router.push(basePath + "?" + params.toString());
   }
 
   /* ---- map bootstrap — once. Leaflet loads client-side only. ---- */
@@ -1053,7 +1065,15 @@ export default function LiveMapPanel({
                   className="font-mono"
                   style={{ fontSize: 9, letterSpacing: ".14em", marginTop: 3, color: "rgba(29,25,19,.65)" }}
                 >
-                  {cardData.beds} BDS · {cardData.baths} BA · {cardData.sqft.toLocaleString("en-US")} SQFT
+                  {land
+                    ? [
+                        formatAcres(cardData.acres)?.toUpperCase(),
+                        formatPricePerAcre(pricePerAcre(cardData.price, cardData.acres))?.toUpperCase(),
+                        landSubtypeLabel(cardData.subtype).toUpperCase(),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : `${cardData.beds} BDS · ${cardData.baths} BA · ${cardData.sqft.toLocaleString("en-US")} SQFT`}
                 </div>
                 <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 5, color: "#1D1913", lineHeight: 1.3 }}>
                   {cardData.address}

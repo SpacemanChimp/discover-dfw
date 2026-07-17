@@ -29,6 +29,7 @@ import type {
 import { dfwCities, cityBySlug, cityMarketSnapshot, dfwCountyNames } from "@/data/dfw-cities";
 import { boundingBox, polygonBounds, type LonLat } from "./geo";
 import { RESO_SCHOOL_FIELDS, schoolsFromReso, schoolMatchToken } from "./school-fields";
+import { subtypesForCategory } from "@/lib/land/land";
 import type { ListingSchools } from "./types";
 
 import { TRESTLE_ODATA_BASE_URL, TRESTLE_TOKEN_URL, trestleCredentials } from "./trestle-env";
@@ -147,7 +148,8 @@ function typeClause(t: PropertyType | undefined): string {
 }
 
 function buildFilter(f: SearchFilters): string {
-  const parts: string[] = [typeClause(f.propertyType)];
+  // /land restricts to genuine land; otherwise the editorial type buckets
+  const parts: string[] = [f.land ? "PropertyType eq 'Land'" : typeClause(f.propertyType)];
 
   const statuses = f.statuses?.length ? f.statuses : DEFAULT_STATUSES;
   parts.push(`StandardStatus in (${statuses.map(q).join(",")})`);
@@ -172,10 +174,10 @@ function buildFilter(f: SearchFilters): string {
   } else if (f.citySlug) {
     const city = cityBySlug[f.citySlug];
     parts.push(`City eq ${q(city ? city.name : f.citySlug)}`);
-  } else if (f.school || f.district) {
-    // metro-wide school/district search — bound to the 8 DFW counties (the
-    // ingestion scope), NOT the 90 curated cities, so out-of-roster matches
-    // (Corinth, etc.) are included
+  } else if (f.school || f.district || f.land) {
+    // metro-wide school / district / land search — bound to the 8 DFW counties
+    // (the ingestion scope), NOT the 90 curated cities, so rural parcels and
+    // out-of-roster matches (Corinth, etc.) are included
     parts.push(`CountyOrParish in (${dfwCountyNames.map(q).join(",")})`);
   } else {
     parts.push(`City in (${dfwCities.map((c) => q(c.name)).join(",")})`);
@@ -188,6 +190,16 @@ function buildFilter(f: SearchFilters): string {
   if (f.minSqft != null) parts.push(`LivingArea ge ${f.minSqft}`);
   if (f.maxSqft != null) parts.push(`LivingArea le ${f.maxSqft}`);
   if (f.newBuildsOnly) parts.push("(NewConstructionYN eq true or YearBuilt ge 2024)");
+  // Land — category (PropertySubType), acreage (LotSizeAcres), county
+  if (f.land) {
+    if (f.landCategory) {
+      const subs = subtypesForCategory(f.landCategory);
+      if (subs.length) parts.push(`PropertySubType in (${subs.map(q).join(",")})`);
+    }
+    if (f.minAcres != null) parts.push(`LotSizeAcres ge ${f.minAcres}`);
+    if (f.maxAcres != null) parts.push(`LotSizeAcres le ${f.maxAcres}`);
+  }
+  if (f.county) parts.push(`CountyOrParish eq ${q(f.county)}`);
   // School — match the MLS-reported name in the level-specific field (parity
   // with the local provider; not a zoning claim).
   if (f.school) {
@@ -297,6 +309,7 @@ function toListing(p: any): Listing {
     citySlug: known?.slug ?? cityName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
     cityName,
     county: p.CountyOrParish ?? undefined,
+    landSubtype: p.PropertySubType ?? undefined,
     neighborhood: hood,
     postalCode: p.PostalCode ?? undefined,
     lonLat: p.Longitude != null && p.Latitude != null ? [p.Longitude, p.Latitude] : undefined,

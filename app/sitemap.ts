@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // individual /listing/* pages stay out (tens of thousands, high churn)
   if (isLiveMls) {
     entries.push({ url: `${SITE_URL}/homes`, changeFrequency: "daily", priority: 0.9 });
+    entries.push({ url: `${SITE_URL}/land`, changeFrequency: "daily", priority: 0.7 });
   }
   for (const c of cities) {
     entries.push({

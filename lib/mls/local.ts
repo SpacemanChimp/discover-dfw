@@ -20,11 +20,12 @@ import type {
   SearchResult,
   SortKey,
 } from "./types";
-import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
+import { dfwCities, cityBySlug, cityMarketSnapshot, dfwCountyNames } from "@/data/dfw-cities";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { boundingBox, milesBetween, pointInPolygon, polygonBounds, type LonLat } from "./geo";
 import { getOpenHouses, openHouseBadge } from "./trestle";
 import { schoolsFromReso, schoolMatchToken } from "./school-fields";
+import { subtypesForCategory } from "@/lib/land/land";
 
 const DEFAULT_PAGE_SIZE = 24;
 const DEFAULT_STATUSES: ListingStatus[] = ["Active", "ActiveUnderContract", "ComingSoon", "Pending"];
@@ -72,6 +73,7 @@ function toListing(r: any): Listing {
     bathsTotal: Number(r.baths ?? 0),
     livingAreaSqft: r.living_area ?? 0,
     lotSizeAcres: r.lot_size != null ? Number(r.lot_size) : undefined,
+    landSubtype: r.property_sub_type ?? undefined,
     yearBuilt: r.year_built ?? 0,
     propertyType: mapPropertyType(r),
     unparsedAddress: r.unparsed_address || "Address withheld",
@@ -112,12 +114,12 @@ function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean 
   } else if (f.citySlug) {
     const city = cityBySlug[f.citySlug];
     query = query.eq("city", city ? city.name : f.citySlug);
-  } else if (f.school || f.district) {
-    // School/district search is metro-wide: it must return EVERY reported
-    // match in the ingested inventory (the 8 DFW counties), including
-    // municipalities with no editorial city profile (Corinth, Copper Canyon,
-    // …). So no city restriction — the school/district clause below is the
-    // filter, and the store is already county-bounded by the sync.
+  } else if (f.school || f.district || f.land) {
+    // School / district / LAND search is metro-wide: it must return EVERY
+    // match in the ingested inventory (the 8 DFW counties), including rural
+    // parcels and municipalities with no editorial city profile (Corinth,
+    // Copper Canyon, …). So no 90-city restriction — the specific clauses
+    // below are the filter, and the store is already county-bounded.
   } else {
     // default browse keeps its curated DFW scope (the 90 city profiles)
     query = query.in("city", dfwCities.map((c) => c.name));
@@ -172,6 +174,24 @@ function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean 
       );
     }
   }
+
+  // LAND search (/land) — only genuine land listings (PropertyType='Land';
+  // there is no 'Farm' PropertyType in this feed). Category maps to the exact
+  // observed PropertySubTypes; acreage rides LotSizeAcres (lot_size, 99.8%
+  // populated). Houses/condos/townhomes can never leak in — they are not
+  // property_type='Land'.
+  if (f.land) {
+    query = query.eq("property_type", "Land");
+    // scope to the 8 DFW-metro counties: the replica also holds a few hundred
+    // out-of-scope rows pulled in by City-name collisions (Bossier LA,
+    // Lafayette AR, Hunt, Parker, …). A specific f.county overrides this.
+    if (!f.county) query = query.in("county", dfwCountyNames);
+    if (f.landCategory) query = query.in("property_sub_type", subtypesForCategory(f.landCategory));
+    if (f.minAcres != null) query = query.gte("lot_size", f.minAcres);
+    if (f.maxAcres != null) query = query.lte("lot_size", f.maxAcres);
+  }
+  // county filter (land toolbar; feed CountyOrParish stored in `county`)
+  if (f.county && !opts?.skipCity) query = query.eq("county", f.county);
 
   switch (f.propertyType) {
     case "Land":
@@ -366,7 +386,9 @@ async function search(filters: SearchFilters): Promise<SearchResult> {
 
 /* ---- map pins (slim payload for the live map panel) ---- */
 
-/** Compact pin for the map: key, lat, lon, price, beds, baths, address, city. */
+/** Compact pin for the map: key, lat, lon, price, beds, baths, address, city,
+    plus land scalars (acreage/subtype/county) so a land popup can be
+    land-aware without a second query. */
 export type MapPin = {
   k: string;
   lat: number;
@@ -376,6 +398,12 @@ export type MapPin = {
   ba: number;
   a: string;
   c: string;
+  /** LotSizeAcres (land popups) */
+  ac?: number;
+  /** raw PropertySubType (land popups) */
+  st?: string;
+  /** CountyOrParish (land popups) */
+  co?: string;
 };
 
 /** Hard cap on pins returned to the map — keeps payloads and the map sane. */
@@ -400,7 +428,7 @@ function intersectBoxes(a: LatLonBox, b: LatLonBox): LatLonBox {
 }
 
 const PIN_SELECT =
-  "listing_key, latitude, longitude, list_price, beds, baths, unparsed_address, city, days_on_market";
+  "listing_key, latitude, longitude, list_price, beds, baths, unparsed_address, city, days_on_market, lot_size, property_sub_type, county";
 
 function toPin(r: any): MapPin {
   return {
@@ -412,6 +440,9 @@ function toPin(r: any): MapPin {
     ba: Number(r.baths ?? 0),
     a: r.unparsed_address || "Address withheld",
     c: r.city || "",
+    ac: r.lot_size != null ? Number(r.lot_size) : undefined,
+    st: r.property_sub_type ?? undefined,
+    co: r.county ?? undefined,
   };
 }
 

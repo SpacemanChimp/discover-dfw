@@ -4,8 +4,9 @@ import { Wordmark } from "@/components/Logo";
 import { useShelf } from "@/lib/shelf";
 
 /* Sticky nav for the search surfaces: wordmark, section links, and the
-   MY SHELF pill with a live count. */
-export default function SearchNav() {
+   MY SHELF pill with a live count. `active` underlines the current surface
+   (SEARCH HOMES on /homes, LAND on /land). */
+export default function SearchNav({ active = "homes" }: { active?: "homes" | "land" }) {
   const shelf = useShelf();
   return (
     <nav
@@ -33,12 +34,30 @@ export default function SearchNav() {
         <Link href="/#cities" className="city-back font-mono" style={{ ...navLink }}>
           THE INDEX
         </Link>
-        <span
-          className="font-mono"
-          style={{ ...navLink, color: "#1D1913", borderBottom: "2px solid #D9481F", paddingBottom: 4 }}
-        >
-          SEARCH HOMES
-        </span>
+        {active === "land" ? (
+          <span
+            className="font-mono"
+            style={{ ...navLink, color: "#1D1913", borderBottom: "2px solid #D9481F", paddingBottom: 4 }}
+          >
+            LAND
+          </span>
+        ) : (
+          <Link href="/land" className="city-back font-mono" style={{ ...navLink }}>
+            LAND
+          </Link>
+        )}
+        {active === "land" ? (
+          <Link href="/homes" className="city-back font-mono" style={{ ...navLink }}>
+            SEARCH HOMES
+          </Link>
+        ) : (
+          <span
+            className="font-mono"
+            style={{ ...navLink, color: "#1D1913", borderBottom: "2px solid #D9481F", paddingBottom: 4 }}
+          >
+            SEARCH HOMES
+          </span>
+        )}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {/* always in the layout — visibility flips on hydration so the nav

@@ -3,9 +3,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Wordmark } from "./Logo";
 
-const LINKS = [
+/* On-page section anchors (scroll-spy) plus one real page link (LAND → /land).
+   `href` entries route to their own page and are skipped by the observer. */
+const LINKS: { id: string; label: string; href?: string }[] = [
   { id: "map", label: "THE MAP" },
   { id: "new-builds", label: "NEW BUILDS" },
+  { id: "land", label: "LAND", href: "/land" },
   { id: "cities", label: "THE INDEX" },
   { id: "about", label: "ABOUT" },
 ];
@@ -22,7 +25,8 @@ export default function Nav() {
       },
       { rootMargin: "-35% 0px -55% 0px" }
     );
-    LINKS.forEach(({ id }) => {
+    LINKS.forEach(({ id, href }) => {
+      if (href) return; // real page link, not an on-page section
       const el = document.getElementById(id);
       if (el) io.observe(el);
     });
@@ -62,17 +66,17 @@ export default function Nav() {
           justifyContent: "center",
         }}
       >
-        {LINKS.map(({ id, label }) => (
+        {LINKS.map(({ id, label, href }) => (
           <Link
             key={id}
-            href={`/#${id}`}
+            href={href ?? `/#${id}`}
             className="nav-link"
             style={{
               color: "#1D1913",
               textDecoration: "none",
               padding: "6px 2px",
               borderBottom:
-                navSec === id
+                !href && navSec === id
                   ? "2px solid #D9481F"
                   : "2px solid transparent",
             }}
@@ -101,8 +105,8 @@ export default function Nav() {
         <Link href="/homes" style={{ ...chip, color: "#F6F1E6", background: "#D9481F", borderColor: "#D9481F" }}>
           SEARCH
         </Link>
-        {LINKS.map(({ id, label }) => (
-          <Link key={id} href={`/#${id}`} style={chip}>
+        {LINKS.map(({ id, label, href }) => (
+          <Link key={id} href={href ?? `/#${id}`} style={chip}>
             {label}
           </Link>
         ))}

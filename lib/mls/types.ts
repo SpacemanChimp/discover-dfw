@@ -85,6 +85,9 @@ export interface Listing {
   lotSizeAcres?: number;
   yearBuilt: number;
   propertyType: PropertyType;
+  /** Raw MLS PropertySubType (e.g. "UnimprovedLand", "Ranch") — powers the
+      land-aware card/popup; undefined for non-land or when the feed omits it. */
+  landSubtype?: string;
 
   /* location */
   unparsedAddress: string;
@@ -168,6 +171,17 @@ export interface SearchFilters {
       listing matching in several fields is returned once. Canonical
       MLS-reported value (e.g. "Denton ISD"). Not a zoning claim. */
   district?: string;
+  /* ---- land search (/land) ---- */
+  /** Restrict to genuine land listings (PropertyType='Land'). Set by the
+      /land route; metro-wide (8-county), never the 90-city browse scope. */
+  land?: boolean;
+  /** Consumer land category → PropertySubType set (see lib/land/land). */
+  landCategory?: import("@/lib/land/land").LandCategory;
+  /** LotSizeAcres bounds (acres). */
+  minAcres?: number;
+  maxAcres?: number;
+  /** County name as the feed reports CountyOrParish (e.g. "Wise"). */
+  county?: string;
   /** Radius search in miles — centered on `center`, else the city centroid. */
   radiusMiles?: number;
   /** Explicit radius center [lon, lat] (e.g. "nearby this listing"). */

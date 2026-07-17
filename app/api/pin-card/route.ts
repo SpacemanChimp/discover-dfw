@@ -28,7 +28,7 @@ export async function GET(req: Request) {
       db
         .from("listings")
         .select(
-          "listing_key, list_price, beds, baths, living_area, unparsed_address, city, prev:raw->PreviousListPrice"
+          "listing_key, list_price, beds, baths, living_area, unparsed_address, city, county, lot_size, property_type, property_sub_type, prev:raw->PreviousListPrice"
         )
         .eq("listing_key", k)
         .maybeSingle(),
@@ -56,6 +56,11 @@ export async function GET(req: Request) {
         sqft: r.living_area ?? 0,
         address: r.unparsed_address || "Address withheld",
         city: r.city || "",
+        // land scalars — let the map popup render acreage/$-per-acre/subtype
+        county: r.county || "",
+        acres: r.lot_size != null ? Number(r.lot_size) : null,
+        isLand: r.property_type === "Land",
+        subtype: r.property_sub_type || null,
         imgs: ((media.data as any[]) ?? [])
           .map((m) => m.media_url as string)
           .filter(Boolean)

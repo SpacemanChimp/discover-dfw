@@ -309,6 +309,25 @@ body {
   }
 }
 
+/* ---------- /land due-diligence guide grid ---------- */
+.land-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px 40px;
+}
+@media (max-width: 900px) {
+  .land-guide-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px 30px;
+  }
+}
+@media (max-width: 560px) {
+  .land-guide-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 /* ---------- the one CTA per page (listing-page treatment) ---------- */
 /* primary + one smaller secondary: side by side and CENTRED on anything
    wider than a phone, a clean full-width stack below. nowrap (not wrap) is

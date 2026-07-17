@@ -23,7 +23,7 @@ const SPEC_COPY = {
 };
 
 test("all intents exist with complete, spec-matching config", () => {
-  assert.equal(INTENT_KEYS.length, 8);
+  assert.equal(INTENT_KEYS.length, 9);
   for (const key of INTENT_KEYS) {
     const cfg = INTENTS[key];
     for (const f of ["kicker", "headline", "body", "cta", "primaryLabel", "primaryHint", "success"]) {

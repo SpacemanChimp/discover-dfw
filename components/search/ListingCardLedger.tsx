@@ -5,18 +5,29 @@ import SaveListingButton from "./SaveListingButton";
 import MLSAttribution from "./MLSAttribution";
 
 import { badgeStyle, money } from "./format";
+import { formatAcres, formatPricePerAcre, pricePerAcre, landSubtypeLabel } from "@/lib/land/land";
 
 /* "The Ledger" — the default listing card: serif price, mono ledger row,
-   one editorial line, reserved attribution. */
+   one editorial line, reserved attribution.
+
+   `land` swaps the beds/baths/sqft/built ledger for a land-aware one
+   (acreage · $/acre · county · days on market) — a land parcel never shows
+   "0 BD · 0 BA". Price-per-acre is omitted, not zeroed, when acreage is
+   missing, and is always list-derived (never appraisal or sold). */
 export default function ListingCardLedger({
   listing,
   cityName,
+  land = false,
 }: {
   listing: Listing;
   cityName: string;
+  land?: boolean;
 }) {
   const b = badgeStyle(listing);
   const ppsf = listing.livingAreaSqft > 0 ? Math.round(listing.listPrice / listing.livingAreaSqft) : null;
+  const acresLabel = land ? formatAcres(listing.lotSizeAcres) : null;
+  const perAcre = land ? formatPricePerAcre(pricePerAcre(listing.listPrice, listing.lotSizeAcres)) : null;
+  const subtypeLabel = land ? landSubtypeLabel(listing.landSubtype ?? null) : null;
   const photo = listing.media.find((m) => m.isPrimary)?.url ?? listing.media[0]?.url ?? null;
   return (
     <article
@@ -93,19 +104,36 @@ export default function ListingCardLedger({
             <span className="font-serif" style={{ fontWeight: 900, fontSize: 27, color: "#D9481F" }}>
               {money(listing.listPrice)}
             </span>
-            {ppsf !== null && (
-              <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)" }}>
-                ${ppsf} / SQFT
-              </span>
-            )}
+            {land
+              ? acresLabel && (
+                  <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)" }}>
+                    {acresLabel.toUpperCase()}
+                  </span>
+                )
+              : ppsf !== null && (
+                  <span className="font-mono" style={{ fontSize: 9.5, letterSpacing: ".12em", color: "rgba(29,25,19,.62)" }}>
+                    ${ppsf} / SQFT
+                  </span>
+                )}
           </div>
           <div style={{ fontSize: 15.5, fontWeight: 600, marginTop: 5 }}>{listing.unparsedAddress}</div>
           <div
             className="font-mono"
             style={{ fontSize: 9.5, letterSpacing: ".16em", color: "rgba(29,25,19,.62)", marginTop: 4 }}
           >
-            {listing.neighborhood.toUpperCase()} ·{" "}
-            <span style={{ color: "#C13E17", fontWeight: 700 }}>{cityName.toUpperCase()} ↗</span>
+            {land ? (
+              <>
+                {subtypeLabel!.toUpperCase()} ·{" "}
+                <span style={{ color: "#C13E17", fontWeight: 700 }}>
+                  {(cityName || listing.county || "DFW").toUpperCase()} ↗
+                </span>
+              </>
+            ) : (
+              <>
+                {listing.neighborhood.toUpperCase()} ·{" "}
+                <span style={{ color: "#C13E17", fontWeight: 700 }}>{cityName.toUpperCase()} ↗</span>
+              </>
+            )}
           </div>
         </div>
         <div
@@ -120,10 +148,21 @@ export default function ListingCardLedger({
             letterSpacing: ".06em",
           }}
         >
-          <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.bedsTotal}</b> BD</span>
-          <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.bathsTotal}</b> BA</span>
-          <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.livingAreaSqft.toLocaleString("en-US")}</b> SQFT</span>
-          <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.yearBuilt}</b> BUILT</span>
+          {land ? (
+            <>
+              <span><b className="font-serif" style={{ fontSize: 15 }}>{acresLabel ? acresLabel.replace(/\s*ac$/i, "") : "—"}</b> ACRES</span>
+              <span><b className="font-serif" style={{ fontSize: 15 }}>{perAcre ? perAcre.replace("/ac", "") : "—"}</b> / ACRE</span>
+              <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.county || "—"}</b> COUNTY</span>
+              <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.daysOnMarket}</b> DOM</span>
+            </>
+          ) : (
+            <>
+              <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.bedsTotal}</b> BD</span>
+              <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.bathsTotal}</b> BA</span>
+              <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.livingAreaSqft.toLocaleString("en-US")}</b> SQFT</span>
+              <span><b className="font-serif" style={{ fontSize: 15 }}>{listing.yearBuilt}</b> BUILT</span>
+            </>
+          )}
         </div>
         <div
           className="font-serif"
