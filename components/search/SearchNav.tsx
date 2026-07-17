@@ -5,9 +5,23 @@ import { useShelf } from "@/lib/shelf";
 
 /* Sticky nav for the search surfaces: wordmark, section links, and the
    MY SHELF pill with a live count. `active` underlines the current surface
-   (SEARCH HOMES on /homes, LAND on /land). */
-export default function SearchNav({ active = "homes" }: { active?: "homes" | "land" }) {
+   (SEARCH HOMES on /homes, LAND on /land, NEW BUILDS on /new-builds). */
+export default function SearchNav({ active = "homes" }: { active?: "homes" | "land" | "new-builds" }) {
   const shelf = useShelf();
+  const surface = (key: "new-builds" | "land" | "homes", href: string, label: string) =>
+    active === key ? (
+      <span
+        key={key}
+        className="font-mono"
+        style={{ ...navLink, color: "#1D1913", borderBottom: "2px solid #D9481F", paddingBottom: 4 }}
+      >
+        {label}
+      </span>
+    ) : (
+      <Link key={key} href={href} className="city-back font-mono" style={{ ...navLink }}>
+        {label}
+      </Link>
+    );
   return (
     <nav
       className="homes-search-nav"
@@ -34,30 +48,9 @@ export default function SearchNav({ active = "homes" }: { active?: "homes" | "la
         <Link href="/#cities" className="city-back font-mono" style={{ ...navLink }}>
           THE INDEX
         </Link>
-        {active === "land" ? (
-          <span
-            className="font-mono"
-            style={{ ...navLink, color: "#1D1913", borderBottom: "2px solid #D9481F", paddingBottom: 4 }}
-          >
-            LAND
-          </span>
-        ) : (
-          <Link href="/land" className="city-back font-mono" style={{ ...navLink }}>
-            LAND
-          </Link>
-        )}
-        {active === "land" ? (
-          <Link href="/homes" className="city-back font-mono" style={{ ...navLink }}>
-            SEARCH HOMES
-          </Link>
-        ) : (
-          <span
-            className="font-mono"
-            style={{ ...navLink, color: "#1D1913", borderBottom: "2px solid #D9481F", paddingBottom: 4 }}
-          >
-            SEARCH HOMES
-          </span>
-        )}
+        {surface("new-builds", "/new-builds", "NEW BUILDS")}
+        {surface("land", "/land", "LAND")}
+        {surface("homes", "/homes", "SEARCH HOMES")}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {/* always in the layout — visibility flips on hydration so the nav

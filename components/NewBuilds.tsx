@@ -1,247 +1,102 @@
-"use client";
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import { newBuilds, bySlug, countyById, counties } from "@/lib/dfw-data";
-import { slugifyHood } from "@/lib/slug";
+import { newBuilds, bySlug } from "@/lib/dfw-data";
+import NewBuildCard from "./newbuild/NewBuildCard";
 
-const STATUS_COLOR: Record<string, string> = {
-  "NOW SELLING": "#D9481F",
-  "MODELS OPEN": "#6FA8B8",
-  "FINAL PHASE": "#C9A24B",
-};
+/* Homepage New Builds PREVIEW — a strong six-card taste of new construction,
+   not the full 33-card catalog (that lives on /new-builds#directory). Keeps
+   its place after the map + featured picks, its id (#new-builds) so old
+   anchors still land, and the field-guide identity. The two actions carry the
+   reader into the dedicated search + directory. */
+
+/* Six geographically varied communities: the first community from each
+   distinct county in the editorial order. Deterministic — no hand-picked list
+   to drift from the data. */
+function featuredSix() {
+  const seenCounty = new Set<string>();
+  const out: typeof newBuilds = [];
+  for (const b of newBuilds) {
+    const county = bySlug[b.city]?.county;
+    if (!county || seenCounty.has(county)) continue;
+    seenCounty.add(county);
+    out.push(b);
+    if (out.length === 6) break;
+  }
+  return out;
+}
 
 export default function NewBuilds({ liveMls }: { liveMls?: boolean }) {
-  const [filter, setFilter] = useState<string>("all");
-
-  // county ids that actually have communities, in the core-first county order
-  const presentCounties = useMemo(() => {
-    const ids = new Set(newBuilds.map((b) => bySlug[b.city].county));
-    return counties.filter((c) => ids.has(c.id));
-  }, []);
-
-  const shown = useMemo(
-    () =>
-      filter === "all"
-        ? newBuilds
-        : newBuilds.filter((b) => bySlug[b.city].county === filter),
-    [filter]
-  );
-
-  const chip = (id: string, label: string) => {
-    const active = filter === id;
-    return (
-      <button
-        key={id}
-        onClick={() => setFilter(id)}
-        className="nb-chip font-mono"
-        style={{
-          fontSize: 10.5,
-          fontWeight: 700,
-          letterSpacing: ".16em",
-          padding: "9px 15px",
-          borderRadius: 999,
-          border: `1.5px solid ${active ? "#D9481F" : "rgba(246,241,230,.28)"}`,
-          background: active ? "#D9481F" : "transparent",
-          color: active ? "#F6F1E6" : "rgba(246,241,230,.72)",
-        }}
-      >
-        {label}
-      </button>
-    );
-  };
-
+  void liveMls;
+  const featured = featuredSix();
   return (
-    <section
-      id="new-builds"
-      style={{ background: "#1D1913", color: "#F6F1E6", borderTop: "2px solid #1D1913" }}
-    >
+    <section id="new-builds" style={{ background: "#1D1913", color: "#F6F1E6", borderTop: "2px solid #1D1913" }}>
       <div style={{ maxWidth: 1380, margin: "0 auto", padding: "88px 4vw" }}>
         <div
           data-reveal="1"
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: 24,
-            flexWrap: "wrap",
-            marginBottom: 26,
-          }}
+          style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 26 }}
         >
           <div>
-            <div
-              className="font-mono"
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: ".32em",
-                color: "#E88D6B",
-                marginBottom: 14,
-              }}
-            >
+            <div className="font-mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".32em", color: "#E88D6B", marginBottom: 14 }}>
               NEW CONSTRUCTION — ACTIVELY SELLING
             </div>
-            <h2
-              className="font-serif"
-              style={{
-                margin: 0,
-                fontWeight: 900,
-                fontSize: "clamp(34px,4.4vw,58px)",
-                lineHeight: 1.02,
-                color: "#F6F1E6",
-              }}
-            >
+            <h2 className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(34px,4.4vw,58px)", lineHeight: 1.02, color: "#F6F1E6" }}>
               Fresh dirt, first owners.
             </h2>
           </div>
-          <p
-            style={{
-              margin: "0 0 6px",
-              maxWidth: 360,
-              fontSize: 15,
-              lineHeight: 1.6,
-              color: "rgba(246,241,230,.7)",
-            }}
-          >
-            Master-planned communities taking contracts right now — filter by
-            county, then step into the community report. Prices &amp; builder
-            counts are {liveMls ? "editorial — verify with sales offices" : "placeholders"}.
+          <p style={{ margin: "0 0 6px", maxWidth: 360, fontSize: 15, lineHeight: 1.6, color: "rgba(246,241,230,.7)" }}>
+            A few of the master-planned communities taking contracts right now. Search every new-construction listing, or browse all {newBuilds.length} communities, on the new builds page.
           </p>
         </div>
 
         <div
           data-reveal="1"
-          style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 28 }}
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 18 }}
         >
-          {chip("all", `ALL · ${newBuilds.length}`)}
-          {presentCounties.map((co) =>
-            chip(
-              co.id,
-              `${co.name.toUpperCase()} · ${
-                newBuilds.filter((b) => bySlug[b.city].county === co.id).length
-              }`
-            )
-          )}
+          {featured.map((b) => (
+            <NewBuildCard key={b.name} b={b} />
+          ))}
         </div>
 
+        {/* one preview → destination action pair; primary search, quieter
+            directory link. Not a second homepage CTA — it points into the
+            new-builds product. */}
         <div
           data-reveal="1"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
-            gap: 18,
-          }}
+          style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", marginTop: 34 }}
         >
-          {shown.map((b) => {
-            const city = bySlug[b.city];
-            const county = countyById[city.county];
-            const sc = STATUS_COLOR[b.status] || "#D9481F";
-            return (
-              <Link
-                key={b.name}
-                href={`/city/${b.city}/${slugifyHood(b.name)}`}
-                className="nb-card"
-                style={{
-                  textDecoration: "none",
-                  color: "#F6F1E6",
-                  border: "2px solid rgba(246,241,230,.18)",
-                  borderRadius: 18,
-                  background: "#241D12",
-                  padding: "22px 24px 24px",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 10,
-                    marginBottom: 16,
-                  }}
-                >
-                  <span
-                    className="font-mono"
-                    style={{
-                      fontSize: 9,
-                      letterSpacing: ".18em",
-                      fontWeight: 700,
-                      color: "#1D1913",
-                      background: sc,
-                      padding: "5px 10px",
-                      borderRadius: 999,
-                    }}
-                  >
-                    {b.status}
-                  </span>
-                  <span
-                    className="font-mono"
-                    style={{ fontSize: 9.5, letterSpacing: ".16em", color: "rgba(246,241,230,.5)" }}
-                  >
-                    {county.name.toUpperCase()} CO.
-                  </span>
-                </div>
-                <div
-                  className="font-serif"
-                  style={{ fontWeight: 900, fontSize: 25, lineHeight: 1.05 }}
-                >
-                  {b.name}
-                </div>
-                <div
-                  className="font-mono"
-                  style={{
-                    fontSize: 10.5,
-                    letterSpacing: ".1em",
-                    color: "#E88D6B",
-                    marginTop: 6,
-                  }}
-                >
-                  {city.name}, TX
-                </div>
-                <p
-                  style={{
-                    fontSize: 13.5,
-                    lineHeight: 1.6,
-                    color: "rgba(246,241,230,.72)",
-                    margin: "14px 0 18px",
-                    flex: 1,
-                  }}
-                >
-                  {b.note}
-                </p>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "baseline",
-                    borderTop: "1px solid rgba(246,241,230,.16)",
-                    paddingTop: 14,
-                  }}
-                >
-                  <span>
-                    <span
-                      className="font-mono"
-                      style={{ fontSize: 8.5, letterSpacing: ".2em", color: "rgba(246,241,230,.5)" }}
-                    >
-                      FROM
-                    </span>
-                    <span
-                      className="font-serif"
-                      style={{ fontWeight: 800, fontSize: 22, color: "#F6F1E6", marginLeft: 8 }}
-                    >
-                      {b.from}
-                    </span>
-                  </span>
-                  <span
-                    className="font-mono"
-                    style={{ fontSize: 10.5, color: "rgba(246,241,230,.6)" }}
-                  >
-                    {b.builders} BUILDERS
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+          <Link
+            href="/new-builds"
+            style={{
+              background: "#D9481F",
+              color: "#F6F1E6",
+              textDecoration: "none",
+              border: "2px solid #D9481F",
+              borderRadius: 999,
+              padding: "15px 28px",
+              fontWeight: 700,
+              fontSize: 15,
+              letterSpacing: ".01em",
+              boxShadow: "0 10px 24px rgba(217,72,31,.26)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Search All New Construction
+          </Link>
+          <Link
+            href="/new-builds#directory"
+            className="font-mono"
+            style={{
+              color: "rgba(246,241,230,.75)",
+              textDecoration: "none",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: ".16em",
+              borderBottom: "1.5px solid rgba(246,241,230,.4)",
+              paddingBottom: 3,
+              whiteSpace: "nowrap",
+            }}
+          >
+            BROWSE ALL {newBuilds.length} COMMUNITIES →
+          </Link>
         </div>
       </div>
     </section>

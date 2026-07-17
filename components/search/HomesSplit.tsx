@@ -34,7 +34,22 @@ export default function HomesSplit({
   initialView?: "list" | "map";
 }) {
   const [view, setView] = useState<"list" | "map">(initialView);
+  const [splitInView, setSplitInView] = useState(true);
   const splitRef = useRef<HTMLDivElement>(null);
+
+  /* The floating LIST/MAP toggle is position:fixed, so on surfaces with
+     editorial content below the split (/land, /new-builds) it would hover over
+     that content. Fade it out once the split leaves the viewport center — it's
+     only meaningful while the map/list split is what you're looking at. */
+  useEffect(() => {
+    const el = splitRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setSplitInView(e.isIntersecting), {
+      rootMargin: "-45% 0px -45% 0px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   /* Measure the real sticky header. A stale React tree can leave duplicate
      0-height copies of these bars in the DOM, so take the first LAID-OUT
@@ -105,6 +120,7 @@ export default function HomesSplit({
         /* toggle semantics: pressed === the map is the active view; the label
            says what pressing it does, so both state and action are spoken */
         aria-pressed={mapMode}
+        aria-hidden={!splitInView}
         aria-label={mapMode ? "Showing map. Switch to list view." : "Showing list. Switch to map view."}
         style={{
           position: "fixed",
@@ -122,6 +138,11 @@ export default function HomesSplit({
           padding: "14px 26px",
           boxShadow: "0 14px 30px rgba(29,25,19,.35)",
           cursor: "pointer",
+          // fade out (and stop intercepting taps) once scrolled past the split
+          // into any editorial content below
+          opacity: splitInView ? 1 : 0,
+          pointerEvents: splitInView ? "auto" : "none",
+          transition: "opacity .2s ease",
         }}
       >
         {mapMode ? (

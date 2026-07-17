@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   if (isLiveMls) {
     entries.push({ url: `${SITE_URL}/homes`, changeFrequency: "daily", priority: 0.9 });
     entries.push({ url: `${SITE_URL}/land`, changeFrequency: "daily", priority: 0.7 });
+    entries.push({ url: `${SITE_URL}/new-builds`, changeFrequency: "daily", priority: 0.8 });
   }
   for (const c of cities) {
     entries.push({

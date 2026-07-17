@@ -309,20 +309,23 @@ body {
   }
 }
 
-/* ---------- /land due-diligence guide grid ---------- */
-.land-guide-grid {
+/* ---------- guide grids (/land due-diligence, /new-builds education) ---------- */
+.land-guide-grid,
+.nb-guide-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px 40px;
 }
 @media (max-width: 900px) {
-  .land-guide-grid {
+  .land-guide-grid,
+  .nb-guide-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 22px 30px;
   }
 }
 @media (max-width: 560px) {
-  .land-guide-grid {
+  .land-guide-grid,
+  .nb-guide-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }

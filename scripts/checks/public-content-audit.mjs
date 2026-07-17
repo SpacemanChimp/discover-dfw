@@ -317,6 +317,7 @@ function classify(p, text) {
   if (p === "/") return "homepage";
   if (p === "/homes" || p.startsWith("/homes?")) return "homes-search";
   if (p === "/land" || p.startsWith("/land?")) return "land-search";
+  if (p === "/new-builds" || p.startsWith("/new-builds?") || p.startsWith("/new-builds#")) return "new-builds-search";
   let m = p.match(/^\/city\/([^/?]+)\/homes/);
   if (m) return "city-homes-search";
   m = p.match(/^\/city\/([^/?]+)\/([^/?]+)$/);
@@ -358,6 +359,7 @@ const SOURCE_HINTS = {
   "new-build-report": "app/city/[slug]/[hood]/page.tsx + lib/dfw.data.json (newBuilds) + lib/hood-content.json",
   "homes-search": "app/homes/page.tsx + components/search/MapRoom.tsx",
   "land-search": "app/land/page.tsx + components/search/LandRoom.tsx",
+  "new-builds-search": "app/new-builds/page.tsx + components/search/NewBuildsRoom.tsx",
   "city-homes-search": "app/city/[slug]/homes/page.tsx + components/city-homes/*",
   listing: "app/listing/[listingKey]/page.tsx + components/listing/* + lib/compliance.ts",
   other: "",
@@ -370,6 +372,7 @@ const RANK_FILES = {
   "city-report": ["app/city/[slug]/page.tsx", "lib/dfw.data.json"],
   "homes-search": ["components/search/MapRoom.tsx", "app/homes/page.tsx"],
   "land-search": ["components/search/LandRoom.tsx", "app/land/page.tsx"],
+  "new-builds-search": ["components/search/NewBuildsRoom.tsx", "components/newbuild", "app/new-builds/page.tsx"],
   "city-homes-search": ["app/city/[slug]/homes/page.tsx", "components/city-homes/CityMarketMiniSnapshot.tsx"],
   homepage: ["components/StatsBand.tsx", "components/InteractiveMap.tsx", "components/Footer.tsx", "app/page.tsx"],
   listing: ["components/listing", "lib/compliance.ts"],
@@ -437,7 +440,7 @@ function checkPage(page, sourceFindings) {
 
   // MLS "TBD <street>" addresses on search/listing surfaces are feed data,
   // not unfinished copy — record once as a low-severity data artifact.
-  const searchLike = ["homes-search", "land-search", "city-homes-search", "listing"].includes(pageType);
+  const searchLike = ["homes-search", "land-search", "new-builds-search", "city-homes-search", "listing"].includes(pageType);
   const tbd = searchLike ? tbdIsMlsAddress(text) : { any: false, allAddresses: false };
   if (tbd.any && tbd.allAddresses) {
     addIssue({

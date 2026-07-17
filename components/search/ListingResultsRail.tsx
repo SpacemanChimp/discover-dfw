@@ -15,6 +15,7 @@ export default function ListingResultsRail({
   statuses,
   sourceNote,
   land = false,
+  newBuilds = false,
 }: {
   result: SearchResult;
   city?: City;
@@ -25,9 +26,15 @@ export default function ListingResultsRail({
   sourceNote?: string;
   /** Land mode (/land): land-aware cards, header noun, and empty state. */
   land?: boolean;
+  /** New-construction mode (/new-builds): new-build header noun. */
+  newBuilds?: boolean;
 }) {
   const scope = resultScopeLabel(statuses);
-  const noun = land ? (result.total === 1 ? "land listing" : "land listings") : scope.noun;
+  const noun = land
+    ? result.total === 1 ? "land listing" : "land listings"
+    : newBuilds
+      ? result.total === 1 ? "new-construction home" : "new-construction homes"
+      : scope.noun;
   return (
     <>
       {city && countyName ? (

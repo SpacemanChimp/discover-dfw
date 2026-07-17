@@ -7,7 +7,7 @@ import { Wordmark } from "./Logo";
    `href` entries route to their own page and are skipped by the observer. */
 const LINKS: { id: string; label: string; href?: string }[] = [
   { id: "map", label: "THE MAP" },
-  { id: "new-builds", label: "NEW BUILDS" },
+  { id: "new-builds", label: "NEW BUILDS", href: "/new-builds" },
   { id: "land", label: "LAND", href: "/land" },
   { id: "cities", label: "THE INDEX" },
   { id: "about", label: "ABOUT" },

@@ -189,16 +189,26 @@ export default function SearchToolbar({
   query,
   citySlug,
   propertyTypes,
+  basePath = "/homes",
+  lockNewBuilds = false,
 }: {
   query: SearchFilters;
   /** When set, we're on /city/[slug]/homes and city is fixed by the path. */
   citySlug?: string;
   propertyTypes: string[];
+  /** Where non-city navigations land. Default "/homes"; "/new-builds" keeps
+      the new-construction surface. City picks still move to /city/x/homes. */
+  basePath?: string;
+  /** /new-builds: the new-construction filter is the page premise — keep it on
+      through every change (incl. Clear) and show it as a static active chip
+      instead of a toggle. */
+  lockNewBuilds?: boolean;
 }) {
   const router = useRouter();
 
   const navigate = (patch: Partial<SearchFilters>) => {
     const q = { ...query, ...patch };
+    if (lockNewBuilds) q.newBuildsOnly = true; // the surface's premise never toggles off
     // In the Map Room (/homes) every change stays in the Map Room — the
     // map is the point. Only the dedicated /city/[slug]/homes pages keep
     // their path form (and switching city there moves to the new city).
@@ -209,7 +219,7 @@ export default function SearchToolbar({
       : undefined;
     // one canonical serializer shared with the server-side parser
     const qs = searchFiltersToQueryString(q, !!target);
-    const path = target ? `/city/${target}/homes` : "/homes";
+    const path = target ? `/city/${target}/homes` : basePath;
     router.push(qs ? `${path}?${qs}` : path);
   };
 
@@ -233,8 +243,9 @@ export default function SearchToolbar({
         q: undefined,
         radiusMiles: undefined,
         polygon: undefined,
+        newBuildsOnly: lockNewBuilds ? true : query.newBuildsOnly,
       });
-      router.push(qs ? `/homes?${qs}` : "/homes");
+      router.push(qs ? `${basePath}?${qs}` : basePath);
     } else if (it.kind === "district") {
       const qs = searchFiltersToQueryString({
         ...query,
@@ -245,8 +256,9 @@ export default function SearchToolbar({
         q: undefined,
         radiusMiles: undefined,
         polygon: undefined,
+        newBuildsOnly: lockNewBuilds ? true : query.newBuildsOnly,
       });
-      router.push(qs ? `/homes?${qs}` : "/homes");
+      router.push(qs ? `${basePath}?${qs}` : basePath);
     }
   };
   const onRawSubmit = (value: string) => {
@@ -267,14 +279,18 @@ export default function SearchToolbar({
   const hasActiveFilters = !!(
     query.minPrice || query.maxPrice || query.minBeds || query.minBaths ||
     query.minSqft || query.maxSqft || query.propertyType || query.statuses?.length ||
-    query.newBuildsOnly || query.q || query.radiusMiles || query.polygon ||
+    // when the surface locks new-builds on, it isn't a "clearable" filter
+    (lockNewBuilds ? false : query.newBuildsOnly) || query.q || query.radiusMiles || query.polygon ||
     query.school || query.district
   );
   const clearAll = () =>
     navigate({
       minPrice: undefined, maxPrice: undefined, minBeds: undefined, minBaths: undefined,
       minSqft: undefined, maxSqft: undefined, propertyType: undefined, statuses: undefined,
-      newBuildsOnly: undefined, q: undefined, radiusMiles: undefined, sort: undefined,
+      // on /new-builds the new-construction filter is the premise — Clear
+      // resets everything else but keeps it (navigate() re-forces it too)
+      newBuildsOnly: lockNewBuilds ? true : undefined,
+      q: undefined, radiusMiles: undefined, sort: undefined,
       polygon: undefined, school: undefined, schoolLevel: undefined, district: undefined,
     });
 
@@ -686,22 +702,41 @@ export default function SearchToolbar({
         <option value="sqft-desc">LARGEST FIRST</option>
       </select>
 
-      <button
-        type="button"
-        onClick={() => navigate({ newBuildsOnly: query.newBuildsOnly ? undefined : true })}
-        aria-pressed={!!query.newBuildsOnly}
-        className="font-mono"
-        style={{
-          ...pill,
-          fontSize: 11,
-          letterSpacing: ".1em",
-          background: query.newBuildsOnly ? "#1D1913" : "#FBF7EE",
-          color: query.newBuildsOnly ? "#F6F1E6" : "rgba(29,25,19,.65)",
-          borderColor: query.newBuildsOnly ? "#1D1913" : "rgba(29,25,19,.4)",
-        }}
-      >
-        NEW BUILDS
-      </button>
+      {lockNewBuilds ? (
+        // the /new-builds surface premise — active, not a toggle
+        <span
+          className="font-mono"
+          aria-label="Filtered to new construction"
+          style={{
+            ...pill,
+            cursor: "default",
+            fontSize: 11,
+            letterSpacing: ".1em",
+            background: "#1D1913",
+            color: "#F6F1E6",
+            borderColor: "#1D1913",
+          }}
+        >
+          ✳ NEW CONSTRUCTION
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => navigate({ newBuildsOnly: query.newBuildsOnly ? undefined : true })}
+          aria-pressed={!!query.newBuildsOnly}
+          className="font-mono"
+          style={{
+            ...pill,
+            fontSize: 11,
+            letterSpacing: ".1em",
+            background: query.newBuildsOnly ? "#1D1913" : "#FBF7EE",
+            color: query.newBuildsOnly ? "#F6F1E6" : "rgba(29,25,19,.65)",
+            borderColor: query.newBuildsOnly ? "#1D1913" : "rgba(29,25,19,.4)",
+          }}
+        >
+          NEW BUILDS
+        </button>
+      )}
 
       {hasActiveFilters && (
         <button
