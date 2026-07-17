@@ -12,7 +12,8 @@
    ARIA combobox pattern: role=combobox + aria-expanded/-controls/
    -activedescendant on the input, role=listbox/option on the menu, full
    arrow/Enter/Esc keyboard support. */
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { cities } from "@/lib/dfw-data";
 import { searchFiltersToQueryString } from "@/lib/mls/url";
@@ -219,6 +220,33 @@ export default function SearchTypeahead({
     onOpenChange?.(showMenu);
   }, [showMenu, onOpenChange]);
 
+  // The dropdown is PORTALED to <body> so it escapes every parent stacking
+  // context (the hero's CTA row, the city ticker, the Leaflet map…) and can
+  // never be clipped or painted over. Track the anchor rect in viewport
+  // coords for the fixed-position menu; recompute on scroll/resize.
+  const [rect, setRect] = useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!showMenu) return;
+    const measure = () => {
+      const r = rootRef.current?.getBoundingClientRect();
+      if (r) {
+        const top = r.bottom + 8;
+        // never spill past the viewport bottom — cap the height to the space
+        // below the input so the menu scrolls internally instead of running
+        // off-screen on short viewports
+        const maxHeight = Math.min(460, Math.max(180, window.innerHeight - top - 12));
+        setRect({ top, left: r.left, width: r.width, maxHeight });
+      }
+    };
+    measure();
+    window.addEventListener("scroll", measure, true);
+    window.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("scroll", measure, true);
+      window.removeEventListener("resize", measure);
+    };
+  }, [showMenu]);
+
   // group consecutive items by section for headers
   const groups: { section: string; items: Item[] }[] = [];
   for (const it of items) {
@@ -296,7 +324,10 @@ export default function SearchTypeahead({
         )}
       </form>
 
-      {showMenu && (
+      {showMenu &&
+        rect &&
+        typeof document !== "undefined" &&
+        createPortal(
         <ul
           id={listId}
           role="listbox"
@@ -305,11 +336,12 @@ export default function SearchTypeahead({
             if (blurTimer.current) clearTimeout(blurTimer.current);
           }}
           style={{
-            position: "absolute",
-            top: "calc(100% + 8px)",
-            left: 0,
-            right: 0,
-            zIndex: 60,
+            position: "fixed",
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            // above the map (400+), the toolbar boost (1500), and anything else
+            zIndex: 2000,
             margin: 0,
             padding: "6px 0",
             listStyle: "none",
@@ -317,7 +349,7 @@ export default function SearchTypeahead({
             border: `2px solid ${INK}`,
             borderRadius: 18,
             boxShadow: "0 22px 48px rgba(20,16,10,.24)",
-            maxHeight: "min(64vh, 460px)",
+            maxHeight: rect.maxHeight,
             overflowY: "auto",
             textAlign: "left",
           }}
@@ -362,8 +394,9 @@ export default function SearchTypeahead({
               </ul>
             </li>
           ))}
-        </ul>
-      )}
+        </ul>,
+          document.body
+        )}
     </div>
   );
 }
