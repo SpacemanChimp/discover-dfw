@@ -3,13 +3,21 @@ import { getSupabaseAdmin } from "@/lib/db/admin";
 import { currentUserId, EMAIL_RE, looksLikeSpam, recordLeadEvent } from "@/lib/leads";
 import { sendShowingRequestEmails } from "@/lib/email/lead-emails";
 import { pushLeadToFub } from "@/lib/crm/fub";
+import { chicagoTodayISO, validateRequestedDay, SHOWING_MAX_DAYS } from "@/lib/showing/dates";
 
 /* Showing requests — a REQUEST, not a confirmed booking; a local guide
-   confirms. Guests submit with name/email; signed-in users get attached
-   by session. Writes via the secret-key client (no anon RLS door). */
+   confirms the exact time with the buyer and the listing agent. Guests submit
+   with name/email; signed-in users get attached by session. Writes via the
+   secret-key client (no anon RLS door). */
 
 const TIME_WINDOWS = new Set(["Morning", "Midday", "Evening"]);
 const MODES = new Set(["in_person", "live_video"]);
+const DATE_SOURCES = new Set(["quick", "calendar"]);
+const DATE_REASON: Record<string, string> = {
+  malformed: "That date isn't valid",
+  past: "Pick a date that hasn't passed",
+  "out-of-range": `Pick a date within the next ${SHOWING_MAX_DAYS} days`,
+};
 
 interface Body {
   listingKey?: string;
@@ -19,6 +27,10 @@ interface Body {
   requestedDay?: string;
   timeWindow?: string;
   mode?: string;
+  /** IANA timezone of the buyer's device, e.g. "America/Chicago". */
+  timezone?: string;
+  /** "quick" (one of the three chips) or "calendar" (the picker). */
+  dateSource?: string;
   name?: string;
   email?: string;
   phone?: string;
@@ -28,6 +40,8 @@ interface Body {
   sessionId?: string;
   hp?: string;
   openedAt?: number;
+  /** Preview only: validate + echo the payload, write/send NOTHING. */
+  dryRun?: boolean;
 }
 
 export async function POST(req: Request) {
@@ -44,19 +58,49 @@ export async function POST(req: Request) {
   const name = (body.name || "").trim();
   const email = (body.email || "").trim().toLowerCase();
   const day = (body.requestedDay || "").trim();
+  // captured, never trusted for range math (server re-derives Chicago "today")
+  const timezone = (body.timezone || "").trim().slice(0, 64) || null;
+  const dateSource = DATE_SOURCES.has(body.dateSource || "") ? body.dateSource! : "quick";
 
   if (!body.listingKey) return NextResponse.json({ ok: false, error: "Missing listing" }, { status: 400 });
   if (!name) return NextResponse.json({ ok: false, error: "Add your name so the guide knows who's coming" }, { status: 400 });
   if (!EMAIL_RE.test(email)) return NextResponse.json({ ok: false, error: "That email doesn't look right" }, { status: 400 });
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || Number.isNaN(Date.parse(day)))
-    return NextResponse.json({ ok: false, error: "Pick a day" }, { status: 400 });
-  const daysOut = (Date.parse(day) - Date.now()) / 86_400_000;
-  if (daysOut < -1 || daysOut > 30)
-    return NextResponse.json({ ok: false, error: "Pick a day in the next few weeks" }, { status: 400 });
+  // re-validate the date on the server against Chicago "today" — a tampered
+  // past or far-future value is rejected even if the client was bypassed
+  const dateCheck = validateRequestedDay(day, chicagoTodayISO());
+  if (!dateCheck.ok)
+    return NextResponse.json({ ok: false, error: DATE_REASON[dateCheck.reason] || "Pick a valid date" }, { status: 400 });
   if (!TIME_WINDOWS.has(body.timeWindow || ""))
     return NextResponse.json({ ok: false, error: "Pick a time of day" }, { status: 400 });
   if (!MODES.has(body.mode || ""))
     return NextResponse.json({ ok: false, error: "Pick in person or live video" }, { status: 400 });
+
+  // dry-run: the payload we WOULD store/email/push, with nothing written or
+  // sent. Lets production be verified without submitting a real showing.
+  if (body.dryRun === true) {
+    return NextResponse.json({
+      ok: true,
+      dryRun: true,
+      wouldSubmit: {
+        listingKey: body.listingKey,
+        address: body.address ?? null,
+        requestedDay: day,
+        timeWindow: body.timeWindow,
+        mode: body.mode,
+        timezone,
+        dateSource,
+        name,
+        email,
+        phone: (body.phone || "").trim() || null,
+        message: (body.message || "").trim().slice(0, 2000) || null,
+        citySlug: (body.citySlug || "").trim() || null,
+        community: (body.community || "").trim() || null,
+        sourcePage: (body.sourcePage || "").slice(0, 300) || null,
+        referrer: (body.referrer || "").slice(0, 300) || null,
+        sessionId: (body.sessionId || "").trim() || null,
+      },
+    });
+  }
 
   const admin = getSupabaseAdmin();
   if (!admin) {
@@ -91,7 +135,7 @@ export async function POST(req: Request) {
     listingKey: body.listingKey,
     citySlug: (body.citySlug || "").trim() || null,
     sourcePage: (body.sourcePage || "").slice(0, 300),
-    metadata: { day, timeWindow: body.timeWindow, mode: body.mode, address: body.address ?? null },
+    metadata: { day, timeWindow: body.timeWindow, mode: body.mode, address: body.address ?? null, timezone, dateSource },
   });
 
   // row is stored — email failures can only cost the heads-up, never the lead
@@ -127,6 +171,8 @@ export async function POST(req: Request) {
     requestedDay: day,
     timeWindow: body.timeWindow,
     tourMode: body.mode,
+    timezone,
+    dateSource,
   });
 
   return NextResponse.json({ ok: true });

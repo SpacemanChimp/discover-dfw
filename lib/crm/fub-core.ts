@@ -40,6 +40,10 @@ export interface NormalizedLead {
   requestedDay?: string | null;
   timeWindow?: string | null;
   tourMode?: string | null;
+  /** Buyer's device timezone (IANA), e.g. "America/Chicago". */
+  timezone?: string | null;
+  /** Whether the date came from a quick choice or the calendar picker. */
+  dateSource?: string | null;
   /* listing-question specifics */
   replyPref?: string | null; // "text" | "email"
   /* guide-request specifics (contextual conversion components) */
@@ -205,8 +209,10 @@ export function buildSummary(lead: NormalizedLead, page: PageContext): string {
   if (communityBit) lines.push(`${page.pageType === "new-build" ? "Community" : "Neighborhood"}: ${communityBit}`);
   if (lead.kind === "showing_request" && lead.requestedDay) {
     lines.push(
-      `Requested: ${lead.requestedDay}, ${lead.timeWindow || "any time"}${lead.tourMode ? `, ${MODE_LABEL[lead.tourMode] || lead.tourMode}` : ""}`
+      `Requested: ${lead.requestedDay}, ${lead.timeWindow || "any time"}${lead.tourMode ? `, ${MODE_LABEL[lead.tourMode] || lead.tourMode}` : ""} (a request — time to be confirmed)`
     );
+    if (lead.timezone) lines.push(`Buyer timezone: ${lead.timezone}`);
+    if (lead.dateSource) lines.push(`Date chosen via: ${lead.dateSource === "calendar" ? "calendar picker" : "quick date"}`);
   }
   if (lead.replyPref) lines.push(`Prefers reply by: ${lead.replyPref}`);
   if (lead.budget) lines.push(`Budget: ${lead.budget}`);

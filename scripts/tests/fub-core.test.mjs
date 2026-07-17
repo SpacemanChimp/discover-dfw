@@ -42,6 +42,8 @@ const showingLead = {
   requestedDay: "2026-07-18",
   timeWindow: "Morning",
   tourMode: "in_person",
+  timezone: "America/Chicago",
+  dateSource: "calendar",
 };
 
 const questionLead = {
@@ -160,7 +162,9 @@ test("showing request maps to a Property Inquiry with every required context", (
   assert.ok(p.person.tags.includes("offer:showing-request"));
   // readable summary preserves the ask
   assert.match(p.description, /Showing request via DiscoverDFW/);
-  assert.match(p.description, /Requested: 2026-07-18, Morning, in person/); // timeline of the request
+  assert.match(p.description, /Requested: 2026-07-18, Morning, in person \(a request — time to be confirmed\)/);
+  assert.match(p.description, /Buyer timezone: America\/Chicago/);
+  assert.match(p.description, /Date chosen via: calendar picker/);
   assert.match(p.description, /City: Celina/);
   assert.match(p.description, /Consent: email transactional, SMS none/);
   assert.match(p.description, /Submitted: 2026-07-15/);

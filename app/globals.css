@@ -241,6 +241,38 @@ body {
 /* map city label lift its parent link cursor */
 .map-city { cursor: pointer; }
 
+/* ---------- lead sheets (showing request / question) ---------- */
+.lead-sheet {
+  animation: fadeUp 0.3s ease both;
+}
+/* native date control inside the showing sheet — matched to the field-guide
+   inputs, with clear focus/hover/disabled states (the picker itself is the
+   browser's own accessible calendar; we only style the surrounding field) */
+.showing-date-input {
+  min-height: 46px; /* comfortable touch target */
+  cursor: pointer;
+}
+.showing-date-input:hover {
+  border-color: #d9481f;
+}
+.showing-date-input:focus-visible {
+  border-color: #d9481f;
+  box-shadow: 0 0 0 3px rgba(217, 72, 31, 0.25);
+}
+.showing-date-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.showing-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lead-sheet {
+    animation: none;
+  }
+}
+
 /* ---------- the one CTA per page (listing-page treatment) ---------- */
 /* primary + one smaller secondary: side by side and CENTRED on anything
    wider than a phone, a clean full-width stack below. nowrap (not wrap) is
