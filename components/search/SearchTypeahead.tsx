@@ -1,10 +1,13 @@
 "use client";
 /* The field-guide search typeahead — replaces the native <datalist> (the
-   unstyled browser bar) with a categorized, keyboard-accessible combobox
-   built from our own data: cities, neighborhoods, new-build communities,
-   and schools (instant, client-side) plus live listing ADDRESSES (debounced
-   /api/search-suggest). Signed-in visitors also see their saved homes,
-   saved searches, and recent searches; guests don't.
+   unstyled browser bar) with a categorized, keyboard-accessible combobox.
+   Cities, neighborhoods, and new-build communities come instant + client-side
+   (navigational, editorial). SCHOOLS, DISTRICTS, and listing ADDRESSES come
+   from the MLS store via the debounced /api/search-suggest route — the school
+   and district options are the distinct values actually reported across
+   on-market listings, so they can't drift from the data. Signed-in visitors
+   also see their saved homes, saved searches, and recent searches; guests
+   don't.
 
    Selecting a school routes to a metro-wide homes search filtered to every
    listing whose MLS record reports that school (schools cross city lines;
@@ -27,7 +30,7 @@ const INK = "#1D1913";
 const ORANGE = "#C13E17";
 
 type Item = Suggestion & { section: string; icon: IconName };
-type IconName = "pin" | "school" | "home" | "heart" | "clock" | "saved-search";
+type IconName = "pin" | "school" | "district" | "home" | "heart" | "clock" | "saved-search";
 
 /* ---- inline icons (match the site's thin-stroke SVG language) ---- */
 function Icon({ name }: { name: IconName }) {
@@ -38,6 +41,9 @@ function Icon({ name }: { name: IconName }) {
       return (<svg viewBox="0 0 20 20" style={box} aria-hidden="true"><path {...p} d="M10 18s6-5.3 6-10a6 6 0 10-12 0c0 4.7 6 10 6 10z" /><circle {...p} cx="10" cy="8" r="2" /></svg>);
     case "school":
       return (<svg viewBox="0 0 20 20" style={box} aria-hidden="true"><path {...p} d="M10 3 2 7l8 4 8-4-8-4z" /><path {...p} d="M5 9v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V9" /></svg>);
+    case "district":
+      // civic building (columns) — reads as "district", distinct from a single school
+      return (<svg viewBox="0 0 20 20" style={box} aria-hidden="true"><path {...p} d="M3 8l7-4 7 4" /><path {...p} d="M4 8v7m4-7v7m4-7v7m4-7v7" /><path {...p} d="M3 16h14" /></svg>);
     case "home":
       return (<svg viewBox="0 0 20 20" style={box} aria-hidden="true"><path {...p} d="M3 9l7-5 7 5" /><path {...p} d="M5 8.5V16h10V8.5" /></svg>);
     case "heart":
@@ -49,7 +55,7 @@ function Icon({ name }: { name: IconName }) {
   }
 }
 
-const ICON_FOR: Record<Suggestion["kind"], IconName> = { city: "pin", neighborhood: "pin", "new-build": "home", school: "school", address: "home" } as Record<Suggestion["kind"], IconName>;
+const ICON_FOR: Record<Suggestion["kind"], IconName> = { city: "pin", neighborhood: "pin", "new-build": "home", school: "school", district: "district", address: "home" } as Record<Suggestion["kind"], IconName>;
 
 interface Recent {
   label: string;
@@ -88,7 +94,7 @@ export default function SearchTypeahead({
   initialValue?: string;
   /** when set, a city/school pick calls this (to MERGE into active filters)
       instead of navigating; page picks still navigate. Toolbar mode. */
-  onPick?: (it: { kind: Suggestion["kind"]; citySlug?: string; schoolName?: string; schoolLevel?: Suggestion["schoolLevel"]; href: string }) => void;
+  onPick?: (it: { kind: Suggestion["kind"]; citySlug?: string; schoolName?: string; schoolLevel?: Suggestion["schoolLevel"]; districtName?: string; href: string }) => void;
   /** when set, a raw keyword submit calls this instead of the default route */
   onRawSubmit?: (q: string) => void;
   /** fires when the dropdown opens/closes — the toolbar uses it to lift its
@@ -152,12 +158,20 @@ export default function SearchTypeahead({
       return out;
     }
     for (const s of staticSuggestions(q, 8)) out.push({ ...s, section: sectionFor(s.kind), icon: ICON_FOR[s.kind] });
-    for (const s of live.slice(0, 5)) out.push({ ...s, section: "Addresses", icon: "home" });
+    // live = MLS-sourced schools + districts + addresses (from /api/search-suggest)
+    for (const s of live.slice(0, 14)) out.push({ ...s, section: sectionFor(s.kind), icon: ICON_FOR[s.kind] });
     return out;
   }, [query, live, recent, signedIn, savedCount, shelf.searches]);
 
   function sectionFor(kind: Suggestion["kind"]): string {
-    return kind === "city" ? "Cities" : kind === "school" ? "Schools" : kind === "new-build" ? "New-build communities" : "Neighborhoods";
+    switch (kind) {
+      case "city": return "Cities";
+      case "school": return "Schools";
+      case "district": return "School districts";
+      case "new-build": return "New-build communities";
+      case "address": return "Addresses";
+      default: return "Neighborhoods";
+    }
   }
 
   useEffect(() => {
@@ -168,11 +182,11 @@ export default function SearchTypeahead({
     pushRecent({ label: it.label, sublabel: it.sublabel, href: it.href });
     setOpen(false);
     setActive(-1);
-    // toolbar mode: city/school picks merge into the active filters via the
-    // callback; everything else (neighborhood, new-build, address, saved)
-    // navigates to its own page regardless.
-    if (onPick && (it.kind === "city" || it.kind === "school")) {
-      onPick({ kind: it.kind, citySlug: it.citySlug, schoolName: it.schoolName, schoolLevel: it.schoolLevel, href: it.href });
+    // toolbar mode: city/school/district picks merge into the active filters
+    // via the callback; everything else (neighborhood, new-build, address,
+    // saved) navigates to its own page regardless.
+    if (onPick && (it.kind === "city" || it.kind === "school" || it.kind === "district")) {
+      onPick({ kind: it.kind, citySlug: it.citySlug, schoolName: it.schoolName, schoolLevel: it.schoolLevel, districtName: it.districtName, href: it.href });
       return;
     }
     router.push(it.href);

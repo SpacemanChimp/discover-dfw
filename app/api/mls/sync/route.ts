@@ -36,7 +36,10 @@ import {
    - ?limit=N      stop after ~N records — small first runs.
    - ?reconcile=1  no paging; diff feed on-market keys vs local rows and
                    mark local-only ones OffMarket (hard-deleted records
-                   never emit a status flip). Composes with dryrun. */
+                   never emit a status flip). Composes with dryrun.
+   - ?nomedia=1    skip the Media $expand and media writes — a fast repair
+                   walk when only scalar/raw fields (e.g. school/district)
+                   need re-populating; existing media rows are left intact. */
 
 export const maxDuration = 300; // Vercel Pro
 
@@ -168,6 +171,7 @@ export async function GET(req: Request) {
   const dryRun = reqUrl.searchParams.get("dryrun") === "1";
   const limit = Math.max(0, Number(reqUrl.searchParams.get("limit")) || 0);
   const reconcile = reqUrl.searchParams.get("reconcile") === "1";
+  const noMedia = reqUrl.searchParams.get("nomedia") === "1";
   const budgetParam = Number(reqUrl.searchParams.get("budget")) || TIME_BUDGET_MS;
   // Vercel serverless caps at maxDuration; only local/manual runs may go long
   const timeBudget = process.env.VERCEL ? Math.min(budgetParam, TIME_BUDGET_MS) : budgetParam;
@@ -302,7 +306,8 @@ export async function GET(req: Request) {
       const url =
         `${API_BASE}/Property?$filter=${encodeURIComponent(filter)}` +
         `&$orderby=${encodeURIComponent("ModificationTimestamp asc,ListingKey asc")}&$top=${pageSize}` +
-        `&$select=${SELECT}&$expand=${encodeURIComponent("Media($orderby=Order;$top=50)")}`;
+        `&$select=${SELECT}` +
+        (noMedia ? "" : `&$expand=${encodeURIComponent("Media($orderby=Order;$top=50)")}`);
 
       let rows: any[];
       try {
@@ -369,7 +374,9 @@ export async function GET(req: Request) {
         upserted += mapped.length;
       }
 
-      // media: replace wholesale per listing (feed order is authoritative)
+      // media: replace wholesale per listing (feed order is authoritative).
+      // Skipped in nomedia repair walks — existing media rows stay intact.
+      if (!noMedia) {
       const media = rows.flatMap((p: any) =>
         (Array.isArray(p.Media) ? p.Media : [])
           .filter((m: any) => m.MediaURL)
@@ -392,6 +399,7 @@ export async function GET(req: Request) {
         failed++;
         await logError("media", String(e));
         status = "partial";
+      }
       }
 
       const last = rows[rows.length - 1];

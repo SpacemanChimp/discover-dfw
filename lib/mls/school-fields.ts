@@ -19,6 +19,41 @@ export const RESO_SCHOOL_FIELDS = [
   "HighSchoolDistrict",
 ] as const;
 
+/** The three RESO district fields, in the order they map to the generated
+    columns high/middle/elementary_school_district (migration 0017). */
+export const RESO_DISTRICT_FIELDS = [
+  "HighSchoolDistrict",
+  "MiddleOrJuniorSchoolDistrict",
+  "ElementarySchoolDistrict",
+] as const;
+
+/** Normalize a school/district NAME for lookup + dedup only (never display).
+    Lowercases, drops punctuation, collapses whitespace, folds the standalone
+    level abbreviations (HS/MS/ES) to their long level word, and drops the
+    non-distinctive "school" token — so "Guyer HS", "Guyer High", and "Guyer
+    High School" collapse to one key, while distinctive parts of a name are
+    untouched ("Middle Creek", "Highland" are NOT mangled, since only 2-letter
+    whole-word abbreviations are folded). The canonical MLS-reported string is
+    preserved separately for display. Pure + client-safe. */
+export function normalizeSchoolKey(name: string): string {
+  let s =
+    " " +
+    (name || "")
+      .toLowerCase()
+      .replace(/[.'’`]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim() +
+    " ";
+  s = s
+    .replace(/ (h s|hs) /g, " high ")
+    .replace(/ (m s|ms) /g, " middle ")
+    .replace(/ (e s|es) /g, " elementary ")
+    .replace(/ (jr high|junior high) /g, " middle ")
+    .replace(/ school /g, " "); // never distinctive; "High School" == "High"
+  return s.replace(/\s+/g, " ").trim();
+}
+
 const clean = (v: unknown): string | undefined => {
   const s = typeof v === "string" ? v.trim() : "";
   return s && s.toLowerCase() !== "none" ? s : undefined;

@@ -146,6 +146,24 @@ function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean 
     const token = schoolMatchToken(f.school);
     if (token) query = query.ilike(col, `%${token}%`);
   }
+  // District filter — matches the MLS-reported district in ANY of the three
+  // indexed district columns (0017), so a listing that reports the same
+  // district across several fields is still returned once (single-row OR).
+  // City-independent (a district crosses city lines). Exact case-insensitive
+  // match on the canonical value; the value is double-quoted so commas/dots
+  // in a district name can't break the PostgREST or() grammar.
+  if (f.district && !opts?.skipCity) {
+    const v = f.district.replace(/["\\%]/g, " ").trim();
+    if (v) {
+      query = query.or(
+        [
+          `high_school_district.ilike."${v}"`,
+          `middle_school_district.ilike."${v}"`,
+          `elementary_school_district.ilike."${v}"`,
+        ].join(",")
+      );
+    }
+  }
 
   switch (f.propertyType) {
     case "Land":

@@ -11,10 +11,13 @@ export default function ListingResultsRail({
   result,
   city,
   countyName,
+  sourceNote,
 }: {
   result: SearchResult;
   city?: City;
   countyName?: string;
+  /** Source-qualification shown when a school/district filter is active. */
+  sourceNote?: string;
 }) {
   return (
     <>
@@ -34,6 +37,19 @@ export default function ListingResultsRail({
         >
           ALL OF DFW — {result.total} ACTIVE {result.total === 1 ? "HOME" : "HOMES"}
         </div>
+      )}
+      {sourceNote && (
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontSize: 11,
+            lineHeight: 1.55,
+            color: "rgba(29,25,19,.62)",
+            fontStyle: "italic",
+          }}
+        >
+          {sourceNote}
+        </p>
       )}
       {result.listings.map((l) => (
         <ListingCardLedger

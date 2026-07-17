@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { bySlug, countyById, cities, type City } from "@/lib/dfw-data";
 import { getMlsProvider, isLiveMls, PROPERTY_TYPE_OPTIONS } from "@/lib/mls";
 import type { SearchFilters, SearchResult } from "@/lib/mls/types";
+import { SCHOOL_SOURCE_NOTE } from "@/lib/compliance";
 import { searchFiltersToQueryString } from "@/lib/mls/url";
 import SearchNav from "./SearchNav";
 import SearchToolbar from "./SearchToolbar";
@@ -46,6 +47,9 @@ export default async function MapRoom({
   const county = city ? countyById[city.county] : undefined;
   const basePath = citySlug ? `/city/${citySlug}/homes` : "/homes";
   const pagerQs = searchFiltersToQueryString(effective, !!citySlug);
+  // source-qualification for the results surface when a school/district
+  // filter is active (required compliance copy — see lib/compliance)
+  const sourceNote = effective.school || effective.district ? SCHOOL_SOURCE_NOTE : undefined;
 
   if (!isLiveMls) {
     const [result, counts] = await Promise.all([
@@ -60,7 +64,7 @@ export default async function MapRoom({
           railDesktopOnly={!city}
           rail={
             <>
-              <ListingResultsRail result={result} city={city} countyName={county?.name} />
+              <ListingResultsRail result={result} city={city} countyName={county?.name} sourceNote={sourceNote} />
               <Pager
                 total={result.total}
                 page={result.page}
@@ -120,6 +124,7 @@ export default async function MapRoom({
               qs={pagerQs}
               leadHelp={leadHelp}
               leadCitySlug={effective.citySlug}
+              sourceNote={sourceNote}
             />
           </Suspense>
         }
@@ -245,6 +250,7 @@ async function RailResults({
   qs,
   leadHelp,
   leadCitySlug,
+  sourceNote,
 }: {
   resultPromise: Promise<SearchResult>;
   city?: City;
@@ -253,11 +259,12 @@ async function RailResults({
   qs: string;
   leadHelp?: boolean;
   leadCitySlug?: string;
+  sourceNote?: string;
 }) {
   const result = await resultPromise;
   return (
     <>
-      <ListingResultsRail result={result} city={city} countyName={countyName} />
+      <ListingResultsRail result={result} city={city} countyName={countyName} sourceNote={sourceNote} />
       <Pager
         total={result.total}
         page={result.page}

@@ -1,60 +1,49 @@
-/* Static search-suggestion index — cities, neighborhoods, new-build
-   communities, and schools, all from the editorial dataset that the client
-   already bundles (lib/dfw-data). Pure + client-safe: no network, no server
-   deps, so the typeahead filters ~600 entries instantly on every keystroke.
-   Live listing ADDRESSES come from a separate debounced API
-   (/api/search-suggest) since those need the MLS store.
+/* Static search-suggestion index — cities, neighborhoods, and new-build
+   communities, all from the editorial dataset that the client already
+   bundles (lib/dfw-data). Pure + client-safe: no network, no server deps, so
+   the typeahead filters these navigational entries instantly on every
+   keystroke.
 
-   Unit-tested by scripts/tests/search-suggest.test.mjs. */
+   SCHOOLS and DISTRICTS are deliberately NOT here: they are sourced from the
+   MLS feed itself (the distinct values actually reported across on-market
+   listings) via the debounced /api/search-suggest route, so the searchable
+   set can never drift from what the data contains. Live listing ADDRESSES
+   come from that same route. */
 import { cities, newBuilds } from "@/lib/dfw-data";
 import { slugifyHood } from "@/lib/slug";
 
-export type SuggestionKind = "city" | "neighborhood" | "new-build" | "school" | "address";
+export type SuggestionKind = "city" | "neighborhood" | "new-build" | "school" | "district" | "address";
 export type SchoolLevel = "elementary" | "middle" | "high";
 
 export interface Suggestion {
   kind: SuggestionKind;
-  /** primary line, e.g. "Denton High School" */
+  /** primary line, e.g. "Guyer High School" */
   label: string;
-  /** secondary line, e.g. "Denton, TX" */
+  /** secondary line, e.g. "HIGH SCHOOL · 279 listings" */
   sublabel: string;
   /** where selecting it goes (query string appended to /homes, or a path) */
   href: string;
   /** lowercased haystack for matching */
   hay: string;
   /** city context — lets an embedding toolbar MERGE the pick into active
-      filters instead of navigating away (city/school picks) */
+      filters instead of navigating away (city picks) */
   citySlug?: string;
-  /** school specifics (for the filter + results-page chip) */
+  /** school specifics (MLS-canonical name + level) — for the filter + chip */
   schoolName?: string;
   schoolLevel?: SchoolLevel;
+  /** district specifics (MLS-canonical district name) — for the filter + chip */
+  districtName?: string;
 }
-
-const LEVEL_MAP: Record<string, SchoolLevel> = {
-  elementary: "elementary",
-  middle: "middle",
-  high: "high",
-  "junior high": "middle",
-  intermediate: "elementary",
-};
-
-const LEVEL_WORD: Record<SchoolLevel, string> = {
-  elementary: "Elementary",
-  middle: "Middle",
-  high: "High",
-};
 
 function qs(params: Record<string, string>): string {
   return new URLSearchParams(params).toString();
 }
 
-/* Built once at module load. */
+/* Built once at module load. Navigational entries only (cities / hoods /
+   new-builds); schools + districts are MLS-sourced server-side. */
 export const SUGGEST_INDEX: Suggestion[] = (() => {
   const out: Suggestion[] = [];
   const nbByKey = new Set(newBuilds.map((nb) => `${nb.city}/${slugifyHood(nb.name)}`));
-  // A school can be listed under several cities it serves; the filter is
-  // city-independent, so collapse to one suggestion per (name, level).
-  const seenSchool = new Set<string>();
 
   for (const c of cities) {
     const cityLabel = `${c.name}, TX`;
@@ -78,23 +67,6 @@ export const SUGGEST_INDEX: Suggestion[] = (() => {
         hay: `${hoodName} ${c.name}`.toLowerCase(),
       });
     }
-    for (const [name, level] of c.schools) {
-      const lvl = LEVEL_MAP[(level || "").toLowerCase()] || "high";
-      const key = `${name.toLowerCase()}|${lvl}`;
-      if (seenSchool.has(key)) continue;
-      seenSchool.add(key);
-      out.push({
-        kind: "school",
-        // city-independent: a school search spans every city it serves, so
-        // route without a city and label with the district, not one town
-        label: name,
-        sublabel: `${LEVEL_WORD[lvl]} school · ${c.isd}`,
-        href: `/homes?${qs({ school: name, slevel: lvl })}`,
-        hay: `${name} ${c.name} ${c.isd}`.toLowerCase(),
-        schoolName: name,
-        schoolLevel: lvl,
-      });
-    }
   }
   for (const nb of newBuilds) {
     const city = cities.find((c) => c.slug === nb.city);
@@ -113,7 +85,7 @@ export const SUGGEST_INDEX: Suggestion[] = (() => {
 /* Ranking: prefix of the label wins, then a word-start match, then a loose
    contains. Ties break by kind priority (city > new-build > neighborhood >
    school) so the most navigational hits lead. */
-const KIND_RANK: Record<SuggestionKind, number> = { city: 0, "new-build": 1, neighborhood: 2, school: 3, address: 4 };
+const KIND_RANK: Record<SuggestionKind, number> = { city: 0, "new-build": 1, neighborhood: 2, school: 3, district: 4, address: 5 };
 
 export function scoreSuggestion(s: Suggestion, q: string): number {
   const label = s.label.toLowerCase();

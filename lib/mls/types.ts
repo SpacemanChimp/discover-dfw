@@ -153,13 +153,18 @@ export interface SearchFilters {
   newBuildsOnly?: boolean;
   /** Free-text keywords — remarks, address, subdivision. */
   q?: string;
-  /** Filter to listings whose MLS record REPORTS this school (never a
-      zoning claim — see lib/mls/school-fields.ts). City-scoped only:
-      always paired with citySlug so the match runs on the indexed
-      per-city subset, never the whole table. */
+  /** Filter to listings whose MLS record REPORTS this school in the field
+      for `schoolLevel` (never a zoning claim — see lib/mls/school-fields.ts).
+      Metro-wide via the indexed generated columns (migration 0016); a school
+      crosses city lines, so this is city-independent. */
   school?: string;
   /** Which reported school field to match against `school`. */
   schoolLevel?: "elementary" | "middle" | "high";
+  /** Filter to listings whose MLS record REPORTS this school DISTRICT in any
+      of the three district fields (migration 0017). City-independent; a
+      listing matching in several fields is returned once. Canonical
+      MLS-reported value (e.g. "Denton ISD"). Not a zoning claim. */
+  district?: string;
   /** Radius search in miles — centered on `center`, else the city centroid. */
   radiusMiles?: number;
   /** Explicit radius center [lon, lat] (e.g. "nearby this listing"). */

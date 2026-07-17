@@ -62,6 +62,15 @@ export const MOCK_FOOTER_DISCLAIMER =
 export const DISCLAIMER_RESERVED =
   "DISCLAIMER RESERVED — DEEMED RELIABLE, NOT GUARANTEED (LIVE FEED)";
 
+/* ---- school / district source qualification ---- */
+
+/** REQUIRED source-qualification for every school/district surface (search
+    chips, results header, listing school card). Uses "reported", never
+    "zoned"/"assigned"/guaranteed. Single source of truth. */
+export const SCHOOL_SOURCE_NOTE =
+  "Schools reported by this listing’s MLS record. School assignments and boundaries can change. " +
+  "Verify the specific address with the district.";
+
 /* ---- last-updated stamp ---- */
 
 export const formatUpdatedStamp = (iso: string) =>

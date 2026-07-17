@@ -1,4 +1,5 @@
 import type { ListingSchools } from "@/lib/mls/types";
+import { SCHOOL_SOURCE_NOTE } from "@/lib/compliance";
 
 /* "03 — SCHOOLS" — ONLY what the MLS listing record reports (RESO school
    fields). Launch-safe rules: never inferred from city/hood, no A-F ratings
@@ -41,8 +42,7 @@ export default function ListingSchoolsCard({
           Schools reported for this listing
         </div>
         <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.65, color: "rgba(29,25,19,.72)" }}>
-          School information comes from the MLS listing record. Verify current
-          assignments with the district before relying on them.
+          {SCHOOL_SOURCE_NOTE}
         </p>
         {rows.length > 0 ? (
           <div style={{ marginTop: 12 }}>

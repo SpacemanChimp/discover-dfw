@@ -59,6 +59,9 @@ export function parseSearchFilters(
     )
       ? (one("slevel") as "elementary" | "middle" | "high")
       : undefined,
+    // District is a standalone, city-independent filter (0017): matches the
+    // MLS-reported school district across any of the three district fields.
+    district: (one("district") || "").trim().slice(0, 120) || undefined,
     radiusMiles: [5, 10, 15, 25].includes(num("r") ?? 0) ? num("r") : undefined,
     // invalid poly strings parse to undefined silently — junk URLs just
     // fall back to the non-polygon search
@@ -86,6 +89,8 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
     params.set("school", f.school);
     if (f.schoolLevel) params.set("slevel", f.schoolLevel);
   }
+  // district (0017) — city-independent, serializes on its own
+  if (f.district) params.set("district", f.district);
   if (f.radiusMiles) params.set("r", String(f.radiusMiles));
   if (f.polygon?.length) params.set("poly", serializePolygon(f.polygon));
   return params.toString();
@@ -103,6 +108,7 @@ export function searchFiltersLabel(f: SearchFilters, cityName?: string): string 
   if (f.statuses?.[0]) parts.push(f.statuses[0].replace(/([A-Z])/g, " $1").trim().toLowerCase());
   if (f.newBuildsOnly) parts.push("new construction");
   if (f.school) parts.push(`served by ${f.school}`);
+  if (f.district) parts.push(`in ${f.district}`);
   if (f.q) parts.push(`“${f.q}”`);
   if (f.radiusMiles) parts.push(`within ${f.radiusMiles} mi`);
   if (f.polygon?.length) parts.push("custom area");

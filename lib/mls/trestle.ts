@@ -28,7 +28,7 @@ import type {
 } from "./types";
 import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
 import { boundingBox, polygonBounds, type LonLat } from "./geo";
-import { RESO_SCHOOL_FIELDS, schoolsFromReso } from "./school-fields";
+import { RESO_SCHOOL_FIELDS, schoolsFromReso, schoolMatchToken } from "./school-fields";
 import type { ListingSchools } from "./types";
 
 import { TRESTLE_ODATA_BASE_URL, TRESTLE_TOKEN_URL, trestleCredentials } from "./trestle-env";
@@ -183,6 +183,25 @@ function buildFilter(f: SearchFilters): string {
   if (f.minSqft != null) parts.push(`LivingArea ge ${f.minSqft}`);
   if (f.maxSqft != null) parts.push(`LivingArea le ${f.maxSqft}`);
   if (f.newBuildsOnly) parts.push("(NewConstructionYN eq true or YearBuilt ge 2024)");
+  // School — match the MLS-reported name in the level-specific field (parity
+  // with the local provider; not a zoning claim).
+  if (f.school) {
+    const field =
+      f.schoolLevel === "elementary"
+        ? "ElementarySchool"
+        : f.schoolLevel === "middle"
+        ? "MiddleOrJuniorSchool"
+        : "HighSchool";
+    const token = schoolMatchToken(f.school);
+    if (token) parts.push(`contains(${field},${q(token)})`);
+  }
+  // District — match in ANY of the three district fields (one row, one match).
+  if (f.district) {
+    const d = f.district;
+    parts.push(
+      `(contains(HighSchoolDistrict,${q(d)}) or contains(MiddleOrJuniorSchoolDistrict,${q(d)}) or contains(ElementarySchoolDistrict,${q(d)}))`
+    );
+  }
   if (f.q) {
     const term = f.q.trim(); // q() handles quote escaping
     if (term)

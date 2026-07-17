@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { cities } from "@/lib/dfw-data";
 import { RADIUS_OPTIONS } from "@/lib/mls/geo";
 import type { ListingStatus, PropertyType, SearchFilters, SortKey } from "@/lib/mls/types";
+import { SCHOOL_SOURCE_NOTE } from "@/lib/compliance";
 import { searchFiltersToQueryString, SLUG_BY_STATUS, STATUS_BY_SLUG } from "@/lib/mls/url";
 import SaveSearchButton from "./SaveSearchButton";
 import SearchTypeahead from "./SearchTypeahead";
@@ -213,20 +214,34 @@ export default function SearchToolbar({
   };
 
   /* Typeahead picks that stay in the search MERGE into the active filters
-     (preserve price/beds/etc). A city pick clears any prior school/keyword.
-     A school pick searches the WHOLE metro — schools cross city lines, so it
-     leaves any city page/scope and any radius/polygon behind and lands on
-     /homes with the school filter. Neighborhood / new-build / address picks
-     navigate to their own page inside the typeahead. A raw keyword submit
-     becomes a keyword search. */
-  const onPick = (it: { kind: string; citySlug?: string; schoolName?: string; schoolLevel?: "elementary" | "middle" | "high" }) => {
-    if (it.kind === "city") navigate({ citySlug: it.citySlug, q: undefined, school: undefined, schoolLevel: undefined });
+     (preserve price/beds/etc). A city pick clears any prior school/district/
+     keyword. A school OR district pick searches the WHOLE metro — schools and
+     districts cross city lines, so it leaves any city page/scope and any
+     radius/polygon behind and lands on /homes with that filter (and clears
+     the sibling school/district filter so they never stack). Neighborhood /
+     new-build / address picks navigate to their own page inside the
+     typeahead. A raw keyword submit becomes a keyword search. */
+  const onPick = (it: { kind: string; citySlug?: string; schoolName?: string; schoolLevel?: "elementary" | "middle" | "high"; districtName?: string }) => {
+    if (it.kind === "city") navigate({ citySlug: it.citySlug, q: undefined, school: undefined, schoolLevel: undefined, district: undefined });
     else if (it.kind === "school") {
       const qs = searchFiltersToQueryString({
         ...query,
         citySlug: undefined,
         school: it.schoolName,
         schoolLevel: it.schoolLevel,
+        district: undefined,
+        q: undefined,
+        radiusMiles: undefined,
+        polygon: undefined,
+      });
+      router.push(qs ? `/homes?${qs}` : "/homes");
+    } else if (it.kind === "district") {
+      const qs = searchFiltersToQueryString({
+        ...query,
+        citySlug: undefined,
+        district: it.districtName,
+        school: undefined,
+        schoolLevel: undefined,
         q: undefined,
         radiusMiles: undefined,
         polygon: undefined,
@@ -237,8 +252,8 @@ export default function SearchToolbar({
   const onRawSubmit = (value: string) => {
     const v = value.trim();
     const hit = cities.find((c) => c.name.toLowerCase() === v.toLowerCase());
-    if (!v) navigate({ q: undefined, school: undefined, schoolLevel: undefined });
-    else if (hit) navigate({ citySlug: hit.slug, q: undefined, school: undefined, schoolLevel: undefined });
+    if (!v) navigate({ q: undefined, school: undefined, schoolLevel: undefined, district: undefined });
+    else if (hit) navigate({ citySlug: hit.slug, q: undefined, school: undefined, schoolLevel: undefined, district: undefined });
     else navigate({ q: v });
   };
 
@@ -252,14 +267,15 @@ export default function SearchToolbar({
   const hasActiveFilters = !!(
     query.minPrice || query.maxPrice || query.minBeds || query.minBaths ||
     query.minSqft || query.maxSqft || query.propertyType || query.statuses?.length ||
-    query.newBuildsOnly || query.q || query.radiusMiles || query.polygon
+    query.newBuildsOnly || query.q || query.radiusMiles || query.polygon ||
+    query.school || query.district
   );
   const clearAll = () =>
     navigate({
       minPrice: undefined, maxPrice: undefined, minBeds: undefined, minBaths: undefined,
       minSqft: undefined, maxSqft: undefined, propertyType: undefined, statuses: undefined,
       newBuildsOnly: undefined, q: undefined, radiusMiles: undefined, sort: undefined,
-      polygon: undefined,
+      polygon: undefined, school: undefined, schoolLevel: undefined, district: undefined,
     });
 
   const bits = [
@@ -416,14 +432,20 @@ export default function SearchToolbar({
         />
       </div>
 
-      {/* active school filter — launch-safe: "as listed", never a zoning
-          claim (see lib/mls/school-fields.ts). Removable. */}
-      {query.school && (
+      {/* active school / district filter — launch-safe: "as reported", never
+          a zoning claim (see lib/mls/school-fields.ts). Removable. */}
+      {(query.school || query.district) && (
         <button
           type="button"
-          onClick={() => navigate({ school: undefined, schoolLevel: undefined })}
+          onClick={() =>
+            navigate(
+              query.school
+                ? { school: undefined, schoolLevel: undefined }
+                : { district: undefined }
+            )
+          }
           className="font-mono"
-          title="Listings whose MLS record reports this school — as listed, not a zoning guarantee. Verify with the district."
+          title={SCHOOL_SOURCE_NOTE}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -440,9 +462,9 @@ export default function SearchToolbar({
             cursor: "pointer",
           }}
         >
-          🎓 {query.school.toUpperCase()} · AS LISTED
+          {query.school ? `🎓 ${query.school.toUpperCase()}` : `🏛 ${query.district!.toUpperCase()}`} · AS REPORTED
           <span aria-hidden="true" style={{ fontSize: 14, lineHeight: 1 }}>×</span>
-          <span className="cv-visually-hidden">Remove school filter</span>
+          <span className="cv-visually-hidden">Remove {query.school ? "school" : "district"} filter</span>
         </button>
       )}
 
