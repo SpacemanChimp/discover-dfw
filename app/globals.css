@@ -280,6 +280,12 @@ body {
     scrollbar-width: thin; /* Firefox: slim, not the chunky default */
     scrollbar-color: rgba(29, 25, 19, 0.32) transparent;
   }
+  /* the rail is a flex column; a fixed height would otherwise let flex
+     children SHRINK to fit (squishing the cards) instead of overflowing.
+     Pin their size so tall content overflows into the rail's own scroll. */
+  .homes-rail > * {
+    flex-shrink: 0;
+  }
   .homes-rail::-webkit-scrollbar {
     width: 9px;
   }
