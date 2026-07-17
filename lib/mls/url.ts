@@ -50,6 +50,16 @@ export function parseSearchFilters(
     sort: sort && SORT_KEYS.includes(sort) ? sort : undefined,
     page: num("page"),
     q: (one("q") || "").trim().slice(0, 120) || undefined,
+    // Parse school unconditionally — the city that scopes it may come from
+    // the PATH (/city/[slug]/homes), not the query. The city-scoped SAFETY
+    // (no whole-table jsonb scan) is enforced in the provider, which applies
+    // the school filter only when citySlug is set.
+    school: (one("school") || "").trim().slice(0, 120) || undefined,
+    schoolLevel: (["elementary", "middle", "high"] as const).includes(
+      (one("slevel") as "elementary" | "middle" | "high") ?? ("" as never)
+    )
+      ? (one("slevel") as "elementary" | "middle" | "high")
+      : undefined,
     radiusMiles: [5, 10, 15, 25].includes(num("r") ?? 0) ? num("r") : undefined,
     // invalid poly strings parse to undefined silently — junk URLs just
     // fall back to the non-polygon search
@@ -71,6 +81,11 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
   if (f.newBuildsOnly) params.set("new", "1");
   if (f.sort) params.set("sort", f.sort);
   if (f.q) params.set("q", f.q);
+  // school only serializes alongside a city (city-scoped invariant)
+  if (f.school && f.citySlug) {
+    params.set("school", f.school);
+    if (f.schoolLevel) params.set("slevel", f.schoolLevel);
+  }
   if (f.radiusMiles) params.set("r", String(f.radiusMiles));
   if (f.polygon?.length) params.set("poly", serializePolygon(f.polygon));
   return params.toString();
@@ -87,6 +102,7 @@ export function searchFiltersLabel(f: SearchFilters, cityName?: string): string 
   if (f.propertyType) parts.push(f.propertyType);
   if (f.statuses?.[0]) parts.push(f.statuses[0].replace(/([A-Z])/g, " $1").trim().toLowerCase());
   if (f.newBuildsOnly) parts.push("new construction");
+  if (f.school) parts.push(`served by ${f.school}`);
   if (f.q) parts.push(`“${f.q}”`);
   if (f.radiusMiles) parts.push(`within ${f.radiusMiles} mi`);
   if (f.polygon?.length) parts.push("custom area");

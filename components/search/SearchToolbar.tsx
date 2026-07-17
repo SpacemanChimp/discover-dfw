@@ -6,6 +6,7 @@ import { RADIUS_OPTIONS } from "@/lib/mls/geo";
 import type { ListingStatus, PropertyType, SearchFilters, SortKey } from "@/lib/mls/types";
 import { searchFiltersToQueryString, SLUG_BY_STATUS, STATUS_BY_SLUG } from "@/lib/mls/url";
 import SaveSearchButton from "./SaveSearchButton";
+import SearchTypeahead from "./SearchTypeahead";
 
 const PRICE_BANDS: { label: string; min?: number; max?: number }[] = [
   { label: "ANY PRICE" },
@@ -211,19 +212,21 @@ export default function SearchToolbar({
     router.push(qs ? `${path}?${qs}` : path);
   };
 
-  const onCityInput = (value: string) => {
-    const hit = cities.find((c) => c.name.toLowerCase() === value.toLowerCase());
-    if (hit) navigate({ citySlug: hit.slug, q: undefined });
-    else if (value === "") navigate({ citySlug: undefined, q: undefined });
+  /* Typeahead picks that stay in the search MERGE into the active filters
+     (preserve price/beds/etc). A city pick clears any prior school/keyword;
+     a school pick sets the city-scoped school filter. Neighborhood /
+     new-build / address picks navigate to their own page inside the
+     typeahead. A raw keyword submit becomes a keyword search. */
+  const onPick = (it: { kind: string; citySlug?: string; schoolName?: string; schoolLevel?: "elementary" | "middle" | "high" }) => {
+    if (it.kind === "city") navigate({ citySlug: it.citySlug, q: undefined, school: undefined, schoolLevel: undefined });
+    else if (it.kind === "school") navigate({ citySlug: it.citySlug, school: it.schoolName, schoolLevel: it.schoolLevel, q: undefined });
   };
-
-  /** Enter on text that isn't a city name = keyword search (remarks,
-      address, subdivision — "pool", "granite", a street name…). */
-  const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter") return;
-    const value = (e.target as HTMLInputElement).value.trim();
-    const isCity = cities.some((c) => c.name.toLowerCase() === value.toLowerCase());
-    if (value && !isCity) navigate({ q: value });
+  const onRawSubmit = (value: string) => {
+    const v = value.trim();
+    const hit = cities.find((c) => c.name.toLowerCase() === v.toLowerCase());
+    if (!v) navigate({ q: undefined, school: undefined, schoolLevel: undefined });
+    else if (hit) navigate({ citySlug: hit.slug, q: undefined, school: undefined, schoolLevel: undefined });
+    else navigate({ q: v });
   };
 
   const priceIdx = PRICE_BANDS.findIndex(
@@ -270,6 +273,7 @@ export default function SearchToolbar({
   /* ---- popover state: one open at a time; drafts seed from the URL on
      open and only hit navigate() ONCE on APPLY (batched round trip) ---- */
   const [open, setOpen] = useState<string | null>(null);
+  const [typeaheadOpen, setTypeaheadOpen] = useState(false);
   const [priceMinDraft, setPriceMinDraft] = useState("");
   const [priceMaxDraft, setPriceMaxDraft] = useState("");
   const [bedsDraft, setBedsDraft] = useState(0);
@@ -368,7 +372,7 @@ export default function SearchToolbar({
            popover hangs over the map and paints INVISIBLY beneath it. While a
            popover is open, lift the whole context above every map overlay
            (dots/controls/chip/toggle top out at 1400). */
-        zIndex: open ? 1500 : undefined,
+        zIndex: open || typeaheadOpen ? 1500 : undefined,
       }}
     >
       <div
@@ -388,32 +392,46 @@ export default function SearchToolbar({
           <circle cx="8.5" cy="8.5" r="6" fill="none" stroke="#1D1913" strokeWidth="2" />
           <line x1="13" y1="13" x2="18" y2="18" stroke="#1D1913" strokeWidth="2" strokeLinecap="round" />
         </svg>
-        <input
-          list="ddfw-cities"
-          defaultValue={query.q || currentCityName}
+        <SearchTypeahead
+          size="toolbar"
           key={query.q || currentCityName}
-          onChange={(e) => onCityInput(e.target.value)}
-          onKeyDown={onSearchKeyDown}
-          placeholder="City, neighborhood, address, or keywords…"
-          aria-label="Search by city or keywords"
-          style={{
-            flex: 1,
-            minWidth: 0,
-            border: "none",
-            outline: "none",
-            background: "transparent",
-            fontSize: 14,
-            fontWeight: 600,
-            fontFamily: "inherit",
-            color: "#1D1913",
-          }}
+          initialValue={query.q || currentCityName}
+          placeholder="City, neighborhood, school, address, or keywords…"
+          onPick={onPick}
+          onRawSubmit={onRawSubmit}
+          onOpenChange={setTypeaheadOpen}
         />
-        <datalist id="ddfw-cities">
-          {cities.map((c) => (
-            <option key={c.slug} value={c.name} />
-          ))}
-        </datalist>
       </div>
+
+      {/* active school filter — launch-safe: "as listed", never a zoning
+          claim (see lib/mls/school-fields.ts). Removable. */}
+      {query.school && (
+        <button
+          type="button"
+          onClick={() => navigate({ school: undefined, schoolLevel: undefined })}
+          className="font-mono"
+          title="Listings whose MLS record reports this school — as listed, not a zoning guarantee. Verify with the district."
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            flexShrink: 0,
+            border: "2px solid #1D1913",
+            borderRadius: 999,
+            padding: "9px 14px",
+            background: "#1D1913",
+            color: "#F6F1E6",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: ".1em",
+            cursor: "pointer",
+          }}
+        >
+          🎓 {query.school.toUpperCase()} · AS LISTED
+          <span aria-hidden="true" style={{ fontSize: 14, lineHeight: 1 }}>×</span>
+          <span className="cv-visually-hidden">Remove school filter</span>
+        </button>
+      )}
 
       {/* pills row — desktop: display:contents keeps the single-row layout;
           mobile: becomes a horizontal-scroll strip under the full-width

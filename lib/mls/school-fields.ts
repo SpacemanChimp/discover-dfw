@@ -24,6 +24,23 @@ const clean = (v: unknown): string | undefined => {
   return s && s.toLowerCase() !== "none" ? s : undefined;
 };
 
+/* Bridge editorial/TEA school names to the MLS-reported names, which vary
+   ("Denton High School" vs "Denton H S" vs "Denton"). Strip the generic
+   level/type suffix and keep the distinctive core, which becomes an
+   ILIKE token (matched against the level-specific field, so an
+   elementary token can't collide with a high school). Pure + client-safe. */
+export function schoolMatchToken(name: string): string {
+  return (name || "")
+    .replace(/\b(senior|junior)\b/gi, " ")
+    .replace(/\b(high|elementary|middle|intermediate|primary|el|jr|sr)\b/gi, " ")
+    .replace(/\bh\s*s\b/gi, " ") // "H S" / "HS"
+    .replace(/\bm\s*s\b/gi, " ")
+    .replace(/\be\s*s\b/gi, " ")
+    .replace(/\bschool\b/gi, " ")
+    .replace(/[^a-z0-9]+/gi, " ")
+    .trim();
+}
+
 /** Map the RESO school fields off a feed payload (live API row or the
     replicated `raw` column). Returns undefined when the record reports
     nothing — callers hide the section or show the "not reported" note. */

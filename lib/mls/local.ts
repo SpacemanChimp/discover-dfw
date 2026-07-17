@@ -24,7 +24,7 @@ import { dfwCities, cityBySlug, cityMarketSnapshot } from "@/data/dfw-cities";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { boundingBox, milesBetween, pointInPolygon, polygonBounds, type LonLat } from "./geo";
 import { getOpenHouses, openHouseBadge } from "./trestle";
-import { schoolsFromReso } from "./school-fields";
+import { schoolsFromReso, schoolMatchToken } from "./school-fields";
 
 const DEFAULT_PAGE_SIZE = 24;
 const DEFAULT_STATUSES: ListingStatus[] = ["Active", "ActiveUnderContract", "ComingSoon", "Pending"];
@@ -128,6 +128,21 @@ function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean 
     // phrases, OR, minus-exclusion.
     const term = f.q.replace(/[():|&!*<>\\]/g, " ").trim();
     if (term) query = query.textSearch("search_tsv", term, { type: "websearch" });
+  }
+  // School filter — ONLY with a city (indexed clause already narrowed the
+  // set to a few hundred rows) and never in the city-crossing geo path, so
+  // the unindexed jsonb match stays cheap. Matches the MLS-reported school
+  // field for the chosen level; `raw` is filtered in Postgres, never
+  // selected/exposed. Not a zoning claim — see school-fields.ts.
+  if (f.school && f.citySlug && !opts?.skipCity) {
+    const col =
+      f.schoolLevel === "elementary"
+        ? "raw->>ElementarySchool"
+        : f.schoolLevel === "middle"
+        ? "raw->>MiddleOrJuniorSchool"
+        : "raw->>HighSchool";
+    const token = schoolMatchToken(f.school);
+    if (token) query = query.ilike(col, `%${token}%`);
   }
 
   switch (f.propertyType) {
