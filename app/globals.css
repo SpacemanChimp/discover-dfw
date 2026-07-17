@@ -242,17 +242,22 @@ body {
 .map-city { cursor: pointer; }
 
 /* ---------- the one CTA per page (listing-page treatment) ---------- */
-/* primary + one smaller secondary, adjacent on wider screens and a clean
-   compact stack on phones — no nested cards, no horizontal overflow */
+/* primary + one smaller secondary: side by side and CENTRED on anything
+   wider than a phone, a clean full-width stack below. nowrap (not wrap) is
+   deliberate — wrapping dropped the secondary onto its own line at some
+   widths, which read as two lonely left-aligned buttons rather than one
+   pair. The two together need ~404px; the stack takes over long before the
+   row could ever run out of room. */
 .cta-duo {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .cta-duo > button {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 @media (max-width: 560px) {
   .cta-duo {
@@ -262,6 +267,7 @@ body {
   }
   .cta-duo > button {
     width: 100%;
+    white-space: normal;
   }
 }
 
