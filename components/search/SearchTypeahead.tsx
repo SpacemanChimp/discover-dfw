@@ -6,8 +6,9 @@
    /api/search-suggest). Signed-in visitors also see their saved homes,
    saved searches, and recent searches; guests don't.
 
-   Selecting a school routes to that city's homes filtered to the listings
-   whose MLS record reports the school (city-scoped; not a zoning claim).
+   Selecting a school routes to a metro-wide homes search filtered to every
+   listing whose MLS record reports that school (schools cross city lines;
+   not a zoning claim).
 
    ARIA combobox pattern: role=combobox + aria-expanded/-controls/
    -activedescendant on the input, role=listbox/option on the menu, full

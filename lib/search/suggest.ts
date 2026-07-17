@@ -38,6 +38,12 @@ const LEVEL_MAP: Record<string, SchoolLevel> = {
   intermediate: "elementary",
 };
 
+const LEVEL_WORD: Record<SchoolLevel, string> = {
+  elementary: "Elementary",
+  middle: "Middle",
+  high: "High",
+};
+
 function qs(params: Record<string, string>): string {
   return new URLSearchParams(params).toString();
 }
@@ -46,6 +52,9 @@ function qs(params: Record<string, string>): string {
 export const SUGGEST_INDEX: Suggestion[] = (() => {
   const out: Suggestion[] = [];
   const nbByKey = new Set(newBuilds.map((nb) => `${nb.city}/${slugifyHood(nb.name)}`));
+  // A school can be listed under several cities it serves; the filter is
+  // city-independent, so collapse to one suggestion per (name, level).
+  const seenSchool = new Set<string>();
 
   for (const c of cities) {
     const cityLabel = `${c.name}, TX`;
@@ -71,13 +80,17 @@ export const SUGGEST_INDEX: Suggestion[] = (() => {
     }
     for (const [name, level] of c.schools) {
       const lvl = LEVEL_MAP[(level || "").toLowerCase()] || "high";
+      const key = `${name.toLowerCase()}|${lvl}`;
+      if (seenSchool.has(key)) continue;
+      seenSchool.add(key);
       out.push({
         kind: "school",
+        // city-independent: a school search spans every city it serves, so
+        // route without a city and label with the district, not one town
         label: name,
-        sublabel: `School · ${cityLabel}`,
-        href: `/homes?${qs({ city: c.slug, school: name, slevel: lvl })}`,
-        hay: `${name} ${c.name}`.toLowerCase(),
-        citySlug: c.slug,
+        sublabel: `${LEVEL_WORD[lvl]} school · ${c.isd}`,
+        href: `/homes?${qs({ school: name, slevel: lvl })}`,
+        hay: `${name} ${c.name} ${c.isd}`.toLowerCase(),
         schoolName: name,
         schoolLevel: lvl,
       });

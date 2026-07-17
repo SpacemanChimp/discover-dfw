@@ -213,13 +213,26 @@ export default function SearchToolbar({
   };
 
   /* Typeahead picks that stay in the search MERGE into the active filters
-     (preserve price/beds/etc). A city pick clears any prior school/keyword;
-     a school pick sets the city-scoped school filter. Neighborhood /
-     new-build / address picks navigate to their own page inside the
-     typeahead. A raw keyword submit becomes a keyword search. */
+     (preserve price/beds/etc). A city pick clears any prior school/keyword.
+     A school pick searches the WHOLE metro — schools cross city lines, so it
+     leaves any city page/scope and any radius/polygon behind and lands on
+     /homes with the school filter. Neighborhood / new-build / address picks
+     navigate to their own page inside the typeahead. A raw keyword submit
+     becomes a keyword search. */
   const onPick = (it: { kind: string; citySlug?: string; schoolName?: string; schoolLevel?: "elementary" | "middle" | "high" }) => {
     if (it.kind === "city") navigate({ citySlug: it.citySlug, q: undefined, school: undefined, schoolLevel: undefined });
-    else if (it.kind === "school") navigate({ citySlug: it.citySlug, school: it.schoolName, schoolLevel: it.schoolLevel, q: undefined });
+    else if (it.kind === "school") {
+      const qs = searchFiltersToQueryString({
+        ...query,
+        citySlug: undefined,
+        school: it.schoolName,
+        schoolLevel: it.schoolLevel,
+        q: undefined,
+        radiusMiles: undefined,
+        polygon: undefined,
+      });
+      router.push(qs ? `/homes?${qs}` : "/homes");
+    }
   };
   const onRawSubmit = (value: string) => {
     const v = value.trim();

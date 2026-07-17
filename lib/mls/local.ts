@@ -129,18 +129,20 @@ function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean 
     const term = f.q.replace(/[():|&!*<>\\]/g, " ").trim();
     if (term) query = query.textSearch("search_tsv", term, { type: "websearch" });
   }
-  // School filter — ONLY with a city (indexed clause already narrowed the
-  // set to a few hundred rows) and never in the city-crossing geo path, so
-  // the unindexed jsonb match stays cheap. Matches the MLS-reported school
-  // field for the chosen level; `raw` is filtered in Postgres, never
-  // selected/exposed. Not a zoning claim — see school-fields.ts.
-  if (f.school && f.citySlug && !opts?.skipCity) {
+  // School filter — matches the MLS-reported school for the chosen level
+  // against the indexed generated columns (migration 0016), so it's fast
+  // ACROSS every city: a school crosses city lines (Guyer High serves homes
+  // in Denton, Lantana, AND Argyle), and the old single-city scope hid most
+  // of them. `raw` is never selected/exposed — only these derived scalars.
+  // Not a zoning claim — see school-fields.ts. Skipped only in the geo path,
+  // where radius/polygon already ride a slim column projection.
+  if (f.school && !opts?.skipCity) {
     const col =
       f.schoolLevel === "elementary"
-        ? "raw->>ElementarySchool"
+        ? "elementary_school"
         : f.schoolLevel === "middle"
-        ? "raw->>MiddleOrJuniorSchool"
-        : "raw->>HighSchool";
+        ? "middle_school"
+        : "high_school";
     const token = schoolMatchToken(f.school);
     if (token) query = query.ilike(col, `%${token}%`);
   }

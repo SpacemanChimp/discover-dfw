@@ -50,10 +50,9 @@ export function parseSearchFilters(
     sort: sort && SORT_KEYS.includes(sort) ? sort : undefined,
     page: num("page"),
     q: (one("q") || "").trim().slice(0, 120) || undefined,
-    // Parse school unconditionally — the city that scopes it may come from
-    // the PATH (/city/[slug]/homes), not the query. The city-scoped SAFETY
-    // (no whole-table jsonb scan) is enforced in the provider, which applies
-    // the school filter only when citySlug is set.
+    // School is a standalone, city-independent filter (0016): it matches the
+    // MLS-reported school across every city via the indexed generated columns,
+    // so it needs no city context to be safe or fast.
     school: (one("school") || "").trim().slice(0, 120) || undefined,
     schoolLevel: (["elementary", "middle", "high"] as const).includes(
       (one("slevel") as "elementary" | "middle" | "high") ?? ("" as never)
@@ -81,8 +80,9 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
   if (f.newBuildsOnly) params.set("new", "1");
   if (f.sort) params.set("sort", f.sort);
   if (f.q) params.set("q", f.q);
-  // school only serializes alongside a city (city-scoped invariant)
-  if (f.school && f.citySlug) {
+  // school is city-independent now (0016): a school crosses city lines, so
+  // the filter serializes on its own — with or without a city context.
+  if (f.school) {
     params.set("school", f.school);
     if (f.schoolLevel) params.set("slevel", f.schoolLevel);
   }
