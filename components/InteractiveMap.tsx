@@ -31,6 +31,7 @@ export default function InteractiveMap({
   pricesLive = false,
   pricesAsOf,
   introOverride,
+  regionKey,
 }: {
   liveMls?: boolean;
   /* canonical city figures from the homepage's metric fetch — the map holds
@@ -40,6 +41,8 @@ export default function InteractiveMap({
   pricesLive?: boolean;
   pricesAsOf?: string;
   introOverride?: React.ReactNode;
+  /** builder-canvas region marker — set only in builder mode */
+  regionKey?: string;
 }) {
   // the prices map (when supplied) is the whole truth — a missing entry
   // means the canonical layer omitted the median; render nothing for it
@@ -133,11 +136,12 @@ export default function InteractiveMap({
           </h2>
         </div>
         {introOverride ? (
-          <div style={{ margin: "0 0 6px", maxWidth: 340, fontSize: 15, lineHeight: 1.6, color: "rgba(29,25,19,.65)" }}>
+          <div data-bb-region={regionKey} style={{ margin: "0 0 6px", maxWidth: 340, fontSize: 15, lineHeight: 1.6, color: "rgba(29,25,19,.65)" }}>
             {introOverride}
           </div>
         ) : (
           <p
+            data-bb-region={regionKey}
             style={{
               margin: "0 0 6px",
               maxWidth: 340,

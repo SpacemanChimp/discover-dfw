@@ -36,6 +36,7 @@ import ConversionDuo from "@/components/convert/ConversionDuo";
 import NewBuildCTA from "@/components/convert/NewBuildCTA";
 import { leadBackendReady } from "@/lib/convert/config";
 import { getEditorState } from "@/lib/editor/overrides";
+import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { applyLayout } from "@/lib/editor/blocks-render";
 import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
 import { RichDoc, textValue, faqItems, bulletTexts } from "@/lib/editor/render";
@@ -154,6 +155,7 @@ export default async function HoodPage({
   // shared-template layout (Visual Builder) — null = code-owned order
   const tpl = await getEditorState("template:hood");
   const tplLayout = (tpl.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
+  const builder = tpl.preview && (await isBuilderMode());
   const tagline = textValue(ed.regions["tagline"]) ?? content.tagline;
   const introOv = ed.regions["intro"];
   const homesOv = ed.regions["homes"];
@@ -271,7 +273,7 @@ export default async function HoodPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {ed.preview && <PreviewBanner route={`/city/${c.slug}/${h.slug}`} />}
+      {ed.preview && !builder && <PreviewBanner route={`/city/${c.slug}/${h.slug}`} />}
       <CityNav slug={c.slug} options={options} prevSlug={prevCity.slug} nextSlug={nextCity.slug} />
 
       {/* breadcrumb trail */}
@@ -1188,7 +1190,7 @@ export default async function HoodPage({
 
       </>
       ),
-      })}
+      }, undefined, builder)}
       {/* prev / next hood */}
       <section style={{ borderTop: "2px solid #1D1913" }}>
         <div

@@ -4,6 +4,7 @@ import { draftMode } from "next/headers";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import PreviewBanner from "@/components/editor/PreviewBanner";
+import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { getEditorPage, getPageLayout } from "@/lib/editor/pages";
 import { applyLayout, layoutFaqItems } from "@/lib/editor/blocks-render";
 import { RESERVED_SLUGS } from "@/lib/editor/blocks.ts";
@@ -58,6 +59,7 @@ export default async function BuilderPage({ params }: { params: Promise<{ slug: 
   // drafts exist ONLY for the authenticated preview session
   if (page.status !== "published" && !preview) notFound();
 
+  const builder = preview && (await isBuilderMode());
   const layout = await getPageLayout(slug, preview);
   if (!layout) notFound();
 
@@ -84,9 +86,9 @@ export default async function BuilderPage({ params }: { params: Promise<{ slug: 
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {preview && <PreviewBanner route={`/${slug}`} />}
+      {preview && !builder && <PreviewBanner route={`/${slug}`} />}
       {page.header_footer && <Nav />}
-      <main>{applyLayout(layout, [], {})}</main>
+      <main>{applyLayout(layout, [], {}, undefined, builder)}</main>
       {page.header_footer && <Footer />}
     </div>
   );

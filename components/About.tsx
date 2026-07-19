@@ -1,6 +1,6 @@
 import { cities } from "@/lib/dfw-data";
 
-export default function About({ copyOverride }: { copyOverride?: React.ReactNode } = {}) {
+export default function About({ copyOverride, regionKey }: { copyOverride?: React.ReactNode; regionKey?: string } = {}) {
   const n = cities.length;
   return (
     <section
@@ -49,9 +49,9 @@ export default function About({ copyOverride }: { copyOverride?: React.ReactNode
           style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 26 }}
         >
           {copyOverride ? (
-            <div style={{ fontSize: 16, lineHeight: 1.75, color: "rgba(29,25,19,.8)" }}>{copyOverride}</div>
+            <div data-bb-region={regionKey} style={{ fontSize: 16, lineHeight: 1.75, color: "rgba(29,25,19,.8)" }}>{copyOverride}</div>
           ) : (
-            <p style={{ margin: 0, fontSize: 16, lineHeight: 1.75, color: "rgba(29,25,19,.8)" }}>
+            <p data-bb-region={regionKey} style={{ margin: 0, fontSize: 16, lineHeight: 1.75, color: "rgba(29,25,19,.8)" }}>
               The metroplex adds a small city&apos;s worth of people every year, and
               every one of them asks the same question: <em>where, exactly?</em>{" "}
               Discover DFW is the answer machine — {n} city reports behind one map,

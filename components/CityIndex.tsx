@@ -10,11 +10,14 @@ export default function CityIndex({
   pricesLive,
   pricesAsOf,
   introOverride,
+  regionKey,
 }: {
   prices?: Record<string, number>;
   pricesLive?: boolean;
   pricesAsOf?: string;
   introOverride?: React.ReactNode;
+  /** builder-canvas region marker — set only in builder mode */
+  regionKey?: string;
 }) {
   // when a prices map is supplied, it is the whole truth: a missing entry
   // means the canonical layer omitted the metric — render nothing for it
@@ -56,7 +59,7 @@ export default function CityIndex({
         </div>
         {/* EDITOR-desk intro — additive; no code intro exists today */}
         {introOverride && (
-          <div style={{ marginTop: 16, maxWidth: 680, fontSize: 15.5, lineHeight: 1.7, color: "rgba(29,25,19,.75)" }}>
+          <div data-bb-region={regionKey} style={{ marginTop: 16, maxWidth: 680, fontSize: 15.5, lineHeight: 1.7, color: "rgba(29,25,19,.75)" }}>
             {introOverride}
           </div>
         )}

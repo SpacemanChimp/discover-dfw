@@ -15,6 +15,7 @@ import NewBuildDirectory from "@/components/newbuild/NewBuildDirectory";
 import NewBuildCTA from "@/components/convert/NewBuildCTA";
 import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
 import { getEditorState, type EditorState } from "@/lib/editor/overrides";
+import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
 import { applyLayout } from "@/lib/editor/blocks-render";
@@ -43,14 +44,15 @@ export default async function NewBuildsRoom({
   const pagerQs = searchFiltersToQueryString(effective);
   // EDITOR-desk overrides (intro / guide) — code content is the fallback
   const ed = await getEditorState("/new-builds");
+  const builder = ed.preview && (await isBuilderMode());
   const roomLayout = (ed.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
 
   if (!isLiveMls) {
     const result = await provider.searchListings(effective);
     return (
-      <Shell asOf={result.mlsLastUpdated} ed={ed}>
+      <Shell asOf={result.mlsLastUpdated} ed={ed} builder={builder}>
         {applyLayout(roomLayout, TEMPLATE_SECTIONS["/new-builds"], {
-          intro: <RoomIntro ed={ed} />,
+          intro: <RoomIntro ed={ed} builder={builder} />,
           search: (
             <>
               <SearchToolbar query={effective} propertyTypes={PROPERTY_TYPE_OPTIONS} basePath="/new-builds" lockNewBuilds />
@@ -67,9 +69,9 @@ export default async function NewBuildsRoom({
             </>
           ),
           directory: <NewBuildDirectory />,
-          guide: <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />,
+          guide: <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} region={builder ? "guide" : undefined} /> : undefined} />,
           cta: <NewBuildCTA />,
-        })}
+        }, undefined, builder)}
         <MLSComplianceFooter asOf={result.mlsLastUpdated} />
       </Shell>
     );
@@ -84,6 +86,7 @@ export default async function NewBuildsRoom({
   return (
     <Shell
       ed={ed}
+      builder={builder}
       freshness={
         <Suspense fallback={null}>
           <FreshnessStamp resultPromise={resultPromise} />
@@ -91,7 +94,7 @@ export default async function NewBuildsRoom({
       }
     >
       {applyLayout(roomLayout, TEMPLATE_SECTIONS["/new-builds"], {
-        intro: <RoomIntro ed={ed} />,
+        intro: <RoomIntro ed={ed} builder={builder} />,
         search: (
           <>
             <SearchToolbar query={effective} propertyTypes={PROPERTY_TYPE_OPTIONS} basePath="/new-builds" lockNewBuilds />
@@ -107,9 +110,9 @@ export default async function NewBuildsRoom({
           </>
         ),
         directory: <NewBuildDirectory />,
-        guide: <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />,
+        guide: <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} region={builder ? "guide" : undefined} /> : undefined} />,
         cta: <NewBuildCTA />,
-      })}
+      }, undefined, builder)}
       <Suspense fallback={<MLSComplianceFooter />}>
         <ComplianceSection resultPromise={resultPromise} />
       </Suspense>
@@ -122,16 +125,18 @@ function Shell({
   asOf,
   freshness,
   ed,
+  builder,
   children,
 }: {
   asOf?: string;
   freshness?: React.ReactNode;
   ed: EditorState;
+  builder?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="homes-shell" style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
-      {ed.preview && <PreviewBanner route="/new-builds" />}
+      {ed.preview && !builder && <PreviewBanner route="/new-builds" />}
       <SearchNav active="new-builds" />
       <div
         className="font-mono homes-head-strip"
@@ -166,7 +171,7 @@ function Shell({
 }
 
 /* the H1 + intro line — a layout SECTION (required: it owns the page H1) */
-function RoomIntro({ ed }: { ed: EditorState }) {
+function RoomIntro({ ed, builder }: { ed: EditorState; builder?: boolean }) {
   return (
     <div style={{ padding: "18px 4vw 6px", maxWidth: 900 }}>
       <h1 className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(22px,2.9vw,32px)", lineHeight: 1.08 }}>
@@ -174,10 +179,10 @@ function RoomIntro({ ed }: { ed: EditorState }) {
       </h1>
       {ed.regions["intro"] ? (
         <div style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
-          <RichDoc doc={ed.regions["intro"].json} />
+          <RichDoc doc={ed.regions["intro"].json} region={builder ? "intro" : undefined} />
         </div>
       ) : (
-        <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
+        <p data-bb-region={builder ? "intro" : undefined} style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
           Search live NTREIS new-construction listings across North Texas, then browse the master-planned communities taking
           contracts right now. Filtered to new builds only.
         </p>

@@ -14,6 +14,7 @@ import LandDueDiligence from "./LandDueDiligence";
 import LandCTA from "@/components/convert/LandCTA";
 import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
 import { getEditorState, type EditorState } from "@/lib/editor/overrides";
+import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
 import { applyLayout } from "@/lib/editor/blocks-render";
@@ -47,14 +48,15 @@ export default async function LandRoom({
   const pagerQs = searchFiltersToQueryString(effective);
   // EDITOR-desk overrides (intro / guide) — code content is the fallback
   const ed = await getEditorState("/land");
+  const builder = ed.preview && (await isBuilderMode());
   const roomLayout = (ed.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
 
   if (!isLiveMls) {
     const result = await provider.searchListings(effective);
     return (
-      <Shell asOf={result.mlsLastUpdated} ed={ed}>
+      <Shell asOf={result.mlsLastUpdated} ed={ed} builder={builder}>
         {applyLayout(roomLayout, TEMPLATE_SECTIONS["/land"], {
-          intro: <RoomIntro ed={ed} />,
+          intro: <RoomIntro ed={ed} builder={builder} />,
           search: (
             <>
               <LandToolbar query={effective} />
@@ -70,9 +72,9 @@ export default async function LandRoom({
               />
             </>
           ),
-          guide: <LandDueDiligence override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />,
+          guide: <LandDueDiligence override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} region={builder ? "guide" : undefined} /> : undefined} />,
           cta: <LandCTA citySlug={effective.citySlug} />,
-        })}
+        }, undefined, builder)}
         <MLSComplianceFooter asOf={result.mlsLastUpdated} />
       </Shell>
     );
@@ -87,6 +89,7 @@ export default async function LandRoom({
   return (
     <Shell
       ed={ed}
+      builder={builder}
       freshness={
         <Suspense fallback={null}>
           <FreshnessStamp resultPromise={resultPromise} />
@@ -94,7 +97,7 @@ export default async function LandRoom({
       }
     >
       {applyLayout(roomLayout, TEMPLATE_SECTIONS["/land"], {
-        intro: <RoomIntro ed={ed} />,
+        intro: <RoomIntro ed={ed} builder={builder} />,
         search: (
           <>
             <LandToolbar query={effective} />
@@ -109,9 +112,9 @@ export default async function LandRoom({
             />
           </>
         ),
-        guide: <LandDueDiligence override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />,
+        guide: <LandDueDiligence override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} region={builder ? "guide" : undefined} /> : undefined} />,
         cta: <LandCTA citySlug={effective.citySlug} />,
-      })}
+      }, undefined, builder)}
       <Suspense fallback={<MLSComplianceFooter />}>
         <ComplianceSection resultPromise={resultPromise} />
       </Suspense>
@@ -124,16 +127,18 @@ function Shell({
   asOf,
   freshness,
   ed,
+  builder,
   children,
 }: {
   asOf?: string;
   freshness?: React.ReactNode;
   ed: EditorState;
+  builder?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="homes-shell" style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
-      {ed.preview && <PreviewBanner route="/land" />}
+      {ed.preview && !builder && <PreviewBanner route="/land" />}
       <SearchNav active="land" />
       <div
         className="font-mono homes-head-strip"
@@ -168,7 +173,7 @@ function Shell({
 }
 
 /* the H1 + intro line — a layout SECTION (required: it owns the page H1) */
-function RoomIntro({ ed }: { ed: EditorState }) {
+function RoomIntro({ ed, builder }: { ed: EditorState; builder?: boolean }) {
   return (
     <div style={{ padding: "18px 4vw 6px", maxWidth: 900 }}>
       <h1 className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(23px,3vw,32px)", lineHeight: 1.08 }}>
@@ -176,10 +181,10 @@ function RoomIntro({ ed }: { ed: EditorState }) {
       </h1>
       {ed.regions["intro"] ? (
         <div style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
-          <RichDoc doc={ed.regions["intro"].json} />
+          <RichDoc doc={ed.regions["intro"].json} region={builder ? "intro" : undefined} />
         </div>
       ) : (
-        <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
+        <p data-bb-region={builder ? "intro" : undefined} style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
           Live NTREIS listings for residential lots, acreage, farms, ranches, and undeveloped land across the eight-county
           North Texas metro — filtered to genuine land only, never houses.
         </p>
