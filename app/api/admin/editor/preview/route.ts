@@ -45,8 +45,17 @@ export async function GET(req: Request) {
   const dest = page?.route ?? route;
 
   (await draftMode()).enable();
-  const res = NextResponse.redirect(new URL(dest, req.url));
-  if (url.searchParams.get("builder") === "1") {
+  const target = new URL(dest, req.url);
+  const builder = url.searchParams.get("builder") === "1";
+  if (builder) {
+    // bust the BROWSER's HTTP cache of the public page — without this, a
+    // previously-cached anonymous copy can satisfy the redirect and the
+    // canvas silently misses its builder render. Public pages never read
+    // query params, so the param is inert server-side.
+    target.searchParams.set("bbts", Date.now().toString(36));
+  }
+  const res = NextResponse.redirect(target);
+  if (builder) {
     res.cookies.set(BUILDER_COOKIE, "1", { path: "/", sameSite: "lax", httpOnly: true });
   } else {
     res.cookies.set(BUILDER_COOKIE, "", { path: "/", maxAge: 0 });
