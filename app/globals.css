@@ -734,3 +734,18 @@ body {
   }
 }
 
+
+/* ---------- visual builder device visibility ----------
+   Blocks/sections saved with visibility "desktop" or "mobile" (the only
+   values the layout sanitizer emits besides "all"). 768px matches the
+   builder's tablet/mobile canvas split. */
+@media (max-width: 767px) {
+  .bb-desktop-only {
+    display: none;
+  }
+}
+@media (min-width: 768px) {
+  .bb-mobile-only {
+    display: none;
+  }
+}
