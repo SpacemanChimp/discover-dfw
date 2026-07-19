@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { editorGate, readJsonBody } from "@/lib/editor/api";
 import { pageInventory } from "@/lib/content/community-content-drafts";
 import { lintContentDraft, buildSeoCorpus, draftPageContext, type ContentDraft, type LintResult } from "@/lib/content/community-content-drafts";
-import { sanitizeLayout, hoodGalleryFromLayout, TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
-import { validateClaims } from "@/lib/editor/doc";
+import { prepareBlockers, preparedStampFresh, type PrepareBlocker } from "@/lib/editor/prepare";
 import { pageByRoute } from "@/lib/editor/registry";
-import { bySlug, cities } from "@/lib/dfw-data";
+import { cities } from "@/lib/dfw-data";
+import { bySlug } from "@/lib/dfw-data";
 
 /* Community Studio inventory — ONE read that unifies what already exists:
    the dataset's live pages (pageInventory), CB-1 community drafts, CB-3a
@@ -169,11 +169,7 @@ export async function GET(req: Request) {
        build actually serves the route. */
     const stamp = preparedAtByKey.get(key) ?? null;
     const layoutDraftAt = layoutDraftAtByRoute.get(`/city/${key}`) ?? null;
-    const stampFresh =
-      !!stamp &&
-      stamp >= String(d.updated_at ?? "") &&
-      (!cd || stamp >= String(cd.updated_at ?? "")) &&
-      (!layoutDraftAt || stamp >= layoutDraftAt);
+    const stampFresh = preparedStampFresh(stamp, [String(d.updated_at ?? ""), cd ? String(cd.updated_at ?? "") : null, layoutDraftAt]);
     items.push({
       key,
       citySlug: d.city_slug,
@@ -245,11 +241,6 @@ export async function GET(req: Request) {
 
 /* ---------------------- A5: PREPARE FOR EXPORT ------------------------- */
 
-interface PrepareBlocker {
-  tab: string;
-  message: string;
-}
-
 export async function POST(req: Request) {
   const ctx = await editorGate(req);
   if (ctx instanceof NextResponse) return ctx;
@@ -270,37 +261,13 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (!d) return NextResponse.json({ ok: false, error: "No active community draft for that key" }, { status: 404 });
 
-  const blockers: PrepareBlocker[] = [];
-
-  /* identity */
-  if (!bySlug[citySlug]) blockers.push({ tab: "identity", message: "City is not a canonical DFW city" });
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(d.slug)) blockers.push({ tab: "identity", message: `Slug "${d.slug}" is not canonical (lowercase, single hyphens)` });
-  if (!String(d.name ?? "").trim()) blockers.push({ tab: "identity", message: "The community needs a name" });
-
-  /* lifecycle position */
-  if (d.lifecycle !== "ready") {
-    blockers.push({ tab: "preview", message: "The community is not marked READY — pass the readiness gates and MARK READY first" });
-  }
-
-  /* facts + MLS evidence */
-  if (d.type === "new_build") {
-    if (!String(d.status_label ?? "").trim()) blockers.push({ tab: "facts", message: "Sales status not set — the hero would render STATUS NOT SET" });
-    if (!String(d.from_label ?? "").trim()) blockers.push({ tab: "facts", message: "Pricing FROM label not set — the hero would render $— (not set)" });
-    if (d.builders_count == null && !String(d.builders_label ?? "").trim()) {
-      blockers.push({ tab: "facts", message: "Builder claim unverified — set a verified count or a generic label" });
-    }
-  }
-  if (!d.mls_snapshot_json) blockers.push({ tab: "facts", message: "MLS lookup evidence not frozen on the draft" });
-
   /* content + SEO + claims — the exporter's own strict lint */
   const { data: allContent } = await ctx.db
     .from("community_content_drafts")
     .select("id, city_slug, hood_slug, seo_title, seo_description, tagline, intro_json, homes_copy, highlights_json, faq_json, newbuild_json, links_json, mls_snapshot_json, ready_for_export, lifecycle, updated_at");
   const cd = (allContent ?? []).find((r) => `${r.city_slug}/${r.hood_slug}` === key) ?? null;
-  if (!cd) {
-    blockers.push({ tab: "content", message: "No page content drafted" });
-  } else {
-    if (!cd.ready_for_export) blockers.push({ tab: "content", message: "Content is not marked READY (server lint sign-off)" });
+  let contentLintErrors: { field: string; message: string }[] = [];
+  if (cd) {
     const shape: ContentDraft = {
       id: cd.id as string,
       citySlug,
@@ -327,59 +294,51 @@ export async function POST(req: Request) {
         .map((r) => ({ citySlug: r.city_slug, hoodSlug: r.hood_slug, seoTitle: r.seo_title, seoDescription: r.seo_description }))
     );
     const lint = lintContentDraft(shape, corpus, true, draftPageContext(d));
-    for (const e of lint.errors) blockers.push({ tab: "content", message: `${e.field}: ${e.message}` });
+    contentLintErrors = lint.errors.map((e) => ({ field: e.field, message: e.message }));
   }
 
-  /* photos */
-  const { data: heroSlot } = await ctx.db
+  /* photos: hero approval + every APPROVED gallery slot for this entity */
+  const { data: photoRows } = await ctx.db
     .from("photo_slots")
-    .select("status")
+    .select("slot_key, status")
     .eq("entity_type", "neighborhood")
-    .eq("entity_slug", key)
-    .eq("slot_key", "hero")
-    .maybeSingle();
-  if (heroSlot?.status !== "approved") blockers.push({ tab: "photos", message: "No approved hero photo (Photo Desk CI-6 approval required)" });
+    .eq("entity_slug", key);
+  const heroApproved = (photoRows ?? []).some((r) => r.slot_key === "hero" && r.status === "approved");
+  const approvedGallerySlots = new Set((photoRows ?? []).filter((r) => r.status === "approved" && r.slot_key.startsWith("gallery-")).map((r) => r.slot_key as string));
 
-  /* layout + canvas text drafts on the FUTURE route — publish-grade checks */
+  /* route-keyed editor DRAFT documents (__layout + canvas text regions) */
   const route = `/city/${key}`;
   const { data: routeDocs } = await ctx.db
     .from("editor_documents")
     .select("region_key, draft:editor_versions!editor_documents_draft_fk(content_type, content_json, content_text)")
     .eq("route", route);
-  for (const docRow of routeDocs ?? []) {
-    const draft = (Array.isArray(docRow.draft) ? docRow.draft[0] : docRow.draft) as { content_type: string; content_json: unknown; content_text: string | null } | null;
-    if (!draft) continue;
-    if (docRow.region_key === "__layout") {
-      const s = sanitizeLayout(draft.content_json, {
-        pageKind: "template",
-        sections: TEMPLATE_SECTIONS["template:hood"],
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        requireImageAlt: true,
-        citySlugs: cities.map((c) => c.slug),
-      });
-      for (const e of s.errors) blockers.push({ tab: "arrange", message: `layout: ${e}` });
-      for (const e of validateClaims(s.ok ? s.text : String(draft.content_text ?? ""))) blockers.push({ tab: "arrange", message: `layout: ${e}` });
-      const galleryOrder = s.ok && s.doc ? hoodGalleryFromLayout(s.doc as LayoutDoc) : null;
-      if (galleryOrder) {
-        const { data: gSlots } = await ctx.db
-          .from("photo_slots")
-          .select("slot_key")
-          .eq("entity_type", "neighborhood")
-          .eq("entity_slug", key)
-          .eq("status", "approved")
-          .in("slot_key", galleryOrder);
-        const approved = new Set((gSlots ?? []).map((r) => r.slot_key as string));
-        for (const k of galleryOrder) {
-          if (!approved.has(k)) blockers.push({ tab: "photos", message: `gallery entry "${k}" has no APPROVED photo — approve it or remove it from the order` });
-        }
-      }
-    } else {
-      // canvas text/tagline drafts: the claims linter is the publication risk
-      for (const e of validateClaims(String(draft.content_text ?? ""))) {
-        blockers.push({ tab: "arrange", message: `“${docRow.region_key}” canvas draft: ${e}` });
-      }
-    }
-  }
+  const routeDrafts = (routeDocs ?? []).flatMap((docRow) => {
+    const draft = (Array.isArray(docRow.draft) ? docRow.draft[0] : docRow.draft) as { content_json: unknown; content_text: string | null } | null;
+    return draft ? [{ regionKey: docRow.region_key as string, contentJson: draft.content_json, contentText: draft.content_text }] : [];
+  });
+
+  /* the COMPLETE validator is pure and fixture-tested — the route only
+     gathers rows (scripts/tests/prepare-community.test.mjs) */
+  const blockers: PrepareBlocker[] = prepareBlockers({
+    draft: {
+      type: d.type as "hood" | "new_build",
+      name: d.name,
+      slug: d.slug,
+      lifecycle: d.lifecycle,
+      statusLabel: d.status_label,
+      fromLabel: d.from_label,
+      buildersCount: d.builders_count,
+      buildersLabel: d.builders_label,
+      hasMlsSnapshot: !!d.mls_snapshot_json,
+    },
+    cityCanonical: !!bySlug[citySlug],
+    content: { exists: !!cd, ready: !!cd?.ready_for_export, lintErrors: contentLintErrors },
+    heroApproved,
+    routeDrafts,
+    approvedGallerySlots,
+    citySlugs: cities.map((c) => c.slug),
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  });
 
   if (blockers.length > 0) {
     return NextResponse.json({ ok: true, prepared: false, blockers });
