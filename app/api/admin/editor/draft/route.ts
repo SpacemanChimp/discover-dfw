@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
-import { regionDef } from "@/lib/editor/registry";
+import { regionDef, sectionsForRoute } from "@/lib/editor/registry";
 import { sanitizeContent } from "@/lib/editor/doc";
 import { sanitizeLayout, sanitizeNav, TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
 import { cities } from "@/lib/dfw-data";
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   if (regionKey === "__layout") {
     // Visual Builder layout: template sections when the route is a code
     // template; block-only custom pages otherwise
-    const sections = TEMPLATE_SECTIONS[route];
+    const sections = sectionsForRoute(route);
     let pageKind: "custom" | "template";
     if (sections) pageKind = "template";
     else if (await customPageExists(ctx, route)) pageKind = "custom";

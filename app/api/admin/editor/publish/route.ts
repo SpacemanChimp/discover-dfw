@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
-import { pageByRoute, regionDef } from "@/lib/editor/registry";
+import { pageByRoute, regionDef, sectionsForRoute } from "@/lib/editor/registry";
 import { sanitizeContent, validateClaims, validateSeo } from "@/lib/editor/doc";
 import { sanitizeLayout, sanitizeNav, editorsPicksFromLayout, TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
 import { cities } from "@/lib/dfw-data";
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
   // page/custom resolution
   let customPage: { slug: string; status: string } | null = null;
-  if (isLayout && !TEMPLATE_SECTIONS[route]) {
+  if (isLayout && !sectionsForRoute(route)) {
     if (!/^\/[a-z0-9-]+$/.test(route)) return NextResponse.json({ ok: false, error: "Unknown layout target" }, { status: 400 });
     const { data } = await ctx.db.from("editor_pages").select("slug, status").eq("slug", route.slice(1)).maybeSingle();
     if (!data) return NextResponse.json({ ok: false, error: "Unknown page" }, { status: 400 });
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
   /* ---- strict publication validation per family ---- */
   const errors: string[] = [];
   if (isLayout) {
-    const sections = TEMPLATE_SECTIONS[route];
+    const sections = sectionsForRoute(route);
     const s = sanitizeLayout(draft.content_json, {
       pageKind: sections ? "template" : "custom",
       sections,

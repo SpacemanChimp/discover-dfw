@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
-import { regionDef } from "@/lib/editor/registry";
+import { regionDef, sectionsForRoute } from "@/lib/editor/registry";
 import { TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
 import { revalidateEditorTarget } from "@/lib/editor/revalidate";
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const regionKey = String(body.regionKey ?? "");
 
   if (regionKey === "__layout") {
-    if (!TEMPLATE_SECTIONS[route]) {
+    if (!sectionsForRoute(route)) {
       return NextResponse.json(
         { ok: false, error: "Admin-created pages have no code fallback — use Unpublish in Page Settings instead" },
         { status: 400 }

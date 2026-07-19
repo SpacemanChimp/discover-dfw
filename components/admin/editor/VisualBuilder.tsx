@@ -131,6 +131,11 @@ const newBlock = (type: string): BlockInstance => ({
 });
 
 const entryId = (e: LayoutEntry) => (e.kind === "section" ? `s:${e.key}` : `b:${e.block.id}`);
+
+/* individual hood/community routes edit against the shared hood template's
+   section contract — but as PAGE-SPECIFIC (this page only) documents */
+const HOOD_ROUTE_RE = /^\/city\/[a-z0-9-]+\/[a-z0-9-]+$/;
+const sectionsKeyFor = (route: string): string => (TEMPLATE_SECTIONS[route] ? route : HOOD_ROUTE_RE.test(route) ? "template:hood" : route);
 const stableStr = (v: unknown) => JSON.stringify(v);
 
 /* --------------------------------------------------- editor's picks */
@@ -284,11 +289,24 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 /* ============================================================== builder */
-export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
+export default function VisualBuilder({
+  adminEmail,
+  initialTarget,
+  embedded,
+}: {
+  adminEmail: string;
+  /** Community Studio embed: open ONE page, hide global navigation chrome */
+  initialTarget?: { route: string; title: string };
+  embedded?: boolean;
+}) {
   void adminEmail;
   const [customPages, setCustomPages] = useState<{ slug: string; title: string; status: string; template: string; seo_title: string | null; seo_description: string | null; og_image_url: string | null; nav_label: string | null; show_in_nav: boolean; header_footer: boolean }[]>([]);
   const [migrationApplied, setMigrationApplied] = useState<boolean | null>(null);
-  const [target, setTarget] = useState<Target>(BASE_TARGETS[0]);
+  const [target, setTarget] = useState<Target>(
+    initialTarget
+      ? { route: initialTarget.route, title: initialTarget.title, group: "Pages", kind: "static", previewRoute: initialTarget.route }
+      : BASE_TARGETS[0]
+  );
   const [entries, setEntries] = useState<LayoutEntry[]>([]);
   const [navItems, setNavItems] = useState<NavItem[]>([]);
   const [publishedDoc, setPublishedDoc] = useState<LayoutDoc | null>(null);
@@ -298,7 +316,7 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [device, setDevice] = useState<(typeof DEVICES)[number]>(DEVICES[0]);
   const [zoom, setZoom] = useState<"fit" | number>("fit");
-  const [leftTab, setLeftTab] = useState<"pages" | "blocks" | "layers">("pages");
+  const [leftTab, setLeftTab] = useState<"pages" | "blocks" | "layers">(embedded ? "layers" : "pages");
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "warn" | "error"; text: string } | null>(null);
@@ -349,7 +367,7 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
         : (target.previewRoute ?? "/city/northlake/pecan-square")
       : (target.previewRoute ?? target.route);
 
-  const sections: SectionDef[] = useMemo(() => TEMPLATE_SECTIONS[target.route] ?? [], [target.route]);
+  const sections: SectionDef[] = useMemo(() => TEMPLATE_SECTIONS[sectionsKeyFor(target.route)] ?? [], [target.route]);
   const sectionByKey = useMemo(() => new Map(sections.map((s) => [s.key, s])), [sections]);
   const sectionByKeyRef = useRef(sectionByKey);
   sectionByKeyRef.current = sectionByKey;
@@ -500,7 +518,7 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
         setPublishedDoc(null);
         setEntries([]);
       } else {
-        const working = (draft as LayoutDoc | undefined) ?? (published as LayoutDoc | undefined) ?? codeLayout(t.route);
+        const working = (draft as LayoutDoc | undefined) ?? (published as LayoutDoc | undefined) ?? codeLayout(sectionsKeyFor(t.route));
         setEntries(working.blocks);
         setPublishedDoc((published as LayoutDoc | undefined) ?? null);
         historyRef.current = { stack: [{ entries: working.blocks, regions: {} }], idx: 0 };
@@ -1065,7 +1083,7 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
   };
 
   const diff = useMemo(
-    () => diffLayouts(publishedDoc ?? (target.kind === "static" || target.kind === "template" ? codeLayout(target.route) : null), { type: "layout", blocks: entries }, sections),
+    () => diffLayouts(publishedDoc ?? (target.kind === "static" || target.kind === "template" ? codeLayout(sectionsKeyFor(target.route)) : null), { type: "layout", blocks: entries }, sections),
     [publishedDoc, entries, sections, target]
   );
 
@@ -1078,6 +1096,7 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     <div style={{ height: "calc(100vh - 46px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* ---------------------------------------------------- top toolbar */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 14px", borderBottom: `2px solid ${INK}`, background: CARD, zIndex: 50 }}>
+        {!embedded && (
         <select
           aria-label="Page"
           value={target.route}
@@ -1098,6 +1117,10 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
             </optgroup>
           ))}
         </select>
+        )}
+        {embedded && (
+          <span className="font-mono" style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".06em", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{target.title}</span>
+        )}
 
         <span style={{ display: "flex", gap: 5 }} role="group" aria-label="Device preview">
           {DEVICES.map((d) => (
@@ -1157,10 +1180,14 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
         {target.kind === "custom" && (
           <button type="button" onClick={() => setSettingsOpen(true)} className="font-mono" style={btn()}><Settings2 size={14} /> PAGE SETTINGS</button>
         )}
-        <button type="button" onClick={() => setNewPageOpen(true)} className="font-mono" style={btn()}><Plus size={14} /> NEW PAGE</button>
-        <a href="/admin" className="font-mono" style={{ ...btn(), textDecoration: "none" }} title="Exit the builder — back to the console">
-          <LogOut size={14} /> EXIT
-        </a>
+        {!embedded && (
+          <button type="button" onClick={() => setNewPageOpen(true)} className="font-mono" style={btn()}><Plus size={14} /> NEW PAGE</button>
+        )}
+        {!embedded && (
+          <a href="/admin" className="font-mono" style={{ ...btn(), textDecoration: "none" }} title="Exit the builder — back to the console">
+            <LogOut size={14} /> EXIT
+          </a>
+        )}
       </div>
 
       {migrationApplied === false && (
@@ -1173,7 +1200,7 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
         {/* --------------------------------------------------- left panel */}
         <aside style={{ borderRight: `2px solid ${INK}`, background: CARD, overflowY: "auto" }}>
           <div style={{ display: "flex", borderBottom: `1.5px solid rgba(29,25,19,.25)` }}>
-            {(["pages", "blocks", "layers"] as const).map((t) => (
+            {((embedded ? ["blocks", "layers"] : ["pages", "blocks", "layers"]) as ("pages" | "blocks" | "layers")[]).map((t) => (
               <button key={t} type="button" onClick={() => setLeftTab(t)} className="font-mono" style={{ flex: 1, border: "none", borderBottom: leftTab === t ? `3px solid ${ORANGE}` : "3px solid transparent", background: "transparent", padding: "11px 4px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".1em", cursor: "pointer", color: leftTab === t ? INK : "rgba(29,25,19,.55)" }}>
                 {t.toUpperCase()}
               </button>
@@ -1287,6 +1314,7 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
                   </span>
                 )}
                 {target.kind === "template" && <span style={{ color: ORANGE_DARK, fontWeight: 700 }}>SHARED TEMPLATE — CHANGES AFFECT EVERY PAGE OF THIS KIND</span>}
+                {HOOD_ROUTE_RE.test(target.route) && <span style={{ color: "#2c6e49", fontWeight: 700 }}>THIS PAGE ONLY — THE SHARED HOOD TEMPLATE IS UNTOUCHED</span>}
                 <span style={{ flex: 1 }} />
                 {dirty && <span style={{ color: ORANGE_DARK, fontWeight: 700 }}>UNSAVED CHANGES</span>}
               </div>
@@ -2335,18 +2363,24 @@ function PickCardPanel({
     the approved asset with its full metadata, or an honest empty state.
     Uploads ride the EXISTING CI-7 manual pipeline and only ever create a
     PENDING candidate — approval stays the Photo Desk's explicit action. */
-function PickPhotoModal({
+export function PickPhotoModal({
   city,
   info,
   onClose,
   onRefresh,
+  entity = "homepage",
+  displayName,
 }: {
+  /** homepage: a city slug · neighborhood: "city/slug" */
   city: string;
   info: PickPhotoInfo | null;
   onClose: () => void;
   onRefresh: () => void;
+  entity?: "homepage" | "neighborhood";
+  displayName?: string;
 }) {
-  const c = bySlug[city];
+  const c = bySlug[entity === "neighborhood" ? city.split("/")[0] : city];
+  const shown = displayName ?? c?.name ?? city;
   const [showUpload, setShowUpload] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [attr, setAttr] = useState("PHOTO: DISCOVER DFW");
@@ -2364,7 +2398,7 @@ function PickPhotoModal({
     try {
       let slotId = info?.slot?.id;
       if (!slotId) {
-        const j = await (await fetch("/api/admin/editor/pick-photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "ensure-slot", city }) })).json();
+        const j = await (await fetch("/api/admin/editor/pick-photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entity === "neighborhood" ? { action: "ensure-slot", entity, key: city, name: displayName } : { action: "ensure-slot", city }) })).json();
         if (!j.ok) throw new Error(String(j.error ?? "Could not create the photo slot"));
         slotId = j.slot.id as string;
       }
@@ -2389,7 +2423,7 @@ function PickPhotoModal({
   };
 
   return (
-    <Modal title={`HOMEPAGE PICK PHOTO — ${(c?.name ?? city).toUpperCase()}`} onClose={onClose} wide>
+    <Modal title={`${entity === "neighborhood" ? "COMMUNITY HERO PHOTO" : "HOMEPAGE PICK PHOTO"} — ${shown.toUpperCase()}`} onClose={onClose} wide>
       {!info ? (
         <div className="font-mono" style={{ fontSize: 11 }}>LOADING THE PHOTO DESK RECORD…</div>
       ) : (
@@ -2420,7 +2454,7 @@ function PickPhotoModal({
             </div>
           ) : (
             <div className="font-mono" style={{ fontSize: 11, lineHeight: 1.9, background: "rgba(193,62,23,.08)", border: `1.5px solid ${ORANGE_DARK}`, borderRadius: 10, padding: "12px 14px", color: ORANGE_DARK }}>
-              NO APPROVED HOMEPAGE-PICK PHOTO FOR {(c?.name ?? city).toUpperCase()}.
+              NO APPROVED {entity === "neighborhood" ? "HERO" : "HOMEPAGE-PICK"} PHOTO FOR {shown.toUpperCase()}.
               <br />Upload one below (it becomes a PENDING candidate) or research/approve in the Photo Desk. A lineup with this city can be drafted but never published until an asset is approved.
             </div>
           )}

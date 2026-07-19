@@ -13,6 +13,7 @@ import { allPages, type PageDef, type RegionDef } from "@/lib/editor/registry";
 import { SEO_TITLE_MAX, SEO_DESC_MAX, isAllowedLinkHref, type PMNode } from "@/lib/editor/doc";
 import RichEditor, { type RichEditorHandle } from "./RichEditor";
 import VisualBuilder from "./VisualBuilder";
+import CommunityStudio from "./CommunityStudio";
 
 const INK = "#1D1913";
 const CREAM = "#F6F1E6";
@@ -113,7 +114,7 @@ function imagesIn(doc: unknown): { src: string; alt: string; attribution: string
 }
 
 export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: string; initialRoute?: string }) {
-  const [mode, setMode] = useState<"builder" | "content">(initialRoute ? "content" : "builder");
+  const [mode, setMode] = useState<"builder" | "communities" | "content">(initialRoute ? "content" : "builder");
   const pages = useMemo(() => allPages(), []);
   const groups = useMemo(() => {
     const order = ["Homepage", "Search & editorial", "Cities", "Neighborhoods", "New-build communities", "Static & research"];
@@ -372,13 +373,13 @@ export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: s
 
   const modeTabs = (
     <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 14px", borderBottom: "2px solid #1D1913", background: "#1D1913" }}>
-      {(["builder", "content"] as const).map((m) => (
+      {(["builder", "communities", "content"] as const).map((m) => (
         <button key={m} type="button" onClick={() => setMode(m)} className="font-mono" style={{ border: "1.5px solid " + (mode === m ? "#F6F1E6" : "rgba(246,241,230,.35)"), borderRadius: 999, padding: "7px 16px", fontSize: 10, fontWeight: 700, letterSpacing: ".14em", cursor: "pointer", background: mode === m ? "#F6F1E6" : "transparent", color: mode === m ? "#1D1913" : "rgba(246,241,230,.85)" }}>
-          {m === "builder" ? "VISUAL BUILDER" : "CONTENT / SEO"}
+          {m === "builder" ? "VISUAL BUILDER" : m === "communities" ? "COMMUNITIES" : "CONTENT / SEO"}
         </button>
       ))}
       <span className="font-mono" style={{ marginLeft: "auto", fontSize: 9, letterSpacing: ".14em", color: "rgba(246,241,230,.55)" }}>
-        {mode === "builder" ? "PAGE STRUCTURE & BLOCKS" : "FOCUSED COPY, FAQS & SEO — THE 0018 DESK"}
+        {mode === "builder" ? "PAGE STRUCTURE & BLOCKS" : mode === "communities" ? "COMMUNITY PAGE STUDIO — DRAFT, EDIT & LIFECYCLE" : "FOCUSED COPY, FAQS & SEO — THE 0018 DESK"}
       </span>
     </div>
   );
@@ -388,6 +389,15 @@ export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: s
       <div>
         {modeTabs}
         <VisualBuilder adminEmail={adminEmail} />
+      </div>
+    );
+  }
+
+  if (mode === "communities") {
+    return (
+      <div>
+        {modeTabs}
+        <CommunityStudio adminEmail={adminEmail} />
       </div>
     );
   }

@@ -160,7 +160,20 @@ export async function POST(req: Request) {
   if (body.action === "save") {
     const citySlug = String(body.citySlug ?? "");
     const hoodSlug = String(body.hoodSlug ?? "");
-    if (!findPage(citySlug, hoodSlug)) return bad(`${citySlug}/${hoodSlug} is not an existing page — content attaches only to live pages`, 409);
+    if (!findPage(citySlug, hoodSlug)) {
+      // Community Studio: an ACTIVE community draft may hold page content
+      // before its page exists — the CB-2/CB-3b exporters still validate
+      // page existence at export time, so nothing thin can ship early
+      const { data: activeDraft } = await db
+        .from("community_drafts")
+        .select("id")
+        .eq("city_slug", citySlug)
+        .eq("slug", hoodSlug)
+        .neq("lifecycle", "archived")
+        .maybeSingle();
+      if (!activeDraft)
+        return bad(`${citySlug}/${hoodSlug} is not an existing page or an active community draft — content attaches only to real targets`, 409);
+    }
     const patch = toRowPatch(body.fields ?? {});
     if (typeof patch === "string") return bad(patch);
 

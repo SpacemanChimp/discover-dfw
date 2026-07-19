@@ -20,17 +20,23 @@ export async function GET(req: Request) {
   if (ctx instanceof NextResponse) return ctx;
 
   const url = new URL(req.url);
-  const city = url.searchParams.get("city") ?? "";
-  if (!CITY_RE.test(city) || !bySlug[city]) {
+  // homepage picks (default) or a community hero slot (entity=neighborhood,
+  // key="city/slug" — works for live pages AND not-yet-exported drafts)
+  const entity = url.searchParams.get("entity") === "neighborhood" ? "neighborhood" : "homepage";
+  const rawKey = entity === "neighborhood" ? (url.searchParams.get("key") ?? "") : (url.searchParams.get("city") ?? "");
+  const city = entity === "neighborhood" ? rawKey.split("/")[0] ?? "" : rawKey;
+  const entityKey = entity === "neighborhood" ? rawKey : city;
+  const slotKey = entity === "neighborhood" ? "hero" : "pick";
+  if (!CITY_RE.test(city) || !bySlug[city] || (entity === "neighborhood" && !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(rawKey))) {
     return NextResponse.json({ ok: false, error: "Unknown city" }, { status: 400 });
   }
 
   const { data: slot } = await ctx.db
     .from("photo_slots")
     .select("id, status, label, slot_key")
-    .eq("entity_type", "homepage")
-    .eq("entity_slug", city)
-    .eq("slot_key", "pick")
+    .eq("entity_type", entity)
+    .eq("entity_slug", entityKey)
+    .eq("slot_key", slotKey)
     .maybeSingle();
 
   let asset: Record<string, unknown> | null = null;
@@ -56,7 +62,7 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    city,
+    city: entityKey,
     cityName: bySlug[city].name,
     slot: slot ? { id: slot.id, status: slot.status, label: slot.label } : null,
     asset,
@@ -70,35 +76,48 @@ export async function POST(req: Request) {
   const ctx = await editorGate(req);
   if (ctx instanceof NextResponse) return ctx;
 
-  const body = await readJsonBody<{ action?: string; city?: string }>(req);
+  const body = await readJsonBody<{ action?: string; city?: string; entity?: string; key?: string; name?: string }>(req);
   if (body instanceof NextResponse) return body;
   if (body.action !== "ensure-slot") return NextResponse.json({ ok: false, error: "Unknown action" }, { status: 400 });
 
-  const city = String(body.city ?? "");
-  const c = CITY_RE.test(city) ? bySlug[city] : undefined;
-  if (!c) return NextResponse.json({ ok: false, error: "Unknown city" }, { status: 400 });
+  const entity = body.entity === "neighborhood" ? "neighborhood" : "homepage";
+  const rawKey = entity === "neighborhood" ? String(body.key ?? "") : String(body.city ?? "");
+  const citySlug = entity === "neighborhood" ? (rawKey.split("/")[0] ?? "") : rawKey;
+  const c = CITY_RE.test(citySlug) ? bySlug[citySlug] : undefined;
+  if (!c || (entity === "neighborhood" && !/^[a-z0-9-]+\/[a-z0-9-]+$/.test(rawKey))) {
+    return NextResponse.json({ ok: false, error: "Unknown city" }, { status: 400 });
+  }
+  const entityKey = entity === "neighborhood" ? rawKey : citySlug;
+  const slotKey = entity === "neighborhood" ? "hero" : "pick";
+  const displayName = entity === "neighborhood" ? String(body.name ?? rawKey.split("/")[1] ?? "").trim() || rawKey : c.name;
 
   const { data: existing } = await ctx.db
     .from("photo_slots")
     .select("id, status, label")
-    .eq("entity_type", "homepage")
-    .eq("entity_slug", city)
-    .eq("slot_key", "pick")
+    .eq("entity_type", entity)
+    .eq("entity_slug", entityKey)
+    .eq("slot_key", slotKey)
     .maybeSingle();
   if (existing) return NextResponse.json({ ok: true, slot: existing, created: false });
 
-  // same row shape the seed script writes for homepage picks
+  // same row shapes the seed script writes
   const { data: created, error } = await ctx.db
     .from("photo_slots")
     .insert({
-      entity_type: "homepage",
-      entity_slug: city,
-      slot_key: "pick",
-      label: `${c.name.toUpperCase()} — HOMEPAGE PICK`,
+      entity_type: entity,
+      entity_slug: entityKey,
+      slot_key: slotKey,
+      label:
+        entity === "neighborhood"
+          ? `${displayName.toUpperCase()} — HERO`
+          : `${c.name.toUpperCase()} — HOMEPAGE PICK`,
       label_source: "explicit",
-      search_query: `${c.name} Texas downtown landmark`,
+      search_query:
+        entity === "neighborhood"
+          ? `${displayName} ${c.name} Texas neighborhood`
+          : `${c.name} Texas downtown landmark`,
       preferred_orientation: "landscape",
-      required_place_name: c.name,
+      required_place_name: entity === "neighborhood" ? `${displayName}, ${c.name}` : c.name,
       latitude: c.ll?.[1] ?? null,
       longitude: c.ll?.[0] ?? null,
       status: "missing",
@@ -108,12 +127,15 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 
   await ctx.db.from("verification_events").insert({
-    entity_type: "homepage",
-    entity_slug: city,
+    entity_type: entity,
+    entity_slug: entityKey,
     verified_by: ctx.admin.email,
     verification_method: "admin_review",
     action: "create",
-    notes: "homepage pick photo slot created from the Visual Builder (upload target — publish still requires CI-6 approval)",
+    notes:
+      entity === "neighborhood"
+        ? "community hero photo slot created from the Community Studio (upload target — publish still requires CI-6 approval)"
+        : "homepage pick photo slot created from the Visual Builder (upload target — publish still requires CI-6 approval)",
   });
 
   return NextResponse.json({ ok: true, slot: created, created: true });
