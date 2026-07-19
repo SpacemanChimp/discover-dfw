@@ -7849,6 +7849,14 @@
    "builders": 7,
    "status": "NOW SELLING",
    "note": "A builder-rich ranch plan on Fort Worth's fast-growing rim."
+  },
+  {
+   "name": "Bridgewater",
+   "city": "midlothian",
+   "from": "$430s",
+   "builders": 3,
+   "status": "NOW SELLING",
+   "note": "New-build community in Midlothian with multiple active builders and quick move-in inventory."
   }
  ]
 }
