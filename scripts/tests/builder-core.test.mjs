@@ -11,6 +11,8 @@ import {
   diffLayouts,
   codeLayout,
   starterLayout,
+  editorsPicksFromLayout,
+  EDITORS_PICKS_DEFAULT,
   TEMPLATE_SECTIONS,
   SYSTEM_NAV,
 } from "../../lib/editor/blocks.ts";
@@ -189,6 +191,57 @@ test("diff is key-order-canonical: a jsonb round-trip is NOT an edit", () => {
   };
   const d = diffLayouts(a, b, secs);
   assert.deepEqual(d, { added: [], removed: [], moved: [], hidden: [], shown: [], edited: [] });
+});
+
+test("editor's picks card settings: 4 canonical distinct cities, tagline capped, identity normalizes away", () => {
+  const CITIES = ["denton", "fort-worth", "dallas", "frisco", "plano", "allen"];
+  const homeSections = TEMPLATE_SECTIONS["/"];
+  const withPicks = (picks) => ({
+    type: "layout",
+    blocks: homeSections.map((s) =>
+      s.key === "picks"
+        ? { kind: "section", key: "picks", hidden: false, visibility: "all", settings: { picks } }
+        : { kind: "section", key: s.key, hidden: false, visibility: "all" }
+    ),
+  });
+  const OPTS = { pageKind: "template", sections: homeSections, supabaseUrl: SUPA, requireImageAlt: true, citySlugs: CITIES };
+
+  // a real override round-trips
+  const ok = sanitizeLayout(withPicks([{ city: "plano", tagline: "  Big city, tidy lawns.  " }, { city: "fort-worth" }, { city: "dallas" }, { city: "frisco" }]), OPTS);
+  assert.equal(ok.ok, true, ok.errors.join("; "));
+  const picks = editorsPicksFromLayout(ok.doc);
+  assert.deepEqual(picks.map((p) => p.city), ["plano", "fort-worth", "dallas", "frisco"]);
+  assert.equal(picks[0].tagline, "Big city, tidy lawns.");
+  assert.equal(picks[1].tagline, undefined);
+
+  // wrong count refused
+  assert.equal(sanitizeLayout(withPicks([{ city: "plano" }]), OPTS).ok, false);
+  // duplicate city refused
+  const dup = sanitizeLayout(withPicks([{ city: "plano" }, { city: "plano" }, { city: "dallas" }, { city: "frisco" }]), OPTS);
+  assert.equal(dup.ok, false);
+  assert.ok(dup.errors.some((e) => /different city/.test(e)));
+  // non-canonical city refused
+  const bogus = sanitizeLayout(withPicks([{ city: "gotham" }, { city: "fort-worth" }, { city: "dallas" }, { city: "frisco" }]), OPTS);
+  assert.equal(bogus.ok, false);
+  assert.ok(bogus.errors.some((e) => /not a canonical DFW city/.test(e)));
+  // script-shaped tagline refused by the global guard
+  assert.equal(sanitizeLayout(withPicks([{ city: "plano", tagline: "<script>x</script>" }, { city: "fort-worth" }, { city: "dallas" }, { city: "frisco" }]), OPTS).ok, false);
+  // settings on a section without a cards contract refused
+  const wrongSection = {
+    type: "layout",
+    blocks: homeSections.map((s) =>
+      s.key === "trust"
+        ? { kind: "section", key: "trust", hidden: false, visibility: "all", settings: { picks: [{ city: "plano" }, { city: "fort-worth" }, { city: "dallas" }, { city: "frisco" }] } }
+        : { kind: "section", key: s.key, hidden: false, visibility: "all" }
+    ),
+  };
+  assert.equal(sanitizeLayout(wrongSection, OPTS).ok, false);
+  // the DEFAULT lineup with no taglines stores NO settings (identity stays clean)
+  const identity = sanitizeLayout(withPicks(EDITORS_PICKS_DEFAULT.map((city) => ({ city }))), OPTS);
+  assert.equal(identity.ok, true, identity.errors.join("; "));
+  assert.equal(editorsPicksFromLayout(identity.doc), null);
+  // absent settings = null lineup
+  assert.equal(editorsPicksFromLayout(codeLayout("/")), null);
 });
 
 test("fallback: a null layout renders code order (applyLayout contract is null-safe)", () => {

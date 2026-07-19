@@ -46,6 +46,8 @@ export type CanvasMsg =
   | { ns: typeof BB_NS; t: "field"; id: string; field: string; value: string }
   | { ns: typeof BB_NS; t: "rich"; id: string; field: string; html: string }
   | { ns: typeof BB_NS; t: "region"; region: string; html: string; original: string | null }
+  | { ns: typeof BB_NS; t: "card"; section: string; index: number }
+  | { ns: typeof BB_NS; t: "cardReorder"; section: string; order: number[] }
   | { ns: typeof BB_NS; t: "navigate"; href: string }
   | { ns: typeof BB_NS; t: "height"; px: number }
   | { ns: typeof BB_NS; t: "error"; message: string };
@@ -63,6 +65,7 @@ export type ShellMsg =
   | { ns: typeof BB_NS; t: "scrollTo"; id: string }
   | { ns: typeof BB_NS; t: "field"; id: string; field: string; value: string }
   | { ns: typeof BB_NS; t: "regionHtml"; region: string; html: string }
+  | { ns: typeof BB_NS; t: "cardSelect"; section: string; index: number | null }
   | { ns: typeof BB_NS; t: "overlays"; on: boolean };
 
 /* -------------------------------------------------------------- guards */
@@ -140,6 +143,17 @@ export function parseCanvasMsg(data: unknown): CanvasMsg | null {
       return isStr(d.region) && /^[a-z0-9-]{1,40}$/.test(d.region) && isStr(d.html) && d.html.length <= 100_000 && (d.original === null || (isStr(d.original) && d.original.length <= 100_000))
         ? { ns: BB_NS, t: "region", region: d.region, html: d.html, original: d.original as string | null }
         : null;
+    case "card":
+      return isEntryId(d.section) && isNum(d.index) && d.index >= 0 && d.index < 8
+        ? { ns: BB_NS, t: "card", section: d.section, index: Math.floor(d.index) }
+        : null;
+    case "cardReorder":
+      return isEntryId(d.section) &&
+        Array.isArray(d.order) &&
+        d.order.length <= 8 &&
+        d.order.every((n) => isNum(n) && n >= 0 && n < 8)
+        ? { ns: BB_NS, t: "cardReorder", section: d.section, order: (d.order as number[]).map((n) => Math.floor(n)) }
+        : null;
     case "navigate":
       return isStr(d.href) && d.href.length <= 2000 ? { ns: BB_NS, t: "navigate", href: d.href } : null;
     case "height":
@@ -185,6 +199,10 @@ export function parseShellMsg(data: unknown): ShellMsg | null {
     case "regionHtml":
       return isStr(d.region) && /^[a-z0-9-]{1,40}$/.test(d.region) && isStr(d.html) && d.html.length <= 100_000
         ? { ns: BB_NS, t: "regionHtml", region: d.region, html: d.html }
+        : null;
+    case "cardSelect":
+      return isEntryId(d.section) && (d.index === null || (isNum(d.index) && d.index >= 0 && d.index < 8))
+        ? { ns: BB_NS, t: "cardSelect", section: d.section, index: d.index === null ? null : Math.floor(d.index as number) }
         : null;
     case "overlays":
       return isBool(d.on) ? { ns: BB_NS, t: "overlays", on: d.on } : null;

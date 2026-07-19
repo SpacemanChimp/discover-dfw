@@ -58,6 +58,7 @@ import {
   SYSTEM_NAV,
   codeLayout,
   diffLayouts,
+  EDITORS_PICKS_DEFAULT,
   TREATMENTS,
   WIDTHS,
   ALIGNS,
@@ -72,7 +73,7 @@ import {
   type BlockImage,
 } from "@/lib/editor/blocks.ts";
 import { BB_NS, type CanvasEntryMeta, type CanvasMsg } from "@/lib/editor/bridge-protocol";
-import { cities } from "@/lib/dfw-data";
+import { cities, bySlug } from "@/lib/dfw-data";
 import RichEditor, { type RichEditorHandle } from "./RichEditor";
 import { MediaPicker, type MediaItem } from "./EditorDesk";
 import CanvasFrame, { type CanvasApi } from "./CanvasFrame";
@@ -131,6 +132,35 @@ const newBlock = (type: string): BlockInstance => ({
 
 const entryId = (e: LayoutEntry) => (e.kind === "section" ? `s:${e.key}` : `b:${e.block.id}`);
 const stableStr = (v: unknown) => JSON.stringify(v);
+
+/* --------------------------------------------------- editor's picks */
+const PICKS_ID = "s:picks";
+export type PickCard = { city: string; tagline?: string };
+export interface PickPhotoInfo {
+  city: string;
+  cityName: string;
+  slot: { id: string; status: string; label: string } | null;
+  asset: {
+    public_image_url: string;
+    alt_text: string;
+    caption: string | null;
+    attribution_text: string;
+    license: string;
+    source_page_url: string | null;
+    approved_by: string;
+    approved_at: string;
+    width: number | null;
+    height: number | null;
+  } | null;
+  pendingCandidates: number;
+}
+
+const defaultPicks = (): PickCard[] => EDITORS_PICKS_DEFAULT.map((c) => ({ city: c }));
+const isDefaultPicks = (p: PickCard[]) => p.length === 4 && p.every((x, i) => x.city === EDITORS_PICKS_DEFAULT[i] && !x.tagline);
+const picksOf = (list: LayoutEntry[]): PickCard[] => {
+  for (const e of list) if (e.kind === "section" && e.key === "picks") return e.settings?.picks ?? defaultPicks();
+  return defaultPicks();
+};
 
 /** HTML → sanitized-format TipTap document (the server re-sanitizes on save) */
 const TT_EXTENSIONS = [StarterKit, TipTapLink];
@@ -283,11 +313,21 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
   const [insertAt, setInsertAt] = useState<number | null>(null);
   const [previewCity, setPreviewCity] = useState("frisco");
   const [regionDrafts, setRegionDrafts] = useState<Record<string, { html: string; doc: unknown }>>({});
+  /* editor's picks card editing */
+  const [selectedCard, setSelectedCard] = useState<number | null>(null);
+  const selectedCardRef = useRef<number | null>(null);
+  selectedCardRef.current = selectedCard;
+  const [photoModalCity, setPhotoModalCity] = useState<string | null>(null);
+  const [pickPhotos, setPickPhotos] = useState<Record<string, PickPhotoInfo | null>>({});
+  const [missingPhotos, setMissingPhotos] = useState<string[]>([]);
+  const lastPicksRef = useRef<string>("");
 
   /* ------------------------------------------------- canvas plumbing */
   const canvasApi = useRef<CanvasApi | null>(null);
   const entriesRef = useRef<LayoutEntry[]>(entries);
   entriesRef.current = entries;
+  const targetRef = useRef(target);
+  targetRef.current = target;
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
   const canvasSt = useRef<{ ready: boolean; order: string[]; hidden: Record<string, boolean>; blockJson: Record<string, string> }>({ ready: false, order: [], hidden: {}, blockJson: {} });
@@ -432,6 +472,10 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     setBusy("load");
     setMessage(null);
     setSelectedId(null);
+    setSelectedCard(null);
+    setPhotoModalCity(null);
+    setMissingPhotos([]);
+    lastPicksRef.current = "";
     setRegionDrafts({});
     regionsCanvas.current = {};
     regionsOriginal.current = {};
@@ -595,6 +639,36 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     updateEntry(`b:${id}`, (e) => (e.kind === "block" ? { ...e, block: { ...e.block, ...patch } } : e));
   const updateSettings = (id: string, patch: Record<string, unknown>) =>
     updateEntry(`b:${id}`, (e) => (e.kind === "block" ? { ...e, block: { ...e.block, settings: { ...e.block.settings, ...patch } } } : e));
+
+  /* --------------------------------------------- editor's picks state */
+  const setPicks = (next: PickCard[]) => {
+    setLayout(
+      entriesRef.current.map((e) => {
+        if (e.kind !== "section" || e.key !== "picks") return e;
+        const { settings: _drop, ...rest } = e;
+        void _drop;
+        // the code lineup stores NO override — identity drafts stay clean
+        return isDefaultPicks(next) ? rest : { ...rest, settings: { picks: next } };
+      })
+    );
+  };
+
+  const loadPickInfo = useCallback(async (city: string, force = false) => {
+    if (!force) {
+      let known = false;
+      setPickPhotos((prev) => {
+        known = city in prev;
+        return known ? prev : { ...prev, [city]: null };
+      });
+      if (known) return;
+    }
+    try {
+      const j = await (await fetch(`/api/admin/editor/pick-photos?city=${encodeURIComponent(city)}`)).json();
+      if (j.ok) setPickPhotos((prev) => ({ ...prev, [city]: j as PickPhotoInfo }));
+    } catch {
+      /* stays in loading state — the panel shows a retry-friendly message */
+    }
+  }, []);
 
   const addBlockAt = (type: string, index: number | null) => {
     const b: LayoutEntry = { kind: "block", block: newBlock(type) };
@@ -771,6 +845,29 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     scheduleSync();
   }, [entries, scheduleSync]);
 
+  /* picks changed → re-render the REAL section into the canvas (debounced;
+     the response also reports cities without an approved pick photo) */
+  useEffect(() => {
+    if (target.route !== "/") return;
+    const cur = stableStr(picksOf(entries));
+    if (!canvasSt.current.ready || lastPicksRef.current === "" || cur === lastPicksRef.current) return;
+    const t = setTimeout(async () => {
+      lastPicksRef.current = cur;
+      const p = picksOf(entriesRef.current);
+      const j = await post("/api/admin/editor/render-picks", { picks: isDefaultPicks(p) ? null : p });
+      if (j.ok && j.html) {
+        canvasApi.current?.send({ ns: BB_NS, t: "replace", id: PICKS_ID, html: j.html });
+        setMissingPhotos((j.missingPhotos as string[]) ?? []);
+        const sc = selectedCardRef.current;
+        if (sc !== null) canvasApi.current?.send({ ns: BB_NS, t: "cardSelect", section: PICKS_ID, index: sc });
+      } else if (!j.ok) {
+        setMessage({ kind: "error", text: ((j.errors as string[]) ?? [j.error]).filter(Boolean).join(" · ") || "Pick update failed" });
+      }
+    }, 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, target.route]);
+
   /* the bridge (re)connected — seed canvas state, init overlays, resync */
   const onCanvasReady = useCallback(() => {
     const c = canvasSt.current;
@@ -788,6 +885,19 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     }
     canvasApi.current?.send({ ns: BB_NS, t: "init", metas: entriesRef.current.map(metaFor), order: entriesRef.current.map(entryId) });
     if (selectedId) canvasApi.current?.send({ ns: BB_NS, t: "select", id: selectedId });
+    // picks baseline: the frame just rendered THIS lineup; changes diff from here
+    if (targetRef.current.route === "/") {
+      lastPicksRef.current = stableStr(picksOf(entriesRef.current));
+      const p0 = picksOf(entriesRef.current);
+      if (!isDefaultPicks(p0)) {
+        // populate the missing-photo report for an already-overridden draft
+        void post("/api/admin/editor/render-picks", { picks: p0 }).then((j) => {
+          if (j.ok) setMissingPhotos((j.missingPhotos as string[]) ?? []);
+        });
+      } else {
+        setMissingPhotos([]);
+      }
+    }
     // unsaved in-canvas text edits survive a canvas reload
     regionsCanvas.current = {};
     for (const [key, d] of Object.entries(regionDraftsRef.current)) {
@@ -813,8 +923,22 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
           break;
         case "select":
           setSelectedId(m.id);
+          setSelectedCard(null);
           if (m.id) setLeftTab("layers");
           break;
+        case "card":
+          setSelectedId(m.section);
+          setSelectedCard(m.index);
+          setLeftTab("layers");
+          break;
+        case "cardReorder": {
+          if (m.section !== PICKS_ID) break;
+          const cur = picksOf(entriesRef.current);
+          if (m.order.length !== cur.length || new Set(m.order).size !== cur.length || m.order.some((i) => i >= cur.length)) break;
+          setSelectedCard((sc) => (sc === null ? null : m.order.indexOf(sc)));
+          setPicks(m.order.map((i) => cur[i]));
+          break;
+        }
         case "reorder": {
           const map = new Map(entriesRef.current.map((e) => [entryId(e), e]));
           const next = m.ids.map((id) => map.get(id)).filter((x): x is LayoutEntry => !!x);
@@ -1216,7 +1340,26 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
               )}
             </div>
           ) : selected.kind === "section" ? (
-            <SectionSettings entry={selected} def={selectedSection} onChange={(patch) => updateEntry(selectedId!, (e) => (e.kind === "section" ? { ...e, ...patch } : e))} />
+            selectedCard !== null && selectedSection?.cards === "editors-picks" ? (
+              <PickCardPanel
+                index={selectedCard}
+                picks={picksOf(entries)}
+                info={pickPhotos}
+                onLoadInfo={loadPickInfo}
+                onPicks={setPicks}
+                onSelectCard={(i) => {
+                  setSelectedCard(i);
+                  canvasApi.current?.send({ ns: BB_NS, t: "cardSelect", section: PICKS_ID, index: i });
+                }}
+                onChangePhoto={(city) => {
+                  setPhotoModalCity(city);
+                  void loadPickInfo(city, true);
+                }}
+                onRefuse={(text) => setMessage({ kind: "error", text })}
+              />
+            ) : (
+              <SectionSettings entry={selected} def={selectedSection} onChange={(patch) => updateEntry(selectedId!, (e) => (e.kind === "section" ? { ...e, ...patch } : e))} />
+            )
           ) : (
             <BlockSettings
               block={selectedBlock!}
@@ -1270,6 +1413,11 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
               {diff.edited.length > 0 && <div>✏ EDITED: {diff.edited.join(" · ")}</div>}
               {Object.keys(savedRegionsRef.current).length > 0 && (
                 <div>✏ TEXT DRAFTS PUBLISHING TOO: {Object.keys(savedRegionsRef.current).join(" · ")}</div>
+              )}
+              {target.route === "/" && missingPhotos.length > 0 && (
+                <div style={{ color: ORANGE_DARK, marginTop: 6 }}>
+                  ⛔ PUBLISH WILL BE REFUSED — no APPROVED homepage-pick photo for: {missingPhotos.map((c) => bySlug[c]?.name ?? c).join(", ")}. Approve one in the Photo Desk first.
+                </div>
               )}
               {!diff.added.length && !diff.removed.length && !diff.moved.length && !diff.hidden.length && !diff.shown.length && !diff.edited.length && !Object.keys(savedRegionsRef.current).length && (
                 <div>NO STRUCTURAL DIFFERENCE FROM WHAT IS LIVE.</div>
@@ -1405,6 +1553,16 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
             }
             return null;
           }}
+        />
+      )}
+
+      {/* ------------------------------------------- pick photo modal */}
+      {photoModalCity && (
+        <PickPhotoModal
+          city={photoModalCity}
+          info={pickPhotos[photoModalCity] ?? null}
+          onClose={() => setPhotoModalCity(null)}
+          onRefresh={() => loadPickInfo(photoModalCity, true)}
         />
       )}
 
@@ -2030,6 +2188,291 @@ function PageSettingsModal({
         )}
         <button type="button" className="font-mono" style={{ ...btn(), flex: 1 }} onClick={onClose}>CLOSE</button>
       </div>
+    </Modal>
+  );
+}
+
+/* ===================================================== editor's picks */
+/** right-panel editor for ONE homepage pick card. City name, county,
+    median, and the destination URL stay canonical site data — only the
+    city CHOICE and the short tagline override are editable here. */
+function PickCardPanel({
+  index,
+  picks,
+  info,
+  onLoadInfo,
+  onPicks,
+  onSelectCard,
+  onChangePhoto,
+  onRefuse,
+}: {
+  index: number;
+  picks: PickCard[];
+  info: Record<string, PickPhotoInfo | null>;
+  onLoadInfo: (city: string) => void | Promise<void>;
+  onPicks: (next: PickCard[]) => void;
+  onSelectCard: (i: number) => void;
+  onChangePhoto: (city: string) => void;
+  onRefuse: (text: string) => void;
+}) {
+  const pick = picks[index];
+  const pickCity = pick?.city;
+  const [cityQuery, setCityQuery] = useState("");
+  useEffect(() => {
+    if (pickCity) void onLoadInfo(pickCity);
+    setCityQuery("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickCity]);
+  if (!pick) return null;
+  const c = bySlug[pick.city];
+  const ph = info[pick.city];
+  const q = cityQuery.trim().toLowerCase();
+  const matches = q ? cities.filter((x) => x.name.toLowerCase().includes(q) && x.slug !== pick.city).slice(0, 8) : [];
+
+  const swap = (dir: -1 | 1) => {
+    const to = index + dir;
+    if (to < 0 || to >= picks.length) return;
+    const next = [...picks];
+    [next[index], next[to]] = [next[to], next[index]];
+    onPicks(next);
+    onSelectCard(to);
+  };
+
+  return (
+    <div>
+      <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".16em", color: ORANGE_DARK }}>
+        EDITOR&rsquo;S PICK — CARD {index + 1} OF {picks.length}
+      </div>
+      <div className="font-serif" style={{ fontWeight: 900, fontSize: 24, marginTop: 6 }}>{c?.name ?? pick.city}</div>
+      <div className="font-mono" style={{ fontSize: 10, color: "rgba(29,25,19,.55)", marginTop: 2 }}>
+        MEDIAN, COUNTY &amp; LINK COME FROM CANONICAL CITY DATA
+      </div>
+
+      <Field label="POSITION">
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <button type="button" className="font-mono" onClick={() => swap(-1)} disabled={index === 0} style={{ ...btn(), opacity: index === 0 ? 0.4 : 1 }}>◀ MOVE</button>
+          <button type="button" className="font-mono" onClick={() => swap(1)} disabled={index === picks.length - 1} style={{ ...btn(), opacity: index === picks.length - 1 ? 0.4 : 1 }}>MOVE ▶</button>
+          <span className="font-mono" style={{ fontSize: 9.5, color: "rgba(29,25,19,.5)" }}>or drag the card on the page</span>
+        </div>
+      </Field>
+
+      <Field label="CITY (SEARCH THE CANONICAL DATASET)">
+        <input value={cityQuery} onChange={(e) => setCityQuery(e.target.value)} placeholder={`${c?.name ?? pick.city} — type to replace…`} style={inputStyle} />
+        {matches.length > 0 && (
+          <div style={{ border: "1.5px solid rgba(29,25,19,.3)", borderRadius: 8, marginTop: 4, overflow: "hidden", background: "#fff" }}>
+            {matches.map((x) => {
+              const dup = picks.some((p, j) => j !== index && p.city === x.slug);
+              return (
+                <button
+                  key={x.slug}
+                  type="button"
+                  onClick={() => {
+                    if (dup) {
+                      onRefuse(`"${x.name}" is already on another pick card — each card needs a different city.`);
+                      return;
+                    }
+                    onPicks(picks.map((p, j) => (j === index ? { city: x.slug } : p)));
+                    setCityQuery("");
+                  }}
+                  style={{ display: "flex", gap: 8, alignItems: "baseline", width: "100%", textAlign: "left", border: "none", borderBottom: "1px solid rgba(29,25,19,.1)", background: "transparent", padding: "7px 10px", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, opacity: dup ? 0.45 : 1 }}
+                >
+                  <span style={{ flex: 1 }}>{x.name}</span>
+                  {dup && <span className="font-mono" style={{ fontSize: 8.5, color: ORANGE_DARK }}>ALREADY PICKED</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </Field>
+
+      <Field label="TAGLINE (EMPTY = THE CITY'S CANONICAL LINE)">
+        <textarea
+          value={pick.tagline ?? ""}
+          maxLength={140}
+          rows={2}
+          placeholder={c?.tagline ?? ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            onPicks(picks.map((p, j) => (j === index ? { ...p, tagline: v || undefined } : p)));
+          }}
+          style={{ ...inputStyle, resize: "vertical" }}
+        />
+      </Field>
+
+      <Field label="PHOTO (VIA THE PHOTO DESK — APPROVED ASSETS ONLY)">
+        {ph === null || ph === undefined ? (
+          <div className="font-mono" style={{ fontSize: 10, color: "rgba(29,25,19,.55)" }}>CHECKING THE PHOTO DESK…</div>
+        ) : ph.asset ? (
+          <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={ph.asset.public_image_url} alt={ph.asset.alt_text} style={{ width: "100%", borderRadius: 8, border: `1.5px solid ${INK}` }} />
+            <div className="font-mono" style={{ fontSize: 9.5, marginTop: 5, color: "rgba(29,25,19,.65)", lineHeight: 1.7 }}>
+              {ph.asset.attribution_text}
+              <br />LICENSE: {ph.asset.license}
+            </div>
+          </div>
+        ) : (
+          <div className="font-mono" style={{ fontSize: 10, lineHeight: 1.8, background: "rgba(193,62,23,.08)", border: `1.5px solid ${ORANGE_DARK}`, borderRadius: 8, padding: "8px 10px", color: ORANGE_DARK }}>
+            NO APPROVED HOMEPAGE-PICK PHOTO FOR {(c?.name ?? pick.city).toUpperCase()}.
+            <br />You can SAVE this lineup as a draft, but PUBLISH will refuse until a photo is approved.
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+          <button type="button" className="font-mono" onClick={() => onChangePhoto(pick.city)} style={btn(true)}>CHANGE PHOTO…</button>
+          <a href="/admin/photos" target="_blank" rel="noreferrer" className="font-mono" style={{ ...btn(), textDecoration: "none" }}>OPEN PHOTO DESK ↗</a>
+        </div>
+        {ph && ph.pendingCandidates > 0 && (
+          <div className="font-mono" style={{ fontSize: 9.5, marginTop: 6, color: "#8a6d1a" }}>
+            {ph.pendingCandidates} PENDING CANDIDATE{ph.pendingCandidates === 1 ? "" : "S"} AWAITING REVIEW IN THE PHOTO DESK
+          </div>
+        )}
+      </Field>
+    </div>
+  );
+}
+
+/** CHANGE PHOTO — the Photo Desk data for one city's homepage-pick slot:
+    the approved asset with its full metadata, or an honest empty state.
+    Uploads ride the EXISTING CI-7 manual pipeline and only ever create a
+    PENDING candidate — approval stays the Photo Desk's explicit action. */
+function PickPhotoModal({
+  city,
+  info,
+  onClose,
+  onRefresh,
+}: {
+  city: string;
+  info: PickPhotoInfo | null;
+  onClose: () => void;
+  onRefresh: () => void;
+}) {
+  const c = bySlug[city];
+  const [showUpload, setShowUpload] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [attr, setAttr] = useState("PHOTO: DISCOVER DFW");
+  const [caption, setCaption] = useState("");
+  const [rights, setRights] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  const upload = async () => {
+    if (!file) return setNote({ kind: "error", text: "Choose an image file first." });
+    if (!attr.trim()) return setNote({ kind: "error", text: "Attribution is required." });
+    if (!rights) return setNote({ kind: "error", text: "Confirm you have the right to use this photo." });
+    setBusy(true);
+    setNote(null);
+    try {
+      let slotId = info?.slot?.id;
+      if (!slotId) {
+        const j = await (await fetch("/api/admin/editor/pick-photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "ensure-slot", city }) })).json();
+        if (!j.ok) throw new Error(String(j.error ?? "Could not create the photo slot"));
+        slotId = j.slot.id as string;
+      }
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("slotId", slotId);
+      fd.set("attributionText", attr.trim());
+      fd.set("caption", caption.trim());
+      fd.set("rightsConfirmed", "true");
+      const res = await fetch("/api/admin/photos/upload", { method: "POST", body: fd });
+      const j = await res.json();
+      if (!j.ok) throw new Error(String(j.error ?? "Upload failed"));
+      setNote({ kind: "ok", text: "Uploaded as a PENDING candidate — APPROVE it in the Photo Desk to make it publishable. Nothing on the site changes until then." });
+      setShowUpload(false);
+      setFile(null);
+      onRefresh();
+    } catch (e) {
+      setNote({ kind: "error", text: e instanceof Error ? e.message : "Upload failed" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal title={`HOMEPAGE PICK PHOTO — ${(c?.name ?? city).toUpperCase()}`} onClose={onClose} wide>
+      {!info ? (
+        <div className="font-mono" style={{ fontSize: 11 }}>LOADING THE PHOTO DESK RECORD…</div>
+      ) : (
+        <>
+          {info.asset ? (
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: 16 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={info.asset.public_image_url} alt={info.asset.alt_text} style={{ width: "100%", borderRadius: 10, border: `2px solid ${INK}` }} />
+              <div className="font-mono" style={{ fontSize: 10.5, lineHeight: 2 }}>
+                <div style={{ fontWeight: 700, color: ORANGE_DARK }}>APPROVED ASSET — THE CARD USES THIS AUTOMATICALLY</div>
+                <div>ATTRIBUTION: {info.asset.attribution_text}</div>
+                <div>LICENSE: {info.asset.license}</div>
+                <div>
+                  SOURCE:{" "}
+                  {info.asset.source_page_url ? (
+                    <a href={info.asset.source_page_url} target="_blank" rel="noopener noreferrer nofollow" style={{ color: ORANGE_DARK }}>
+                      {info.asset.source_page_url.slice(0, 60)}…
+                    </a>
+                  ) : (
+                    "manual upload"
+                  )}
+                </div>
+                <div>ALT: {info.asset.alt_text}</div>
+                <div>CAPTION: {info.asset.caption ?? "—"}</div>
+                <div>APPROVED BY: {info.asset.approved_by}</div>
+                <div>SIZE: {info.asset.width ?? "?"}×{info.asset.height ?? "?"}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="font-mono" style={{ fontSize: 11, lineHeight: 1.9, background: "rgba(193,62,23,.08)", border: `1.5px solid ${ORANGE_DARK}`, borderRadius: 10, padding: "12px 14px", color: ORANGE_DARK }}>
+              NO APPROVED HOMEPAGE-PICK PHOTO FOR {(c?.name ?? city).toUpperCase()}.
+              <br />Upload one below (it becomes a PENDING candidate) or research/approve in the Photo Desk. A lineup with this city can be drafted but never published until an asset is approved.
+            </div>
+          )}
+
+          {info.pendingCandidates > 0 && (
+            <div className="font-mono" style={{ fontSize: 10, marginTop: 10, color: "#8a6d1a" }}>
+              {info.pendingCandidates} PENDING CANDIDATE{info.pendingCandidates === 1 ? "" : "S"} already awaiting review for this slot.
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+            <button type="button" className="font-mono" onClick={() => setShowUpload((v) => !v)} style={btn(!showUpload)}>
+              {showUpload ? "CANCEL UPLOAD" : info.asset ? "UPLOAD REPLACEMENT…" : "UPLOAD PHOTO…"}
+            </button>
+            <a href="/admin/photos" target="_blank" rel="noreferrer" className="font-mono" style={{ ...btn(), textDecoration: "none" }}>
+              OPEN PHOTO DESK ↗
+            </a>
+            <span style={{ flex: 1 }} />
+            <button type="button" className="font-mono" onClick={onClose} style={btn()}>BACK TO BUILDER</button>
+          </div>
+
+          {showUpload && (
+            <div style={{ border: "1.5px solid rgba(29,25,19,.3)", borderRadius: 10, padding: "10px 12px", marginTop: 10 }}>
+              <div className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.8, color: "rgba(29,25,19,.6)" }}>
+                Same rules as the Photo Desk uploader: JPEG/PNG/WebP, ≥1200px wide, landscape, ≤4MB. The upload creates a PENDING candidate — publishing it stays the Photo Desk&rsquo;s explicit APPROVE action.
+              </div>
+              <Field label="IMAGE FILE">
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} style={{ fontSize: 12 }} />
+              </Field>
+              <Field label="ATTRIBUTION (SHOWN ON THE CARD)">
+                <input value={attr} onChange={(e) => setAttr(e.target.value)} style={inputStyle} />
+              </Field>
+              <Field label="CAPTION (OPTIONAL)">
+                <input value={caption} onChange={(e) => setCaption(e.target.value)} style={inputStyle} />
+              </Field>
+              <label className="font-mono" style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 10, marginTop: 10, cursor: "pointer" }}>
+                <input type="checkbox" checked={rights} onChange={(e) => setRights(e.target.checked)} style={{ marginTop: 2 }} />
+                I confirm Discover DFW has the right to use this photo publicly.
+              </label>
+              <button type="button" className="font-mono" onClick={upload} disabled={busy} style={{ ...btn(true), marginTop: 10 }}>
+                {busy ? "UPLOADING…" : "UPLOAD AS PENDING CANDIDATE"}
+              </button>
+            </div>
+          )}
+
+          {note && (
+            <div className="font-mono" style={{ fontSize: 10.5, marginTop: 10, lineHeight: 1.7, color: note.kind === "error" ? ORANGE_DARK : "rgba(29,25,19,.75)" }}>
+              {note.text}
+            </div>
+          )}
+        </>
+      )}
     </Modal>
   );
 }

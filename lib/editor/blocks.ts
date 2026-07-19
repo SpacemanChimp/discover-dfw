@@ -65,7 +65,15 @@ export interface BlockInstance {
 }
 
 export type LayoutEntry =
-  | { kind: "section"; key: string; hidden: boolean; visibility: (typeof VISIBILITIES)[number] }
+  | {
+      kind: "section";
+      key: string;
+      hidden: boolean;
+      visibility: (typeof VISIBILITIES)[number];
+      /** card-level settings for sections whose SectionDef declares `cards`
+          (v1: the homepage Editor's Picks lineup). Absent = code lineup. */
+      settings?: { picks?: { city: string; tagline?: string }[] };
+    }
   | { kind: "block"; block: BlockInstance };
 
 export interface LayoutDoc {
@@ -123,6 +131,18 @@ export interface SectionDef {
   /** no settings; shown with a lock — live data / legal / plumbing */
   locked?: boolean;
   description?: string;
+  /** this section carries card-level settings (v1: the homepage picks) */
+  cards?: "editors-picks";
+}
+
+/** the code-owned homepage lineup — the fallback when no override exists */
+export const EDITORS_PICKS_DEFAULT = ["denton", "fort-worth", "dallas", "frisco"] as const;
+export const EDITORS_PICKS_COUNT = 4;
+
+export interface EditorsPickCard {
+  city: string;
+  /** overrides the city's canonical tagline; empty/absent = canonical */
+  tagline?: string;
 }
 
 export const TEMPLATE_SECTIONS: Record<string, SectionDef[]> = {
@@ -130,7 +150,7 @@ export const TEMPLATE_SECTIONS: Record<string, SectionDef[]> = {
     { key: "hero", label: "Hero (H1 + search)", required: true, description: "Owns the page H1 and hero search." },
     { key: "ticker", label: "City price ticker", locked: true, description: "Live NTREIS medians — data locked." },
     { key: "map", label: "Interactive metro map", locked: true },
-    { key: "picks", label: "Editor's Picks" },
+    { key: "picks", label: "Editor's Picks", cards: "editors-picks", description: "Four city pick cards — click a card to edit its city, tagline, and photo." },
     { key: "stats", label: "Stats band", locked: true, description: "Canonical market figures." },
     { key: "newbuilds", label: "New Builds preview" },
     { key: "cityindex", label: "City Index", locked: true },
@@ -403,6 +423,63 @@ function sanitizeBlockSettings(type: string, raw: unknown, ctx: BlockSanitizeCtx
   }
 }
 
+/** Editor's Picks card settings — exactly four canonical, distinct cities;
+    taglines are short overridable editorial text. City name, county, median,
+    and destination URL always come from canonical site data downstream —
+    only the slug + optional tagline are ever stored. A lineup identical to
+    the code default (order and all) normalizes to ABSENT settings. */
+function sanitizeEditorsPicks(raw: unknown, ctx: BlockSanitizeCtx): { city: string; tagline?: string }[] | null {
+  const picksRaw = (raw as { picks?: unknown })?.picks;
+  if (!Array.isArray(picksRaw)) {
+    ctx.errors.push("Editor's Picks settings must be { picks: [ … ] }");
+    return null;
+  }
+  if (picksRaw.length !== EDITORS_PICKS_COUNT) {
+    ctx.errors.push(`Editor's Picks needs exactly ${EDITORS_PICKS_COUNT} cards (got ${picksRaw.length})`);
+    return null;
+  }
+  const out: { city: string; tagline?: string }[] = [];
+  const seen = new Set<string>();
+  for (const p of picksRaw) {
+    const city = String((p as { city?: unknown })?.city ?? "");
+    if (ctx.citySlugs.size > 0 && !ctx.citySlugs.has(city)) {
+      ctx.errors.push(`"${city.slice(0, 40)}" is not a canonical DFW city`);
+      continue;
+    }
+    if (!/^[a-z0-9-]{2,60}$/.test(city)) {
+      ctx.errors.push("pick city slug is invalid");
+      continue;
+    }
+    if (seen.has(city)) {
+      ctx.errors.push(`"${city}" appears on two pick cards — each card needs a different city`);
+      continue;
+    }
+    seen.add(city);
+    const tagline = clean((p as { tagline?: unknown })?.tagline, 140);
+    if (tagline) {
+      ctx.textParts.push(tagline);
+      out.push({ city, tagline });
+    } else {
+      out.push({ city });
+    }
+  }
+  if (out.length !== EDITORS_PICKS_COUNT) return null; // errors already pushed
+  // identity lineup → no override stored (the code lineup stays the truth)
+  const isDefault = out.every((p, i) => p.city === EDITORS_PICKS_DEFAULT[i] && !p.tagline);
+  return isDefault ? null : out;
+}
+
+/** the working pick lineup a layout doc implies — null = code lineup */
+export function editorsPicksFromLayout(layout: LayoutDoc | null): { city: string; tagline?: string }[] | null {
+  if (!layout || !Array.isArray(layout.blocks)) return null;
+  for (const e of layout.blocks) {
+    if (e.kind === "section" && e.key === "picks" && e.settings?.picks?.length === EDITORS_PICKS_COUNT) {
+      return e.settings.picks;
+    }
+  }
+  return null;
+}
+
 export interface LayoutSanitizeResult {
   ok: boolean;
   errors: string[];
@@ -475,12 +552,23 @@ export function sanitizeLayout(
       if (hidden && (def.required || def.locked)) {
         errors.push(`section "${def.label}" is ${def.required ? "required" : "protected"} and cannot be hidden`);
       }
-      out.push({
+      const clean_entry: LayoutEntry = {
         kind: "section",
         key,
         hidden: hidden && !def.required && !def.locked,
         visibility: pick((entry as { visibility?: unknown }).visibility, VISIBILITIES, "all"),
-      });
+      };
+      // card-level settings — only where the section CONTRACT declares them
+      const rawSettings = (entry as { settings?: unknown }).settings;
+      if (rawSettings !== undefined && rawSettings !== null) {
+        if (def.cards !== "editors-picks") {
+          errors.push(`section "${def.label}" does not accept card settings`);
+        } else {
+          const picks = sanitizeEditorsPicks(rawSettings, ctx);
+          if (picks) clean_entry.settings = { picks };
+        }
+      }
+      out.push(clean_entry);
     } else if ((entry as { kind?: unknown }).kind === "block") {
       const raw = (entry as { block?: unknown }).block as BlockInstance;
       if (!raw || typeof raw !== "object") continue;

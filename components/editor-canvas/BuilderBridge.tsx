@@ -51,6 +51,10 @@ const OVERLAY_CSS = `
 .bbov-plus:hover{filter:brightness(1.08);}
 .bbov-line{position:absolute;left:0;width:100%;height:0;border-top:3px solid ${ORANGE};pointer-events:none;}
 .bbov-line::before{content:"";position:absolute;left:8px;top:-6px;width:9px;height:9px;border-radius:999px;background:${ORANGE};}
+.bbov-vline{position:absolute;width:0;border-left:3px solid ${ORANGE};pointer-events:none;}
+.bbov-vline::before{content:"";position:absolute;top:-4px;left:-6px;width:9px;height:9px;border-radius:999px;background:${ORANGE};}
+.bbov-cardhover{outline:2px dashed ${ORANGE};outline-offset:-2px;border-radius:14px;}
+.bbov-cardsel{outline:3px solid ${ORANGE};outline-offset:-3px;border-radius:14px;box-shadow:0 0 0 6px rgba(217,72,31,.14);}
 .bbov-toolbar{position:absolute;display:flex;gap:2px;pointer-events:auto;background:${INK};border-radius:8px;padding:4px;
   box-shadow:0 6px 18px rgba(29,25,19,.4);}
 .bbov-toolbar button{border:none;background:none;color:${CREAM};cursor:pointer;font:700 11.5px/1 ui-monospace,monospace;
@@ -91,12 +95,19 @@ export default function BuilderBridge() {
       regionOriginalSent: boolean;
     } | null = null;
     let dragging: { id: string; startY: number; gap: number | null; active: boolean } | null = null;
+    /* pick-card sub-selection (data-bb-card elements inside a section) */
+    let cardSel: { section: string; index: number } | null = null;
+    let hoverCard: { section: string; index: number } | null = null;
+    let cardDragging: { section: string; index: number; startX: number; startY: number; gap: number | null; active: boolean } | null = null;
     let errorsSent = 0;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const wrappers = () => Array.from(document.querySelectorAll<HTMLElement>("[data-bb-id]"));
     const wrapperOf = (id: string) => document.querySelector<HTMLElement>(`[data-bb-id="${CSS.escape(id)}"]`);
     const orderIds = () => wrappers().map((w) => w.getAttribute("data-bb-id")!).filter(Boolean);
+    const cardsIn = (section: string) => Array.from(wrapperOf(section)?.querySelectorAll<HTMLElement>("[data-bb-card]") ?? []);
+    const cardEl = (section: string, index: number) =>
+      wrapperOf(section)?.querySelector<HTMLElement>(`[data-bb-card="${index}"]`) ?? null;
 
     /* ----------------------------------------------------------- overlay */
     const style = document.createElement("style");
@@ -126,7 +137,15 @@ export default function BuilderBridge() {
     insLine.className = "bbov-line";
     const toolbar = document.createElement("div");
     toolbar.className = "bbov-toolbar";
-    for (const el of [hoverBox, selBox, chip, plusTop, plusBottom, insLine, toolbar]) {
+    const cardHoverBox = document.createElement("div");
+    cardHoverBox.className = "bbov-box bbov-cardhover";
+    const cardSelBox = document.createElement("div");
+    cardSelBox.className = "bbov-box bbov-cardsel";
+    const cardChip = document.createElement("div");
+    cardChip.className = "bbov-chip";
+    const cardInsLine = document.createElement("div");
+    cardInsLine.className = "bbov-vline";
+    for (const el of [hoverBox, selBox, chip, plusTop, plusBottom, insLine, toolbar, cardHoverBox, cardSelBox, cardChip, cardInsLine]) {
       el.style.display = "none";
       root.appendChild(el);
     }
@@ -187,9 +206,40 @@ export default function BuilderBridge() {
       if (m.deletable) btn("✕", "Delete block", () => post({ ns: BB_NS, t: "action", id, action: "delete" }), true);
     };
 
+    const selectCard = (section: string, index: number) => {
+      cardSel = { section, index };
+      selectedId = section;
+      post({ ns: BB_NS, t: "card", section, index });
+      scheduleRefresh();
+    };
+
+    const cardChipFor = (section: string, index: number) => {
+      const el = cardEl(section, index);
+      if (!el) return;
+      cardChip.innerHTML = "";
+      const h = document.createElement("button");
+      h.className = "bbov-handle";
+      h.textContent = "⠿";
+      h.title = "Drag to reorder this card (or ←/→ with it selected)";
+      h.setAttribute("aria-label", "Drag to reorder card");
+      h.addEventListener("pointerdown", (e) => startCardDrag(e, section, index));
+      cardChip.appendChild(h);
+      const label = document.createElement("span");
+      label.textContent = el.getAttribute("data-bb-card-label") ?? `CARD ${index + 1}`;
+      cardChip.appendChild(label);
+      const edit = document.createElement("button");
+      edit.textContent = "✎";
+      edit.title = "Edit this pick — city, tagline, photo";
+      edit.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectCard(section, index);
+      });
+      cardChip.appendChild(edit);
+    };
+
     const refresh = () => {
       if (!overlaysOn) {
-        for (const el of [hoverBox, selBox, chip, plusTop, plusBottom]) el.style.display = "none";
+        for (const el of [hoverBox, selBox, chip, plusTop, plusBottom, cardHoverBox, cardSelBox, cardChip, cardInsLine]) el.style.display = "none";
         return;
       }
       const selW = selectedId ? wrapperOf(selectedId) : null;
@@ -229,6 +279,26 @@ export default function BuilderBridge() {
         }
       } else {
         hoverBox.style.display = "none";
+      }
+
+      /* individual pick-card overlays (within their section) */
+      const csEl = cardSel ? cardEl(cardSel.section, cardSel.index) : null;
+      if (csEl) place(cardSelBox, csEl.getBoundingClientRect());
+      else cardSelBox.style.display = "none";
+      const sameAsSel = cardSel && hoverCard && cardSel.section === hoverCard.section && cardSel.index === hoverCard.index;
+      const chEl = hoverCard && !sameAsSel ? cardEl(hoverCard.section, hoverCard.index) : null;
+      if (chEl) place(cardHoverBox, chEl.getBoundingClientRect());
+      else cardHoverBox.style.display = "none";
+      const chipTarget = csEl ?? chEl;
+      if (chipTarget) {
+        const info = csEl && chipTarget === csEl ? cardSel! : hoverCard!;
+        cardChipFor(info.section, info.index);
+        const r = chipTarget.getBoundingClientRect();
+        cardChip.style.top = `${Math.max(r.top + window.scrollY - 30, window.scrollY + 4)}px`;
+        cardChip.style.left = `${r.left + window.scrollX + 6}px`;
+        cardChip.style.display = "flex";
+      } else {
+        cardChip.style.display = "none";
       }
     };
 
@@ -300,6 +370,68 @@ export default function BuilderBridge() {
           }
         }
         dragging = null;
+        scheduleRefresh();
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    };
+
+    /* drag ONE pick card among its siblings — vertical insertion line, the
+       same feel as section drag but grid-aware (row + horizontal midpoint) */
+    const startCardDrag = (e: PointerEvent, section: string, index: number) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cardDragging = { section, index, startX: e.clientX, startY: e.clientY, gap: null, active: false };
+      const move = (ev: PointerEvent) => {
+        if (!cardDragging) return;
+        if (!cardDragging.active && Math.hypot(ev.clientX - cardDragging.startX, ev.clientY - cardDragging.startY) < 6) return;
+        cardDragging.active = true;
+        cardEl(section, index)?.classList.add("bbov-ghost");
+        const cards = cardsIn(section);
+        let gap = cards.length;
+        for (let j = 0; j < cards.length; j++) {
+          const r = cards[j].getBoundingClientRect();
+          if (ev.clientY < r.top) {
+            gap = j;
+            break;
+          }
+          if (ev.clientY <= r.bottom && ev.clientX < r.left + r.width / 2) {
+            gap = j;
+            break;
+          }
+        }
+        cardDragging.gap = gap;
+        const anchor = cards[Math.min(gap, cards.length - 1)];
+        if (anchor) {
+          const r = anchor.getBoundingClientRect();
+          const x = gap < cards.length ? r.left : r.right;
+          cardInsLine.style.top = `${r.top + window.scrollY}px`;
+          cardInsLine.style.left = `${x + window.scrollX - 1}px`;
+          cardInsLine.style.height = `${r.height}px`;
+          cardInsLine.style.display = "block";
+        }
+        if (ev.clientY < 90) window.scrollBy(0, -14);
+        else if (ev.clientY > window.innerHeight - 90) window.scrollBy(0, 14);
+        scheduleRefresh();
+      };
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        cardInsLine.style.display = "none";
+        cardEl(section, index)?.classList.remove("bbov-ghost");
+        if (cardDragging?.active && cardDragging.gap !== null) {
+          const cards = cardsIn(section);
+          const from = cards.findIndex((c) => Number(c.getAttribute("data-bb-card")) === index);
+          const to = cardDragging.gap;
+          if (from >= 0 && to !== from && to !== from + 1) {
+            const node = cards[from];
+            const ref = to >= cards.length ? null : cards[to];
+            node.parentNode?.insertBefore(node, ref);
+            const order = cardsIn(section).map((c) => Number(c.getAttribute("data-bb-card")));
+            post({ ns: BB_NS, t: "cardReorder", section, order });
+          }
+        }
+        cardDragging = null;
         scheduleRefresh();
       };
       window.addEventListener("pointermove", move);
@@ -385,13 +517,19 @@ export default function BuilderBridge() {
 
     /* ------------------------------------------------------ DOM listeners */
     const onPointerMove = (e: PointerEvent) => {
-      if (dragging?.active || editing) return;
+      if (dragging?.active || cardDragging?.active || editing) return;
       const t = e.target as HTMLElement;
       if (root.contains(t)) return;
+      const cEl = t.closest?.("[data-bb-card]") as HTMLElement | null;
+      const cw = cEl?.closest("[data-bb-id]") as HTMLElement | null;
+      const nextCard = cEl && cw ? { section: cw.getAttribute("data-bb-id")!, index: Number(cEl.getAttribute("data-bb-card")) } : null;
       const w = t.closest?.("[data-bb-id]") as HTMLElement | null;
-      const id = w?.getAttribute("data-bb-id") ?? null;
-      if (id !== hoverId) {
+      // hovering a card supersedes the section-level hover outline
+      const id = nextCard ? null : (w?.getAttribute("data-bb-id") ?? null);
+      const cardChanged = (nextCard?.section ?? "") + (nextCard?.index ?? -1) !== (hoverCard?.section ?? "") + (hoverCard?.index ?? -1);
+      if (id !== hoverId || cardChanged) {
         hoverId = id;
+        hoverCard = nextCard;
         scheduleRefresh();
       }
     };
@@ -399,6 +537,19 @@ export default function BuilderBridge() {
     const onClick = (e: MouseEvent) => {
       const t = e.target as HTMLElement;
       if (root.contains(t)) return;
+      if (editing) {
+        if (!editing.el.contains(t) && !toolbar.contains(t)) endEdit(true);
+        else return;
+      }
+      // an editable pick card: select the CARD (its own panel), no navigation
+      const cEl = t.closest?.("[data-bb-card]") as HTMLElement | null;
+      const cw = cEl?.closest("[data-bb-id]") as HTMLElement | null;
+      if (cEl && cw) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectCard(cw.getAttribute("data-bb-id")!, Number(cEl.getAttribute("data-bb-card")));
+        return;
+      }
       // navigation containment: the canvas is an editing surface — links and
       // form controls must never navigate it away or submit anything
       const a = t.closest?.("a[href]") as HTMLAnchorElement | null;
@@ -407,12 +558,10 @@ export default function BuilderBridge() {
         e.stopPropagation();
         post({ ns: BB_NS, t: "navigate", href: a.getAttribute("href") ?? "" });
       }
-      if (editing) {
-        if (!editing.el.contains(t) && !toolbar.contains(t)) endEdit(true);
-        else return;
-      }
       const w = t.closest?.("[data-bb-id]") as HTMLElement | null;
       const id = w?.getAttribute("data-bb-id") ?? null;
+      cardSel = null;
+      hoverCard = null;
       setSelected(id);
       post({ ns: BB_NS, t: "select", id });
     };
@@ -449,6 +598,27 @@ export default function BuilderBridge() {
         } else if (e.key === "Enter" && editing.kind === "plain") {
           e.preventDefault();
           endEdit(true);
+        }
+        return;
+      }
+      // card-level keyboard: ←/→ reorders the selected card, Esc backs out
+      if (cardSel) {
+        if (e.key === "Escape") {
+          const backTo = cardSel.section;
+          cardSel = null;
+          setSelected(backTo);
+          post({ ns: BB_NS, t: "select", id: backTo });
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          e.preventDefault();
+          const cards = cardsIn(cardSel.section);
+          const pos = cards.findIndex((c) => Number(c.getAttribute("data-bb-card")) === cardSel!.index);
+          const to = e.key === "ArrowLeft" ? pos - 1 : pos + 1;
+          if (pos < 0 || to < 0 || to >= cards.length) return;
+          const node = cards[pos];
+          node.parentNode?.insertBefore(node, e.key === "ArrowLeft" ? cards[to] : cards[to].nextSibling);
+          const order = cardsIn(cardSel.section).map((c) => Number(c.getAttribute("data-bb-card")));
+          post({ ns: BB_NS, t: "cardReorder", section: cardSel.section, order });
+          scheduleRefresh();
         }
         return;
       }
@@ -529,9 +699,15 @@ export default function BuilderBridge() {
             w.innerHTML = msg.html;
             revealAll();
           }
+          hoverCard = null; // card elements were just swapped out
           scheduleRefresh();
           break;
         }
+        case "cardSelect":
+          cardSel = msg.index === null ? null : { section: msg.section, index: msg.index };
+          if (cardSel) selectedId = cardSel.section;
+          scheduleRefresh();
+          break;
         case "insert": {
           const div = document.createElement("div");
           div.setAttribute("data-bb-id", msg.meta.id);
@@ -555,6 +731,7 @@ export default function BuilderBridge() {
           break;
         }
         case "select":
+          cardSel = null;
           setSelected(msg.id);
           break;
         case "scrollTo":
