@@ -127,12 +127,14 @@ function Block({ node }: { node: PMNode }) {
 }
 
 /** Render a sanitized richtext document with the site's editorial rhythm
-    (.ed-rich rules live in globals.css). */
-export function RichDoc({ doc }: { doc: unknown }) {
+    (.ed-rich rules live in globals.css). `region` marks the container for
+    the Visual Builder canvas (data-bb-region) — pages pass it ONLY in
+    builder mode, so public HTML never carries the marker. */
+export function RichDoc({ doc, region }: { doc: unknown; region?: string }) {
   const d = doc as PMNode;
   if (!d || d.type !== "doc" || !Array.isArray(d.content)) return null;
   return (
-    <div className="ed-rich">
+    <div className="ed-rich" data-bb-region={region}>
       {d.content.map((n, i) => (
         <Block key={i} node={n} />
       ))}

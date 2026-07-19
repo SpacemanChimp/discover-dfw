@@ -16,6 +16,7 @@ import Footer from "@/components/Footer";
 import Reveals from "@/components/Reveals";
 import HumanTrust from "@/components/HumanTrust";
 import { getEditorState } from "@/lib/editor/overrides";
+import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
 import { applyLayout } from "@/lib/editor/blocks-render";
@@ -85,6 +86,9 @@ export default async function Home() {
      falls back to the existing code copy (or renders nothing where the
      section has no intro today). One batched read; failure = code content. */
   const ed = await getEditorState("/");
+  // builder-canvas render? (admin Draft Mode + __bb cookie — never public)
+  const builder = ed.preview && (await isBuilderMode());
+  const rk = (key: string) => (builder ? key : undefined);
   const ov = (key: string): React.ReactNode =>
     ed.regions[key] ? <RichDoc doc={ed.regions[key].json} /> : undefined;
   // Visual Builder layout + published navigation — both null = code-owned
@@ -92,7 +96,7 @@ export default async function Home() {
   const navItems = (await getPublishedNav()) ?? undefined;
 
   const sections: Record<string, React.ReactNode> = {
-    hero: <Hero copyOverride={ov("hero-copy")} />,
+    hero: <Hero copyOverride={ov("hero-copy")} regionKey={rk("hero-copy")} />,
     ticker: <Ticker prices={priceBySlug} />,
     map: (
       <InteractiveMap
@@ -102,15 +106,16 @@ export default async function Home() {
         pricesLive={pricesLive}
         pricesAsOf={pricesAsOf}
         introOverride={ov("map-intro")}
+        regionKey={rk("map-intro")}
       />
     ),
-    picks: <EditorsPicks introOverride={ov("picks-intro")} />,
+    picks: <EditorsPicks introOverride={ov("picks-intro")} regionKey={rk("picks-intro")} />,
     stats: <StatsBand prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />,
-    newbuilds: <NewBuilds liveMls={isLiveMls} introOverride={ov("newbuilds-intro")} />,
-    cityindex: <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} introOverride={ov("cities-intro")} />,
+    newbuilds: <NewBuilds liveMls={isLiveMls} introOverride={ov("newbuilds-intro")} regionKey={rk("newbuilds-intro")} />,
+    cityindex: <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} introOverride={ov("cities-intro")} regionKey={rk("cities-intro")} />,
     trust: <HumanTrust />,
-    about: <About copyOverride={ov("about-copy")} />,
-    newsletter: <Newsletter introOverride={ov("newsletter-intro")} />,
+    about: <About copyOverride={ov("about-copy")} regionKey={rk("about-copy")} />,
+    newsletter: <Newsletter introOverride={ov("newsletter-intro")} regionKey={rk("newsletter-intro")} />,
   };
 
   return (
@@ -140,10 +145,10 @@ export default async function Home() {
         <span>A FIELD GUIDE TO NORTH TEXAS REAL ESTATE</span>
       </div>
 
-      {ed.preview && <PreviewBanner route="/" />}
+      {ed.preview && !builder && <PreviewBanner route="/" />}
       <Nav navItems={navItems} />
       {/* Visual Builder: code-owned order until a homepage layout publishes */}
-      {applyLayout(homeLayout, TEMPLATE_SECTIONS["/"], sections)}
+      {applyLayout(homeLayout, TEMPLATE_SECTIONS["/"], sections, undefined, builder)}
       <Footer />
       <Reveals />
     </div>

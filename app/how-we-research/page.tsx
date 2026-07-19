@@ -3,6 +3,7 @@ import Link from "next/link";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import { getEditorState } from "@/lib/editor/overrides";
+import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
 import { applyLayout } from "@/lib/editor/blocks-render";
@@ -50,6 +51,7 @@ export default async function HowWeResearch() {
      fallback (and the guaranteed render if the override store is down).
      The Visual Builder layout ('__layout') reorders/hides the sections. */
   const ed = await getEditorState("/how-we-research");
+  const builder = ed.preview && (await isBuilderMode());
   const introOv = ed.regions["intro"];
   const pageLayout = (ed.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
   const navItems = (await getPublishedNav()) ?? undefined;
@@ -65,10 +67,10 @@ export default async function HowWeResearch() {
         </h1>
         {introOv ? (
           <div style={{ margin: "18px 0 0", fontSize: 16.5, lineHeight: 1.8, color: "rgba(29,25,19,.8)" }}>
-            <RichDoc doc={introOv.json} />
+            <RichDoc doc={introOv.json} region={builder ? "intro" : undefined} />
           </div>
         ) : (
-          <p style={{ margin: "18px 0 0", fontSize: 16.5, lineHeight: 1.8, color: "rgba(29,25,19,.8)" }}>
+          <p data-bb-region={builder ? "intro" : undefined} style={{ margin: "18px 0 0", fontSize: 16.5, lineHeight: 1.8, color: "rgba(29,25,19,.8)" }}>
             A field guide is only as good as its sourcing. Every number on this site is either pulled live from a named
             source or written by a person and labeled that way — and when we can't verify something, it doesn't run.
           </p>
@@ -107,10 +109,10 @@ export default async function HowWeResearch() {
 
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
-      {ed.preview && <PreviewBanner route="/how-we-research" />}
+      {ed.preview && !builder && <PreviewBanner route="/how-we-research" />}
       <Nav navItems={navItems} />
       <main style={{ maxWidth: 860, margin: "0 auto", padding: "64px 4vw 80px" }}>
-        {applyLayout(pageLayout, TEMPLATE_SECTIONS["/how-we-research"], sections)}
+        {applyLayout(pageLayout, TEMPLATE_SECTIONS["/how-we-research"], sections, undefined, builder)}
       </main>
       <Footer />
     </div>

@@ -54,7 +54,7 @@ function TypedNext() {
   );
 }
 
-export default function Hero({ copyOverride }: { copyOverride?: React.ReactNode } = {}) {
+export default function Hero({ copyOverride, regionKey }: { copyOverride?: React.ReactNode; regionKey?: string } = {}) {
   let d = 0.05;
   return (
     <header
@@ -154,6 +154,7 @@ export default function Hero({ copyOverride }: { copyOverride?: React.ReactNode 
 
       {copyOverride ? (
         <div
+          data-bb-region={regionKey}
           className="font-serif"
           style={{
             maxWidth: 640,
@@ -170,6 +171,7 @@ export default function Hero({ copyOverride }: { copyOverride?: React.ReactNode 
         </div>
       ) : (
         <p
+          data-bb-region={regionKey}
           className="font-serif"
           style={{
             maxWidth: 640,

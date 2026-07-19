@@ -19,6 +19,7 @@ import InteractiveMap from "@/components/InteractiveMap";
 import ConvertSlot from "@/components/convert/ConvertSlot";
 import ConversionDuo from "@/components/convert/ConversionDuo";
 import ListingCardLedger from "@/components/search/ListingCardLedger";
+import BuilderBridge from "@/components/editor-canvas/BuilderBridge";
 
 const INK = "#1D1913";
 const CREAM = "#F6F1E6";
@@ -77,9 +78,14 @@ function Figure({ image, height }: { image: BlockImage; height?: number }) {
 }
 
 /* ---------------------------------------------------------------- blocks */
-async function BlockBody({ block, citySlug }: { block: BlockInstance; citySlug?: string }) {
+/** `bb` = builder-canvas render: safe text elements gain data-bb-field
+    markers so the in-canvas runtime can offer inline editing. NEVER set on
+    a public render — public HTML stays byte-identical. */
+async function BlockBody({ block, citySlug, bb }: { block: BlockInstance; citySlug?: string; bb?: boolean }) {
   const s = block.settings as Record<string, never> & Record<string, unknown>;
   const onInk = block.style.treatment === "ink" || block.style.treatment === "orange";
+  const f = (field: string) => (bb ? { "data-bb-field": field } : {});
+  const fr = (field: string) => (bb ? { "data-bb-field": field, "data-bb-rich": "1" } : {});
 
   switch (block.type) {
     case "hero": {
@@ -91,11 +97,11 @@ async function BlockBody({ block, citySlug }: { block: BlockInstance; citySlug?:
               {String(s.kicker).toUpperCase()}
             </div>
           ) : null}
-          <H className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(34px,4.6vw,56px)", lineHeight: 1.04 }}>
+          <H {...f("heading")} className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(34px,4.6vw,56px)", lineHeight: 1.04 }}>
             {String(s.heading ?? "")}
           </H>
           {s.sub ? (
-            <p className="font-serif" style={{ margin: "16px 0 0", fontStyle: "italic", fontWeight: 500, fontSize: "clamp(18px,2.3vw,24px)", lineHeight: 1.5, opacity: 0.85 }}>
+            <p {...f("sub")} className="font-serif" style={{ margin: "16px 0 0", fontStyle: "italic", fontWeight: 500, fontSize: "clamp(18px,2.3vw,24px)", lineHeight: 1.5, opacity: 0.85 }}>
               {String(s.sub)}
             </p>
           ) : null}
@@ -105,7 +111,7 @@ async function BlockBody({ block, citySlug }: { block: BlockInstance; citySlug?:
     }
     case "richtext":
       return (
-        <div style={{ maxWidth: 860, margin: block.style.align === "center" ? "0 auto" : undefined, fontSize: 16, lineHeight: 1.75 }}>
+        <div {...fr("doc")} style={{ maxWidth: 860, margin: block.style.align === "center" ? "0 auto" : undefined, fontSize: 16, lineHeight: 1.75 }}>
           <RichDoc doc={s.doc} />
         </div>
       );
@@ -128,7 +134,7 @@ async function BlockBody({ block, citySlug }: { block: BlockInstance; citySlug?:
       return (
         <div className="bb-2col" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(380px,90vw),1fr))", gap: 40, alignItems: "center" }}>
           {side === "left" && <Figure image={image} />}
-          <div style={{ fontSize: 16, lineHeight: 1.75 }}>
+          <div {...fr("doc")} style={{ fontSize: 16, lineHeight: 1.75 }}>
             <RichDoc doc={s.doc} />
           </div>
           {side === "right" && <Figure image={image} />}
@@ -155,10 +161,10 @@ async function BlockBody({ block, citySlug }: { block: BlockInstance; citySlug?:
                 {String(s.kicker).toUpperCase()}
               </div>
             ) : null}
-            <h2 className="font-serif" style={{ margin: "8px 0 0", fontWeight: 800, fontSize: "clamp(20px,2.4vw,25px)", lineHeight: 1.15 }}>
+            <h2 {...f("heading")} className="font-serif" style={{ margin: "8px 0 0", fontWeight: 800, fontSize: "clamp(20px,2.4vw,25px)", lineHeight: 1.15 }}>
               {String(s.heading ?? "")}
             </h2>
-            {s.body ? <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.6, opacity: 0.75, maxWidth: 560 }}>{String(s.body)}</p> : null}
+            {s.body ? <p {...f("body")} style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.6, opacity: 0.75, maxWidth: 560 }}>{String(s.body)}</p> : null}
           </div>
           <div className="nb-cta-actions">
             <Buttons buttons={(s.buttons as BlockButton[]) ?? []} onInk={onInk} />
@@ -213,7 +219,7 @@ async function BlockBody({ block, citySlug }: { block: BlockInstance; citySlug?:
       return (
         <blockquote style={{ margin: 0, maxWidth: 760, marginInline: block.style.align === "center" ? "auto" : undefined }}>
           <p className="font-serif" style={{ margin: 0, fontStyle: "italic", fontWeight: 600, fontSize: "clamp(22px,2.6vw,32px)", lineHeight: 1.4 }}>
-            “{String(s.text ?? "")}”
+            “<span {...f("text")}>{String(s.text ?? "")}</span>”
           </p>
           {s.cite ? <cite className="font-mono" style={{ display: "block", marginTop: 14, fontSize: 10, letterSpacing: ".2em", fontStyle: "normal", opacity: 0.6 }}>— {String(s.cite).toUpperCase()}</cite> : null}
         </blockquote>
@@ -312,8 +318,8 @@ async function BlockBody({ block, citySlug }: { block: BlockInstance; citySlug?:
       return (
         <div className="nb-cta-band">
           <div className="nb-cta-copy">
-            <h2 className="font-serif" style={{ margin: 0, fontWeight: 800, fontSize: "clamp(20px,2.4vw,25px)", lineHeight: 1.15 }}>{String(s.heading ?? "Search the market")}</h2>
-            {s.body ? <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.6, opacity: 0.75, maxWidth: 560 }}>{String(s.body)}</p> : null}
+            <h2 {...f("heading")} className="font-serif" style={{ margin: 0, fontWeight: 800, fontSize: "clamp(20px,2.4vw,25px)", lineHeight: 1.15 }}>{String(s.heading ?? "Search the market")}</h2>
+            {s.body ? <p {...f("body")} style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.6, opacity: 0.75, maxWidth: 560 }}>{String(s.body)}</p> : null}
           </div>
           <div className="nb-cta-actions">
             <Buttons buttons={[{ label: String(s.buttonLabel ?? "Open the search"), href: String(s.target ?? "/homes"), style: "primary" }]} onInk={onInk} />
@@ -347,16 +353,11 @@ async function BlockBody({ block, citySlug }: { block: BlockInstance; citySlug?:
   }
 }
 
-/** one builder block → a styled site section */
-export async function BuilderBlock({ block, citySlug }: { block: BlockInstance; citySlug?: string }) {
-  if (block.hidden) return null;
+/** the styled section shell around a block's (already-resolved) body */
+function blockShell(block: BlockInstance, body: React.ReactNode): React.ReactElement {
   // full-bleed site components own their own section shells
   if (["newsletter", "cityIndex", "communityDirectory", "metroMap"].includes(block.type)) {
-    return (
-      <div className={visibilityClass(block.visibility)}>
-        <BlockBody block={block} citySlug={citySlug} />
-      </div>
-    );
+    return <div className={visibilityClass(block.visibility)}>{body}</div>;
   }
   const t = TREATMENT[block.style.treatment] ?? TREATMENT.parchment;
   return (
@@ -369,10 +370,24 @@ export async function BuilderBlock({ block, citySlug }: { block: BlockInstance; 
           textAlign: block.style.align === "center" ? "center" : undefined,
         }}
       >
-        <BlockBody block={block} citySlug={citySlug} />
+        {body}
       </div>
     </section>
   );
+}
+
+/** one builder block → a styled site section */
+export async function BuilderBlock({ block, citySlug, bb }: { block: BlockInstance; citySlug?: string; bb?: boolean }) {
+  if (block.hidden && !bb) return null;
+  return blockShell(block, <BlockBody block={block} citySlug={citySlug} bb={bb} />);
+}
+
+/** fully-resolved element for the admin render-block endpoint — awaits the
+    async body so the result can go straight through renderToStaticMarkup.
+    Builder-canvas use only; the public path stays <BuilderBlock/>. */
+export async function resolvedBuilderBlock(block: BlockInstance, citySlug?: string): Promise<React.ReactElement> {
+  const body = await BlockBody({ block: { ...block, hidden: false }, citySlug, bb: true });
+  return blockShell(block, body);
 }
 
 /* ------------------------------------------------------------ applyLayout */
@@ -386,10 +401,24 @@ export function applyLayout(
   layout: LayoutDoc | null,
   sectionDefs: SectionDef[],
   rendered: Record<string, React.ReactNode>,
-  citySlug?: string
+  citySlug?: string,
+  /** builder-canvas render: every entry (hidden ones included) is wrapped in
+      a data-bb-id marker div and the canvas runtime is appended. NEVER true
+      on a public render — set only via the admin preview's builder cookie. */
+  builder?: boolean
 ): React.ReactNode[] {
+  const wrap = (id: string, hidden: boolean, node: React.ReactNode) => (
+    <div key={`w-${id}`} data-bb-id={id} data-bb-hidden={hidden ? "1" : undefined} style={hidden ? { display: "none" } : undefined}>
+      {node}
+    </div>
+  );
+
   if (!layout || !Array.isArray(layout.blocks)) {
-    return sectionDefs.map((d) => <React.Fragment key={d.key}>{rendered[d.key]}</React.Fragment>);
+    const out: React.ReactNode[] = sectionDefs.map((d) =>
+      builder ? wrap(`s:${d.key}`, false, rendered[d.key]) : <React.Fragment key={d.key}>{rendered[d.key]}</React.Fragment>
+    );
+    if (builder) out.push(<BuilderBridge key="__bb" />);
+    return out;
   }
   const out: React.ReactNode[] = [];
   const used = new Set<string>();
@@ -399,27 +428,35 @@ export function applyLayout(
       if (!def) continue;
       used.add(entry.key);
       const mustShow = def.required || def.locked;
-      if (entry.hidden && !mustShow) continue;
+      const hidden = entry.hidden && !mustShow;
+      if (hidden && !builder) continue;
       const node = rendered[entry.key];
       if (!node) continue;
       const cls = visibilityClass(entry.visibility);
+      const inner = cls && !mustShow ? <div className={cls}>{node}</div> : node;
       out.push(
-        cls && !mustShow ? (
-          <div key={`s-${entry.key}`} className={cls}>{node}</div>
+        builder ? (
+          wrap(`s:${entry.key}`, hidden, inner)
         ) : (
-          <React.Fragment key={`s-${entry.key}`}>{node}</React.Fragment>
+          <React.Fragment key={`s-${entry.key}`}>{inner}</React.Fragment>
         )
       );
-    } else if (entry.kind === "block" && entry.block && !entry.block.hidden) {
-      out.push(<BuilderBlock key={`b-${entry.block.id}`} block={entry.block} citySlug={citySlug} />);
+    } else if (entry.kind === "block" && entry.block) {
+      const hidden = entry.block.hidden;
+      if (hidden && !builder) continue;
+      const node = <BuilderBlock key={`b-${entry.block.id}`} block={entry.block} citySlug={citySlug} bb={builder} />;
+      out.push(builder ? wrap(`b:${entry.block.id}`, hidden, node) : node);
     }
   }
   // fail-safe: required/locked sections a bad layout omitted
   for (const def of sectionDefs) {
     if ((def.required || def.locked) && !used.has(def.key) && rendered[def.key]) {
-      out.push(<React.Fragment key={`fs-${def.key}`}>{rendered[def.key]}</React.Fragment>);
+      out.push(
+        builder ? wrap(`s:${def.key}`, false, rendered[def.key]) : <React.Fragment key={`fs-${def.key}`}>{rendered[def.key]}</React.Fragment>
+      );
     }
   }
+  if (builder) out.push(<BuilderBridge key="__bb" />);
   return out;
 }
 

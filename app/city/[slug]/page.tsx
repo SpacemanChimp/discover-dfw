@@ -27,6 +27,7 @@ import { leadBackendReady } from "@/lib/convert/config";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
 import { getEditorState } from "@/lib/editor/overrides";
+import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { applyLayout } from "@/lib/editor/blocks-render";
 import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
 import { RichDoc } from "@/lib/editor/render";
@@ -116,6 +117,7 @@ export default async function CityPage({
   // shared-template layout (Visual Builder) — null = code-owned order
   const tpl = await getEditorState("template:city");
   const tplLayout = (tpl.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
+  const builder = tpl.preview && (await isBuilderMode());
 
   /* Nearest cities by actual map distance — real geographic neighbors only,
      so the "compare nearby" links are useful to a human deciding between
@@ -321,7 +323,7 @@ export default async function CityPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {ed.preview && <PreviewBanner route={`/city/${c.slug}`} />}
+      {ed.preview && !builder && <PreviewBanner route={`/city/${c.slug}`} />}
       <CityNav slug={slug} options={options} prevSlug={prev.slug} nextSlug={next.slug} />
 
       {applyLayout(tplLayout, TEMPLATE_SECTIONS["template:city"], {
@@ -1244,7 +1246,7 @@ export default async function CityPage({
 
       </>
       ),
-      })}
+      }, undefined, builder)}
       {/* prev / next */}
       <section style={{ borderTop: "2px solid #1D1913" }}>
         <div

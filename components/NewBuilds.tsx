@@ -27,10 +27,13 @@ function featuredSix() {
 export default function NewBuilds({
   liveMls,
   introOverride,
+  regionKey,
 }: {
   liveMls?: boolean;
   /** EDITOR-desk override for the intro paragraph (code copy = fallback) */
   introOverride?: React.ReactNode;
+  /** builder-canvas region marker — set only in builder mode */
+  regionKey?: string;
 }) {
   void liveMls;
   const featured = featuredSix();
@@ -50,11 +53,11 @@ export default function NewBuilds({
             </h2>
           </div>
           {introOverride ? (
-            <div style={{ margin: "0 0 6px", maxWidth: 360, fontSize: 15, lineHeight: 1.6, color: "rgba(246,241,230,.7)" }}>
+            <div data-bb-region={regionKey} style={{ margin: "0 0 6px", maxWidth: 360, fontSize: 15, lineHeight: 1.6, color: "rgba(246,241,230,.7)" }}>
               {introOverride}
             </div>
           ) : (
-            <p style={{ margin: "0 0 6px", maxWidth: 360, fontSize: 15, lineHeight: 1.6, color: "rgba(246,241,230,.7)" }}>
+            <p data-bb-region={regionKey} style={{ margin: "0 0 6px", maxWidth: 360, fontSize: 15, lineHeight: 1.6, color: "rgba(246,241,230,.7)" }}>
               A few of the master-planned communities taking contracts right now. Search every new-construction listing, or browse all {newBuilds.length} communities, on the new builds page.
             </p>
           )}

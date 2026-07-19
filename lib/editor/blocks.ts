@@ -421,6 +421,11 @@ export function sanitizeLayout(
     supabaseUrl?: string;
     requireImageAlt?: boolean;
     citySlugs?: string[];
+    /** validating a lone entry for the builder canvas (render-block): the
+        per-block rules all apply, but whole-page rules (required sections
+        present, H1 count/position) can't be judged on a fragment — the
+        full-layout save/publish path always re-validates them. */
+    fragment?: boolean;
   }
 ): LayoutSanitizeResult {
   const errors: string[] = [];
@@ -522,23 +527,25 @@ export function sanitizeLayout(
     }
   }
 
-  // required sections can never be dropped — fail loudly, and also fail-safe
-  for (const def of sections) {
-    if ((def.required || def.locked) && !seenSections.has(def.key)) {
-      errors.push(`${def.required ? "required" : "protected"} section "${def.label}" is missing from the layout`);
+  if (!opts.fragment) {
+    // required sections can never be dropped — fail loudly, and also fail-safe
+    for (const def of sections) {
+      if ((def.required || def.locked) && !seenSections.has(def.key)) {
+        errors.push(`${def.required ? "required" : "protected"} section "${def.label}" is missing from the layout`);
+      }
     }
-  }
 
-  // exactly one H1 on a custom page; zero admin-minted H1s on templates
-  if (opts.pageKind === "custom") {
-    if (h1Count === 0) errors.push("a custom page needs exactly one Hero (H1) block");
-    if (h1Count > 1) errors.push(`only one H1 is allowed — found ${h1Count} hero blocks at level h1`);
-    const firstVisible = out.find((e) => (e.kind === "block" ? !e.block.hidden : !e.hidden));
-    if (firstVisible && firstVisible.kind === "block" && firstVisible.block.type !== "hero" && h1Count > 0) {
-      errors.push("the Hero (H1) block must be the first visible block");
+    // exactly one H1 on a custom page; zero admin-minted H1s on templates
+    if (opts.pageKind === "custom") {
+      if (h1Count === 0) errors.push("a custom page needs exactly one Hero (H1) block");
+      if (h1Count > 1) errors.push(`only one H1 is allowed — found ${h1Count} hero blocks at level h1`);
+      const firstVisible = out.find((e) => (e.kind === "block" ? !e.block.hidden : !e.hidden));
+      if (firstVisible && firstVisible.kind === "block" && firstVisible.block.type !== "hero" && h1Count > 0) {
+        errors.push("the Hero (H1) block must be the first visible block");
+      }
+    } else if (h1Count > 0) {
+      errors.push("template insertions cannot add an H1 — the template owns its H1");
     }
-  } else if (h1Count > 0) {
-    errors.push("template insertions cannot add an H1 — the template owns its H1");
   }
 
   if (!out.length) errors.push("layout is empty");

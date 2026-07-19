@@ -11,7 +11,7 @@ const PICKS: { slug: string; photo: string }[] = [
   { slug: "frisco", photo: "THE STAR DISTRICT" },
 ];
 
-export default async function EditorsPicks({ introOverride }: { introOverride?: React.ReactNode } = {}) {
+export default async function EditorsPicks({ introOverride, regionKey }: { introOverride?: React.ReactNode; regionKey?: string } = {}) {
   /* CI-3: one query covers all four picks (composite entity_slug::slot_key
      keys — every pick shares slot_key='pick'). Empty = placeholders. */
   const photos = await getApprovedPhotos(
@@ -77,7 +77,7 @@ export default async function EditorsPicks({ introOverride }: { introOverride?: 
       {/* EDITOR-desk intro — this section has no code intro, so the region
           renders nothing until an override is published (additive only) */}
       {introOverride && (
-        <div data-reveal="1" style={{ maxWidth: 680, margin: "0 0 26px", fontSize: 15.5, lineHeight: 1.7, color: "rgba(29,25,19,.75)" }}>
+        <div data-reveal="1" data-bb-region={regionKey} style={{ maxWidth: 680, margin: "0 0 26px", fontSize: 15.5, lineHeight: 1.7, color: "rgba(29,25,19,.75)" }}>
           {introOverride}
         </div>
       )}

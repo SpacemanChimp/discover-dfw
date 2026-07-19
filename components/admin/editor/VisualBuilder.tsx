@@ -1,16 +1,16 @@
 "use client";
-/* Visual Builder — the Lofty-style block workspace on the 0018/0019 rails.
+/* Visual Builder — the full-fidelity page workspace on the 0018/0019 rails.
 
-   Top toolbar : target selector · device widths · undo/redo · Save Draft ·
-                 Preview Draft · Publish (diff + typed template confirm) ·
-                 History · Page Settings · New Page
-   Left panel  : Pages · Templates · Block Library · Structure
-   Canvas      : the page's ordered entries — code sections (lock badges on
-                 protected/required ones) and admin blocks, dnd-kit sortable
-                 with keyboard reordering, inline text editing where the
-                 field is plain text
-   Right panel : settings for the selected entry (enum-only styling, media
-                 picker, buttons, per-type content fields)
+   Center      : CanvasFrame — the REAL page in a same-origin Draft-Mode
+                 iframe. Click a visible section to select it, double-click
+                 text to edit in place, drag the handle to reorder, use the
+                 + buttons to insert blocks. Changes appear immediately.
+   Top toolbar : page selector · device widths (1440/768/390) · zoom ·
+                 undo/redo · reload · Preview (new tab) · Save Draft ·
+                 Publish (diff + typed template confirm) · History ·
+                 Page Settings · New Page · Exit
+   Left panel  : Pages · Blocks · Layers (synced selection + reorder)
+   Right panel : settings for the selected section/block
 
    Nothing here touches a public page: Save Draft persists through the
    sanitizing draft API, Publish runs the atomic RPCs, and the server
@@ -27,6 +27,30 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import {
+  Monitor,
+  Tablet,
+  Smartphone,
+  Undo2,
+  Redo2,
+  Save,
+  CloudUpload,
+  History as HistoryIcon,
+  Settings2,
+  Plus,
+  RefreshCw,
+  ExternalLink,
+  LogOut,
+  Eye,
+  EyeOff,
+  Trash2,
+  GripVertical,
+  Lock,
+  ClipboardPaste,
+} from "lucide-react";
+import { generateJSON } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import TipTapLink from "@tiptap/extension-link";
 import {
   BLOCK_DEFS,
   BLOCK_DEF_BY_TYPE,
@@ -47,9 +71,11 @@ import {
   type BlockButton,
   type BlockImage,
 } from "@/lib/editor/blocks.ts";
+import { BB_NS, type CanvasEntryMeta, type CanvasMsg } from "@/lib/editor/bridge-protocol";
 import { cities } from "@/lib/dfw-data";
 import RichEditor, { type RichEditorHandle } from "./RichEditor";
 import { MediaPicker, type MediaItem } from "./EditorDesk";
+import CanvasFrame, { type CanvasApi } from "./CanvasFrame";
 
 const INK = "#1D1913";
 const CREAM = "#F6F1E6";
@@ -104,6 +130,17 @@ const newBlock = (type: string): BlockInstance => ({
 });
 
 const entryId = (e: LayoutEntry) => (e.kind === "section" ? `s:${e.key}` : `b:${e.block.id}`);
+const stableStr = (v: unknown) => JSON.stringify(v);
+
+/** HTML → sanitized-format TipTap document (the server re-sanitizes on save) */
+const TT_EXTENSIONS = [StarterKit, TipTapLink];
+const htmlToDoc = (html: string): unknown => {
+  try {
+    return generateJSON(html, TT_EXTENSIONS);
+  } catch {
+    return null;
+  }
+};
 
 interface Target {
   route: string;
@@ -134,22 +171,64 @@ const PAGE_TEMPLATES = [
 ];
 
 const DEVICES = [
-  { key: "desktop", label: "Desktop", width: 1200 },
+  { key: "desktop", label: "Desktop", width: 1440 },
   { key: "tablet", label: "Tablet", width: 768 },
   { key: "mobile", label: "Mobile", width: 390 },
 ] as const;
 
+const ZOOMS: { key: "fit" | number; label: string }[] = [
+  { key: "fit", label: "FIT" },
+  { key: 1, label: "100%" },
+  { key: 0.75, label: "75%" },
+  { key: 0.5, label: "50%" },
+];
+
+/** inline-editable text fields per block type (mirrors data-bb-field markers) */
+const INLINE_FIELDS: Record<string, { field: string; kind: "plain" | "rich" }[]> = {
+  hero: [
+    { field: "heading", kind: "plain" },
+    { field: "sub", kind: "plain" },
+  ],
+  cta: [
+    { field: "heading", kind: "plain" },
+    { field: "body", kind: "plain" },
+  ],
+  quote: [{ field: "text", kind: "plain" }],
+  searchPromo: [
+    { field: "heading", kind: "plain" },
+    { field: "body", kind: "plain" },
+  ],
+  richtext: [{ field: "doc", kind: "rich" }],
+  imageText: [{ field: "doc", kind: "rich" }],
+};
+
 const btn = (primary = false, danger = false): React.CSSProperties => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 7,
   border: `2px solid ${danger ? ORANGE_DARK : INK}`,
   borderRadius: 999,
-  padding: "8px 14px",
-  fontSize: 10,
+  padding: "9px 15px",
+  fontSize: 12,
   fontWeight: 700,
-  letterSpacing: ".1em",
+  letterSpacing: ".07em",
   cursor: "pointer",
   background: primary ? ORANGE : danger ? "transparent" : CARD,
   color: primary ? CREAM : danger ? ORANGE_DARK : INK,
   whiteSpace: "nowrap",
+});
+
+const iconBtn = (active = false): React.CSSProperties => ({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: `2px solid ${INK}`,
+  borderRadius: 9,
+  width: 34,
+  height: 34,
+  cursor: "pointer",
+  background: active ? INK : CARD,
+  color: active ? CREAM : INK,
 });
 
 const inputStyle: React.CSSProperties = {
@@ -168,7 +247,7 @@ const selStyle: React.CSSProperties = { ...inputStyle, padding: "7px 8px" };
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label style={{ display: "block", marginTop: 10 }}>
-      <span className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".14em", color: "rgba(29,25,19,.6)" }}>{label}</span>
+      <span className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".14em", color: "rgba(29,25,19,.6)" }}>{label}</span>
       <div style={{ marginTop: 4 }}>{children}</div>
     </label>
   );
@@ -188,7 +267,8 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
   const [versions, setVersions] = useState<{ versionNo: number; status: string; createdAt: string; createdBy: string }[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [device, setDevice] = useState<(typeof DEVICES)[number]>(DEVICES[0]);
-  const [leftTab, setLeftTab] = useState<"pages" | "templates" | "blocks" | "structure">("pages");
+  const [zoom, setZoom] = useState<"fit" | number>("fit");
+  const [leftTab, setLeftTab] = useState<"pages" | "blocks" | "layers">("pages");
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "warn" | "error"; text: string } | null>(null);
@@ -200,12 +280,88 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
   const [mediaFor, setMediaFor] = useState<{ blockId: string; field: string; index?: number } | null>(null);
   const [mediaLists, setMediaLists] = useState<{ media: MediaItem[]; assets: MediaItem[] } | null>(null);
   const [clipboard, setClipboard] = useState<BlockInstance | null>(null);
+  const [insertAt, setInsertAt] = useState<number | null>(null);
+  const [previewCity, setPreviewCity] = useState("frisco");
+  const [regionDrafts, setRegionDrafts] = useState<Record<string, { html: string; doc: unknown }>>({});
 
-  // undo/redo history of entries
-  const historyRef = useRef<{ stack: LayoutEntry[][]; idx: number }>({ stack: [], idx: -1 });
+  /* ------------------------------------------------- canvas plumbing */
+  const canvasApi = useRef<CanvasApi | null>(null);
+  const entriesRef = useRef<LayoutEntry[]>(entries);
+  entriesRef.current = entries;
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const canvasSt = useRef<{ ready: boolean; order: string[]; hidden: Record<string, boolean>; blockJson: Record<string, string> }>({ ready: false, order: [], hidden: {}, blockJson: {} });
+  const regionsCanvas = useRef<Record<string, string>>({});
+  const regionsOriginal = useRef<Record<string, string>>({});
+  const regionDraftsRef = useRef(regionDrafts);
+  regionDraftsRef.current = regionDrafts;
+  const savedRegionsRef = useRef<Record<string, number>>({});
+  const htmlCache = useRef<Map<string, string | null>>(new Map());
+  const syncBusy = useRef(false);
+  const syncAgain = useRef(false);
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** the real public path the canvas renders for the current target */
+  const canvasRoute =
+    target.kind === "template"
+      ? target.route === "template:city"
+        ? `/city/${previewCity}`
+        : (target.previewRoute ?? "/city/northlake/pecan-square")
+      : (target.previewRoute ?? target.route);
+
+  const sections: SectionDef[] = useMemo(() => TEMPLATE_SECTIONS[target.route] ?? [], [target.route]);
+  const sectionByKey = useMemo(() => new Map(sections.map((s) => [s.key, s])), [sections]);
+  const sectionByKeyRef = useRef(sectionByKey);
+  sectionByKeyRef.current = sectionByKey;
+
+  const metaFor = useCallback(
+    (e: LayoutEntry): CanvasEntryMeta => {
+      if (e.kind === "section") {
+        const def = sectionByKey.get(e.key);
+        const lockish = !!(def?.locked || def?.required);
+        return {
+          id: `s:${e.key}`,
+          label: def?.label ?? e.key,
+          kind: "section",
+          locked: !!def?.locked,
+          required: !!def?.required,
+          hideable: !lockish,
+          deletable: false,
+          movable: true,
+          hidden: e.hidden,
+          fields: [],
+          regions: [],
+        };
+      }
+      const def = BLOCK_DEF_BY_TYPE.get(e.block.type);
+      const pinnedHero = target.kind === "custom" && e.block.type === "hero" && String(e.block.settings.level ?? "h1") === "h1";
+      return {
+        id: `b:${e.block.id}`,
+        label: def?.label ?? e.block.type,
+        kind: "block",
+        locked: !!def?.protectedBlock,
+        required: false,
+        hideable: true,
+        deletable: true,
+        movable: !pinnedHero,
+        hidden: e.block.hidden,
+        fields: INLINE_FIELDS[e.block.type] ?? [],
+        regions: [],
+      };
+    },
+    [sectionByKey, target.kind]
+  );
+
+  /* ------------------------------------------------------------ history */
+  const historyRef = useRef<{ stack: { entries: LayoutEntry[]; regions: Record<string, string> }[]; idx: number }>({ stack: [], idx: -1 });
   const pushHistory = useCallback((next: LayoutEntry[]) => {
     const h = historyRef.current;
-    h.stack = h.stack.slice(0, h.idx + 1).concat([next]).slice(-50);
+    const snap = { entries: next, regions: { ...regionsCanvas.current } };
+    // idempotent: a re-delivered event or double-invoked handler must not
+    // mint a second identical entry (it would make undo a visible no-op)
+    const cur = h.stack[h.idx];
+    if (cur && stableStr(cur.entries) === stableStr(snap.entries) && stableStr(cur.regions) === stableStr(snap.regions)) return;
+    h.stack = h.stack.slice(0, h.idx + 1).concat([snap]).slice(-50);
     h.idx = h.stack.length - 1;
   }, []);
   const setLayout = useCallback(
@@ -216,25 +372,44 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     },
     [pushHistory]
   );
+
+  /** apply a history snapshot's region text back to the canvas + drafts */
+  const applyRegionSnapshot = useCallback((snap: Record<string, string>) => {
+    const keys = new Set([...Object.keys(snap), ...Object.keys(regionsCanvas.current)]);
+    const nextDrafts: Record<string, { html: string; doc: unknown }> = {};
+    for (const key of keys) {
+      const targetHtml = snap[key] ?? regionsOriginal.current[key];
+      if (targetHtml === undefined) continue;
+      if (regionsCanvas.current[key] !== targetHtml) {
+        canvasApi.current?.send({ ns: BB_NS, t: "regionHtml", region: key, html: targetHtml });
+        regionsCanvas.current[key] = targetHtml;
+      }
+      if (targetHtml !== regionsOriginal.current[key]) {
+        const doc = htmlToDoc(targetHtml);
+        if (doc) nextDrafts[key] = { html: targetHtml, doc };
+      }
+    }
+    setRegionDrafts(nextDrafts);
+  }, []);
+
   const undo = useCallback(() => {
     const h = historyRef.current;
     if (h.idx > 0) {
       h.idx -= 1;
-      setEntries(h.stack[h.idx]);
+      setEntries(h.stack[h.idx].entries);
+      applyRegionSnapshot(h.stack[h.idx].regions);
       setDirty(true);
     }
-  }, []);
+  }, [applyRegionSnapshot]);
   const redo = useCallback(() => {
     const h = historyRef.current;
     if (h.idx < h.stack.length - 1) {
       h.idx += 1;
-      setEntries(h.stack[h.idx]);
+      setEntries(h.stack[h.idx].entries);
+      applyRegionSnapshot(h.stack[h.idx].regions);
       setDirty(true);
     }
-  }, []);
-
-  const sections: SectionDef[] = useMemo(() => TEMPLATE_SECTIONS[target.route] ?? [], [target.route]);
-  const sectionByKey = useMemo(() => new Map(sections.map((s) => [s.key, s])), [sections]);
+  }, [applyRegionSnapshot]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
@@ -253,44 +428,46 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     loadCustomPages();
   }, [loadCustomPages]);
 
-  const loadTarget = useCallback(
-    async (t: Target) => {
-      setBusy("load");
-      setMessage(null);
-      setSelectedId(null);
-      try {
-        const region = t.kind === "nav" ? "nav" : "__layout";
-        const res = await fetch(`/api/admin/editor/doc?route=${encodeURIComponent(t.route)}&region=${region}`);
-        const j = await res.json();
-        const draft = j.draft?.content_json as LayoutDoc | { type: "nav"; items: NavItem[] } | undefined;
-        const published = j.published?.content_json as LayoutDoc | { type: "nav"; items: NavItem[] } | undefined;
-        setBaseVersion(j.baseVersion ?? 0);
-        setDraftVersion(j.draft?.version_no ?? null);
-        setVersions(j.versions ?? []);
-        if (t.kind === "nav") {
-          const items = ((draft ?? published) as { items?: NavItem[] } | undefined)?.items;
-          setNavItems(
-            items?.length
-              ? items
-              : SYSTEM_NAV.map((s) => ({ key: s.key, label: s.label, href: s.href, kind: "system" as const, hidden: false }))
-          );
-          setPublishedDoc(null);
-          setEntries([]);
-        } else {
-          const working = (draft as LayoutDoc | undefined) ?? (published as LayoutDoc | undefined) ?? codeLayout(t.route);
-          setEntries(working.blocks);
-          setPublishedDoc((published as LayoutDoc | undefined) ?? null);
-          historyRef.current = { stack: [working.blocks], idx: 0 };
-        }
-        setDirty(false);
-      } catch {
-        setMessage({ kind: "error", text: "Failed to load this page — try again." });
-      } finally {
-        setBusy(null);
+  const loadTarget = useCallback(async (t: Target) => {
+    setBusy("load");
+    setMessage(null);
+    setSelectedId(null);
+    setRegionDrafts({});
+    regionsCanvas.current = {};
+    regionsOriginal.current = {};
+    savedRegionsRef.current = {};
+    canvasSt.current = { ready: false, order: [], hidden: {}, blockJson: {} };
+    try {
+      const region = t.kind === "nav" ? "nav" : "__layout";
+      const res = await fetch(`/api/admin/editor/doc?route=${encodeURIComponent(t.route)}&region=${region}`);
+      const j = await res.json();
+      const draft = j.draft?.content_json as LayoutDoc | { type: "nav"; items: NavItem[] } | undefined;
+      const published = j.published?.content_json as LayoutDoc | { type: "nav"; items: NavItem[] } | undefined;
+      setBaseVersion(j.baseVersion ?? 0);
+      setDraftVersion(j.draft?.version_no ?? null);
+      setVersions(j.versions ?? []);
+      if (t.kind === "nav") {
+        const items = ((draft ?? published) as { items?: NavItem[] } | undefined)?.items;
+        setNavItems(
+          items?.length
+            ? items
+            : SYSTEM_NAV.map((s) => ({ key: s.key, label: s.label, href: s.href, kind: "system" as const, hidden: false }))
+        );
+        setPublishedDoc(null);
+        setEntries([]);
+      } else {
+        const working = (draft as LayoutDoc | undefined) ?? (published as LayoutDoc | undefined) ?? codeLayout(t.route);
+        setEntries(working.blocks);
+        setPublishedDoc((published as LayoutDoc | undefined) ?? null);
+        historyRef.current = { stack: [{ entries: working.blocks, regions: {} }], idx: 0 };
       }
-    },
-    []
-  );
+      setDirty(false);
+    } catch {
+      setMessage({ kind: "error", text: "Failed to load this page — try again." });
+    } finally {
+      setBusy(null);
+    }
+  }, []);
   useEffect(() => {
     loadTarget(target);
   }, [target, loadTarget]);
@@ -331,14 +508,39 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
         content: workingDoc(),
         baseVersion,
       });
-      if (j.ok) {
-        setMessage({ kind: "ok", text: `Draft saved as v${j.versionNo}` });
-        setDirty(false);
-        setBaseVersion(j.versionNo);
-        setDraftVersion(j.versionNo);
-      } else {
+      if (!j.ok) {
         setMessage({ kind: "error", text: ((j.errors as string[]) ?? [j.error]).filter(Boolean).join(" · ") || "Save failed" });
+        return;
       }
+      setBaseVersion(j.versionNo);
+      setDraftVersion(j.versionNo);
+      // in-canvas text edits ride the SAME save: one region draft per edited
+      // region, each through the 0018 sanitizer
+      const notes: string[] = [`layout v${j.versionNo}`];
+      let allOk = true;
+      for (const [key, d] of Object.entries(regionDraftsRef.current)) {
+        try {
+          const dj = await (await fetch(`/api/admin/editor/doc?route=${encodeURIComponent(target.route)}&region=${encodeURIComponent(key)}`)).json();
+          const rj = await post("/api/admin/editor/draft", {
+            route: target.route,
+            regionKey: key,
+            content: d.doc,
+            baseVersion: dj.baseVersion ?? 0,
+          });
+          if (rj.ok) {
+            savedRegionsRef.current[key] = rj.versionNo;
+            notes.push(`“${key}” text v${rj.versionNo}`);
+          } else {
+            allOk = false;
+            notes.push(`“${key}” FAILED: ${((rj.errors as string[]) ?? [rj.error]).filter(Boolean).join(", ")}`);
+          }
+        } catch {
+          allOk = false;
+          notes.push(`“${key}” FAILED: network error`);
+        }
+      }
+      setMessage({ kind: allOk ? "ok" : "error", text: `Draft saved — ${notes.join(" · ")}` });
+      if (allOk) setDirty(false);
     } finally {
       setBusy(null);
     }
@@ -355,14 +557,29 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
         versionNo: draftVersion,
         confirmText: target.kind === "template" ? confirmText : undefined,
       });
-      if (j.ok) {
-        setPublishOpen(false);
-        setConfirmText("");
-        setMessage({ kind: j.revalidated ? "ok" : "warn", text: String(j.note ?? "Published") });
-        await Promise.all([loadTarget(target), loadCustomPages()]);
-      } else {
+      if (!j.ok) {
         setMessage({ kind: "error", text: ((j.errors as string[]) ?? [j.error]).filter(Boolean).join(" · ") || "Publish failed" });
+        return;
       }
+      // saved in-canvas text drafts publish with the layout — one audited
+      // publish per region document, honestly reported one by one
+      const notes: string[] = [String(j.note ?? "Layout published")];
+      let warn = !j.revalidated;
+      for (const [key, v] of Object.entries(savedRegionsRef.current)) {
+        const rj = await post("/api/admin/editor/publish", { route: target.route, regionKey: key, versionNo: v });
+        if (rj.ok) notes.push(`“${key}” text published`);
+        else {
+          warn = true;
+          notes.push(`“${key}” text publish FAILED: ${((rj.errors as string[]) ?? [rj.error]).filter(Boolean).join(", ")}`);
+        }
+      }
+      savedRegionsRef.current = {};
+      setRegionDrafts({});
+      setPublishOpen(false);
+      setConfirmText("");
+      setMessage({ kind: warn ? "warn" : "ok", text: notes.join(" · ") });
+      await Promise.all([loadTarget(target), loadCustomPages()]);
+      canvasApi.current?.reload();
     } finally {
       setBusy(null);
     }
@@ -375,18 +592,28 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
 
   const updateEntry = (id: string, fn: (e: LayoutEntry) => LayoutEntry) => setLayout(entries.map((e) => (entryId(e) === id ? fn(e) : e)));
   const updateBlock = (id: string, patch: Partial<BlockInstance>) =>
-    updateEntry(id, (e) => (e.kind === "block" ? { ...e, block: { ...e.block, ...patch } } : e));
+    updateEntry(`b:${id}`, (e) => (e.kind === "block" ? { ...e, block: { ...e.block, ...patch } } : e));
   const updateSettings = (id: string, patch: Record<string, unknown>) =>
-    updateEntry(id, (e) => (e.kind === "block" ? { ...e, block: { ...e.block, settings: { ...e.block.settings, ...patch } } } : e));
+    updateEntry(`b:${id}`, (e) => (e.kind === "block" ? { ...e, block: { ...e.block, settings: { ...e.block.settings, ...patch } } } : e));
 
-  const addBlock = (type: string) => {
+  const addBlockAt = (type: string, index: number | null) => {
     const b: LayoutEntry = { kind: "block", block: newBlock(type) };
-    const idx = selected ? entries.findIndex((e) => entryId(e) === selectedId) + 1 : entries.length;
+    const idx = index ?? (selected ? entries.findIndex((e) => entryId(e) === selectedId) + 1 : entries.length);
     const next = [...entries];
     next.splice(idx, 0, b);
     setLayout(next);
     setSelectedId(entryId(b));
   };
+
+  const pasteAt = (index: number | null) => {
+    if (!clipboard) return;
+    const copy: LayoutEntry = { kind: "block", block: { ...structuredClone(clipboard), id: uid() } };
+    const next = [...entries];
+    next.splice(index ?? entries.length, 0, copy);
+    setLayout(next);
+    setSelectedId(entryId(copy));
+  };
+
   const duplicate = (id: string) => {
     const idx = entries.findIndex((e) => entryId(e) === id);
     const e = entries[idx];
@@ -415,13 +642,267 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     }
   };
 
-  const onDragEnd = (ev: DragEndEvent) => {
+  const onLayerDragEnd = (ev: DragEndEvent) => {
     const { active, over } = ev;
     if (!over || active.id === over.id) return;
     const from = entries.findIndex((e) => entryId(e) === active.id);
     const to = entries.findIndex((e) => entryId(e) === over.id);
     if (from < 0 || to < 0) return;
     setLayout(arrayMove(entries, from, to));
+  };
+
+  /* --------------------------------------------------- canvas sync */
+  const placeholderHtml = (b: BlockInstance) => {
+    const label = (BLOCK_DEF_BY_TYPE.get(b.type)?.label ?? b.type).toUpperCase();
+    return `<section style="background:#F6F1E6;border-top:2px dashed rgba(29,25,19,.45);border-bottom:2px dashed rgba(29,25,19,.45)"><div style="max-width:1280px;margin:0 auto;padding:44px 4vw;font-family:ui-monospace,monospace;font-size:12px;font-weight:700;letter-spacing:.12em;color:rgba(29,25,19,.6)">${label} — THIS BLOCK'S LIVE COMPONENT RENDERS AFTER SAVE DRAFT (reload the canvas)</div></section>`;
+  };
+
+  const fetchBlockHtml = useCallback(
+    async (b: BlockInstance): Promise<string> => {
+      const key = stableStr(b);
+      const cached = htmlCache.current.get(key);
+      if (cached !== undefined) return cached ?? placeholderHtml(b);
+      try {
+        const j = await post("/api/admin/editor/render-block", {
+          route: target.route,
+          block: b,
+          citySlug: target.route === "template:city" ? previewCity : undefined,
+        });
+        const html: string | null = j.ok && j.html ? j.html : null;
+        if (htmlCache.current.size > 120) htmlCache.current.clear();
+        htmlCache.current.set(key, html);
+        return html ?? placeholderHtml(b);
+      } catch {
+        return placeholderHtml(b);
+      }
+    },
+    [target.route, previewCity]
+  );
+
+  /** make the canvas match the working entries — order, hidden flags, and
+      re-rendered blocks. Runs to convergence; restarts if state moves. */
+  const syncCanvas = useCallback(async () => {
+    const api = canvasApi.current;
+    const c = canvasSt.current;
+    if (!api || !c.ready) return;
+    if (syncBusy.current) {
+      syncAgain.current = true;
+      return;
+    }
+    syncBusy.current = true;
+    try {
+      for (let pass = 0; pass < 6; pass++) {
+        syncAgain.current = false;
+        const list = entriesRef.current;
+        const desired = list.map(entryId);
+        // removals first
+        for (const id of [...c.order]) {
+          if (!desired.includes(id)) {
+            api.send({ ns: BB_NS, t: "remove", id });
+            c.order = c.order.filter((x) => x !== id);
+            delete c.hidden[id];
+            delete c.blockJson[id];
+          }
+        }
+        let moved = false;
+        for (let i = 0; i < list.length; i++) {
+          const e = list[i];
+          const id = desired[i];
+          const hid = e.kind === "section" ? e.hidden : e.block.hidden;
+          if (!c.order.includes(id)) {
+            if (e.kind !== "block") continue; // sections always exist in the frame
+            const html = await fetchBlockHtml(e.block);
+            if (entriesRef.current !== list) {
+              moved = true;
+              break;
+            }
+            const before = desired.slice(0, i).filter((x) => c.order.includes(x));
+            const idx = before.length ? c.order.indexOf(before[before.length - 1]) + 1 : 0;
+            api.send({ ns: BB_NS, t: "insert", index: idx, html, meta: metaFor(e) });
+            c.order.splice(idx, 0, id);
+            c.hidden[id] = false;
+            c.blockJson[id] = stableStr(e.block);
+            if (hid) {
+              api.send({ ns: BB_NS, t: "hidden", id, hidden: true });
+              c.hidden[id] = true;
+            }
+          } else {
+            if ((c.hidden[id] ?? false) !== hid) {
+              api.send({ ns: BB_NS, t: "hidden", id, hidden: hid });
+              c.hidden[id] = hid;
+            }
+            if (e.kind === "block") {
+              const jj = stableStr(e.block);
+              if (c.blockJson[id] !== jj) {
+                const html = await fetchBlockHtml(e.block);
+                if (entriesRef.current !== list) {
+                  moved = true;
+                  break;
+                }
+                api.send({ ns: BB_NS, t: "replace", id, html });
+                c.blockJson[id] = jj;
+              }
+            }
+          }
+        }
+        if (moved) continue;
+        const orderNow = desired.filter((id) => c.order.includes(id));
+        if (stableStr(orderNow) !== stableStr(c.order)) {
+          api.send({ ns: BB_NS, t: "order", ids: orderNow });
+          c.order = orderNow;
+        }
+        api.send({ ns: BB_NS, t: "meta", metas: entriesRef.current.map(metaFor) });
+        if (!syncAgain.current) break;
+      }
+    } finally {
+      syncBusy.current = false;
+    }
+  }, [fetchBlockHtml, metaFor]);
+
+  const scheduleSync = useCallback(() => {
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      syncTimer.current = null;
+      void syncCanvas();
+    }, 250);
+  }, [syncCanvas]);
+
+  useEffect(() => {
+    scheduleSync();
+  }, [entries, scheduleSync]);
+
+  /* the bridge (re)connected — seed canvas state, init overlays, resync */
+  const onCanvasReady = useCallback(() => {
+    const c = canvasSt.current;
+    c.ready = true;
+    c.hidden = {};
+    c.blockJson = {};
+    const clean = !dirtyRef.current;
+    for (const e of entriesRef.current) {
+      const id = entryId(e);
+      if (!c.order.includes(id)) continue;
+      c.hidden[id] = e.kind === "section" ? e.hidden : e.block.hidden;
+      // a clean load renders exactly the working draft — skip re-renders;
+      // a dirty reload can't be trusted, so every block re-renders
+      if (clean && e.kind === "block") c.blockJson[id] = stableStr(e.block);
+    }
+    canvasApi.current?.send({ ns: BB_NS, t: "init", metas: entriesRef.current.map(metaFor), order: entriesRef.current.map(entryId) });
+    if (selectedId) canvasApi.current?.send({ ns: BB_NS, t: "select", id: selectedId });
+    // unsaved in-canvas text edits survive a canvas reload
+    regionsCanvas.current = {};
+    for (const [key, d] of Object.entries(regionDraftsRef.current)) {
+      canvasApi.current?.send({ ns: BB_NS, t: "regionHtml", region: key, html: d.html });
+      regionsCanvas.current[key] = d.html;
+    }
+    void syncCanvas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metaFor, syncCanvas]);
+
+  /* every message FROM the canvas (already schema-validated by the frame).
+     IMPORTANT: this callback is memoized — it must never touch `entries`
+     or helpers that close over it (stale first-render captures). Everything
+     goes through entriesRef/sectionByKeyRef + the stable setLayout. */
+  const onCanvasMsg = useCallback(
+    (m: CanvasMsg) => {
+      const c = canvasSt.current;
+      const patchEntry = (id: string, fn: (e: LayoutEntry) => LayoutEntry) =>
+        setLayout(entriesRef.current.map((e) => (entryId(e) === id ? fn(e) : e)));
+      switch (m.t) {
+        case "ready":
+          c.order = m.ids; // actual DOM order in the frame
+          break;
+        case "select":
+          setSelectedId(m.id);
+          if (m.id) setLeftTab("layers");
+          break;
+        case "reorder": {
+          const map = new Map(entriesRef.current.map((e) => [entryId(e), e]));
+          const next = m.ids.map((id) => map.get(id)).filter((x): x is LayoutEntry => !!x);
+          if (next.length === entriesRef.current.length) {
+            c.order = m.ids;
+            setLayout(next);
+          }
+          break;
+        }
+        case "action": {
+          const e = entriesRef.current.find((x) => entryId(x) === m.id);
+          if (!e) break;
+          if (m.action === "hide" || m.action === "show") {
+            if (e.kind === "section") {
+              const def = sectionByKeyRef.current.get(e.key);
+              if (def?.required || def?.locked) break;
+              patchEntry(m.id, (x) => (x.kind === "section" ? { ...x, hidden: m.action === "hide" } : x));
+            } else {
+              patchEntry(m.id, (x) => (x.kind === "block" ? { ...x, block: { ...x.block, hidden: m.action === "hide" } } : x));
+            }
+          } else if (m.action === "duplicate" && e.kind === "block") {
+            const idx = entriesRef.current.findIndex((x) => entryId(x) === m.id);
+            const copy: LayoutEntry = { kind: "block", block: { ...structuredClone(e.block), id: uid() } };
+            const next = [...entriesRef.current];
+            next.splice(idx + 1, 0, copy);
+            setLayout(next);
+            setSelectedId(entryId(copy));
+          } else if (m.action === "copy" && e.kind === "block") {
+            setClipboard(structuredClone(e.block));
+            setMessage({ kind: "ok", text: "Copied — paste from the Blocks tab or a + button." });
+          } else if (m.action === "delete" && e.kind === "block") {
+            if (window.confirm("Delete this block?")) {
+              setLayout(entriesRef.current.filter((x) => entryId(x) !== m.id));
+              setSelectedId((cur) => (cur === m.id ? null : cur));
+            }
+          }
+          break;
+        }
+        case "insertAt":
+          setInsertAt(m.index);
+          break;
+        case "field": {
+          const e = entriesRef.current.find((x) => entryId(x) === m.id);
+          if (e?.kind !== "block") break;
+          const settings = { ...e.block.settings, [m.field]: m.value };
+          c.blockJson[m.id] = stableStr({ ...e.block, settings }); // canvas already shows it
+          patchEntry(m.id, (x) => (x.kind === "block" ? { ...x, block: { ...x.block, settings } } : x));
+          break;
+        }
+        case "rich": {
+          const e = entriesRef.current.find((x) => entryId(x) === m.id);
+          if (e?.kind !== "block") break;
+          const doc = htmlToDoc(m.html);
+          if (!doc) break;
+          const settings = { ...e.block.settings, [m.field]: doc };
+          c.blockJson[m.id] = stableStr({ ...e.block, settings });
+          patchEntry(m.id, (x) => (x.kind === "block" ? { ...x, block: { ...x.block, settings } } : x));
+          break;
+        }
+        case "region": {
+          if (m.original !== null && !(m.region in regionsOriginal.current)) regionsOriginal.current[m.region] = m.original;
+          if (regionsCanvas.current[m.region] === m.html) break; // duplicate delivery
+          regionsCanvas.current[m.region] = m.html;
+          const doc = htmlToDoc(m.html);
+          if (!doc) break;
+          setRegionDrafts((prev) => ({ ...prev, [m.region]: { html: m.html, doc } }));
+          pushHistory(entriesRef.current);
+          setDirty(true);
+          break;
+        }
+        case "navigate":
+          setMessage({ kind: "warn", text: `Links don't navigate inside the canvas — use PREVIEW for the real page. (${m.href})` });
+          break;
+        case "error":
+          break; // surfaced by the frame's error banner
+        case "height":
+          break;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setLayout, pushHistory]
+  );
+
+  /* selecting from Layers highlights + scrolls the canvas */
+  const selectFromPanel = (id: string | null) => {
+    setSelectedId(id);
+    canvasApi.current?.send({ ns: BB_NS, t: "select", id });
+    if (id) canvasApi.current?.send({ ns: BB_NS, t: "scrollTo", id });
   };
 
   const openMedia = useCallback(
@@ -464,27 +945,28 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
     [publishedDoc, entries, sections, target]
   );
 
-  const previewHref = target.kind === "nav" ? "/" : target.previewRoute ?? target.route;
+  const previewHref = target.kind === "nav" ? "/" : canvasRoute;
+  const pendingRegionKeys = Object.keys(regionDrafts);
+  const allTargets: Target[] = [...BASE_TARGETS, ...customPages.map<Target>((p) => ({ route: `/${p.slug}`, title: `${p.title} (${p.status})`, group: "My pages", kind: "custom", previewRoute: `/${p.slug}` }))];
 
   /* ============================================================ render */
   return (
-    <div style={{ minHeight: "calc(100vh - 46px)", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "calc(100vh - 46px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* ---------------------------------------------------- top toolbar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 14px", borderBottom: `2px solid ${INK}`, background: CARD, position: "sticky", top: 0, zIndex: 50 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 14px", borderBottom: `2px solid ${INK}`, background: CARD, zIndex: 50 }}>
         <select
           aria-label="Page"
           value={target.route}
           onChange={(e) => {
-            const all = [...BASE_TARGETS, ...customPages.map<Target>((p) => ({ route: `/${p.slug}`, title: `${p.title} (${p.status})`, group: "My pages", kind: "custom", previewRoute: `/${p.slug}` }))];
-            const t = all.find((x) => x.route === e.target.value);
+            const t = allTargets.find((x) => x.route === e.target.value);
             if (t) switchTarget(t);
           }}
           className="font-mono"
-          style={{ ...selStyle, width: 300, fontSize: 11, fontWeight: 700 }}
+          style={{ ...selStyle, width: 250, fontSize: 12, fontWeight: 700 }}
         >
           {["Pages", "Templates", "Site", "My pages"].map((g) => (
             <optgroup key={g} label={g.toUpperCase()}>
-              {[...BASE_TARGETS, ...customPages.map<Target>((p) => ({ route: `/${p.slug}`, title: `${p.title} (${p.status})`, group: "My pages", kind: "custom" }))]
+              {allTargets
                 .filter((t) => t.group === g)
                 .map((t) => (
                   <option key={t.route} value={t.route}>{t.title}</option>
@@ -493,19 +975,34 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
           ))}
         </select>
 
-        <span style={{ display: "flex", gap: 4 }} role="group" aria-label="Device preview">
+        <span style={{ display: "flex", gap: 5 }} role="group" aria-label="Device preview">
           {DEVICES.map((d) => (
-            <button key={d.key} type="button" onClick={() => setDevice(d)} className="font-mono" style={{ ...btn(device.key === d.key), padding: "8px 10px" }} title={`${d.label} preview`}>
-              {d.key === "desktop" ? "🖥" : d.key === "tablet" ? "▯" : "📱"}
+            <button key={d.key} type="button" onClick={() => setDevice(d)} style={iconBtn(device.key === d.key)} title={`${d.label} — ${d.width}px`}>
+              {d.key === "desktop" ? <Monitor size={16} /> : d.key === "tablet" ? <Tablet size={16} /> : <Smartphone size={16} />}
             </button>
           ))}
         </span>
-        <button type="button" onClick={undo} className="font-mono" style={btn()} title="Undo">↶</button>
-        <button type="button" onClick={redo} className="font-mono" style={btn()} title="Redo">↷</button>
+        <span style={{ display: "flex", gap: 4 }} role="group" aria-label="Zoom">
+          {ZOOMS.map((z) => (
+            <button
+              key={String(z.key)}
+              type="button"
+              onClick={() => setZoom(z.key)}
+              className="font-mono"
+              style={{ ...iconBtn(zoom === z.key), width: "auto", padding: "0 9px", fontSize: 10.5, fontWeight: 700 }}
+              title={z.key === "fit" ? "Fit canvas to the window" : `Zoom ${z.label}`}
+            >
+              {z.label}
+            </button>
+          ))}
+        </span>
+        <button type="button" onClick={undo} style={iconBtn()} title="Undo"><Undo2 size={16} /></button>
+        <button type="button" onClick={redo} style={iconBtn()} title="Redo"><Redo2 size={16} /></button>
+        <button type="button" onClick={() => canvasApi.current?.reload()} style={iconBtn()} title="Reload canvas"><RefreshCw size={15} /></button>
 
         <span style={{ flex: 1 }} />
         {message && (
-          <span className="font-mono" role="status" style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".06em", maxWidth: 420, color: message.kind === "error" ? ORANGE_DARK : message.kind === "warn" ? "#8a6d1a" : "rgba(29,25,19,.7)" }}>
+          <span className="font-mono" role="status" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em", maxWidth: 430, lineHeight: 1.5, color: message.kind === "error" ? ORANGE_DARK : message.kind === "warn" ? "#8a6d1a" : "rgba(29,25,19,.7)" }}>
             {message.text}
           </span>
         )}
@@ -514,12 +1011,13 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
           target="_blank"
           rel="noreferrer"
           className="font-mono"
-          style={{ ...btn(), textDecoration: "none", opacity: draftVersion ? 1 : 0.5, pointerEvents: draftVersion ? "auto" : "none" }}
+          style={{ ...btn(), textDecoration: "none" }}
+          title="Open the real page with this draft in a new tab (final check)"
         >
-          PREVIEW ↗
+          <ExternalLink size={14} /> PREVIEW
         </a>
         <button type="button" onClick={saveDraft} disabled={busy !== null || migrationApplied === false} className="font-mono" style={btn()}>
-          {busy === "save" ? "SAVING…" : "SAVE DRAFT"}
+          <Save size={14} /> {busy === "save" ? "SAVING…" : "SAVE DRAFT"}
         </button>
         <button
           type="button"
@@ -529,27 +1027,30 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
           style={{ ...btn(true), opacity: draftVersion == null || dirty ? 0.5 : 1 }}
           title={dirty ? "Save the draft first" : undefined}
         >
-          PUBLISH…
+          <CloudUpload size={14} /> PUBLISH…
         </button>
-        <button type="button" onClick={() => setHistoryOpen(true)} className="font-mono" style={btn()}>HISTORY</button>
+        <button type="button" onClick={() => setHistoryOpen(true)} className="font-mono" style={btn()}><HistoryIcon size={14} /> HISTORY</button>
         {target.kind === "custom" && (
-          <button type="button" onClick={() => setSettingsOpen(true)} className="font-mono" style={btn()}>PAGE SETTINGS</button>
+          <button type="button" onClick={() => setSettingsOpen(true)} className="font-mono" style={btn()}><Settings2 size={14} /> PAGE SETTINGS</button>
         )}
-        <button type="button" onClick={() => setNewPageOpen(true)} className="font-mono" style={btn()}>+ NEW PAGE</button>
+        <button type="button" onClick={() => setNewPageOpen(true)} className="font-mono" style={btn()}><Plus size={14} /> NEW PAGE</button>
+        <a href="/admin" className="font-mono" style={{ ...btn(), textDecoration: "none" }} title="Exit the builder — back to the console">
+          <LogOut size={14} /> EXIT
+        </a>
       </div>
 
       {migrationApplied === false && (
-        <div className="font-mono" style={{ padding: "10px 16px", background: INK, color: "#E88D6B", fontSize: 10, letterSpacing: ".08em", lineHeight: 1.7 }}>
+        <div className="font-mono" style={{ padding: "10px 16px", background: INK, color: "#E88D6B", fontSize: 11, letterSpacing: ".08em", lineHeight: 1.7 }}>
           MIGRATION 0019 NOT APPLIED — layouts, navigation, and new pages are read-only until supabase/migrations/0019_visual_builder.sql runs. Every public page renders its code-owned composition.
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "250px 1fr 300px", flex: 1, minHeight: 0 }} className="ed-desk">
+      <div style={{ display: "grid", gridTemplateColumns: "260px minmax(0,1fr) 320px", flex: 1, minHeight: 0 }} className="ed-desk">
         {/* --------------------------------------------------- left panel */}
         <aside style={{ borderRight: `2px solid ${INK}`, background: CARD, overflowY: "auto" }}>
           <div style={{ display: "flex", borderBottom: `1.5px solid rgba(29,25,19,.25)` }}>
-            {(["pages", "templates", "blocks", "structure"] as const).map((t) => (
-              <button key={t} type="button" onClick={() => setLeftTab(t)} className="font-mono" style={{ flex: 1, border: "none", borderBottom: leftTab === t ? `3px solid ${ORANGE}` : "3px solid transparent", background: "transparent", padding: "10px 4px", fontSize: 8.5, fontWeight: 700, letterSpacing: ".08em", cursor: "pointer", color: leftTab === t ? INK : "rgba(29,25,19,.55)" }}>
+            {(["pages", "blocks", "layers"] as const).map((t) => (
+              <button key={t} type="button" onClick={() => setLeftTab(t)} className="font-mono" style={{ flex: 1, border: "none", borderBottom: leftTab === t ? `3px solid ${ORANGE}` : "3px solid transparent", background: "transparent", padding: "11px 4px", fontSize: 10.5, fontWeight: 700, letterSpacing: ".1em", cursor: "pointer", color: leftTab === t ? INK : "rgba(29,25,19,.55)" }}>
                 {t.toUpperCase()}
               </button>
             ))}
@@ -557,16 +1058,21 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
           <div style={{ padding: "12px 12px 30px" }}>
             {leftTab === "pages" && (
               <>
-                {(["Pages", "Site"] as const).map((g) => (
+                {(["Pages", "Templates", "Site"] as const).map((g) => (
                   <div key={g}>
-                    <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.55)", margin: "10px 0 4px" }}>{g.toUpperCase()}</div>
+                    <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.55)", margin: "10px 0 4px" }}>{g.toUpperCase()}</div>
+                    {g === "Templates" && (
+                      <p style={{ fontSize: 11.5, lineHeight: 1.55, color: "rgba(29,25,19,.6)", margin: "0 0 6px" }}>
+                        Shared templates drive EVERY page of their kind — publishing needs a typed confirmation.
+                      </p>
+                    )}
                     {BASE_TARGETS.filter((t) => t.group === g).map((t) => (
                       <TargetRow key={t.route} t={t} active={target.route === t.route} onPick={() => switchTarget(t)} />
                     ))}
                   </div>
                 ))}
-                <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.55)", margin: "10px 0 4px" }}>MY PAGES</div>
-                {customPages.length === 0 && <div className="font-mono" style={{ fontSize: 9.5, color: "rgba(29,25,19,.5)" }}>None yet — + NEW PAGE.</div>}
+                <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.55)", margin: "10px 0 4px" }}>MY PAGES</div>
+                {customPages.length === 0 && <div className="font-mono" style={{ fontSize: 10.5, color: "rgba(29,25,19,.5)" }}>None yet — + NEW PAGE.</div>}
                 {customPages.map((p) => (
                   <TargetRow
                     key={p.slug}
@@ -577,97 +1083,107 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
                 ))}
               </>
             )}
-            {leftTab === "templates" && (
-              <>
-                <p style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(29,25,19,.7)" }}>
-                  Shared templates drive EVERY page of their kind. Publishing one requires a typed confirmation.
-                </p>
-                {BASE_TARGETS.filter((t) => t.group === "Templates").map((t) => (
-                  <TargetRow key={t.route} t={t} active={target.route === t.route} onPick={() => switchTarget(t)} />
-                ))}
-              </>
-            )}
             {leftTab === "blocks" && target.kind !== "nav" && (
               <>
+                <p style={{ fontSize: 11.5, lineHeight: 1.55, color: "rgba(29,25,19,.6)", margin: "0 0 8px" }}>
+                  Click to insert after the selected section — or use a <b>+</b> button right on the page.
+                </p>
                 {clipboard && (
-                  <button type="button" className="font-mono" style={{ ...btn(true), width: "100%", marginBottom: 10 }} onClick={() => {
-                    const copy: LayoutEntry = { kind: "block", block: { ...structuredClone(clipboard), id: uid() } };
-                    setLayout([...entries, copy]);
-                  }}>
-                    📋 PASTE “{BLOCK_DEF_BY_TYPE.get(clipboard.type)?.label}”
+                  <button type="button" className="font-mono" style={{ ...btn(true), width: "100%", marginBottom: 10, justifyContent: "center" }} onClick={() => pasteAt(null)}>
+                    <ClipboardPaste size={13} /> PASTE “{BLOCK_DEF_BY_TYPE.get(clipboard.type)?.label}”
                   </button>
                 )}
                 {(["Content", "Media", "Conversion", "Site data", "Structure"] as const).map((cat) => (
                   <div key={cat}>
-                    <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.55)", margin: "10px 0 4px" }}>{cat.toUpperCase()}</div>
+                    <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.55)", margin: "10px 0 4px" }}>{cat.toUpperCase()}</div>
                     {BLOCK_DEFS.filter((b) => b.category === cat)
                       .filter((b) => (target.kind === "custom" ? b.onCustomPages : b.onTemplates))
                       .map((b) => (
-                        <button key={b.type} type="button" onClick={() => addBlock(b.type)} title={b.description} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: `1.5px solid rgba(29,25,19,.3)`, background: "#fff", borderRadius: 8, padding: "8px 10px", marginBottom: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5 }}>
+                        <button key={b.type} type="button" onClick={() => addBlockAt(b.type, null)} title={b.description} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: `1.5px solid rgba(29,25,19,.3)`, background: "#fff", borderRadius: 8, padding: "8px 10px", marginBottom: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5 }}>
                           <span style={{ flex: 1 }}>{b.label}</span>
-                          {b.protectedBlock && <span title="Protected — plumbing/data locked">🔒</span>}
-                          <span className="font-mono" style={{ fontSize: 12, color: ORANGE_DARK }}>+</span>
+                          {b.protectedBlock && <Lock size={12} aria-label="Protected — plumbing/data locked" />}
+                          <Plus size={13} color={ORANGE_DARK} />
                         </button>
                       ))}
                   </div>
                 ))}
               </>
             )}
-            {leftTab === "structure" && target.kind !== "nav" && (
-              <div>
-                {entries.map((e, i) => {
-                  const label = e.kind === "section" ? sectionByKey.get(e.key)?.label ?? e.key : BLOCK_DEF_BY_TYPE.get(e.block.type)?.label ?? e.block.type;
-                  const hidden = e.kind === "section" ? e.hidden : e.block.hidden;
-                  return (
-                    <button key={entryId(e)} type="button" onClick={() => setSelectedId(entryId(e))} style={{ display: "flex", gap: 8, alignItems: "center", width: "100%", textAlign: "left", border: "none", background: selectedId === entryId(e) ? INK : "transparent", color: selectedId === entryId(e) ? CREAM : INK, borderRadius: 7, padding: "6px 8px", fontSize: 12, cursor: "pointer", fontFamily: "inherit", opacity: hidden ? 0.5 : 1 }}>
-                      <span className="font-mono" style={{ fontSize: 9, opacity: 0.6 }}>{i + 1}</span>
-                      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
-                      {e.kind === "section" && (sectionByKey.get(e.key)?.locked || sectionByKey.get(e.key)?.required) && <span>🔒</span>}
-                      {hidden && <span className="font-mono" style={{ fontSize: 8 }}>HIDDEN</span>}
-                    </button>
-                  );
-                })}
-              </div>
+            {leftTab === "layers" && target.kind !== "nav" && (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onLayerDragEnd}>
+                <SortableContext items={entries.map(entryId)} strategy={verticalListSortingStrategy}>
+                  {entries.map((e, i) => (
+                    <LayerRow
+                      key={entryId(e)}
+                      entry={e}
+                      index={i}
+                      def={e.kind === "section" ? sectionByKey.get(e.key) : undefined}
+                      selected={selectedId === entryId(e)}
+                      onPick={() => selectFromPanel(entryId(e))}
+                      onHide={() => toggleHidden(entryId(e))}
+                      onDelete={() => {
+                        if (window.confirm("Delete this block?")) removeEntry(entryId(e));
+                      }}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            )}
+            {leftTab === "layers" && target.kind === "nav" && (
+              <p style={{ fontSize: 12, color: "rgba(29,25,19,.6)" }}>The navigation editor lives in the center panel.</p>
             )}
           </div>
         </aside>
 
         {/* ------------------------------------------------------- canvas */}
-        <main style={{ overflowY: "auto", background: "#E9E0CC", padding: "22px 16px 80px" }}>
+        <main style={{ minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", background: "#E9E0CC" }}>
           {target.kind === "nav" ? (
-            <NavEditor items={navItems} customPages={customPages} onChange={(items) => { setNavItems(items); setDirty(true); }} />
-          ) : (
-            <div style={{ width: "100%", maxWidth: device.width, margin: "0 auto", transition: "max-width .2s ease" }}>
-              <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".18em", color: "rgba(29,25,19,.5)", marginBottom: 8, textAlign: "center" }}>
-                {device.label.toUpperCase()} · {device.width}PX — CANVAS PREVIEW. “PREVIEW ↗” OPENS THE REAL PAGE WITH THIS DRAFT.
-              </div>
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                <SortableContext items={entries.map(entryId)} strategy={verticalListSortingStrategy}>
-                  {entries.map((e) => (
-                    <CanvasCard
-                      key={entryId(e)}
-                      entry={e}
-                      def={e.kind === "section" ? sectionByKey.get(e.key) : undefined}
-                      selected={selectedId === entryId(e)}
-                      device={device.key}
-                      onSelect={() => setSelectedId(entryId(e))}
-                      onHide={() => toggleHidden(entryId(e))}
-                      onDelete={() => removeEntry(entryId(e))}
-                      onDuplicate={() => duplicate(entryId(e))}
-                      onCopy={() => e.kind === "block" && setClipboard(structuredClone(e.block))}
-                      onInline={(patch) => e.kind === "block" && updateSettings(e.block.id, patch)}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
+            <div style={{ overflowY: "auto", padding: "22px 16px 80px" }}>
+              <NavEditor items={navItems} customPages={customPages} onChange={(items) => { setNavItems(items); setDirty(true); }} />
             </div>
+          ) : (
+            <>
+              <div className="font-mono" style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 14px", fontSize: 10, letterSpacing: ".14em", color: "rgba(29,25,19,.55)", borderBottom: "1px solid rgba(29,25,19,.15)" }}>
+                <span style={{ fontWeight: 700 }}>{canvasRoute}</span>
+                <span>{device.width}PX</span>
+                {target.route === "template:city" && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    PREVIEWING AS
+                    <select
+                      aria-label="Preview city"
+                      value={previewCity}
+                      onChange={(e) => setPreviewCity(e.target.value)}
+                      className="font-mono"
+                      style={{ ...selStyle, width: 140, padding: "3px 6px", fontSize: 10.5 }}
+                    >
+                      {cities.map((ci) => (
+                        <option key={ci.slug} value={ci.slug}>{ci.name}</option>
+                      ))}
+                    </select>
+                  </span>
+                )}
+                {target.kind === "template" && <span style={{ color: ORANGE_DARK, fontWeight: 700 }}>SHARED TEMPLATE — CHANGES AFFECT EVERY PAGE OF THIS KIND</span>}
+                <span style={{ flex: 1 }} />
+                {dirty && <span style={{ color: ORANGE_DARK, fontWeight: 700 }}>UNSAVED CHANGES</span>}
+              </div>
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <CanvasFrame
+                  route={canvasRoute}
+                  deviceWidth={device.width}
+                  zoom={zoom}
+                  apiRef={canvasApi}
+                  onMsg={onCanvasMsg}
+                  onReady={onCanvasReady}
+                />
+              </div>
+            </>
           )}
         </main>
 
         {/* --------------------------------------------------- right panel */}
         <aside style={{ borderLeft: `2px solid ${INK}`, background: CARD, overflowY: "auto", padding: "14px 14px 40px" }}>
           {target.kind === "nav" ? (
-            <div className="font-mono" style={{ fontSize: 10, lineHeight: 2, color: "rgba(29,25,19,.7)" }}>
+            <div className="font-mono" style={{ fontSize: 11, lineHeight: 2, color: "rgba(29,25,19,.7)" }}>
               NAVIGATION RULES
               <br />· system links keep their destinations
               <br />· SEARCH HOMES can’t be hidden
@@ -675,13 +1191,23 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
               <br />· admin/account/api/auth can never enter public nav
             </div>
           ) : !selected ? (
-            <div className="font-mono" style={{ fontSize: 10, lineHeight: 2, color: "rgba(29,25,19,.6)" }}>
-              SELECT A BLOCK OR SECTION ON THE CANVAS.
+            <div className="font-mono" style={{ fontSize: 11, lineHeight: 2, color: "rgba(29,25,19,.6)" }}>
+              CLICK A SECTION ON THE PAGE TO EDIT IT.
+              <br />
+              <br />· double-click text to edit in place
+              <br />· drag the ⠿ handle to reorder
+              <br />· + buttons insert blocks
               <br />
               <br />
               PUBLISHED: {publishedDoc ? "layout override" : target.kind === "custom" ? "—" : "code-owned layout"}
               <br />
               DRAFT: {draftVersion ? `v${draftVersion}` : "—"}
+              {pendingRegionKeys.length > 0 && (
+                <>
+                  <br />
+                  TEXT EDITS: {pendingRegionKeys.join(", ")}
+                </>
+              )}
               {dirty && (
                 <>
                   <br />
@@ -704,18 +1230,48 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
         </aside>
       </div>
 
+      {/* ------------------------------------------------ insert picker */}
+      {insertAt !== null && target.kind !== "nav" && (
+        <Modal title="INSERT A BLOCK HERE" onClose={() => setInsertAt(null)}>
+          {clipboard && (
+            <button type="button" className="font-mono" style={{ ...btn(true), width: "100%", marginBottom: 10, justifyContent: "center" }} onClick={() => { pasteAt(insertAt); setInsertAt(null); }}>
+              <ClipboardPaste size={13} /> PASTE “{BLOCK_DEF_BY_TYPE.get(clipboard.type)?.label}”
+            </button>
+          )}
+          {(["Content", "Media", "Conversion", "Site data", "Structure"] as const).map((cat) => {
+            const defs = BLOCK_DEFS.filter((b) => b.category === cat).filter((b) => (target.kind === "custom" ? b.onCustomPages : b.onTemplates));
+            if (!defs.length) return null;
+            return (
+              <div key={cat}>
+                <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".18em", color: "rgba(29,25,19,.55)", margin: "10px 0 4px" }}>{cat.toUpperCase()}</div>
+                {defs.map((b) => (
+                  <button key={b.type} type="button" onClick={() => { addBlockAt(b.type, insertAt); setInsertAt(null); }} title={b.description} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: `1.5px solid rgba(29,25,19,.3)`, background: "#fff", borderRadius: 8, padding: "8px 10px", marginBottom: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5 }}>
+                    <span style={{ flex: 1 }}>{b.label}</span>
+                    {b.protectedBlock && <Lock size={12} aria-label="Protected" />}
+                    <Plus size={13} color={ORANGE_DARK} />
+                  </button>
+                ))}
+              </div>
+            );
+          })}
+        </Modal>
+      )}
+
       {/* ------------------------------------------------- publish modal */}
       {publishOpen && (
         <Modal title={target.kind === "template" ? "PUBLISH SHARED TEMPLATE" : target.kind === "nav" ? "PUBLISH NAVIGATION" : "PUBLISH PAGE LAYOUT"} onClose={() => setPublishOpen(false)}>
           {target.kind !== "nav" && (
-            <div className="font-mono" style={{ fontSize: 10.5, lineHeight: 2 }}>
+            <div className="font-mono" style={{ fontSize: 11, lineHeight: 2 }}>
               {diff.added.length > 0 && <div>➕ ADDED: {diff.added.join(" · ")}</div>}
               {diff.removed.length > 0 && <div>➖ REMOVED: {diff.removed.join(" · ")}</div>}
               {diff.moved.length > 0 && <div>↕ MOVED: {diff.moved.join(" · ")}</div>}
               {diff.hidden.length > 0 && <div>🚫 HIDDEN: {diff.hidden.join(" · ")}</div>}
               {diff.shown.length > 0 && <div>👁 SHOWN AGAIN: {diff.shown.join(" · ")}</div>}
               {diff.edited.length > 0 && <div>✏ EDITED: {diff.edited.join(" · ")}</div>}
-              {!diff.added.length && !diff.removed.length && !diff.moved.length && !diff.hidden.length && !diff.shown.length && !diff.edited.length && (
+              {Object.keys(savedRegionsRef.current).length > 0 && (
+                <div>✏ TEXT DRAFTS PUBLISHING TOO: {Object.keys(savedRegionsRef.current).join(" · ")}</div>
+              )}
+              {!diff.added.length && !diff.removed.length && !diff.moved.length && !diff.hidden.length && !diff.shown.length && !diff.edited.length && !Object.keys(savedRegionsRef.current).length && (
                 <div>NO STRUCTURAL DIFFERENCE FROM WHAT IS LIVE.</div>
               )}
             </div>
@@ -737,10 +1293,10 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
             </p>
           )}
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            <button type="button" onClick={publish} disabled={busy !== null || (target.kind === "template" && confirmText !== "PUBLISH TEMPLATE")} className="font-mono" style={{ ...btn(true), flex: 1, opacity: target.kind === "template" && confirmText !== "PUBLISH TEMPLATE" ? 0.5 : 1 }}>
+            <button type="button" onClick={publish} disabled={busy !== null || (target.kind === "template" && confirmText !== "PUBLISH TEMPLATE")} className="font-mono" style={{ ...btn(true), flex: 1, justifyContent: "center", opacity: target.kind === "template" && confirmText !== "PUBLISH TEMPLATE" ? 0.5 : 1 }}>
               {busy === "publish" ? "PUBLISHING…" : `CONFIRM — PUBLISH v${draftVersion}`}
             </button>
-            <button type="button" onClick={() => setPublishOpen(false)} className="font-mono" style={{ ...btn(), flex: 1 }}>CANCEL</button>
+            <button type="button" onClick={() => setPublishOpen(false)} className="font-mono" style={{ ...btn(), flex: 1, justifyContent: "center" }}>CANCEL</button>
           </div>
         </Modal>
       )}
@@ -748,16 +1304,16 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
       {/* ------------------------------------------------- history modal */}
       {historyOpen && (
         <Modal title="VERSION HISTORY" onClose={() => setHistoryOpen(false)}>
-          {versions.length === 0 && <div className="font-mono" style={{ fontSize: 10 }}>NO VERSIONS YET — THIS LAYOUT IS PURE CODE.</div>}
+          {versions.length === 0 && <div className="font-mono" style={{ fontSize: 11 }}>NO VERSIONS YET — THIS LAYOUT IS PURE CODE.</div>}
           {versions.map((v) => (
             <div key={v.versionNo} style={{ border: "1.5px solid rgba(29,25,19,.3)", borderRadius: 8, padding: "8px 10px", marginBottom: 8 }}>
-              <div className="font-mono" style={{ fontSize: 10, fontWeight: 700 }}>v{v.versionNo} · {v.status.toUpperCase()}</div>
-              <div className="font-mono" style={{ fontSize: 9, color: "rgba(29,25,19,.6)" }}>{new Date(v.createdAt).toLocaleString()} · {v.createdBy}</div>
+              <div className="font-mono" style={{ fontSize: 11, fontWeight: 700 }}>v{v.versionNo} · {v.status.toUpperCase()}</div>
+              <div className="font-mono" style={{ fontSize: 10, color: "rgba(29,25,19,.6)" }}>{new Date(v.createdAt).toLocaleString()} · {v.createdBy}</div>
               {v.status !== "published" && v.status !== "draft" && (
                 <button
                   type="button"
                   className="font-mono"
-                  style={{ marginTop: 6, border: "none", background: "none", color: ORANGE_DARK, fontSize: 9.5, fontWeight: 700, cursor: "pointer", padding: 0 }}
+                  style={{ marginTop: 6, border: "none", background: "none", color: ORANGE_DARK, fontSize: 10.5, fontWeight: 700, cursor: "pointer", padding: 0 }}
                   onClick={async () => {
                     if (target.kind === "template" && !window.confirm("Rolling back republishes this version on EVERY page using the template. Continue?")) return;
                     setBusy("rollback");
@@ -765,7 +1321,10 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
                     setBusy(null);
                     setHistoryOpen(false);
                     setMessage(j.ok ? { kind: "ok", text: `Rolled back — v${j.publishedVersion} is live` } : { kind: "error", text: String(j.error ?? "Rollback failed") });
-                    if (j.ok) loadTarget(target);
+                    if (j.ok) {
+                      await loadTarget(target);
+                      canvasApi.current?.reload();
+                    }
                   }}
                 >
                   ⟲ ROLL BACK TO v{v.versionNo}…
@@ -777,7 +1336,7 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
             <button
               type="button"
               className="font-mono"
-              style={{ ...btn(false, true), width: "100%", marginTop: 6 }}
+              style={{ ...btn(false, true), width: "100%", marginTop: 6, justifyContent: "center" }}
               onClick={async () => {
                 if (!window.confirm("Restore the code-owned layout? The published override is cleared; history stays.")) return;
                 setBusy("restore");
@@ -785,7 +1344,10 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
                 setBusy(null);
                 setHistoryOpen(false);
                 setMessage(j.ok ? { kind: "ok", text: "Code layout restored" } : { kind: "error", text: String(j.error ?? "Restore failed") });
-                if (j.ok) loadTarget(target);
+                if (j.ok) {
+                  await loadTarget(target);
+                  canvasApi.current?.reload();
+                }
               }}
             >
               RESTORE CODE LAYOUT…
@@ -863,233 +1425,83 @@ export default function VisualBuilder({ adminEmail }: { adminEmail: string }) {
   );
 }
 
-/* ================================================================ cards */
+/* ================================================================ rows */
 function TargetRow({ t, active, onPick }: { t: Target; active: boolean; onPick: () => void }) {
   return (
-    <button type="button" onClick={onPick} style={{ display: "block", width: "100%", textAlign: "left", border: "none", background: active ? INK : "transparent", color: active ? CREAM : INK, borderRadius: 7, padding: "7px 9px", fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", marginBottom: 2 }}>
+    <button type="button" onClick={onPick} style={{ display: "block", width: "100%", textAlign: "left", border: "none", background: active ? INK : "transparent", color: active ? CREAM : INK, borderRadius: 7, padding: "8px 9px", fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", marginBottom: 2 }}>
       {t.title}
     </button>
   );
 }
 
-function CanvasCard({
+/** one entry in the Layers list — synced selection, dnd + keyboard reorder */
+function LayerRow({
   entry,
+  index,
   def,
   selected,
-  device,
-  onSelect,
+  onPick,
   onHide,
   onDelete,
-  onDuplicate,
-  onCopy,
-  onInline,
 }: {
   entry: LayoutEntry;
+  index: number;
   def?: SectionDef;
   selected: boolean;
-  device: "desktop" | "tablet" | "mobile";
-  onSelect: () => void;
+  onPick: () => void;
   onHide: () => void;
   onDelete: () => void;
-  onDuplicate: () => void;
-  onCopy: () => void;
-  onInline: (patch: Record<string, unknown>) => void;
 }) {
   const id = entryId(entry);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const isSection = entry.kind === "section";
   const hidden = isSection ? entry.hidden : entry.block.hidden;
-  const visibility = isSection ? entry.visibility : entry.block.visibility;
-  const lockish = isSection && (def?.locked || def?.required);
-  const deviceHidden = (visibility === "desktop" && device === "mobile") || (visibility === "mobile" && device !== "mobile");
-
+  const lockish = isSection ? !!(def?.locked || def?.required) : !!BLOCK_DEF_BY_TYPE.get(entry.block.type)?.protectedBlock;
+  const label = isSection ? def?.label ?? entry.key : BLOCK_DEF_BY_TYPE.get(entry.block.type)?.label ?? entry.block.type;
   return (
     <div
       ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
         transition: transition ?? undefined,
-        opacity: isDragging ? 0.6 : hidden || deviceHidden ? 0.45 : 1,
-        marginBottom: 10,
-        position: "relative",
-        outline: selected ? `3px solid ${ORANGE}` : "1.5px solid rgba(29,25,19,.3)",
-        outlineOffset: 0,
-        borderRadius: 12,
-        background: "#fff",
-        cursor: "pointer",
+        opacity: isDragging ? 0.6 : hidden ? 0.55 : 1,
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        background: selected ? INK : "transparent",
+        color: selected ? CREAM : INK,
+        borderRadius: 7,
+        padding: "5px 6px",
+        marginBottom: 2,
       }}
-      onClick={onSelect}
     >
-      {/* admin control strip — never part of public HTML */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderBottom: "1px solid rgba(29,25,19,.12)", background: lockish ? "rgba(29,25,19,.06)" : CARD, borderRadius: "12px 12px 0 0" }}>
-        <button type="button" className="font-mono" {...attributes} {...listeners} aria-label="Drag to reorder (space to lift, arrows to move)" title="Drag to reorder" style={{ cursor: "grab", border: "none", background: "none", fontSize: 13, padding: "2px 4px" }} onClick={(e) => e.stopPropagation()}>
-          ⠿
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder (space to lift, arrows to move)"
+        title="Drag to reorder"
+        style={{ cursor: "grab", border: "none", background: "none", color: "inherit", display: "flex", padding: 2 }}
+      >
+        <GripVertical size={13} />
+      </button>
+      <button type="button" onClick={onPick} style={{ flex: 1, display: "flex", alignItems: "center", gap: 7, border: "none", background: "none", color: "inherit", textAlign: "left", fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", overflow: "hidden", padding: 0 }}>
+        <span className="font-mono" style={{ fontSize: 9.5, opacity: 0.55 }}>{index + 1}</span>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+        {lockish && <Lock size={11} aria-label="Protected" />}
+      </button>
+      {!(isSection && lockish) && (
+        <button type="button" onClick={onHide} title={hidden ? "Show" : "Hide"} style={{ border: "none", background: "none", color: "inherit", cursor: "pointer", display: "flex", padding: 2 }}>
+          {hidden ? <EyeOff size={13} /> : <Eye size={13} />}
         </button>
-        <span className="font-mono" style={{ flex: 1, fontSize: 9.5, fontWeight: 700, letterSpacing: ".1em", color: "rgba(29,25,19,.75)" }}>
-          {isSection ? def?.label?.toUpperCase() ?? entry.key.toUpperCase() : (BLOCK_DEF_BY_TYPE.get(entry.block.type)?.label ?? entry.block.type).toUpperCase()}
-        </span>
-        {lockish && (
-          <span className="font-mono" title={def?.description ?? (def?.required ? "Required — carries the page H1, search, or compliance content" : "Protected — live data / plumbing")} style={{ fontSize: 9 }}>
-            🔒 {def?.required ? "REQUIRED" : "PROTECTED"}
-          </span>
-        )}
-        {!isSection && BLOCK_DEF_BY_TYPE.get(entry.block.type)?.protectedBlock && (
-          <span className="font-mono" title="Protected block — data and plumbing are locked; placement and safe settings only" style={{ fontSize: 9 }}>🔒</span>
-        )}
-        {!lockish && (
-          <button type="button" className="font-mono" onClick={(e) => { e.stopPropagation(); onHide(); }} title={hidden ? "Show" : "Hide"} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 11 }}>
-            {hidden ? "🚫" : "👁"}
-          </button>
-        )}
-        {!isSection && (
-          <>
-            <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} title="Duplicate" style={{ border: "none", background: "none", cursor: "pointer", fontSize: 11 }}>⧉</button>
-            <button type="button" className="font-mono" onClick={(e) => { e.stopPropagation(); onCopy(); }} title="Copy (paste on any page)" style={{ border: "none", background: "none", cursor: "pointer", fontSize: 10 }}>📋</button>
-            <button type="button" onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete this block?")) onDelete(); }} title="Delete" style={{ border: "none", background: "none", cursor: "pointer", fontSize: 11, color: ORANGE_DARK }}>✕</button>
-          </>
-        )}
-      </div>
-      <div style={{ padding: 14 }}>
-        {isSection ? (
-          <div className="font-mono" style={{ fontSize: 10, lineHeight: 1.8, color: "rgba(29,25,19,.6)" }}>
-            {def?.description ?? "Code-owned section — renders the real site component on the live page and in Preview."}
-          </div>
-        ) : (
-          <BlockCanvasPreview block={entry.block} onInline={onInline} />
-        )}
-      </div>
+      )}
+      {!isSection && (
+        <button type="button" onClick={onDelete} title="Delete block" style={{ border: "none", background: "none", color: selected ? "#F1A08A" : ORANGE_DARK, cursor: "pointer", display: "flex", padding: 2 }}>
+          <Trash2 size={13} />
+        </button>
+      )}
     </div>
   );
-}
-
-/* stylized in-canvas previews with inline editing for plain-text fields */
-function BlockCanvasPreview({ block, onInline }: { block: BlockInstance; onInline: (patch: Record<string, unknown>) => void }) {
-  const s = block.settings as Record<string, unknown>;
-  const onInk = block.style.treatment === "ink" || block.style.treatment === "orange";
-  const bg = block.style.treatment === "ink" ? INK : block.style.treatment === "orange" ? ORANGE : block.style.treatment === "white" ? CARD : CREAM;
-  const fg = onInk ? CREAM : INK;
-  const inline = (field: string, value: unknown, big = false) => (
-    <input
-      value={String(value ?? "")}
-      onChange={(e) => onInline({ [field]: e.target.value })}
-      onClick={(e) => e.stopPropagation()}
-      placeholder={field}
-      aria-label={`${block.type} ${field}`}
-      style={{ width: "100%", border: "1px dashed rgba(127,127,127,.4)", borderRadius: 6, background: "transparent", color: "inherit", fontFamily: big ? "inherit" : undefined, fontSize: big ? 22 : 13, fontWeight: big ? 800 : 400, padding: "4px 6px" }}
-    />
-  );
-
-  const wrap = (children: React.ReactNode) => (
-    <div style={{ background: bg, color: fg, borderRadius: 10, padding: "16px 18px" }}>{children}</div>
-  );
-
-  switch (block.type) {
-    case "hero":
-      return wrap(
-        <>
-          <div className="font-mono" style={{ fontSize: 9, letterSpacing: ".2em", color: onInk ? "#E88D6B" : ORANGE_DARK, marginBottom: 6 }}>{String(s.kicker ?? "") || "KICKER"}</div>
-          {inline("heading", s.heading, true)}
-          <div style={{ marginTop: 6 }}>{inline("sub", s.sub)}</div>
-          <div className="font-mono" style={{ marginTop: 8, fontSize: 8.5, opacity: 0.6 }}>{((s.buttons as BlockButton[]) ?? []).map((b) => b.label).join(" · ") || "no buttons"} · {String(s.level).toUpperCase()}</div>
-        </>
-      );
-    case "richtext": {
-      const first = ((s.doc as { content?: { content?: { text?: string }[] }[] })?.content ?? [])
-        .flatMap((n) => n.content ?? [])
-        .map((t) => t.text ?? "")
-        .join(" ")
-        .slice(0, 220);
-      return wrap(<div style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.85 }}>{first || "Rich text — edit in the right panel."}</div>);
-    }
-    case "cta":
-      return wrap(
-        <>
-          {inline("heading", s.heading, true)}
-          <div style={{ marginTop: 6 }}>{inline("body", s.body)}</div>
-          <div className="font-mono" style={{ marginTop: 8, fontSize: 8.5, opacity: 0.6 }}>{((s.buttons as BlockButton[]) ?? []).map((b) => `[${b.label}]`).join(" ") || "no buttons"}</div>
-        </>
-      );
-    case "quote":
-      return wrap(
-        <>
-          <div style={{ fontStyle: "italic" }}>{inline("text", s.text, true)}</div>
-          <div style={{ marginTop: 6 }}>{inline("cite", s.cite)}</div>
-        </>
-      );
-    case "image":
-    case "editorialPhoto": {
-      const im = s.image as BlockImage | null;
-      return wrap(
-        im?.src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={im.src} alt={im.alt} style={{ width: "100%", maxHeight: 180, objectFit: "cover", borderRadius: 8 }} />
-        ) : (
-          <div className="font-mono" style={{ fontSize: 10, opacity: 0.6, padding: "20px 0", textAlign: "center" }}>NO IMAGE — CHOOSE ONE IN THE RIGHT PANEL</div>
-        )
-      );
-    }
-    case "imageText": {
-      const im = s.image as BlockImage | null;
-      return wrap(
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div style={{ width: 90, height: 64, borderRadius: 6, background: "rgba(127,127,127,.2)", overflow: "hidden", flexShrink: 0 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {im?.src && <img src={im.src} alt={im.alt} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-          </div>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Image + rich text · image {String(s.imageSide)}</div>
-        </div>
-      );
-    }
-    case "gallery": {
-      const imgs = (s.images as BlockImage[]) ?? [];
-      return wrap(
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {imgs.length === 0 && <span className="font-mono" style={{ fontSize: 10, opacity: 0.6 }}>EMPTY GALLERY</span>}
-          {imgs.map((im, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={im.src} alt={im.alt} style={{ width: 64, height: 48, objectFit: "cover", borderRadius: 6 }} />
-          ))}
-        </div>
-      );
-    }
-    case "faq": {
-      const items = (s.items as { q: string }[]) ?? [];
-      return wrap(<div style={{ fontSize: 12.5, opacity: 0.85 }}>FAQ · {items.length} item{items.length === 1 ? "" : "s"}: {items.map((i) => i.q).join(" · ").slice(0, 140)}</div>);
-    }
-    case "featureGrid": {
-      const items = (s.items as { title: string }[]) ?? [];
-      return wrap(<div style={{ fontSize: 12.5, opacity: 0.85 }}>Feature grid ({String(s.columns)} col): {items.map((i) => i.title).join(" · ").slice(0, 140)}</div>);
-    }
-    case "statsBand": {
-      const items = (s.items as { value: string; label: string }[]) ?? [];
-      return wrap(
-        <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-          {items.map((it, i) => (
-            <div key={i}><span className="font-serif" style={{ fontWeight: 900, fontSize: 22 }}>{it.value}</span> <span className="font-mono" style={{ fontSize: 8.5, opacity: 0.6 }}>{it.label.toUpperCase()}</span></div>
-          ))}
-        </div>
-      );
-    }
-    case "divider":
-      return wrap(<div style={{ height: 2, background: "currentColor", opacity: 0.7 }} />);
-    case "spacer":
-      return wrap(<div className="font-mono" style={{ fontSize: 9, opacity: 0.6, textAlign: "center" }}>SPACER · {String(s.size).toUpperCase()}</div>);
-    case "searchPromo":
-      return wrap(
-        <>
-          {inline("heading", s.heading, true)}
-          <div className="font-mono" style={{ marginTop: 6, fontSize: 8.5, opacity: 0.6 }}>→ {String(s.target)} · 🔒 the search itself lives on that page</div>
-        </>
-      );
-    default: {
-      const def = BLOCK_DEF_BY_TYPE.get(block.type);
-      return wrap(
-        <div className="font-mono" style={{ fontSize: 10, lineHeight: 1.8, opacity: 0.75 }}>
-          🔒 {def?.label?.toUpperCase()} — {def?.description ?? "protected block"} Renders live on the real page and in Preview.
-        </div>
-      );
-    }
-  }
 }
 
 /* =========================================================== settings */
