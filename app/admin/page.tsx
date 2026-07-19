@@ -30,6 +30,12 @@ type Desk = {
 
 const DESKS: Desk[] = [
   {
+    eyebrow: "00 — PAGES",
+    title: "Editor",
+    blurb: "Visual editing for approved editorial regions — draft, preview on the real page, publish. Code content stays the fallback.",
+    href: "/admin/editor",
+  },
+  {
     eyebrow: "01 — PEOPLE",
     title: "Lead Desk",
     blurb: "Showing requests, listing questions, event trail, shelf engagement.",
@@ -49,8 +55,8 @@ const DESKS: Desk[] = [
   },
   {
     eyebrow: "04 — PROSE",
-    title: "SEO Content",
-    blurb: "SEO titles, intros, FAQs for any page — linted, then exported through the gated content pipeline.",
+    title: "SEO Content (legacy)",
+    blurb: "The older structured workflow: linted drafts exported through the gated PR pipeline. For visual editing with instant preview, use the Editor desk.",
     href: "/admin/communities?view=content",
   },
   {

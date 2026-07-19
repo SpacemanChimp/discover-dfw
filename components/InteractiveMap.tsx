@@ -30,6 +30,7 @@ export default function InteractiveMap({
   stats,
   pricesLive = false,
   pricesAsOf,
+  introOverride,
 }: {
   liveMls?: boolean;
   /* canonical city figures from the homepage's metric fetch — the map holds
@@ -38,6 +39,7 @@ export default function InteractiveMap({
   stats?: Record<string, { ppsf?: number; dom?: number }>;
   pricesLive?: boolean;
   pricesAsOf?: string;
+  introOverride?: React.ReactNode;
 }) {
   // the prices map (when supplied) is the whole truth — a missing entry
   // means the canonical layer omitted the median; render nothing for it
@@ -130,18 +132,24 @@ export default function InteractiveMap({
             The Metroplex, mapped.
           </h2>
         </div>
-        <p
-          style={{
-            margin: "0 0 6px",
-            maxWidth: 340,
-            fontSize: 15,
-            lineHeight: 1.6,
-            color: "rgba(29,25,19,.65)",
-          }}
-        >
-          Hover any city to light it up. Click through for the full report:
-          market, neighborhoods, schools, commutes.
-        </p>
+        {introOverride ? (
+          <div style={{ margin: "0 0 6px", maxWidth: 340, fontSize: 15, lineHeight: 1.6, color: "rgba(29,25,19,.65)" }}>
+            {introOverride}
+          </div>
+        ) : (
+          <p
+            style={{
+              margin: "0 0 6px",
+              maxWidth: 340,
+              fontSize: 15,
+              lineHeight: 1.6,
+              color: "rgba(29,25,19,.65)",
+            }}
+          >
+            Hover any city to light it up. Click through for the full report:
+            market, neighborhoods, schools, commutes.
+          </p>
+        )}
       </div>
 
       <div

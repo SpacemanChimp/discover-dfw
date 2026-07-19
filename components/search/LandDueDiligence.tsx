@@ -67,7 +67,7 @@ const TOPICS: { h: string; body: string }[] = [
   },
 ];
 
-export default function LandDueDiligence() {
+export default function LandDueDiligence({ override }: { override?: React.ReactNode }) {
   return (
     <section aria-labelledby="land-guide-head" style={{ borderTop: "2px solid #1D1913", background: "#FBF7EE" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(40px,5vw,64px) 4vw" }}>
@@ -77,6 +77,12 @@ export default function LandDueDiligence() {
         <h2 id="land-guide-head" className="font-serif" style={{ margin: "10px 0 0", fontWeight: 800, fontSize: "clamp(24px,3.2vw,34px)", lineHeight: 1.1, maxWidth: 760 }}>
           What to check before you buy land in North Texas
         </h2>
+        {/* EDITOR-desk override replaces the topic grid; the kicker, H2, and
+            closing disclaimer stay code-owned either way */}
+        {override ? (
+          <div style={{ marginTop: 24, maxWidth: 860, fontSize: 14.5, color: "rgba(29,25,19,.78)" }}>{override}</div>
+        ) : (
+          <>
         <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.65, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
           Buying land is a different job than buying a house. The value is in what you can legally do with the dirt — reach it, get water and power to it, and build on it. Here is what North Texas buyers verify, parcel by parcel, before they write an offer.
         </p>
@@ -89,6 +95,8 @@ export default function LandDueDiligence() {
             </div>
           ))}
         </div>
+          </>
+        )}
 
         <p className="font-mono" style={{ margin: "30px 0 0", fontSize: 10.5, lineHeight: 1.7, letterSpacing: ".04em", color: "rgba(29,25,19,.55)", maxWidth: 760 }}>
           This guide is general information for North Texas land buyers, not legal, engineering, tax, environmental, or survey advice, and it is not a guarantee about any specific parcel. Confirm every detail with the appropriate licensed professional and the governing city or county before you rely on it.

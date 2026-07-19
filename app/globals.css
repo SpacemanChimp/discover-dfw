@@ -309,6 +309,94 @@ body {
   }
 }
 
+/* ---------- editor-published rich content (.ed-rich) ----------
+   Rendered ONLY by lib/editor/render.tsx from sanitized structured JSON.
+   Inherits the surrounding section's font/color; supplies rhythm only. */
+.ed-rich p {
+  margin: 0 0 12px;
+  line-height: 1.65;
+}
+.ed-rich p:last-child {
+  margin-bottom: 0;
+}
+.ed-rich h2 {
+  margin: 26px 0 10px;
+  font-weight: 800;
+  font-size: clamp(20px, 2.4vw, 26px);
+  line-height: 1.15;
+}
+.ed-rich h3 {
+  margin: 20px 0 8px;
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.2;
+}
+.ed-rich ul,
+.ed-rich ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+  line-height: 1.65;
+}
+.ed-rich li {
+  margin: 4px 0;
+}
+.ed-rich blockquote {
+  margin: 14px 0;
+  padding: 4px 0 4px 16px;
+  border-left: 3px solid #d9481f;
+  font-style: italic;
+  color: rgba(29, 25, 19, 0.75);
+}
+.ed-rich a {
+  color: #c13e17;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ed-figure {
+  margin: 18px 0;
+}
+.ed-figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 2px solid #1d1913;
+  border-radius: 14px;
+}
+.ed-figure figcaption {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(29, 25, 19, 0.65);
+}
+.ed-attribution {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.ed-editing .ProseMirror {
+  outline: none;
+  min-height: 220px;
+}
+.ed-editing .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border: 2px solid #1d1913;
+  border-radius: 14px;
+}
+/* desk collapses to stacked panes on phones/tablets */
+@media (max-width: 1000px) {
+  .ed-desk {
+    display: block !important;
+  }
+  .ed-desk aside {
+    position: static !important;
+    max-height: none !important;
+    border-right: none !important;
+    border-left: none !important;
+    border-bottom: 2px solid #1d1913;
+  }
+}
+
 /* ---------- guide grids (/land due-diligence, /new-builds education) ---------- */
 .land-guide-grid,
 .nb-guide-grid {

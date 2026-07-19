@@ -9,10 +9,12 @@ export default function CityIndex({
   prices,
   pricesLive,
   pricesAsOf,
+  introOverride,
 }: {
   prices?: Record<string, number>;
   pricesLive?: boolean;
   pricesAsOf?: string;
+  introOverride?: React.ReactNode;
 }) {
   // when a prices map is supplied, it is the whole truth: a missing entry
   // means the canonical layer omitted the metric — render nothing for it
@@ -52,6 +54,12 @@ export default function CityIndex({
             ? "CITY FIGURES: MEDIAN ACTIVE LIST PRICE · SOURCE: NTREIS"
             : "CITY FIGURES: EDITORIAL MEDIANS, SEEDED FROM NTREIS SNAPSHOTS"}
         </div>
+        {/* EDITOR-desk intro — additive; no code intro exists today */}
+        {introOverride && (
+          <div style={{ marginTop: 16, maxWidth: 680, fontSize: 15.5, lineHeight: 1.7, color: "rgba(29,25,19,.75)" }}>
+            {introOverride}
+          </div>
+        )}
       </div>
 
       {counties.map((co) => {

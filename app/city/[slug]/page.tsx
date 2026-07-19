@@ -26,6 +26,9 @@ import ConversionDuo from "@/components/convert/ConversionDuo";
 import { leadBackendReady } from "@/lib/convert/config";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
+import { getEditorState } from "@/lib/editor/overrides";
+import { RichDoc } from "@/lib/editor/render";
+import PreviewBanner from "@/components/editor/PreviewBanner";
 
 export function generateStaticParams() {
   return cities.map((c) => ({ slug: c.slug }));
@@ -48,11 +51,15 @@ export async function generateMetadata({
      actively-selling communities lead with new construction; the rest lead
      with their neighborhoods. */
   const cityNbs = newBuilds.filter((nb) => nb.city === c.slug);
-  const description = cityNbs.length
+  const fallbackDescription = cityNbs.length
     ? `${c.name}, TX in ${county.name} County — ${c.tagline}. New-construction communities (${cityNbs.slice(0, 2).map((nb) => nb.name).join(", ")}), neighborhood guides, homes for sale, ${c.isd} schools, and commutes.`
     : `${c.name}, TX in ${county.name} County — ${c.tagline}. Neighborhood guides (${topHoods}), homes for sale, market snapshot, ${c.isd} schools, and commute times.`;
+  // EDITOR-desk published SEO override wins; the formula stays the fallback
+  const ed = await getEditorState(`/city/${c.slug}`);
+  const edSeo = ed.regions["intro"];
+  const description = edSeo?.seoDescription ?? fallbackDescription;
   return {
-    title: `${c.name}, TX — Neighborhoods, Homes & Living Guide`,
+    title: edSeo?.seoTitle ?? `${c.name}, TX — Neighborhoods, Homes & Living Guide`,
     description,
     keywords: [
       `${c.name} TX real estate`,
@@ -99,6 +106,11 @@ export default async function CityPage({
   const prev = cities[(idx - 1 + cities.length) % cities.length];
   const next = cities[(idx + 1) % cities.length];
   const county = countyById[c.county];
+
+  /* EDITOR-desk override state — falls back to the code content on any
+     miss or failure, so this page can never break on the CMS's account. */
+  const ed = await getEditorState(`/city/${c.slug}`);
+  const introOv = ed.regions["intro"];
 
   /* Nearest cities by actual map distance — real geographic neighbors only,
      so the "compare nearby" links are useful to a human deciding between
@@ -304,6 +316,7 @@ export default async function CityPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {ed.preview && <PreviewBanner route={`/city/${c.slug}`} />}
       <CityNav slug={slug} options={options} prevSlug={prev.slug} nextSlug={next.slug} />
 
       {/* Hero */}
@@ -502,9 +515,15 @@ export default async function CityPage({
           <div data-reveal="1">
             <Eyebrow>01 — THE VIBE</Eyebrow>
             <SectionH2 style={{ marginBottom: 18 }}>What it feels like to live here.</SectionH2>
-            <p style={{ margin: 0, fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
-              {c.vibe}
-            </p>
+            {introOv ? (
+              <div style={{ fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
+                <RichDoc doc={introOv.json} />
+              </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
+                {c.vibe}
+              </p>
+            )}
           </div>
           <div
             data-reveal="1"

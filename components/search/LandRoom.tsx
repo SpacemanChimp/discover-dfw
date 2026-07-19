@@ -13,6 +13,9 @@ import HomesSplit from "./HomesSplit";
 import LandDueDiligence from "./LandDueDiligence";
 import LandCTA from "@/components/convert/LandCTA";
 import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
+import { getEditorState, type EditorState } from "@/lib/editor/overrides";
+import { RichDoc } from "@/lib/editor/render";
+import PreviewBanner from "@/components/editor/PreviewBanner";
 
 /* "/land" — the land-only search surface. Reuses the Map Room's rail + live
    map + toolbar infrastructure (not a second engine): the filters carry
@@ -40,11 +43,13 @@ export default async function LandRoom({
   // the client to set the scope)
   const effective: SearchFilters = { ...query, land: true };
   const pagerQs = searchFiltersToQueryString(effective);
+  // EDITOR-desk overrides (intro / guide) — code content is the fallback
+  const ed = await getEditorState("/land");
 
   if (!isLiveMls) {
     const result = await provider.searchListings(effective);
     return (
-      <Shell effective={effective} asOf={result.mlsLastUpdated}>
+      <Shell effective={effective} asOf={result.mlsLastUpdated} ed={ed}>
         <HomesSplit
           initialView={view}
           rail={
@@ -55,7 +60,7 @@ export default async function LandRoom({
           }
           map={<LiveMapPanel qs={searchFiltersToQueryString(effective)} land basePath="/land" />}
         />
-        <LandDueDiligence />
+        <LandDueDiligence override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />
         <LandCTA citySlug={effective.citySlug} />
         <MLSComplianceFooter asOf={result.mlsLastUpdated} />
       </Shell>
@@ -71,6 +76,7 @@ export default async function LandRoom({
   return (
     <Shell
       effective={effective}
+      ed={ed}
       freshness={
         <Suspense fallback={null}>
           <FreshnessStamp resultPromise={resultPromise} />
@@ -86,7 +92,7 @@ export default async function LandRoom({
         }
         map={<LiveMapPanel qs={searchFiltersToQueryString(effective)} land basePath="/land" />}
       />
-      <LandDueDiligence />
+      <LandDueDiligence override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />
       <LandCTA citySlug={effective.citySlug} />
       <Suspense fallback={<MLSComplianceFooter />}>
         <ComplianceSection resultPromise={resultPromise} />
@@ -100,15 +106,18 @@ function Shell({
   effective,
   asOf,
   freshness,
+  ed,
   children,
 }: {
   effective: SearchFilters;
   asOf?: string;
   freshness?: React.ReactNode;
+  ed: EditorState;
   children: React.ReactNode;
 }) {
   return (
     <div className="homes-shell" style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
+      {ed.preview && <PreviewBanner route="/land" />}
       <SearchNav active="land" />
       <div
         className="font-mono homes-head-strip"
@@ -143,10 +152,16 @@ function Shell({
         <h1 className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(23px,3vw,32px)", lineHeight: 1.08 }}>
           Land for Sale Across Dallas–Fort Worth
         </h1>
-        <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
-          Live NTREIS listings for residential lots, acreage, farms, ranches, and undeveloped land across the eight-county
-          North Texas metro — filtered to genuine land only, never houses.
-        </p>
+        {ed.regions["intro"] ? (
+          <div style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
+            <RichDoc doc={ed.regions["intro"].json} />
+          </div>
+        ) : (
+          <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
+            Live NTREIS listings for residential lots, acreage, farms, ranches, and undeveloped land across the eight-county
+            North Texas metro — filtered to genuine land only, never houses.
+          </p>
+        )}
       </div>
 
       <LandToolbar query={effective} />

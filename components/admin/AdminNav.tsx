@@ -8,6 +8,7 @@ const ORANGE = "#D9481F";
 
 const TABS: { key: string; label: string; href: string }[] = [
   { key: "console", label: "CONSOLE", href: "/admin" },
+  { key: "editor", label: "EDITOR", href: "/admin/editor" },
   { key: "leads", label: "LEADS", href: "/admin/leads" },
   { key: "photos", label: "PHOTOS", href: "/admin/photos" },
   { key: "communities", label: "COMMUNITIES", href: "/admin/communities" },

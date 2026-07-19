@@ -47,7 +47,7 @@ const TOPICS: { h: string; body: string }[] = [
   },
 ];
 
-export default function NewBuildEducation() {
+export default function NewBuildEducation({ override }: { override?: React.ReactNode }) {
   return (
     <section aria-labelledby="nb-guide-head" style={{ borderTop: "2px solid #1D1913", background: "#FBF7EE" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(40px,5vw,64px) 4vw" }}>
@@ -57,6 +57,12 @@ export default function NewBuildEducation() {
         <h2 id="nb-guide-head" className="font-serif" style={{ margin: "10px 0 0", fontWeight: 800, fontSize: "clamp(24px,3.2vw,34px)", lineHeight: 1.1, maxWidth: 760 }}>
           What to know about buying new construction in North Texas
         </h2>
+        {/* EDITOR-desk override replaces the topic grid; kicker, H2, and the
+            closing disclaimer stay code-owned either way */}
+        {override ? (
+          <div style={{ marginTop: 24, maxWidth: 860, fontSize: 14.5, color: "rgba(29,25,19,.78)" }}>{override}</div>
+        ) : (
+          <>
         <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.65, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
           Buying a new home works differently than buying resale. The sticker price is a starting point, the fine print carries real recurring costs, and the details vary by builder and by lot. Here is what North Texas buyers check before they sign.
         </p>
@@ -69,6 +75,8 @@ export default function NewBuildEducation() {
             </div>
           ))}
         </div>
+          </>
+        )}
 
         <p className="font-mono" style={{ margin: "30px 0 0", fontSize: 10.5, lineHeight: 1.7, letterSpacing: ".04em", color: "rgba(29,25,19,.55)", maxWidth: 760 }}>
           This is general information for North Texas new-construction buyers, not legal, tax, or financial advice, and not a statement about any specific community, builder, incentive, phase, or school assignment. Confirm current terms and figures with the builder, the district, and the governing city or county before you rely on them.

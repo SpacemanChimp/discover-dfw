@@ -54,7 +54,7 @@ function TypedNext() {
   );
 }
 
-export default function Hero() {
+export default function Hero({ copyOverride }: { copyOverride?: React.ReactNode } = {}) {
   let d = 0.05;
   return (
     <header
@@ -152,22 +152,40 @@ export default function Hero() {
         <div style={{ height: 1, background: "#1D1913", marginTop: 3 }} />
       </div>
 
-      <p
-        className="font-serif"
-        style={{
-          maxWidth: 640,
-          margin: "28px 0 0",
-          fontStyle: "italic",
-          fontWeight: 500,
-          fontSize: "clamp(18px,2.3vw,24px)",
-          lineHeight: 1.5,
-          color: "rgba(29,25,19,.85)",
-          animation: "fadeUp .8s ease .6s both",
-        }}
-      >
-        A living atlas of Dallas–Fort Worth real estate — every city, every
-        county, one clickable map.
-      </p>
+      {copyOverride ? (
+        <div
+          className="font-serif"
+          style={{
+            maxWidth: 640,
+            margin: "28px 0 0",
+            fontStyle: "italic",
+            fontWeight: 500,
+            fontSize: "clamp(18px,2.3vw,24px)",
+            lineHeight: 1.5,
+            color: "rgba(29,25,19,.85)",
+            animation: "fadeUp .8s ease .6s both",
+          }}
+        >
+          {copyOverride}
+        </div>
+      ) : (
+        <p
+          className="font-serif"
+          style={{
+            maxWidth: 640,
+            margin: "28px 0 0",
+            fontStyle: "italic",
+            fontWeight: 500,
+            fontSize: "clamp(18px,2.3vw,24px)",
+            lineHeight: 1.5,
+            color: "rgba(29,25,19,.85)",
+            animation: "fadeUp .8s ease .6s both",
+          }}
+        >
+          A living atlas of Dallas–Fort Worth real estate — every city, every
+          county, one clickable map.
+        </p>
+      )}
 
       <HeroSearch />
 

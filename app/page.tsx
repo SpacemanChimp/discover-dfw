@@ -15,6 +15,9 @@ import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 import Reveals from "@/components/Reveals";
 import HumanTrust from "@/components/HumanTrust";
+import { getEditorState } from "@/lib/editor/overrides";
+import { RichDoc } from "@/lib/editor/render";
+import PreviewBanner from "@/components/editor/PreviewBanner";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -75,6 +78,13 @@ export default async function Home() {
   const pricesLive = live > 0;
   const pricesAsOf = pricesLive ? liveAsOf : undefined;
 
+  /* EDITOR-desk overrides for the homepage's editorial regions — every one
+     falls back to the existing code copy (or renders nothing where the
+     section has no intro today). One batched read; failure = code content. */
+  const ed = await getEditorState("/");
+  const ov = (key: string): React.ReactNode =>
+    ed.regions[key] ? <RichDoc doc={ed.regions[key].json} /> : undefined;
+
   return (
     <div
       id="top"
@@ -102,8 +112,9 @@ export default async function Home() {
         <span>A FIELD GUIDE TO NORTH TEXAS REAL ESTATE</span>
       </div>
 
+      {ed.preview && <PreviewBanner route="/" />}
       <Nav />
-      <Hero />
+      <Hero copyOverride={ov("hero-copy")} />
       <Ticker prices={priceBySlug} />
       <InteractiveMap
         liveMls={isLiveMls}
@@ -111,15 +122,16 @@ export default async function Home() {
         stats={statsBySlug}
         pricesLive={pricesLive}
         pricesAsOf={pricesAsOf}
+        introOverride={ov("map-intro")}
       />
       {/* no CTA on the homepage — the map and the index are the ask */}
-      <EditorsPicks />
+      <EditorsPicks introOverride={ov("picks-intro")} />
       <StatsBand prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />
-      <NewBuilds liveMls={isLiveMls} />
-      <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />
+      <NewBuilds liveMls={isLiveMls} introOverride={ov("newbuilds-intro")} />
+      <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} introOverride={ov("cities-intro")} />
       <HumanTrust />
-      <About />
-      <Newsletter />
+      <About copyOverride={ov("about-copy")} />
+      <Newsletter introOverride={ov("newsletter-intro")} />
       <Footer />
       <Reveals />
     </div>

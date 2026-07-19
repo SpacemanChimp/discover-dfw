@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import { getEditorState } from "@/lib/editor/overrides";
+import { RichDoc } from "@/lib/editor/render";
+import PreviewBanner from "@/components/editor/PreviewBanner";
 
 /* "How we research" — the public methodology page the homepage trust strip
    links to. Every claim here mirrors what the site already labels in place
@@ -39,9 +42,14 @@ const SOURCES: [string, string][] = [
   ],
 ];
 
-export default function HowWeResearch() {
+export default async function HowWeResearch() {
+  /* EDITOR-desk override for the lead paragraph — code text stays the
+     fallback (and the guaranteed render if the override store is down). */
+  const ed = await getEditorState("/how-we-research");
+  const introOv = ed.regions["intro"];
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
+      {ed.preview && <PreviewBanner route="/how-we-research" />}
       <Nav />
       <main style={{ maxWidth: 860, margin: "0 auto", padding: "64px 4vw 80px" }}>
         <div className="font-mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".32em", color: "#C13E17" }}>
@@ -50,10 +58,16 @@ export default function HowWeResearch() {
         <h1 className="font-serif" style={{ margin: "14px 0 0", fontWeight: 900, fontSize: "clamp(34px,4.6vw,56px)", lineHeight: 1.04 }}>
           How we research.
         </h1>
-        <p style={{ margin: "18px 0 0", fontSize: 16.5, lineHeight: 1.8, color: "rgba(29,25,19,.8)" }}>
-          A field guide is only as good as its sourcing. Every number on this site is either pulled live from a named
-          source or written by a person and labeled that way — and when we can't verify something, it doesn't run.
-        </p>
+        {introOv ? (
+          <div style={{ margin: "18px 0 0", fontSize: 16.5, lineHeight: 1.8, color: "rgba(29,25,19,.8)" }}>
+            <RichDoc doc={introOv.json} />
+          </div>
+        ) : (
+          <p style={{ margin: "18px 0 0", fontSize: 16.5, lineHeight: 1.8, color: "rgba(29,25,19,.8)" }}>
+            A field guide is only as good as its sourcing. Every number on this site is either pulled live from a named
+            source or written by a person and labeled that way — and when we can't verify something, it doesn't run.
+          </p>
+        )}
 
         <dl style={{ margin: "40px 0 0", padding: 0 }}>
           {SOURCES.map(([term, def]) => (

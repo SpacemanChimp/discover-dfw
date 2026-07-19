@@ -6,7 +6,7 @@ import { useState } from "react";
    link in that email is what actually subscribes. Carries the same cheap
    spam guard as the lead forms (hidden honeypot + submit dwell time). */
 
-export default function Newsletter() {
+export default function Newsletter({ introOverride }: { introOverride?: React.ReactNode } = {}) {
   const [email, setEmail] = useState("");
   const [hp, setHp] = useState(""); // honeypot — humans never see it
   const [openedAt] = useState(() => Date.now());
@@ -67,18 +67,32 @@ export default function Newsletter() {
           >
             The Sunday letter that knows North Texas.
           </h2>
-          <p
-            style={{
-              margin: "16px auto 30px",
-              maxWidth: 520,
-              fontSize: 15.5,
-              lineHeight: 1.65,
-              color: "rgba(246,241,230,.9)",
-            }}
-          >
-            One email a week: what listed, what sold, and which city just changed
-            its math. No spam, no listings-blast.
-          </p>
+          {introOverride ? (
+            <div
+              style={{
+                margin: "16px auto 30px",
+                maxWidth: 520,
+                fontSize: 15.5,
+                lineHeight: 1.65,
+                color: "rgba(246,241,230,.9)",
+              }}
+            >
+              {introOverride}
+            </div>
+          ) : (
+            <p
+              style={{
+                margin: "16px auto 30px",
+                maxWidth: 520,
+                fontSize: 15.5,
+                lineHeight: 1.65,
+                color: "rgba(246,241,230,.9)",
+              }}
+            >
+              One email a week: what listed, what sold, and which city just changed
+              its math. No spam, no listings-blast.
+            </p>
+          )}
 
           {phase === "confirm_sent" ? (
             <div

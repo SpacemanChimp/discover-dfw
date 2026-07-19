@@ -24,7 +24,14 @@ function featuredSix() {
   return out;
 }
 
-export default function NewBuilds({ liveMls }: { liveMls?: boolean }) {
+export default function NewBuilds({
+  liveMls,
+  introOverride,
+}: {
+  liveMls?: boolean;
+  /** EDITOR-desk override for the intro paragraph (code copy = fallback) */
+  introOverride?: React.ReactNode;
+}) {
   void liveMls;
   const featured = featuredSix();
   return (
@@ -42,9 +49,15 @@ export default function NewBuilds({ liveMls }: { liveMls?: boolean }) {
               Fresh dirt, first owners.
             </h2>
           </div>
-          <p style={{ margin: "0 0 6px", maxWidth: 360, fontSize: 15, lineHeight: 1.6, color: "rgba(246,241,230,.7)" }}>
-            A few of the master-planned communities taking contracts right now. Search every new-construction listing, or browse all {newBuilds.length} communities, on the new builds page.
-          </p>
+          {introOverride ? (
+            <div style={{ margin: "0 0 6px", maxWidth: 360, fontSize: 15, lineHeight: 1.6, color: "rgba(246,241,230,.7)" }}>
+              {introOverride}
+            </div>
+          ) : (
+            <p style={{ margin: "0 0 6px", maxWidth: 360, fontSize: 15, lineHeight: 1.6, color: "rgba(246,241,230,.7)" }}>
+              A few of the master-planned communities taking contracts right now. Search every new-construction listing, or browse all {newBuilds.length} communities, on the new builds page.
+            </p>
+          )}
         </div>
 
         <div

@@ -35,6 +35,9 @@ import ConvertSlot from "@/components/convert/ConvertSlot";
 import ConversionDuo from "@/components/convert/ConversionDuo";
 import NewBuildCTA from "@/components/convert/NewBuildCTA";
 import { leadBackendReady } from "@/lib/convert/config";
+import { getEditorState } from "@/lib/editor/overrides";
+import { RichDoc, textValue, faqItems, bulletTexts } from "@/lib/editor/render";
+import PreviewBanner from "@/components/editor/PreviewBanner";
 
 export function generateStaticParams() {
   return cities.flatMap((c) =>
@@ -75,16 +78,18 @@ export async function generateMetadata({
   const content = contentFor(c, h);
   const nb = h.newBuild;
 
-  /* CB-3a: Content Desk overrides win when present; the formulas below
-     remain the fallback for every page without them (mirrored in
-     lib/content/community-content-drafts.ts for duplicate detection —
-     change them there too). */
+  /* Precedence: EDITOR-desk published override → CB-3a Content Desk JSON →
+     the code formulas below. The canonical stays code-owned regardless. */
+  const ed = await getEditorState(`/city/${c.slug}/${h.slug}`);
+  const edSeo = ed.regions["intro"];
   const title =
+    edSeo?.seoTitle ??
     content.seo?.title ??
     (nb
       ? `${h.name} — New Construction Homes in ${c.name}, TX`
       : `${h.name} — ${c.name}, TX Neighborhood Guide & Homes`);
   const description =
+    edSeo?.seoDescription ??
     content.seo?.description ??
     (nb
       ? `${h.name} is a new-build community in ${c.name}, TX (${county.name} County) — ${nb.status.toLowerCase()}, priced from the ${nb.from} with ${nb.builders} active builders. Amenities, buyer resources, schools & FAQs.`
@@ -138,6 +143,21 @@ export default async function HoodPage({
   const county = countyById[c.county];
   const content = contentFor(c, h);
   const nb = h.newBuild;
+
+  /* EDITOR-desk published overrides (drafts too, but only inside the
+     admin-authenticated preview). Every region falls back to the existing
+     content when no override exists — and to exactly that same content if
+     the override store is unreachable. */
+  const ed = await getEditorState(`/city/${c.slug}/${h.slug}`);
+  const tagline = textValue(ed.regions["tagline"]) ?? content.tagline;
+  const introOv = ed.regions["intro"];
+  const homesOv = ed.regions["homes"];
+  const faqOv = faqItems(ed.regions["faq"]);
+  const faqList = faqOv ?? content.faq;
+  const amenitiesOv = ed.regions["amenities"];
+  const amenityTexts = amenitiesOv ? bulletTexts(amenitiesOv.json) : null;
+  const buyerNotesOv = ed.regions["buyer-notes"];
+  const buyerNoteTexts = buyerNotesOv ? bulletTexts(buyerNotesOv.json) : null;
 
   /* CI-3: approved hero photo (photo_assets is human-gated). Public pages
      render the hero column ONLY when an approved asset exists — no asset
@@ -215,7 +235,7 @@ export default async function HoodPage({
       "@context": "https://schema.org",
       "@type": "Place",
       name: `${h.name}, ${c.name}, TX`,
-      description: content.tagline,
+      description: tagline,
       url: pageUrl,
       geo: { "@type": "GeoCoordinates", latitude: c.ll[1], longitude: c.ll[0] },
       containedInPlace: {
@@ -228,7 +248,9 @@ export default async function HoodPage({
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity: content.faq.map((f) => ({
+      // faqList also renders the visible FAQ section below — the schema and
+      // the visible content derive from the SAME published data by design
+      mainEntity: faqList.map((f) => ({
         "@type": "Question",
         name: f.q,
         acceptedAnswer: { "@type": "Answer", text: f.a },
@@ -244,6 +266,7 @@ export default async function HoodPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {ed.preview && <PreviewBanner route={`/city/${c.slug}/${h.slug}`} />}
       <CityNav slug={c.slug} options={options} prevSlug={prevCity.slug} nextSlug={nextCity.slug} />
 
       {/* breadcrumb trail */}
@@ -348,7 +371,7 @@ export default async function HoodPage({
               animation: "fadeUp .7s ease .3s both",
             }}
           >
-            {content.tagline}
+            {tagline}
           </p>
           <div
             style={{
@@ -489,19 +512,25 @@ export default async function HoodPage({
             <SectionH2 style={{ marginBottom: 18 }}>
               What {h.name} feels like.
             </SectionH2>
-            {content.intro.map((para, i) => (
-              <p
-                key={i}
-                style={{
-                  margin: i === 0 ? 0 : "16px 0 0",
-                  fontSize: 17,
-                  lineHeight: 1.85,
-                  color: "rgba(29,25,19,.82)",
-                }}
-              >
-                {para}
-              </p>
-            ))}
+            {introOv ? (
+              <div style={{ fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
+                <RichDoc doc={introOv.json} />
+              </div>
+            ) : (
+              content.intro.map((para, i) => (
+                <p
+                  key={i}
+                  style={{
+                    margin: i === 0 ? 0 : "16px 0 0",
+                    fontSize: 17,
+                    lineHeight: 1.85,
+                    color: "rgba(29,25,19,.82)",
+                  }}
+                >
+                  {para}
+                </p>
+              ))
+            )}
           </div>
           <div
             data-reveal="1"
@@ -645,8 +674,13 @@ export default async function HoodPage({
               >
                 Community amenities
               </h3>
+              {amenitiesOv && !amenityTexts ? (
+                <div style={{ fontSize: 15, lineHeight: 1.65 }}>
+                  <RichDoc doc={amenitiesOv.json} />
+                </div>
+              ) : (
               <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
-                {(content.newBuild?.amenities || [nb.note]).map((a) => (
+                {(amenityTexts ?? content.newBuild?.amenities ?? [nb.note]).map((a) => (
                   <li
                     key={a}
                     style={{
@@ -676,6 +710,7 @@ export default async function HoodPage({
                   </li>
                 ))}
               </ul>
+              )}
             </div>
             <div data-reveal="1">
               <h3
@@ -684,8 +719,13 @@ export default async function HoodPage({
               >
                 Buyer&apos;s field notes
               </h3>
+              {buyerNotesOv && !buyerNoteTexts ? (
+                <div style={{ fontSize: 15, lineHeight: 1.7 }}>
+                  <RichDoc doc={buyerNotesOv.json} />
+                </div>
+              ) : (
               <div style={{ display: "grid", gap: 14 }}>
-                {(content.newBuild?.buyerNotes || []).map((note, i) => (
+                {(buyerNoteTexts ?? content.newBuild?.buyerNotes ?? []).map((note, i) => (
                   <div
                     key={i}
                     style={{
@@ -707,6 +747,7 @@ export default async function HoodPage({
                   </div>
                 ))}
               </div>
+              )}
             </div>
           </div>
         </section>
@@ -723,9 +764,15 @@ export default async function HoodPage({
             <div data-reveal="1">
               <Eyebrow>02 — THE REAL ESTATE</Eyebrow>
               <SectionH2 style={{ marginBottom: 18 }}>What homes look like here.</SectionH2>
-              <p style={{ margin: 0, fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
-                {content.homes}
-              </p>
+              {homesOv ? (
+                <div style={{ fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
+                  <RichDoc doc={homesOv.json} />
+                </div>
+              ) : (
+                <p style={{ margin: 0, fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
+                  {content.homes}
+                </p>
+              )}
               {isLiveMls ? (
                 <Link
                   href={`/city/${c.slug}/homes`}
@@ -928,12 +975,12 @@ export default async function HoodPage({
           <SectionH2>Asked about {h.name}, answered straight.</SectionH2>
         </div>
         <div data-reveal="1" style={{ display: "grid", gap: 0, border: "2px solid #1D1913", borderRadius: 18, background: "#FBF7EE", overflow: "hidden" }}>
-          {content.faq.map((f, i) => (
+          {faqList.map((f, i) => (
             <div
               key={f.q}
               style={{
                 padding: "24px 28px",
-                borderBottom: i === content.faq.length - 1 ? undefined : "1px solid rgba(29,25,19,.14)",
+                borderBottom: i === faqList.length - 1 ? undefined : "1px solid rgba(29,25,19,.14)",
               }}
             >
               <h3

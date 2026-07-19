@@ -14,6 +14,9 @@ import NewBuildEducation from "./NewBuildEducation";
 import NewBuildDirectory from "@/components/newbuild/NewBuildDirectory";
 import NewBuildCTA from "@/components/convert/NewBuildCTA";
 import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
+import { getEditorState, type EditorState } from "@/lib/editor/overrides";
+import { RichDoc } from "@/lib/editor/render";
+import PreviewBanner from "@/components/editor/PreviewBanner";
 
 /* "/new-builds" — the new-construction surface. Reuses the Map Room's rail +
    live map + toolbar (not a second engine): the filter is locked to the exact
@@ -36,11 +39,13 @@ export default async function NewBuildsRoom({
   // still renders the new-construction set (the toolbar re-serializes it too).
   const effective: SearchFilters = { ...query, newBuildsOnly: true };
   const pagerQs = searchFiltersToQueryString(effective);
+  // EDITOR-desk overrides (intro / guide) — code content is the fallback
+  const ed = await getEditorState("/new-builds");
 
   if (!isLiveMls) {
     const result = await provider.searchListings(effective);
     return (
-      <Shell effective={effective} asOf={result.mlsLastUpdated}>
+      <Shell effective={effective} asOf={result.mlsLastUpdated} ed={ed}>
         <HomesSplit
           initialView={view}
           rail={
@@ -52,7 +57,7 @@ export default async function NewBuildsRoom({
           map={<LiveMapPanel qs={searchFiltersToQueryString(effective)} basePath="/new-builds" />}
         />
         <NewBuildDirectory />
-        <NewBuildEducation />
+        <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />
         <NewBuildCTA />
         <MLSComplianceFooter asOf={result.mlsLastUpdated} />
       </Shell>
@@ -68,6 +73,7 @@ export default async function NewBuildsRoom({
   return (
     <Shell
       effective={effective}
+      ed={ed}
       freshness={
         <Suspense fallback={null}>
           <FreshnessStamp resultPromise={resultPromise} />
@@ -84,7 +90,7 @@ export default async function NewBuildsRoom({
         map={<LiveMapPanel qs={searchFiltersToQueryString(effective)} basePath="/new-builds" />}
       />
       <NewBuildDirectory />
-      <NewBuildEducation />
+      <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />
       <NewBuildCTA />
       <Suspense fallback={<MLSComplianceFooter />}>
         <ComplianceSection resultPromise={resultPromise} />
@@ -98,15 +104,18 @@ function Shell({
   effective,
   asOf,
   freshness,
+  ed,
   children,
 }: {
   effective: SearchFilters;
   asOf?: string;
   freshness?: React.ReactNode;
+  ed: EditorState;
   children: React.ReactNode;
 }) {
   return (
     <div className="homes-shell" style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
+      {ed.preview && <PreviewBanner route="/new-builds" />}
       <SearchNav active="new-builds" />
       <div
         className="font-mono homes-head-strip"
@@ -141,10 +150,16 @@ function Shell({
         <h1 className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(22px,2.9vw,32px)", lineHeight: 1.08 }}>
           New Construction Homes for Sale Across Dallas–Fort Worth
         </h1>
-        <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
-          Search live NTREIS new-construction listings across North Texas, then browse the master-planned communities taking
-          contracts right now. Filtered to new builds only.
-        </p>
+        {ed.regions["intro"] ? (
+          <div style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
+            <RichDoc doc={ed.regions["intro"].json} />
+          </div>
+        ) : (
+          <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
+            Search live NTREIS new-construction listings across North Texas, then browse the master-planned communities taking
+            contracts right now. Filtered to new builds only.
+          </p>
+        )}
       </div>
 
       <SearchToolbar query={effective} propertyTypes={PROPERTY_TYPE_OPTIONS} basePath="/new-builds" lockNewBuilds />
