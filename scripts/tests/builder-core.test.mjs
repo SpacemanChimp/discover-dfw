@@ -179,6 +179,18 @@ test("diff summarizes added/removed/moved/hidden/edited", () => {
   assert.ok(d2.removed.length === 1);
 });
 
+test("diff is key-order-canonical: a jsonb round-trip is NOT an edit", () => {
+  const secs = TEMPLATE_SECTIONS["/how-we-research"];
+  const a = codeLayout("/how-we-research");
+  // simulate Postgres jsonb key reordering (shortest key first, then bytewise)
+  const b = {
+    type: "layout",
+    blocks: a.blocks.map((e) => ({ key: e.key, kind: e.kind, hidden: e.hidden, visibility: e.visibility })),
+  };
+  const d = diffLayouts(a, b, secs);
+  assert.deepEqual(d, { added: [], removed: [], moved: [], hidden: [], shown: [], edited: [] });
+});
+
 test("fallback: a null layout renders code order (applyLayout contract is null-safe)", () => {
   // the pure part of the contract: codeLayout(route) IS the code order
   const cl = codeLayout("/");

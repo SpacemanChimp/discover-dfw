@@ -663,6 +663,18 @@ export interface LayoutDiff {
 }
 
 const entryKey = (e: LayoutEntry) => (e.kind === "section" ? `section:${e.key}` : `block:${e.block.id}`);
+
+/* key-order-canonical stringify: documents that round-trip through Postgres
+   jsonb come back with reordered object keys, and a raw JSON.stringify
+   comparison would report every entry as "edited" */
+const stableJson = (v: unknown): string => {
+  if (Array.isArray(v)) return `[${v.map(stableJson).join(",")}]`;
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return `{${Object.keys(o).sort().map((k) => `${JSON.stringify(k)}:${stableJson(o[k])}`).join(",")}}`;
+  }
+  return JSON.stringify(v);
+};
 const entryLabel = (e: LayoutEntry, sections: SectionDef[]) =>
   e.kind === "section"
     ? sections.find((s) => s.key === e.key)?.label ?? e.key
@@ -689,7 +701,7 @@ export function diffLayouts(prev: LayoutDoc | null, next: LayoutDoc, sections: S
     if (old.i !== i && a.filter((x) => bBy.has(entryKey(x))).findIndex((x) => entryKey(x) === k) !== b.filter((x) => aBy.has(entryKey(x))).findIndex((x) => entryKey(x) === k)) {
       diff.moved.push(entryLabel(e, sections));
     }
-    if (JSON.stringify(old.e) !== JSON.stringify(e) && !(!wasHidden && isHidden) && !(wasHidden && !isHidden)) {
+    if (stableJson(old.e) !== stableJson(e) && !(!wasHidden && isHidden) && !(wasHidden && !isHidden)) {
       diff.edited.push(entryLabel(e, sections));
     }
   }
