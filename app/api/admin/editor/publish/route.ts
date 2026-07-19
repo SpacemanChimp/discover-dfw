@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
+import { editorGate, migrationMissing, migration503, readJsonBody, activeCommunityDraftId } from "@/lib/editor/api";
 import { pageByRoute, regionDef, sectionsForRoute } from "@/lib/editor/registry";
 import { sanitizeContent, validateClaims, validateSeo } from "@/lib/editor/doc";
-import { sanitizeLayout, sanitizeNav, editorsPicksFromLayout, TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
+import { sanitizeLayout, sanitizeNav, editorsPicksFromLayout, hoodGalleryFromLayout, TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
 import { cities } from "@/lib/dfw-data";
 import { revalidateEditorTarget } from "@/lib/editor/revalidate";
 
@@ -51,17 +51,33 @@ export async function POST(req: Request) {
     }
   }
 
+  // Community Studio drafts: documents on a not-yet-exported route can be
+  // SAVED but never published — there is no public page to publish to. The
+  // refusal is honest about the lifecycle instead of "unknown route".
+  const draftLocked = async () =>
+    (await activeCommunityDraftId(ctx.db, route))
+      ? NextResponse.json(
+          {
+            ok: false,
+            error: `${route} is a Community Studio draft — the public page does not exist yet. Your saved drafts are kept; publish unlocks after the CB-2 export is reviewed, merged, and deployed and the page is verified live.`,
+          },
+          { status: 409 }
+        )
+      : null;
+
   // page/custom resolution
   let customPage: { slug: string; status: string } | null = null;
   if (isLayout && !sectionsForRoute(route)) {
-    if (!/^\/[a-z0-9-]+$/.test(route)) return NextResponse.json({ ok: false, error: "Unknown layout target" }, { status: 400 });
+    if (!/^\/[a-z0-9-]+$/.test(route)) {
+      return (await draftLocked()) ?? NextResponse.json({ ok: false, error: "Unknown layout target" }, { status: 400 });
+    }
     const { data } = await ctx.db.from("editor_pages").select("slug, status").eq("slug", route.slice(1)).maybeSingle();
     if (!data) return NextResponse.json({ ok: false, error: "Unknown page" }, { status: 400 });
     customPage = data;
   } else if (!isLayout && !isNav) {
     const def = regionDef(route, regionKey);
     if (!def || def.contentType === "layout" || def.contentType === "nav") {
-      return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+      return (await draftLocked()) ?? NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
     }
   }
 
@@ -120,6 +136,27 @@ export async function POST(req: Request) {
       for (const p of lineup) {
         if (!approved.has(p.city)) {
           errors.push(`"${p.city}" has no APPROVED homepage-pick photo — upload/approve one in the Photo Desk before publishing this lineup`);
+        }
+      }
+    }
+    // Community gallery gate: a VISIBLE gallery order may never publish an
+    // entry whose slot lacks an APPROVED asset — no broken frames, no
+    // public placeholders. (Hidden gallery sections have nothing visible to
+    // gate; template routes have no single page entity to check.)
+    const galleryOrder = s.ok && s.doc ? hoodGalleryFromLayout(s.doc) : null;
+    const hoodMatch = /^\/city\/([a-z0-9-]+\/[a-z0-9-]+)$/.exec(route);
+    if (galleryOrder && hoodMatch) {
+      const { data: slotRows } = await ctx.db
+        .from("photo_slots")
+        .select("slot_key")
+        .eq("entity_type", "neighborhood")
+        .eq("entity_slug", hoodMatch[1])
+        .eq("status", "approved")
+        .in("slot_key", galleryOrder);
+      const approvedSlots = new Set((slotRows ?? []).map((r) => r.slot_key as string));
+      for (const k of galleryOrder) {
+        if (!approvedSlots.has(k)) {
+          errors.push(`gallery entry "${k}" has no APPROVED photo for this community — approve one in the Photo Desk or remove it from the order before publishing`);
         }
       }
     }

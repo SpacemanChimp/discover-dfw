@@ -12,6 +12,9 @@ import {
   codeLayout,
   starterLayout,
   editorsPicksFromLayout,
+  hoodCtaFromLayout,
+  hoodGalleryFromLayout,
+  isAllowedCtaAction,
   EDITORS_PICKS_DEFAULT,
   TEMPLATE_SECTIONS,
   SYSTEM_NAV,
@@ -248,4 +251,120 @@ test("fallback: a null layout renders code order (applyLayout contract is null-s
   // the pure part of the contract: codeLayout(route) IS the code order
   const cl = codeLayout("/");
   assert.deepEqual(cl.blocks.map((b) => b.key), TEMPLATE_SECTIONS["/"].map((s) => s.key));
+});
+
+/* ---------------------------------------------- hood CTA override (A2) */
+const withCta = (cta, key = "cta") => ({
+  type: "layout",
+  blocks: hoodSections.map((s) =>
+    s.key === key
+      ? { kind: "section", key: s.key, hidden: false, visibility: "all", settings: { cta } }
+      : { kind: "section", key: s.key, hidden: false, visibility: "all" }
+  ),
+});
+
+test("hood CTA override: sanitized fields, lead intents, validated internal paths", () => {
+  const r = sanitizeLayout(
+    withCta({
+      kicker: "  FIELD NOTES ",
+      heading: "Talk to a <b>local</b> guide about Starlight Meadows.",
+      body: "Real answers about lots, timelines, and builder trade-offs.",
+      primaryLabel: "Ask about lots",
+      primaryAction: "intent:ask-a-question",
+      secondaryLabel: "See Frisco homes",
+      secondaryAction: "/homes?city=frisco",
+    }),
+    OPTS_HOOD
+  );
+  assert.equal(r.ok, true, r.errors.join("; "));
+  const cta = hoodCtaFromLayout(r.doc);
+  assert.equal(cta.kicker, "FIELD NOTES");
+  assert.equal(cta.heading, "Talk to a local guide about Starlight Meadows."); // tags stripped
+  assert.equal(cta.primaryAction, "intent:ask-a-question");
+  assert.equal(cta.secondaryAction, "/homes?city=frisco");
+  // override text feeds the claims linter at publish time
+  assert.ok(r.text.includes("Talk to a local guide"));
+});
+
+test("hood CTA override: unsafe/external/broken destinations are refused", () => {
+  for (const bad of [
+    "https://tracking.example.com/x?utm_source=spam",
+    "javascript:alert(1)",
+    "/admin/editor",
+    "/api/leads",
+    "/city/nowhere-town", // not a canonical city
+    "not-a-path",
+  ]) {
+    const r = sanitizeLayout(withCta({ primaryAction: bad }), OPTS_HOOD);
+    assert.equal(r.ok, false, `should refuse ${bad}`);
+    assert.ok(r.errors.some((e) => e.includes("destination")), `error names the destination for ${bad}`);
+  }
+  const r2 = sanitizeLayout(withCta({ primaryAction: "intent:not-a-real-intent" }), OPTS_HOOD);
+  assert.equal(r2.ok, false);
+});
+
+test("hood CTA override: empty settings normalize AWAY (code CTA stays byte-for-byte)", () => {
+  const r = sanitizeLayout(withCta({ kicker: "", heading: "  ", hideSecondary: false }), OPTS_HOOD);
+  assert.equal(r.ok, true, r.errors.join("; "));
+  assert.equal(hoodCtaFromLayout(r.doc), null);
+  const entry = r.doc.blocks.find((b) => b.kind === "section" && b.key === "cta");
+  assert.equal(entry.settings, undefined);
+  // absent layout = no override
+  assert.equal(hoodCtaFromLayout(null), null);
+  assert.equal(hoodCtaFromLayout(codeLayout("template:hood")), null);
+});
+
+test("hood CTA override: hideSecondary survives; non-cta sections refuse settings", () => {
+  const r = sanitizeLayout(withCta({ heading: "One ask only.", hideSecondary: true }), OPTS_HOOD);
+  assert.equal(r.ok, true, r.errors.join("; "));
+  assert.equal(hoodCtaFromLayout(r.doc).hideSecondary, true);
+  const r2 = sanitizeLayout(withCta({ heading: "Nope." }, "faq"), OPTS_HOOD);
+  assert.equal(r2.ok, false);
+  assert.ok(r2.errors.some((e) => e.includes("does not accept settings")));
+});
+
+/* ---------------------------------------------- hood gallery order (A3) */
+const withGallery = (gallery, hidden = false) => ({
+  type: "layout",
+  blocks: hoodSections.map((s) =>
+    s.key === "gallery"
+      ? { kind: "section", key: "gallery", hidden, visibility: "all", settings: { gallery } }
+      : { kind: "section", key: s.key, hidden: false, visibility: "all" }
+  ),
+});
+
+test("hood gallery order: valid slot keys survive, dedup applies, order is preserved", () => {
+  const r = sanitizeLayout(withGallery({ order: ["gallery-2", "gallery-0", "gallery-2"] }), OPTS_HOOD);
+  assert.equal(r.ok, true, r.errors.join("; "));
+  assert.deepEqual(hoodGalleryFromLayout(r.doc), ["gallery-2", "gallery-0"]);
+});
+
+test("hood gallery order: ad hoc slot keys are refused; empty order normalizes away", () => {
+  const bad = sanitizeLayout(withGallery({ order: ["gallery-2", "my-cool-photo"] }), OPTS_HOOD);
+  assert.equal(bad.ok, false);
+  assert.ok(bad.errors.some((e) => e.includes("not a valid slot key")));
+  const empty = sanitizeLayout(withGallery({ order: [] }), OPTS_HOOD);
+  assert.equal(empty.ok, true, empty.errors.join("; "));
+  assert.equal(hoodGalleryFromLayout(empty.doc), null);
+  const entry = empty.doc.blocks.find((b) => b.kind === "section" && b.key === "gallery");
+  assert.equal(entry.settings, undefined);
+});
+
+test("hood gallery order: a HIDDEN gallery section yields no visible order (nothing to gate)", () => {
+  const r = sanitizeLayout(withGallery({ order: ["gallery-0"] }, true), OPTS_HOOD);
+  assert.equal(r.ok, true, r.errors.join("; "));
+  assert.equal(hoodGalleryFromLayout(r.doc), null);
+  // absent layout = default order
+  assert.equal(hoodGalleryFromLayout(null), null);
+  assert.equal(hoodGalleryFromLayout(codeLayout("template:hood")), null);
+});
+
+test("isAllowedCtaAction: the closed destination world", () => {
+  const citySet = new Set(["frisco"]);
+  for (const ok of ["/", "/homes", "/land", "/new-builds", "/how-we-research", "/#map", "/city/frisco", "/city/frisco/starlight-meadows", "/homes?city=frisco", "intent:curated-homes"]) {
+    assert.equal(isAllowedCtaAction(ok, citySet), true, `should allow ${ok}`);
+  }
+  for (const bad of ["", "https://x.test", "//evil", "/city/frisco/x/y", "/homes?city=frisco&utm=1", "/listing/123", "intent:", "mailto:x@y.z"]) {
+    assert.equal(isAllowedCtaAction(bad, citySet), false, `should refuse ${bad}`);
+  }
 });

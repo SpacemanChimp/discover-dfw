@@ -99,6 +99,19 @@ export async function getEditorState(route: string): Promise<EditorState> {
   }
 }
 
+/** ADMIN-ONLY: draft-inclusive region state for a route with NO public page
+    yet (Community Studio future routes). No draftMode() gate — the caller
+    must already be behind the admin allowlist. Uncached by design: the
+    private preview always shows the latest saved documents. */
+export async function getDraftedRegions(route: string): Promise<Record<string, ResolvedRegion>> {
+  try {
+    const rows = await fetchRows(route, true);
+    return resolveRegions(rows, true);
+  } catch {
+    return {};
+  }
+}
+
 /** SEO override for a page: the seo-carrying region's published (or, in
     preview, draft) values. Falls back to nulls — callers keep their code
     metadata when absent. */

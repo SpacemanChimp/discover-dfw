@@ -4,6 +4,8 @@ import { getAdminUser } from "@/lib/admin";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { bySlug, type NewBuild } from "@/lib/dfw-data";
 import { contentFor, type HoodRef, type HoodContent } from "@/lib/hoods";
+import { getDraftedRegions } from "@/lib/editor/overrides";
+import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { HoodPageView } from "@/components/hood/HoodPageView";
 
 /* Community Studio — PRIVATE draft preview. Renders a not-yet-exported
@@ -25,8 +27,10 @@ export const metadata: Metadata = {
 
 export default async function CommunityDraftPreview({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ bb?: string }>;
 }) {
   const admin = await getAdminUser();
   if (!admin) notFound(); // anonymous and non-admin visitors see a plain 404
@@ -90,6 +94,24 @@ export default async function CommunityDraftPreview({
     seo: { title: cd?.seo_title ?? undefined, description: cd?.seo_description ?? undefined },
   };
 
+  /* Amendment 1: the draft preview is a WORKSPACE, not a mock — it renders
+     the saved layout/region documents keyed to the FUTURE canonical route
+     (drafts only; nothing here is publishable until the page is exported,
+     reviewed, and deployed). Inside the Visual Builder canvas (__bb cookie)
+     the page mounts the same arrange/edit runtime a live page gets, and the
+     sticky private-preview banner stays out of the canvas frame. */
+  const regions = await getDraftedRegions(`/city/${d.city_slug}/${d.slug}`);
+  // builder markup ONLY for the canvas: the preview API's redirect carries
+  // bb=1 alongside the httpOnly __bb cookie — a plain preview (studio
+  // iframe, OPEN IN TAB) has no param and keeps the banner even while the
+  // cookie lingers from a canvas session
+  const sp = await searchParams;
+  const builder = sp.bb === "1" && (await isBuilderMode());
+
+  if (builder) {
+    return <HoodPageView c={c} h={h} draft={{ content, regions, builder: true }} />;
+  }
+
   return (
     <div>
       <div
@@ -119,7 +141,7 @@ export default async function CommunityDraftPreview({
           BACK TO STUDIO
         </a>
       </div>
-      <HoodPageView c={c} h={h} draft={{ content }} />
+      <HoodPageView c={c} h={h} draft={{ content, regions }} />
     </div>
   );
 }

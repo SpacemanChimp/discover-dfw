@@ -45,6 +45,11 @@ interface StudioItem {
   type: "hood" | "new_build";
   kind: "live-page" | "draft";
   lifecycle: "live" | "draft" | "ready" | "exported" | "archived";
+  /** A5 derived: READY + an audited prepare stamp newer than every edit */
+  prepared: boolean;
+  preparedAt: string | null;
+  /** A5 derived: EXPORTED and this deployed build serves the route */
+  deployed: boolean;
   hasCustomContent: boolean;
   contentLifecycle: string | null;
   contentLintErrors: number;
@@ -170,7 +175,8 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
   const [lookup, setLookup] = useState<Record<string, unknown> | null>(null);
   const [lookupBusy, setLookupBusy] = useState(false);
   const [photoInfo, setPhotoInfo] = useState<PickPhotoInfo | null>(null);
-  const [photoModal, setPhotoModal] = useState(false);
+  /* which Photo Desk slot the modal targets: "hero" or "gallery-<i>" */
+  const [photoModal, setPhotoModal] = useState<string | null>(null);
 
   const selected = items.find((i) => i.key === selectedKey) ?? null;
 
@@ -420,7 +426,8 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
                     ["facts", "2 · FACTS & MLS"],
                     ["content", "3 · CONTENT & SEO"],
                     ["photos", "4 · PHOTOS"],
-                    ["preview", "5 · PREVIEW & LIFECYCLE"],
+                    ["arrange", "5 · ARRANGE PAGE"],
+                    ["preview", "6 · PREVIEW & LIFECYCLE"],
                   ]
               ).map(([k, label]) => (
                 <button key={k} type="button" onClick={() => setTab(k)} className="font-mono" style={{ border: "none", borderBottom: tab === k ? `3px solid ${ORANGE}` : "3px solid transparent", background: "transparent", padding: "8px 12px", fontSize: 10, fontWeight: 700, letterSpacing: ".08em", cursor: "pointer", color: tab === k ? INK : "rgba(29,25,19,.55)" }}>
@@ -429,7 +436,7 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
               ))}
             </div>
 
-            <div style={{ flex: 1, minHeight: 0, overflow: tab === "canvas" ? "hidden" : "auto" }}>
+            <div style={{ flex: 1, minHeight: 0, overflow: tab === "canvas" || tab === "arrange" ? "hidden" : "auto" }}>
               {/* live page: the REAL canvas, page-specific */}
               {tab === "canvas" && selected.kind === "live-page" && (
                 <VisualBuilder
@@ -437,6 +444,19 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
                   adminEmail={adminEmail}
                   embedded
                   initialTarget={{ route: `/city/${selected.key}`, title: `${selected.name} — THIS PAGE ONLY` }}
+                />
+              )}
+
+              {/* draft: the SAME canvas over the private preview — layout and
+                  text documents save against the future canonical route, so
+                  everything arranged here survives export untouched. Publish
+                  stays locked until the page is live (honest lifecycle). */}
+              {tab === "arrange" && selected.kind === "draft" && (
+                <VisualBuilder
+                  key={`draft:${selected.key}`}
+                  adminEmail={adminEmail}
+                  embedded
+                  initialTarget={{ route: `/city/${selected.key}`, title: `${selected.name} — PRIVATE DRAFT`, draftCommunity: true }}
                 />
               )}
 
@@ -494,7 +514,7 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
 
               {tab === "photos" && (
                 <div style={{ padding: 20, maxWidth: 760 }}>
-                  <PhotoPanel item={selected} info={photoInfo} onOpen={() => setPhotoModal(true)} onRefresh={() => void loadPhoto(selected.key)} />
+                  <PhotoPanel item={selected} info={photoInfo} onOpen={(slotKey) => setPhotoModal(slotKey)} onRefresh={() => void loadPhoto(selected.key)} />
                 </div>
               )}
 
@@ -508,6 +528,7 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
                   facts={facts}
                   lint={detailLint}
                   onGoto={(t) => setTab(t)}
+                  onPrepared={() => void loadInventory(selected.key)}
                   onReadyToggle={async (ready) => {
                     // studio gate: unverified new-build claims block READY
                     if (ready && facts?.type === "new_build" && facts.builders_count == null && !facts.builders_label?.trim()) {
@@ -553,8 +574,16 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
           entity="neighborhood"
           city={selected.key}
           displayName={selected.name}
-          info={photoInfo}
-          onClose={() => setPhotoModal(false)}
+          slotKey={photoModal}
+          info={
+            photoInfo && photoModal.startsWith("gallery-")
+              ? (() => {
+                  const g = photoInfo.gallery?.find((x) => x.slotKey === photoModal);
+                  return { ...photoInfo, slot: g?.slot ?? null, asset: g?.asset ?? null, pendingCandidates: g?.pendingCandidates ?? 0 };
+                })()
+              : photoInfo
+          }
+          onClose={() => setPhotoModal(null)}
           onRefresh={() => void loadPhoto(selected.key)}
         />
       )}
@@ -857,7 +886,7 @@ function ContentPanel({
   );
 }
 
-function PhotoPanel({ item, info, onOpen, onRefresh }: { item: StudioItem; info: PickPhotoInfo | null; onOpen: () => void; onRefresh: () => void }) {
+function PhotoPanel({ item, info, onOpen, onRefresh }: { item: StudioItem; info: PickPhotoInfo | null; onOpen: (slotKey: string) => void; onRefresh: () => void }) {
   return (
     <div>
       <div className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em" }}>HERO SLOT — VIA THE PHOTO DESK</div>
@@ -889,9 +918,51 @@ function PhotoPanel({ item, info, onOpen, onRefresh }: { item: StudioItem; info:
         </div>
       )}
       <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-        <button type="button" className="font-mono" style={btn(true)} onClick={onOpen}><Camera size={14} /> CHANGE PHOTO…</button>
+        <button type="button" className="font-mono" style={btn(true)} onClick={() => onOpen("hero")}><Camera size={14} /> CHANGE PHOTO…</button>
         <a href="/admin/photos" target="_blank" rel="noreferrer" className="font-mono" style={{ ...btn(), textDecoration: "none" }}><ExternalLink size={13} /> OPEN PHOTO DESK</a>
         <button type="button" className="font-mono" style={btn()} onClick={onRefresh}><RefreshCw size={13} /> REFRESH</button>
+      </div>
+
+      {/* A3 — the optional community gallery: deterministic seeder-shaped
+          slots (neighborhood/<key>/gallery-<i>). Approval, metadata, and
+          licensing stay Photo Desk actions; the page hides the section
+          publicly until at least one photo is approved. */}
+      <div style={{ borderTop: "1.5px solid rgba(29,25,19,.25)", marginTop: 20, paddingTop: 14 }}>
+        <div className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em" }}>COMMUNITY GALLERY — OPTIONAL, VIA THE PHOTO DESK</div>
+        <p className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.8, color: "rgba(29,25,19,.6)" }}>
+          Up to six frames. The section renders publicly ONLY with approved photos (never a placeholder); reorder approved frames from the page canvas&rsquo;s gallery section. Uploads become PENDING candidates — approval stays in the Photo Desk.
+        </p>
+        {!info ? (
+          <div className="font-mono" style={{ fontSize: 10 }}>CHECKING THE PHOTO DESK…</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(190px,1fr))", gap: 10, marginTop: 8 }}>
+            {(info.gallery ?? []).map((g, i) => (
+              <div key={g.slotKey} style={{ border: `1.5px solid rgba(29,25,19,.3)`, borderRadius: 10, padding: 10, background: "#fff" }}>
+                <div className="font-mono" style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".14em", color: "rgba(29,25,19,.55)" }}>
+                  GALLERY {i + 1} · {g.asset ? "APPROVED" : g.slot ? g.slot.status.toUpperCase() : "NO SLOT YET"}
+                </div>
+                {g.asset ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={g.asset.public_image_url} alt={g.asset.alt_text} style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 8, border: `1.5px solid ${INK}`, marginTop: 6 }} />
+                    <div className="font-mono" style={{ fontSize: 8.5, lineHeight: 1.7, marginTop: 6, color: "rgba(29,25,19,.7)" }}>
+                      <div>ATTR: {g.asset.attribution_text}</div>
+                      <div>LIC: {g.asset.license}</div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="font-mono" style={{ fontSize: 9, lineHeight: 1.7, marginTop: 6, color: "rgba(29,25,19,.5)" }}>
+                    Not publicly visible.
+                    {g.pendingCandidates > 0 && <div style={{ color: "#8a6d1a" }}>{g.pendingCandidates} PENDING candidate(s).</div>}
+                  </div>
+                )}
+                <button type="button" className="font-mono" style={{ ...btn(), marginTop: 8, padding: "5px 10px", fontSize: 10 }} onClick={() => onOpen(g.slotKey)}>
+                  <Camera size={12} /> PHOTO…
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -937,6 +1008,7 @@ function PreviewLifecyclePanel({
   onGoto,
   onReadyToggle,
   onArchive,
+  onPrepared,
 }: {
   item: StudioItem;
   facts: Facts | null;
@@ -944,6 +1016,8 @@ function PreviewLifecyclePanel({
   onGoto: (t: string) => void;
   onReadyToggle: (ready: boolean) => void;
   onArchive: () => void;
+  /** refresh the inventory after a successful (audited) prepare stamp */
+  onPrepared: () => void;
 }) {
   const buildersOk = item.type === "hood" || facts == null || facts.builders_count != null || !!facts.builders_label?.trim();
   const gates = {
@@ -954,6 +1028,50 @@ function PreviewLifecyclePanel({
     builders: buildersOk,
   };
   const allOk = Object.values(gates).every(Boolean);
+
+  /* A5: PREPARE FOR EXPORT — the server runs the complete validation and
+     either stamps (audited) or returns every blocker with its tab */
+  const [preparing, setPreparing] = useState(false);
+  const [blockers, setBlockers] = useState<{ tab: string; message: string }[] | null>(null);
+
+  /* the honest 7-state model: 5 stored states + 2 derived (prepared =
+     audited clean stamp newer than every edit; deployed = this build
+     actually serves the route) */
+  const state = item.lifecycle === "archived"
+    ? "archived"
+    : item.lifecycle === "live"
+      ? "live"
+      : item.lifecycle === "exported"
+        ? item.deployed ? "deployed" : "exported"
+        : item.prepared ? "prepared" : item.lifecycle; // "draft" | "ready"
+  const STATES: { key: string; label: string; note: string }[] = [
+    { key: "draft", label: "DRAFT", note: "being edited in the studio" },
+    { key: "ready", label: "READY", note: "readiness gates passed, marked for export" },
+    { key: "prepared", label: "PREPARED", note: "full validation stamped — any later edit clears it" },
+    { key: "exported", label: "EXPORTED", note: "CB-2 wrote the dataset on a reviewed branch" },
+    { key: "deployed", label: "DEPLOYED", note: "this build serves the route — verify, then --mark-live" },
+    { key: "live", label: "LIVE", note: "public page, continues editing as a live page" },
+    { key: "archived", label: "ARCHIVED", note: "kept for audit; slug freed" },
+  ];
+  const stateIdx = STATES.findIndex((s) => s.key === state);
+
+  const prepare = async () => {
+    setPreparing(true);
+    setBlockers(null);
+    try {
+      const j = await post("/api/admin/editor/communities", { action: "prepare", key: item.key });
+      if (!j.ok) setBlockers([{ tab: "preview", message: String(j.error ?? "Prepare failed") }]);
+      else if (j.prepared) {
+        setBlockers([]);
+        onPrepared();
+      } else setBlockers((j.blockers as { tab: string; message: string }[]) ?? []);
+    } catch {
+      setBlockers([{ tab: "preview", message: "Network error — nothing was stamped" }]);
+    } finally {
+      setPreparing(false);
+    }
+  };
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 340px", height: "100%" }}>
       <div style={{ minWidth: 0, borderRight: `2px solid ${INK}`, display: "flex", flexDirection: "column" }}>
@@ -965,9 +1083,29 @@ function PreviewLifecyclePanel({
         <iframe src={`/admin/editor/community-preview/${item.draftId}`} title="Private community draft preview" style={{ flex: 1, border: "none", background: CREAM }} />
       </div>
       <aside style={{ background: CARD, padding: 16, overflowY: "auto" }}>
-        <div className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em" }}>LIFECYCLE — {item.lifecycle.toUpperCase()}</div>
-        <div className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.9, color: "rgba(29,25,19,.6)", margin: "6px 0 10px" }}>
-          Draft → Ready → Exported (CB-2, reviewed PR) → Deployed → Live. The studio never fakes a URL being live — the exporter, PR review, deploy, and mark-live steps stay exactly as built.
+        <div className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em" }}>LIFECYCLE</div>
+        {/* the 7-state strip — the current state is derived, never faked */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 8 }}>
+          {STATES.map((s, i) => {
+            const current = s.key === state;
+            const passed = stateIdx >= 0 && i < stateIdx && state !== "archived";
+            return (
+              <div key={s.key} className="font-mono" style={{ display: "flex", gap: 8, alignItems: "baseline", padding: "3px 6px", borderRadius: 6, background: current ? INK : "transparent", color: current ? CREAM : passed ? "rgba(29,25,19,.75)" : "rgba(29,25,19,.4)" }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", minWidth: 74 }}>
+                  {current ? "▶ " : passed ? "✓ " : "· "}{s.label}
+                </span>
+                <span style={{ fontSize: 8.5, lineHeight: 1.5 }}>{s.note}</span>
+              </div>
+            );
+          })}
+        </div>
+        {item.preparedAt && (
+          <div className="font-mono" style={{ fontSize: 9, marginTop: 6, color: "#2c6e49", fontWeight: 700 }}>
+            PREPARE STAMP: {new Date(item.preparedAt).toLocaleString()} (audited)
+          </div>
+        )}
+        <div className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.9, color: "rgba(29,25,19,.6)", margin: "8px 0 10px" }}>
+          There is no one-click publish for a page that does not exist. Exporting, PR review, deploying, and mark-live stay exactly as built; saved canvas drafts survive export and publish later through the normal Visual Builder flow once the page is live.
         </div>
         <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", marginTop: 6 }}>READINESS GATES</div>
         <Gate ok={gates.identity} label="Identity valid — slug + collisions enforced on every save" onGoto={onGoto} />
@@ -983,21 +1121,45 @@ function PreviewLifecyclePanel({
             </button>
           )}
           {item.lifecycle === "ready" && (
-            <button type="button" className="font-mono" style={btn()} onClick={() => onReadyToggle(false)}>BACK TO DRAFT</button>
+            <>
+              <button type="button" className="font-mono" style={btn(true)} disabled={preparing} onClick={() => void prepare()}>
+                {preparing ? "VALIDATING…" : item.prepared ? "RE-RUN PREPARE FOR EXPORT" : "PREPARE FOR EXPORT"}
+              </button>
+              <button type="button" className="font-mono" style={btn()} onClick={() => onReadyToggle(false)}>BACK TO DRAFT</button>
+            </>
           )}
           {(item.lifecycle === "draft" || item.lifecycle === "ready") && (
             <button type="button" className="font-mono" style={btn(false, true)} onClick={onArchive}><Archive size={13} /> ARCHIVE</button>
           )}
         </div>
 
-        {item.lifecycle === "ready" && (
+        {blockers && blockers.length > 0 && (
+          <div className="font-mono" style={{ fontSize: 10, lineHeight: 1.8, marginTop: 12, border: `1.5px solid ${ORANGE_DARK}`, borderRadius: 10, padding: "10px 12px", background: "rgba(193,62,23,.06)" }}>
+            <div style={{ fontWeight: 700, color: ORANGE_DARK }}>PREPARE REFUSED — {blockers.length} BLOCKER{blockers.length === 1 ? "" : "S"}:</div>
+            {blockers.map((b, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", marginTop: 4 }}>
+                <span style={{ flex: 1 }}>{b.message}</span>
+                <button type="button" className="font-mono" onClick={() => onGoto(b.tab)} style={{ border: "none", background: "none", color: ORANGE_DARK, fontWeight: 700, fontSize: 9, cursor: "pointer", textDecoration: "underline", whiteSpace: "nowrap" }}>
+                  {b.tab.toUpperCase()} →
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {blockers && blockers.length === 0 && (
+          <div className="font-mono" style={{ fontSize: 10, marginTop: 12, color: "#2c6e49", fontWeight: 700 }}>
+            ✓ ALL CHECKS PASSED — stamped (audited). Run the CB-2 export below when you are ready.
+          </div>
+        )}
+
+        {(state === "prepared" || state === "ready" || state === "exported" || state === "deployed") && (
           <div className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.9, marginTop: 12, border: `1.5px solid ${INK}`, borderRadius: 10, padding: "10px 12px", background: "#fff" }}>
-            <b>PREPARE FOR EXPORT (CB-2 — reviewed code step):</b>
+            <b>CB-2 EXPORT (reviewed code step — never run from this server):</b>
             <br />1. <code>node scripts/content/export-community-drafts.mjs --diff</code>
             <br />2. Review the literal dataset insertions.
             <br />3. <code>--apply</code> on a branch → PR → human review → merge.
             <br />4. Deploy, probe the new URL, then <code>--mark-live</code>.
-            <br />The page then appears here as a LIVE page automatically.
+            <br />The page then appears here as a LIVE page automatically, with every saved canvas draft intact.
           </div>
         )}
       </aside>

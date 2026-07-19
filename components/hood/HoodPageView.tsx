@@ -32,23 +32,44 @@ import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
 import ConvertSlot from "@/components/convert/ConvertSlot";
 import ConversionDuo from "@/components/convert/ConversionDuo";
-import NewBuildCTA from "@/components/convert/NewBuildCTA";
+import NewBuildCTA, { type CtaBandButton } from "@/components/convert/NewBuildCTA";
 import { leadBackendReady } from "@/lib/convert/config";
+import { INTENTS, type IntentKey } from "@/lib/convert/intents";
 import { getEditorState, type EditorState } from "@/lib/editor/overrides";
+import type { ResolvedRegion } from "@/lib/editor/doc";
 import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { applyLayout } from "@/lib/editor/blocks-render";
-import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
+import { TEMPLATE_SECTIONS, hoodCtaFromLayout, hoodGalleryFromLayout, type LayoutDoc } from "@/lib/editor/blocks.ts";
 import { RichDoc, textValue, faqItems, bulletTexts } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
+/** translate a CTA-override button (label + "intent:<key>"-or-path action)
+    into the band/duo props; no override at all keeps the code default */
+function ctaButton(
+  ovLabel: string | undefined,
+  ovAction: string | undefined,
+  fallback: { label: string; intent: IntentKey }
+): CtaBandButton {
+  const a = ovAction ?? "";
+  if (a.startsWith("intent:")) {
+    const intent = a.slice(7) as IntentKey;
+    return { label: ovLabel || INTENTS[intent].cta, intent };
+  }
+  if (a) return { label: ovLabel || fallback.label, href: a };
+  return { label: ovLabel || fallback.label, intent: fallback.intent };
+}
+
 /** The COMPLETE hood/community page for (c, h) — extracted so the Community
     Studio can render the REAL template as a private, admin-only preview of
     a not-yet-exported draft. `draft` supplies the content source and skips
-    the override store (a draft page has no route documents yet); everything
-    else — schools, drive times, market data, photos, compliance — renders
-    exactly as the public page does. */
+    the route's override store read; its `regions` carry the DRAFTED editor
+    documents keyed to the future route (layout + region overrides), and
+    `builder` mounts the Visual Builder canvas markers so the draft page is
+    arrangeable exactly like a live one. Everything else — schools, drive
+    times, market data, photos, compliance — renders exactly as the public
+    page does. */
 export async function HoodPageView({
   c,
   h,
@@ -56,7 +77,7 @@ export async function HoodPageView({
 }: {
   c: City;
   h: HoodRef;
-  draft?: { content: HoodContent };
+  draft?: { content: HoodContent; regions?: Record<string, ResolvedRegion>; builder?: boolean };
 }) {
   const county = countyById[c.county];
   const content = draft?.content ?? contentFor(c, h);
@@ -66,14 +87,34 @@ export async function HoodPageView({
      admin-authenticated preview). Every region falls back to the existing
      content when no override exists — and to exactly that same content if
      the override store is unreachable. */
-  const ed: EditorState = draft ? { preview: false, regions: {} } : await getEditorState(`/city/${c.slug}/${h.slug}`);
+  const ed: EditorState = draft ? { preview: false, regions: draft.regions ?? {} } : await getEditorState(`/city/${c.slug}/${h.slug}`);
   // shared-template layout (Visual Builder) — null = code-owned order
   const tpl = await getEditorState("template:hood");
   const tplLayout = (tpl.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
   // Community Studio: a published PAGE-SPECIFIC layout override wins over
   // the shared template — THIS PAGE ONLY, other communities untouched
   const pageLayout = (ed.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
-  const builder = !draft && tpl.preview && (await isBuilderMode());
+  const builder = draft ? !!draft.builder : tpl.preview && (await isBuilderMode());
+
+  /* Amendment 2: the page-specific conversion-band override rides the
+     WINNING layout document's cta-section settings. Absent (today's state
+     everywhere) = the code CTA renders byte-for-byte. */
+  const ctaOv = hoodCtaFromLayout(pageLayout ?? tplLayout);
+  const ctaPrimary = ctaButton(ctaOv?.primaryLabel, ctaOv?.primaryAction, nb
+    ? { label: "Discover Builder Incentives", intent: "new-build-incentives" }
+    : { label: INTENTS["curated-homes"].cta, intent: "curated-homes" });
+  const ctaSecondary = ctaButton(ctaOv?.secondaryLabel, ctaOv?.secondaryAction, { label: "Ask a Question", intent: "ask-a-question" });
+  const ctaHasCopy = !!ctaOv && !!(ctaOv.kicker || ctaOv.heading || ctaOv.body);
+  const ctaBandIntent: IntentKey = ctaPrimary.intent ?? "curated-homes";
+
+  /* Amendment 4: canonical values carry LOCKED source labels in the builder
+     canvas — hover shows where the number comes from and where (if
+     anywhere) it can be edited. Public markup carries no attributes. */
+  const lockMarket = builder ? "CANONICAL CITY MARKET DATA (NTREIS SNAPSHOT) — NOT EDITABLE" : undefined;
+  const lockFacts = builder ? (draft ? "COMMUNITY FACTS — EDIT IN FACTS & MLS TAB" : "COMMUNITY FACTS — CANONICAL DATASET") : undefined;
+  const lockCity = builder ? "CANONICAL CITY DATA — NOT EDITABLE" : undefined;
+  const lockCommute = builder ? "DRIVE-TIME MODEL (OSRM) — NOT EDITABLE" : undefined;
+  const lockIdentity = builder ? (draft ? "COMMUNITY IDENTITY — EDIT IN IDENTITY TAB" : "COMMUNITY IDENTITY — CANONICAL DATASET") : undefined;
   const tagline = textValue(ed.regions["tagline"]) ?? content.tagline;
   const introOv = ed.regions["intro"];
   const homesOv = ed.regions["homes"];
@@ -90,6 +131,21 @@ export async function HoodPageView({
      the Photo Desk keeps the missing slot as an upload target). */
   const photos = await getApprovedPhotos("neighborhood", `${c.slug}/${h.slug}`);
   const heroPhoto = photos.get(photoKey(`${c.slug}/${h.slug}`, "hero"));
+
+  /* A3: community gallery — APPROVED assets only (the photos map cannot
+     hold anything else). The saved page-specific order wins; keys without
+     an approved asset are skipped, never placeholdered. Zero approved
+     photos hide the section publicly; the builder canvas shows an
+     editor-only empty state instead. */
+  const entityKey = `${c.slug}/${h.slug}`;
+  const approvedGalleryKeys = [...photos.keys()]
+    .filter((k) => k.startsWith(`${entityKey}::gallery-`))
+    .map((k) => k.split("::")[1])
+    .sort((a, b) => Number(a.slice(8)) - Number(b.slice(8)));
+  const galleryOrder = hoodGalleryFromLayout(pageLayout ?? tplLayout);
+  const galleryPhotos = (galleryOrder ?? approvedGalleryKeys)
+    .filter((k) => photos.has(photoKey(entityKey, k)))
+    .map((k) => ({ slotKey: k, photo: photos.get(photoKey(entityKey, k))! }));
 
   /* NB inventory band: renders ONLY for published new-build communities
      with a snapshot above the thin-inventory threshold — null (today's
@@ -264,6 +320,7 @@ export async function HoodPageView({
           </div>
           <h1
             className="font-serif"
+            data-bb-lock={lockIdentity}
             style={{
               margin: "14px 0 0",
               fontWeight: 900,
@@ -290,6 +347,7 @@ export async function HoodPageView({
           </h1>
           <p
             className="font-serif"
+            data-bb-note={builder ? "TAGLINE — SELECT THE HERO SECTION, THEN EDIT IT IN THE RIGHT PANEL" : undefined}
             style={{
               margin: "16px 0 0",
               fontStyle: "italic",
@@ -312,17 +370,17 @@ export async function HoodPageView({
           >
             {nb ? (
               <>
-                <HeroStat label="PRICED FROM" value={nb.from} color="#D9481F" />
-                <HeroStat label="BUILDERS" value={`${nb.builders} ACTIVE`} />
-                <HeroStat label="STATUS" value={nb.status} />
-                <HeroStat label="SCHOOLS" value={c.isd} />
+                <HeroStat label="PRICED FROM" value={nb.from} color="#D9481F" lock={lockFacts} />
+                <HeroStat label="BUILDERS" value={`${nb.builders} ACTIVE`} lock={lockFacts} />
+                <HeroStat label="STATUS" value={nb.status} lock={lockFacts} />
+                <HeroStat label="SCHOOLS" value={c.isd} lock={lockCity} />
               </>
             ) : (
               <>
-                <HeroStat label="CITY MEDIAN" value={fmtK(c.price)} color="#D9481F" />
-                <HeroStat label="$ / SQFT (CITY)" value={"$" + c.ppsf} />
-                <HeroStat label="SCHOOLS" value={c.isd} />
-                <HeroStat label="DT DALLAS" value={`${c.commute[0]} MIN`} />
+                <HeroStat label="CITY MEDIAN" value={fmtK(c.price)} color="#D9481F" lock={lockMarket} />
+                <HeroStat label="$ / SQFT (CITY)" value={"$" + c.ppsf} lock={lockMarket} />
+                <HeroStat label="SCHOOLS" value={c.isd} lock={lockCity} />
+                <HeroStat label="DT DALLAS" value={`${c.commute[0]} MIN`} lock={lockCommute} />
               </>
             )}
           </div>
@@ -448,6 +506,17 @@ export async function HoodPageView({
               <div data-bb-region={builder ? "intro" : undefined} style={{ fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
                 <RichDoc doc={introOv.json} />
               </div>
+            ) : builder ? (
+              /* Amendment 4: the generated/fallback intro is selectable and
+                 editable in the canvas — committing it creates a
+                 page-specific override; the shared formula stays untouched */
+              <div data-bb-region="intro" style={{ fontSize: 17, lineHeight: 1.85, color: "rgba(29,25,19,.82)" }}>
+                {content.intro.map((para, i) => (
+                  <p key={i} style={{ margin: i === 0 ? 0 : "16px 0 0" }}>
+                    {para}
+                  </p>
+                ))}
+              </div>
             ) : (
               content.intro.map((para, i) => (
                 <p
@@ -466,6 +535,7 @@ export async function HoodPageView({
           </div>
           <div
             data-reveal="1"
+            data-bb-lock={builder ? "QUICK FACTS — CANONICAL DATA, NOT EDITABLE ON THE CANVAS" : undefined}
             style={{ border: "2px solid #1D1913", borderRadius: 18, background: "#FBF7EE", padding: "26px 28px" }}
           >
             <div
@@ -538,6 +608,7 @@ export async function HoodPageView({
 
           <div
             data-reveal="1"
+            data-bb-lock={lockFacts}
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 18, marginBottom: 34 }}
           >
             <MarketCard label="PRICED FROM" value={nb.from} sub="BASE PRICING · BY PHASE" valColor="#D9481F" />
@@ -558,6 +629,7 @@ export async function HoodPageView({
           {nbInventory && (
             <div
               data-reveal="1"
+              data-bb-lock={builder ? "LIVE NTREIS INVENTORY — READ-ONLY" : undefined}
               className="font-mono"
               style={{
                 border: "2px solid #1D1913",
@@ -760,20 +832,47 @@ export async function HoodPageView({
       ),
       cta: (
       <>
-      {/* Standard-neighborhood CTA keeps its place here (unchanged). New-build
-          communities move their CTA below the "why buyers look here" reasons
-          (see NewBuildCTA after section 03) so the buyer reads the case first
-          — one conversion section per page either way. */}
+      {/* Standard-neighborhood CTA keeps its place here (unchanged by
+          default). New-build communities keep their CTA below the "why
+          buyers look here" reasons UNTIL a page-specific override exists —
+          the override renders here so the admin controls its position.
+          One conversion section per page either way. */}
       {!nb && leadBackendReady() && (
-        <ConvertSlot id="hood-cta">
-          <ConversionDuo
-            primary="curated-homes"
-            secondary="ask-a-question"
-            secondaryLabel="Ask a Question"
+        ctaHasCopy ? (
+          <NewBuildCTA
             citySlug={c.slug}
             community={h.slug}
+            kicker={ctaOv?.kicker ?? INTENTS[ctaBandIntent].kicker}
+            heading={ctaOv?.heading ?? INTENTS[ctaBandIntent].headline}
+            body={ctaOv?.body ?? INTENTS[ctaBandIntent].body}
+            primary={ctaPrimary}
+            secondary={ctaOv?.hideSecondary ? null : ctaSecondary}
           />
-        </ConvertSlot>
+        ) : (
+          <ConvertSlot id="hood-cta">
+            <ConversionDuo
+              primary={ctaPrimary.intent ?? "curated-homes"}
+              secondary={ctaOv?.hideSecondary ? undefined : (ctaSecondary.intent ?? "ask-a-question")}
+              primaryLabel={ctaPrimary.label}
+              secondaryLabel={ctaOv?.hideSecondary ? undefined : ctaSecondary.label}
+              primaryHref={ctaPrimary.href}
+              secondaryHref={ctaOv?.hideSecondary ? undefined : ctaSecondary.href}
+              citySlug={c.slug}
+              community={h.slug}
+            />
+          </ConvertSlot>
+        )
+      )}
+      {nb && leadBackendReady() && ctaOv && (
+        <NewBuildCTA
+          citySlug={c.slug}
+          community={h.slug}
+          kicker={ctaOv.kicker}
+          heading={ctaOv.heading}
+          body={ctaOv.body}
+          primary={ctaPrimary}
+          secondary={ctaOv.hideSecondary ? null : ctaSecondary}
+        />
       )}
 
       </>
@@ -822,8 +921,10 @@ export async function HoodPageView({
 
       {/* New-build's ONE conversion moment — an editorial band placed AFTER
           the reasons above and BEFORE nearby schools, so the case is made
-          before the ask. Shared across every new-build community. */}
-      {nb && leadBackendReady() && <NewBuildCTA citySlug={c.slug} community={h.slug} />}
+          before the ask. Shared across every new-build community. A
+          page-specific CTA override moves the band to the Conversion band
+          section slot (position becomes the admin's), so it never doubles. */}
+      {nb && leadBackendReady() && !ctaOv && <NewBuildCTA citySlug={c.slug} community={h.slug} />}
 
       </>
       ),
@@ -952,6 +1053,53 @@ export async function HoodPageView({
       {/* second CTA region removed — one CTA section per page. The builder
           tour / inventory repeat both collapsed into the single ask above. */}
 
+      </>
+      ),
+      gallery: (
+      <>
+      {/* community gallery — approved frames only; the section hides
+          entirely when none exist (no public "DROP PHOTO" placeholders; the
+          Photo Desk keeps the missing slots). Mirrors the city gallery. */}
+      {galleryPhotos.length > 0 ? (
+        <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw 0" }}>
+          <div data-reveal="1" style={{ marginBottom: 30 }}>
+            <Eyebrow>THE LOOK</Eyebrow>
+            <SectionH2>
+              {galleryPhotos.length === 1 ? `One frame of ${h.name}.` : galleryPhotos.length === 2 ? `Two frames of ${h.name}.` : `Scenes from ${h.name}.`}
+            </SectionH2>
+          </div>
+          <div
+            data-reveal="1"
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 18 }}
+          >
+            {galleryPhotos.map(({ slotKey, photo }) => (
+              <EditorialPhoto
+                key={slotKey}
+                photo={photo}
+                className="gallery-slot"
+                style={{
+                  aspectRatio: "4 / 3",
+                  border: "2px solid #1D1913",
+                  borderRadius: 18,
+                }}
+              >
+                {null}
+              </EditorialPhoto>
+            ))}
+          </div>
+        </section>
+      ) : builder ? (
+        /* editor-only empty state — NEVER rendered publicly */
+        <section style={{ maxWidth: 1280, margin: "0 auto", padding: "42px 4vw 0" }}>
+          <div
+            className="font-mono"
+            style={{ border: "2px dashed rgba(29,25,19,.4)", borderRadius: 18, padding: "26px 28px", fontSize: 11, lineHeight: 1.9, color: "rgba(29,25,19,.6)", letterSpacing: ".08em" }}
+          >
+            COMMUNITY GALLERY — NO APPROVED PHOTOS YET.
+            <br />This section stays HIDDEN on the public page until at least one gallery photo is approved in the Photo Desk. Upload candidates from the Studio&rsquo;s PHOTOS tab; approval remains the Photo Desk&rsquo;s audited action.
+          </div>
+        </section>
+      ) : null}
       </>
       ),
       explore: (
@@ -1259,9 +1407,9 @@ function SectionH2({
   );
 }
 
-function HeroStat({ label, value, color }: { label: string; value: string; color?: string }) {
+function HeroStat({ label, value, color, lock }: { label: string; value: string; color?: string; lock?: string }) {
   return (
-    <div style={{ border: "1.5px solid rgba(29,25,19,.35)", borderRadius: 14, padding: "11px 16px", background: "#FBF7EE" }}>
+    <div data-bb-lock={lock} style={{ border: "1.5px solid rgba(29,25,19,.35)", borderRadius: 14, padding: "11px 16px", background: "#FBF7EE" }}>
       <div className="font-mono" style={{ fontSize: 8.5, letterSpacing: ".2em", color: "rgba(29,25,19,.5)" }}>
         {label}
       </div>

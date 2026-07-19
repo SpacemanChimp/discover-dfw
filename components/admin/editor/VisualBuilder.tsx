@@ -64,6 +64,8 @@ import {
   ALIGNS,
   SPACINGS,
   VISIBILITIES,
+  isAllowedCtaAction,
+  type HoodCtaSettings,
   type LayoutDoc,
   type LayoutEntry,
   type BlockInstance,
@@ -73,6 +75,7 @@ import {
   type BlockImage,
 } from "@/lib/editor/blocks.ts";
 import { BB_NS, type CanvasEntryMeta, type CanvasMsg } from "@/lib/editor/bridge-protocol";
+import { INTENTS, INTENT_KEYS, type IntentKey } from "@/lib/convert/intents";
 import { cities, bySlug } from "@/lib/dfw-data";
 import RichEditor, { type RichEditorHandle } from "./RichEditor";
 import { MediaPicker, type MediaItem } from "./EditorDesk";
@@ -141,23 +144,35 @@ const stableStr = (v: unknown) => JSON.stringify(v);
 /* --------------------------------------------------- editor's picks */
 const PICKS_ID = "s:picks";
 export type PickCard = { city: string; tagline?: string };
+export interface PickPhotoAsset {
+  public_image_url: string;
+  alt_text: string;
+  caption: string | null;
+  attribution_text: string;
+  license: string;
+  source_page_url: string | null;
+  approved_by: string;
+  approved_at: string;
+  width: number | null;
+  height: number | null;
+}
+
+/** one community gallery slot's Photo Desk state (A3 — read-only here) */
+export interface GallerySlotInfo {
+  slotKey: string;
+  slot: { id: string; status: string; label: string } | null;
+  asset: PickPhotoAsset | null;
+  pendingCandidates: number;
+}
+
 export interface PickPhotoInfo {
   city: string;
   cityName: string;
   slot: { id: string; status: string; label: string } | null;
-  asset: {
-    public_image_url: string;
-    alt_text: string;
-    caption: string | null;
-    attribution_text: string;
-    license: string;
-    source_page_url: string | null;
-    approved_by: string;
-    approved_at: string;
-    width: number | null;
-    height: number | null;
-  } | null;
+  asset: PickPhotoAsset | null;
   pendingCandidates: number;
+  /** present for entity=neighborhood: the community gallery slots */
+  gallery?: GallerySlotInfo[];
 }
 
 const defaultPicks = (): PickCard[] => EDITORS_PICKS_DEFAULT.map((c) => ({ city: c }));
@@ -295,11 +310,16 @@ export default function VisualBuilder({
   embedded,
 }: {
   adminEmail: string;
-  /** Community Studio embed: open ONE page, hide global navigation chrome */
-  initialTarget?: { route: string; title: string };
+  /** Community Studio embed: open ONE page, hide global navigation chrome.
+      `draftCommunity` marks a not-yet-exported draft route: layout/text
+      documents SAVE normally (keyed to the future canonical route) but
+      PUBLISH stays locked until the page is exported, reviewed, deployed,
+      and verified live. */
+  initialTarget?: { route: string; title: string; draftCommunity?: boolean };
   embedded?: boolean;
 }) {
   void adminEmail;
+  const draftCommunity = !!(embedded && initialTarget?.draftCommunity);
   const [customPages, setCustomPages] = useState<{ slug: string; title: string; status: string; template: string; seo_title: string | null; seo_description: string | null; og_image_url: string | null; nav_label: string | null; show_in_nav: boolean; header_footer: boolean }[]>([]);
   const [migrationApplied, setMigrationApplied] = useState<boolean | null>(null);
   const [target, setTarget] = useState<Target>(
@@ -331,6 +351,14 @@ export default function VisualBuilder({
   const [insertAt, setInsertAt] = useState<number | null>(null);
   const [previewCity, setPreviewCity] = useState("frisco");
   const [regionDrafts, setRegionDrafts] = useState<Record<string, { html: string; doc: unknown }>>({});
+  /* hood tagline — a TEXT-typed region, edited from the panel only (an
+     inline rich commit would corrupt its {value} document shape) */
+  const [taglineDraft, setTaglineDraft] = useState<string | null>(null);
+  const taglineDraftRef = useRef(taglineDraft);
+  taglineDraftRef.current = taglineDraft;
+  /* cta-override / tagline edits don't live-update the canvas — reload it
+     once after the save that persists them */
+  const ctaTouchedRef = useRef(false);
   /* editor's picks card editing */
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const selectedCardRef = useRef<number | null>(null);
@@ -495,6 +523,8 @@ export default function VisualBuilder({
     setMissingPhotos([]);
     lastPicksRef.current = "";
     setRegionDrafts({});
+    setTaglineDraft(null);
+    ctaTouchedRef.current = false;
     regionsCanvas.current = {};
     regionsOriginal.current = {};
     savedRegionsRef.current = {};
@@ -601,8 +631,45 @@ export default function VisualBuilder({
           notes.push(`“${key}” FAILED: network error`);
         }
       }
+      // the panel-edited hood tagline rides the same save — {value} shape,
+      // 0018 text sanitizer, same audited versioning as every region
+      const tl = taglineDraftRef.current;
+      if (tl !== null && HOOD_ROUTE_RE.test(target.route)) {
+        const v = tl.trim();
+        if (!v) {
+          allOk = false;
+          notes.push("tagline SKIPPED: empty — to remove an override, use Restore fallback on the CONTENT desk");
+        } else {
+          try {
+            const dj = await (await fetch(`/api/admin/editor/doc?route=${encodeURIComponent(target.route)}&region=tagline`)).json();
+            const rj = await post("/api/admin/editor/draft", {
+              route: target.route,
+              regionKey: "tagline",
+              content: { value: v },
+              baseVersion: dj.baseVersion ?? 0,
+            });
+            if (rj.ok) {
+              savedRegionsRef.current["tagline"] = rj.versionNo;
+              notes.push(`tagline v${rj.versionNo}`);
+              setTaglineDraft(null);
+              ctaTouchedRef.current = true;
+            } else {
+              allOk = false;
+              notes.push(`tagline FAILED: ${((rj.errors as string[]) ?? [rj.error]).filter(Boolean).join(", ")}`);
+            }
+          } catch {
+            allOk = false;
+            notes.push("tagline FAILED: network error");
+          }
+        }
+      }
       setMessage({ kind: allOk ? "ok" : "error", text: `Draft saved — ${notes.join(" · ")}` });
       if (allOk) setDirty(false);
+      // CTA-override / tagline changes render server-side — one reload shows them
+      if (ctaTouchedRef.current) {
+        ctaTouchedRef.current = false;
+        canvasApi.current?.reload();
+      }
     } finally {
       setBusy(null);
     }
@@ -1166,6 +1233,15 @@ export default function VisualBuilder({
         <button type="button" onClick={saveDraft} disabled={busy !== null || migrationApplied === false} className="font-mono" style={btn()}>
           <Save size={14} /> {busy === "save" ? "SAVING…" : "SAVE DRAFT"}
         </button>
+        {draftCommunity ? (
+          <span
+            className="font-mono"
+            title="This page has not been exported yet — drafts are saved to the future route; publish unlocks once the CB-2 export is reviewed, merged, deployed, and the page is verified live."
+            style={{ ...btn(), cursor: "help", opacity: 0.75 }}
+          >
+            <CloudUpload size={14} /> PUBLISH LOCKED — NOT EXPORTED
+          </span>
+        ) : (
         <button
           type="button"
           onClick={() => setPublishOpen(true)}
@@ -1176,6 +1252,7 @@ export default function VisualBuilder({
         >
           <CloudUpload size={14} /> PUBLISH…
         </button>
+        )}
         <button type="button" onClick={() => setHistoryOpen(true)} className="font-mono" style={btn()}><HistoryIcon size={14} /> HISTORY</button>
         {target.kind === "custom" && (
           <button type="button" onClick={() => setSettingsOpen(true)} className="font-mono" style={btn()}><Settings2 size={14} /> PAGE SETTINGS</button>
@@ -1314,7 +1391,12 @@ export default function VisualBuilder({
                   </span>
                 )}
                 {target.kind === "template" && <span style={{ color: ORANGE_DARK, fontWeight: 700 }}>SHARED TEMPLATE — CHANGES AFFECT EVERY PAGE OF THIS KIND</span>}
-                {HOOD_ROUTE_RE.test(target.route) && <span style={{ color: "#2c6e49", fontWeight: 700 }}>THIS PAGE ONLY — THE SHARED HOOD TEMPLATE IS UNTOUCHED</span>}
+                {HOOD_ROUTE_RE.test(target.route) &&
+                  (draftCommunity ? (
+                    <span style={{ color: ORANGE_DARK, fontWeight: 700 }}>PRIVATE DRAFT PAGE — SAVES KEEP, PUBLISH UNLOCKS AFTER EXPORT + DEPLOY</span>
+                  ) : (
+                    <span style={{ color: "#2c6e49", fontWeight: 700 }}>THIS PAGE ONLY — THE SHARED HOOD TEMPLATE IS UNTOUCHED</span>
+                  ))}
                 <span style={{ flex: 1 }} />
                 {dirty && <span style={{ color: ORANGE_DARK, fontWeight: 700 }}>UNSAVED CHANGES</span>}
               </div>
@@ -1386,7 +1468,55 @@ export default function VisualBuilder({
                 onRefuse={(text) => setMessage({ kind: "error", text })}
               />
             ) : (
-              <SectionSettings entry={selected} def={selectedSection} onChange={(patch) => updateEntry(selectedId!, (e) => (e.kind === "section" ? { ...e, ...patch } : e))} />
+              <>
+                <SectionSettings entry={selected} def={selectedSection} onChange={(patch) => updateEntry(selectedId!, (e) => (e.kind === "section" ? { ...e, ...patch } : e))} />
+                {selectedSection?.cta && sectionsKeyFor(target.route) === "template:hood" && (
+                  <HoodCtaPanel
+                    value={selected.kind === "section" ? (selected.settings?.cta ?? null) : null}
+                    isTemplate={target.kind === "template"}
+                    onChange={(next) => {
+                      ctaTouchedRef.current = true;
+                      updateEntry(selectedId!, (e) => {
+                        if (e.kind !== "section") return e;
+                        const { settings: _drop, ...rest } = e;
+                        void _drop;
+                        // no fields set → no override stored (code CTA stays the truth)
+                        return next ? { ...rest, settings: { cta: next } } : rest;
+                      });
+                    }}
+                  />
+                )}
+                {selectedSection?.gallery && selected.kind === "section" && HOOD_ROUTE_RE.test(target.route) && (
+                  <HoodGalleryPanel
+                    routeKey={target.route.replace(/^\/city\//, "")}
+                    order={selected.settings?.gallery?.order ?? null}
+                    onChange={(orderNext) => {
+                      ctaTouchedRef.current = true;
+                      updateEntry(selectedId!, (e) => {
+                        if (e.kind !== "section") return e;
+                        const { settings: _drop, ...rest } = e;
+                        void _drop;
+                        return orderNext && orderNext.length ? { ...rest, settings: { gallery: { order: orderNext } } } : rest;
+                      });
+                    }}
+                  />
+                )}
+                {selectedSection?.gallery && target.kind === "template" && (
+                  <p className="font-mono" style={{ fontSize: 10, lineHeight: 1.8, color: "rgba(29,25,19,.6)", marginTop: 12 }}>
+                    GALLERY PHOTOS AND ORDER ARE PAGE-SPECIFIC — open a community&rsquo;s own canvas (Community Studio) to arrange its frames.
+                  </p>
+                )}
+                {selected.kind === "section" && selected.key === "hero" && HOOD_ROUTE_RE.test(target.route) && (
+                  <HoodTaglinePanel
+                    route={target.route}
+                    pending={taglineDraft}
+                    onChange={(v) => {
+                      setTaglineDraft(v);
+                      setDirty(true);
+                    }}
+                  />
+                )}
+              </>
             )
           ) : (
             <BlockSettings
@@ -1719,6 +1849,299 @@ function SectionSettings({ entry, def, onChange }: { entry: Extract<LayoutEntry,
             </select>
           </Field>
         </>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------- hood CTA override (A2) */
+const CITY_SLUG_SET = new Set(cities.map((c) => c.slug));
+
+/** one CTA button's destination: default, a supported lead intent, or a
+    validated internal path — the closed world sanitizeHoodCta enforces */
+function CtaActionField({
+  label,
+  action,
+  onAction,
+}: {
+  label: string;
+  action?: string;
+  onAction: (a: string | undefined) => void;
+}) {
+  const isPath = !!action && !action.startsWith("intent:");
+  return (
+    <>
+      <Field label={label}>
+        <select
+          value={isPath ? "__path" : (action ?? "")}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "__path") onAction("/homes");
+            else onAction(v || undefined);
+          }}
+          style={selStyle}
+        >
+          <option value="">Default action</option>
+          {INTENT_KEYS.map((k) => (
+            <option key={k} value={`intent:${k}`}>Lead: {INTENTS[k].cta}</option>
+          ))}
+          <option value="__path">Internal link…</option>
+        </select>
+      </Field>
+      {isPath && (
+        <Field label="INTERNAL PATH">
+          <input value={action} onChange={(e) => onAction(e.target.value)} placeholder="/homes · /land · /city/frisco" style={inputStyle} />
+          {!isAllowedCtaAction(action ?? "", CITY_SLUG_SET) && (
+            <div className="font-mono" style={{ marginTop: 4, fontSize: 9.5, color: ORANGE_DARK, fontWeight: 700 }}>
+              NOT AN ALLOWED DESTINATION — allowed: /, /homes, /land, /new-builds, /how-we-research, /city/&lt;city&gt;[/community], /#anchor. The save will be refused.
+            </div>
+          )}
+        </Field>
+      )}
+    </>
+  );
+}
+
+/** Amendment 2: the page-specific conversion-band settings. Everything is
+    optional; leaving a field empty keeps the code default, and clearing all
+    fields removes the override entirely (byte-for-byte code CTA). */
+function HoodCtaPanel({
+  value,
+  isTemplate,
+  onChange,
+}: {
+  value: HoodCtaSettings | null;
+  isTemplate: boolean;
+  onChange: (next: HoodCtaSettings | null) => void;
+}) {
+  const v = value ?? {};
+  const set = (patch: Partial<Record<keyof HoodCtaSettings, string | boolean | undefined>>) => {
+    const next = { ...v, ...patch } as HoodCtaSettings;
+    for (const k of Object.keys(next) as (keyof HoodCtaSettings)[]) {
+      const val = next[k];
+      if (val === "" || val === undefined || val === false) delete next[k];
+    }
+    onChange(Object.keys(next).length ? next : null);
+  };
+  return (
+    <div style={{ marginTop: 18, borderTop: `1.5px solid rgba(29,25,19,.25)`, paddingTop: 12 }}>
+      <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".16em", color: ORANGE_DARK }}>
+        THIS PAGE&rsquo;S CTA {value ? "· OVERRIDDEN" : "· CODE DEFAULT"}
+      </div>
+      <p style={{ fontSize: 11.5, lineHeight: 1.6, color: "rgba(29,25,19,.65)", margin: "6px 0 0" }}>
+        Empty fields keep the code CTA. Destinations are limited to supported lead actions and validated internal
+        paths. Changes appear on the canvas after SAVE DRAFT.
+        {isTemplate && (
+          <strong style={{ color: ORANGE_DARK }}> You are editing the SHARED TEMPLATE — this CTA would apply to EVERY community page without its own override.</strong>
+        )}
+      </p>
+      <Field label="KICKER">
+        <input value={v.kicker ?? ""} maxLength={60} onChange={(e) => set({ kicker: e.target.value })} placeholder="(code default)" style={inputStyle} />
+      </Field>
+      <Field label="HEADLINE">
+        <input value={v.heading ?? ""} maxLength={120} onChange={(e) => set({ heading: e.target.value })} placeholder="(code default)" style={inputStyle} />
+      </Field>
+      <Field label="SUPPORTING COPY">
+        <textarea value={v.body ?? ""} maxLength={400} rows={3} onChange={(e) => set({ body: e.target.value })} placeholder="(code default)" style={{ ...inputStyle, resize: "vertical" }} />
+      </Field>
+      <Field label="PRIMARY BUTTON LABEL">
+        <input value={v.primaryLabel ?? ""} maxLength={40} onChange={(e) => set({ primaryLabel: e.target.value })} placeholder="(code default)" style={inputStyle} />
+      </Field>
+      <CtaActionField label="PRIMARY BUTTON ACTION" action={v.primaryAction} onAction={(a) => set({ primaryAction: a })} />
+      <Field label="SECONDARY BUTTON">
+        <select value={v.hideSecondary ? "hidden" : "shown"} onChange={(e) => set({ hideSecondary: e.target.value === "hidden" ? true : undefined })} style={selStyle}>
+          <option value="shown">Shown</option>
+          <option value="hidden">Removed</option>
+        </select>
+      </Field>
+      {!v.hideSecondary && (
+        <>
+          <Field label="SECONDARY BUTTON LABEL">
+            <input value={v.secondaryLabel ?? ""} maxLength={40} onChange={(e) => set({ secondaryLabel: e.target.value })} placeholder="(code default)" style={inputStyle} />
+          </Field>
+          <CtaActionField label="SECONDARY BUTTON ACTION" action={v.secondaryAction} onAction={(a) => set({ secondaryAction: a })} />
+        </>
+      )}
+      {value && (
+        <button type="button" className="font-mono" onClick={() => onChange(null)} style={{ ...btn(false, true), marginTop: 12 }}>
+          REMOVE OVERRIDE — BACK TO THE CODE CTA
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------ hood gallery order (A3) */
+/** Reorders (and selects among) the APPROVED gallery frames for THIS page.
+    Ordering is all this stores — photos, approval, metadata, and licensing
+    live in the Photo Desk and are never bypassed here. */
+function HoodGalleryPanel({
+  routeKey,
+  order,
+  onChange,
+}: {
+  /** "city/slug" — the neighborhood entity key */
+  routeKey: string;
+  order: string[] | null;
+  onChange: (order: string[] | null) => void;
+}) {
+  const [slots, setSlots] = useState<GallerySlotInfo[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const j = await (await fetch(`/api/admin/editor/pick-photos?entity=neighborhood&key=${encodeURIComponent(routeKey)}`)).json();
+        if (alive && j.ok) setSlots((j.gallery as GallerySlotInfo[]) ?? []);
+      } catch {
+        if (alive) setSlots([]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [routeKey]);
+  const approved = (slots ?? []).filter((g) => g.asset);
+  const approvedKeys = approved.map((g) => g.slotKey);
+  const bySlot = new Map(approved.map((g) => [g.slotKey, g]));
+  const effective = (order ?? approvedKeys).filter((k) => approvedKeys.includes(k));
+  const hiddenKeys = approvedKeys.filter((k) => !effective.includes(k));
+  // identity order (or nothing left) → no override stored
+  const commit = (next: string[]) => onChange(!next.length || stableStr(next) === stableStr(approvedKeys) ? null : next);
+  const move = (i: number, dir: -1 | 1) => {
+    const next = [...effective];
+    const j = i + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[i], next[j]] = [next[j], next[i]];
+    commit(next);
+  };
+  return (
+    <div style={{ marginTop: 18, borderTop: `1.5px solid rgba(29,25,19,.25)`, paddingTop: 12 }}>
+      <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".16em", color: ORANGE_DARK }}>
+        GALLERY ORDER — THIS PAGE ONLY {order ? "· CUSTOM" : "· DEFAULT"}
+      </div>
+      <p style={{ fontSize: 11.5, lineHeight: 1.6, color: "rgba(29,25,19,.65)", margin: "6px 0 0" }}>
+        Approved Photo Desk frames only. Photos, approvals, and metadata are managed in the Studio&rsquo;s PHOTOS tab —
+        this panel only picks the order. Changes appear on the canvas after SAVE DRAFT.
+      </p>
+      {slots === null ? (
+        <div className="font-mono" style={{ fontSize: 10, marginTop: 8 }}>CHECKING THE PHOTO DESK…</div>
+      ) : approved.length === 0 ? (
+        <div className="font-mono" style={{ fontSize: 10, lineHeight: 1.8, marginTop: 8, color: "rgba(29,25,19,.6)" }}>
+          NO APPROVED GALLERY PHOTOS YET — the section stays hidden on the public page. Add and approve photos via the
+          Studio&rsquo;s PHOTOS tab / Photo Desk.
+        </div>
+      ) : (
+        <>
+          {effective.map((k, i) => {
+            const g = bySlot.get(k)!;
+            return (
+              <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, border: "1.5px solid rgba(29,25,19,.3)", borderRadius: 8, padding: 6, marginTop: 6, background: "#fff" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={g.asset!.public_image_url} alt={g.asset!.alt_text} style={{ width: 52, height: 40, objectFit: "cover", borderRadius: 6, border: `1px solid ${INK}` }} />
+                <span className="font-mono" style={{ flex: 1, fontSize: 9.5, lineHeight: 1.5 }}>
+                  {k.toUpperCase()}
+                  <br />
+                  <span style={{ color: "rgba(29,25,19,.55)" }}>{g.asset!.attribution_text.slice(0, 34)}</span>
+                </span>
+                <button type="button" title="Move up" onClick={() => move(i, -1)} disabled={i === 0} style={{ ...iconBtn(), opacity: i === 0 ? 0.35 : 1 }}>↑</button>
+                <button type="button" title="Move down" onClick={() => move(i, 1)} disabled={i === effective.length - 1} style={{ ...iconBtn(), opacity: i === effective.length - 1 ? 0.35 : 1 }}>↓</button>
+                <button
+                  type="button"
+                  title="Remove from this page's gallery (the photo stays approved in the Photo Desk)"
+                  onClick={() => {
+                    const next = effective.filter((x) => x !== k);
+                    if (!next.length) onChange(null);
+                    else onChange(next);
+                  }}
+                  style={iconBtn()}
+                >
+                  ✕
+                </button>
+              </div>
+            );
+          })}
+          {hiddenKeys.length > 0 && (
+            <div className="font-mono" style={{ fontSize: 9.5, marginTop: 8, color: "rgba(29,25,19,.6)" }}>
+              NOT SHOWN:{" "}
+              {hiddenKeys.map((k) => (
+                <button key={k} type="button" className="font-mono" onClick={() => onChange([...effective, k])} style={{ ...btn(), padding: "3px 8px", fontSize: 9.5, marginRight: 4 }}>
+                  + {k.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          )}
+          {order && (
+            <button type="button" className="font-mono" onClick={() => onChange(null)} style={{ ...btn(), marginTop: 10 }}>
+              RESET TO DEFAULT ORDER (ALL APPROVED)
+            </button>
+          )}
+          <div className="font-mono" style={{ fontSize: 9, lineHeight: 1.7, marginTop: 8, color: "rgba(29,25,19,.5)" }}>
+            Removing every frame resets to the default order — hide the SECTION to hide the whole gallery.
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------- hood tagline panel (A4) */
+/** The tagline is a TEXT-typed region ({value} document) — it is edited
+    HERE, from the panel, while the hero is selected on the canvas. It is
+    deliberately NOT an inline-editable region: a rich-doc commit would
+    corrupt its typed shape. */
+function HoodTaglinePanel({
+  route,
+  pending,
+  onChange,
+}: {
+  route: string;
+  pending: string | null;
+  onChange: (v: string) => void;
+}) {
+  const [info, setInfo] = useState<{ current: string | null; status: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const j = await (await fetch(`/api/admin/editor/doc?route=${encodeURIComponent(route)}&region=tagline`)).json();
+        if (!alive) return;
+        const draftVal = (j.draft?.content_json as { attrs?: { value?: string } } | undefined)?.attrs?.value ?? null;
+        const pubVal = (j.published?.content_json as { attrs?: { value?: string } } | undefined)?.attrs?.value ?? null;
+        setInfo({
+          current: draftVal ?? pubVal,
+          status: draftVal ? "draft override" : pubVal ? "published override" : "code formula — no override yet",
+        });
+      } catch {
+        if (alive) setInfo({ current: null, status: "store unavailable — the page renders its code formula" });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [route]);
+  return (
+    <div style={{ marginTop: 18, borderTop: `1.5px solid rgba(29,25,19,.25)`, paddingTop: 12 }}>
+      <div className="font-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".16em", color: ORANGE_DARK }}>
+        TAGLINE — THIS PAGE ONLY
+      </div>
+      <p style={{ fontSize: 11.5, lineHeight: 1.6, color: "rgba(29,25,19,.65)", margin: "6px 0 0" }}>
+        The italic line under the H1. Saved with SAVE DRAFT (max 300 chars); the canvas shows it after the save.
+        Source: {info ? info.status : "loading…"}
+      </p>
+      <Field label="TAGLINE">
+        <textarea
+          value={pending ?? info?.current ?? ""}
+          maxLength={300}
+          rows={2}
+          placeholder={info?.status.startsWith("code formula") ? "(type to override the formula tagline)" : ""}
+          onChange={(e) => onChange(e.target.value)}
+          style={{ ...inputStyle, resize: "vertical" }}
+        />
+      </Field>
+      {pending !== null && (
+        <div className="font-mono" style={{ marginTop: 4, fontSize: 9.5, color: ORANGE_DARK, fontWeight: 700 }}>
+          UNSAVED — SAVE DRAFT persists it{pending.trim() ? "" : " (empty is refused; use the CONTENT desk to restore the fallback)"}
+        </div>
       )}
     </div>
   );
@@ -2370,6 +2793,7 @@ export function PickPhotoModal({
   onRefresh,
   entity = "homepage",
   displayName,
+  slotKey,
 }: {
   /** homepage: a city slug · neighborhood: "city/slug" */
   city: string;
@@ -2378,9 +2802,13 @@ export function PickPhotoModal({
   onRefresh: () => void;
   entity?: "homepage" | "neighborhood";
   displayName?: string;
+  /** neighborhood only: "hero" (default) or a "gallery-<i>" slot */
+  slotKey?: string;
 }) {
   const c = bySlug[entity === "neighborhood" ? city.split("/")[0] : city];
   const shown = displayName ?? c?.name ?? city;
+  const galleryIdx = slotKey?.startsWith("gallery-") ? Number(slotKey.slice(8)) : null;
+  const slotWord = entity === "neighborhood" ? (galleryIdx !== null ? `GALLERY ${galleryIdx + 1}` : "HERO") : "HOMEPAGE-PICK";
   const [showUpload, setShowUpload] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [attr, setAttr] = useState("PHOTO: DISCOVER DFW");
@@ -2398,7 +2826,7 @@ export function PickPhotoModal({
     try {
       let slotId = info?.slot?.id;
       if (!slotId) {
-        const j = await (await fetch("/api/admin/editor/pick-photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entity === "neighborhood" ? { action: "ensure-slot", entity, key: city, name: displayName } : { action: "ensure-slot", city }) })).json();
+        const j = await (await fetch("/api/admin/editor/pick-photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entity === "neighborhood" ? { action: "ensure-slot", entity, key: city, name: displayName, slotKey: slotKey ?? "hero" } : { action: "ensure-slot", city }) })).json();
         if (!j.ok) throw new Error(String(j.error ?? "Could not create the photo slot"));
         slotId = j.slot.id as string;
       }
@@ -2423,7 +2851,7 @@ export function PickPhotoModal({
   };
 
   return (
-    <Modal title={`${entity === "neighborhood" ? "COMMUNITY HERO PHOTO" : "HOMEPAGE PICK PHOTO"} — ${shown.toUpperCase()}`} onClose={onClose} wide>
+    <Modal title={`${entity === "neighborhood" ? (galleryIdx !== null ? `COMMUNITY GALLERY PHOTO ${galleryIdx + 1}` : "COMMUNITY HERO PHOTO") : "HOMEPAGE PICK PHOTO"} — ${shown.toUpperCase()}`} onClose={onClose} wide>
       {!info ? (
         <div className="font-mono" style={{ fontSize: 11 }}>LOADING THE PHOTO DESK RECORD…</div>
       ) : (
@@ -2454,7 +2882,7 @@ export function PickPhotoModal({
             </div>
           ) : (
             <div className="font-mono" style={{ fontSize: 11, lineHeight: 1.9, background: "rgba(193,62,23,.08)", border: `1.5px solid ${ORANGE_DARK}`, borderRadius: 10, padding: "12px 14px", color: ORANGE_DARK }}>
-              NO APPROVED {entity === "neighborhood" ? "HERO" : "HOMEPAGE-PICK"} PHOTO FOR {shown.toUpperCase()}.
+              NO APPROVED {slotWord} PHOTO FOR {shown.toUpperCase()}.
               <br />Upload one below (it becomes a PENDING candidate) or research/approve in the Photo Desk. A lineup with this city can be drafted but never published until an asset is approved.
             </div>
           )}

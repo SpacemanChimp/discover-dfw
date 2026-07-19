@@ -3,6 +3,7 @@ import { draftMode } from "next/headers";
 import { getAdminUser } from "@/lib/admin";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { pageByRoute } from "@/lib/editor/registry";
+import { activeCommunityDraftId } from "@/lib/editor/api";
 import { BUILDER_COOKIE } from "@/lib/editor/builder-mode";
 
 /* Preview Draft — enables Next.js Draft Mode for THIS browser only, after
@@ -38,11 +39,20 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const route = url.searchParams.get("route") ?? "";
   const page = pageByRoute(route);
+  let dest = page?.route ?? route;
   // admin-created pages live in editor_pages, not the code registry
   if (!page && !(await customPageExists(route))) {
-    return NextResponse.json({ ok: false, error: "Unknown route" }, { status: 400 });
+    // Community Studio: a hood route backed by an active draft has NO public
+    // page yet — its canvas is the admin-gated private preview (which renders
+    // the identical HoodPageView with the drafted layout/region documents)
+    const db = getSupabaseAdmin();
+    const draftId = db ? await activeCommunityDraftId(db, route) : null;
+    if (!draftId) return NextResponse.json({ ok: false, error: "Unknown route" }, { status: 400 });
+    // the explicit bb param keeps the CANVAS the only builder-marked render:
+    // the studio's plain preview iframes hit the page directly (no param) and
+    // keep the private-preview banner even while the __bb cookie is set
+    dest = `/admin/editor/community-preview/${draftId}${url.searchParams.get("builder") === "1" ? "?bb=1" : ""}`;
   }
-  const dest = page?.route ?? route;
 
   (await draftMode()).enable();
   const target = new URL(dest, req.url);

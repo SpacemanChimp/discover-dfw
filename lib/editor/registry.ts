@@ -239,6 +239,23 @@ export function regionDef(route: string, regionKey: string): RegionDef | undefin
   return pageByRoute(route)?.regions.find((r) => r.key === regionKey);
 }
 
+/** the region contract for a NOT-YET-EXPORTED community draft page — the
+    union of both hood variants (nb + regular), so a draft can hold any of
+    the standard page regions before the dataset row exists. The exporters
+    still gate what ships; these are workspace documents only. */
+const DRAFT_HOOD_REGIONS: Record<string, RegionDef> = {
+  tagline: { key: "tagline", label: "Tagline", contentType: "text", allowImages: false, seoEditable: false, fallbackSource: "contentFor() formula (code)" },
+  intro: rich("intro", "Introduction", "contentFor() formula (code)", { images: true, seo: true }),
+  faq: { key: "faq", label: "FAQs", contentType: "faq", allowImages: false, seoEditable: false, fallbackSource: "contentFor() formula (code)" },
+  homes: rich("homes", "Homes & real-estate copy", "contentFor() formula (code)"),
+  amenities: rich("amenities", "Amenities (bullet list)", "contentFor() formula (code)"),
+  "buyer-notes": rich("buyer-notes", "Buyer notes (bullet list)", "contentFor() formula (code)"),
+};
+
+export function draftHoodRegionDef(regionKey: string): RegionDef | undefined {
+  return DRAFT_HOOD_REGIONS[regionKey];
+}
+
 /** the section contract a route's __layout document is validated against:
     the route's own template sections, or — for individual hood/community
     pages (page-specific THIS-PAGE-ONLY overrides) — the shared hood
