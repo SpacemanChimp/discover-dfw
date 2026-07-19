@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
-import { pageByRoute, regionDef } from "@/lib/editor/registry";
-import { editorTag } from "@/lib/editor/overrides";
+import { regionDef } from "@/lib/editor/registry";
+import { TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
+import { revalidateEditorTarget } from "@/lib/editor/revalidate";
 
-/* Roll Back — republish an earlier version's content as a NEW version
-   (append-only history), then revalidate. Atomic in the RPC. */
+/* Roll Back — republish an earlier version's content/layout as a NEW
+   version (append-only history), then revalidate the affected surfaces.
+   Atomic in the RPC. Works for content regions, page/template layouts,
+   and the navigation document alike. */
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +19,27 @@ export async function POST(req: Request) {
   if (body instanceof NextResponse) return body;
 
   const route = String(body.route ?? "");
-  const def = regionDef(route, String(body.regionKey ?? ""));
-  const page = pageByRoute(route);
-  if (!def || !page) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+  const regionKey = String(body.regionKey ?? "");
+  const isLayout = regionKey === "__layout";
+  const isNav = regionKey === "nav" && route === "__site";
+
+  if (isLayout) {
+    if (!TEMPLATE_SECTIONS[route]) {
+      if (!/^\/[a-z0-9-]+$/.test(route)) return NextResponse.json({ ok: false, error: "Unknown layout target" }, { status: 400 });
+      const { data } = await ctx.db.from("editor_pages").select("slug, status").eq("slug", route.slice(1)).maybeSingle();
+      if (!data) return NextResponse.json({ ok: false, error: "Unknown page" }, { status: 400 });
+      if (data.status !== "published") {
+        return NextResponse.json({ ok: false, error: "Publish the page before rolling back its layout" }, { status: 400 });
+      }
+    }
+  } else if (!isNav) {
+    const def = regionDef(route, regionKey);
+    if (!def) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+  }
 
   const { data, error } = await ctx.db.rpc("editor_rollback", {
     p_route: route,
-    p_region_key: body.regionKey,
+    p_region_key: regionKey,
     p_target_version_no: Number(body.targetVersionNo),
     p_admin_email: ctx.admin.email,
   });
@@ -32,15 +48,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
-  let revalidated = true;
-  let revalidateError: string | null = null;
-  try {
-    revalidateTag(editorTag(route));
-    for (const p of page.revalidatePaths) revalidatePath(p);
-  } catch (e) {
-    revalidated = false;
-    revalidateError = e instanceof Error ? e.message : String(e);
-  }
-
+  const { revalidated, revalidateError } = await revalidateEditorTarget(ctx.db, route);
   return NextResponse.json({ ok: true, publishedVersion: data, revalidated, revalidateError });
 }

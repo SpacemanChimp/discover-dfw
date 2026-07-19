@@ -9,7 +9,7 @@
    anything script-shaped is rejected — client validation is advisory,
    THIS module is the contract. */
 
-export type ContentType = "richtext" | "text" | "faq";
+export type ContentType = "richtext" | "text" | "faq" | "layout" | "nav";
 
 export interface PMNode {
   type: string;

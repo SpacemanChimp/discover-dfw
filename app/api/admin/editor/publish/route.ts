@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
 import { pageByRoute, regionDef } from "@/lib/editor/registry";
 import { sanitizeContent, validateClaims, validateSeo } from "@/lib/editor/doc";
-import { editorTag } from "@/lib/editor/overrides";
+import { sanitizeLayout, sanitizeNav, TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
+import { cities } from "@/lib/dfw-data";
+import { revalidateEditorTarget } from "@/lib/editor/revalidate";
 
 /* Publish — the ONLY action that changes what public visitors see.
-   1. Re-check admin auth (gate).  2. Re-validate the complete stored
-   draft server-side (strict: image alt required, claims linter, SEO
-   rules).  3. Atomic RPC (row locks, audit event inside the
-   transaction).  4. Revalidate the exact public path + override cache
-   tag.  Revalidation failure is REPORTED, never hidden — the desk shows
-   a warning with the audited heal action. */
+   1. Re-check admin auth (gate).  2. Re-validate the COMPLETE stored
+   draft server-side, strictly (image alt required, claims linter, SEO
+   rules; layouts re-checked against their template's required/locked
+   sections and H1 rules).  3. Atomic RPC — editor_publish for regions and
+   template/static layouts, editor_publish_page for admin-created pages
+   (layout + status flip in one transaction).  4. Revalidate exactly the
+   affected surfaces.  Shared-template publishes change EVERY page under
+   the template and therefore require the typed confirmation
+   "PUBLISH TEMPLATE" in the request. Revalidation failure is REPORTED,
+   never hidden — the desk shows the audited Heal action. */
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +24,8 @@ interface Body {
   route: string;
   regionKey: string;
   versionNo: number;
+  /** required for template:* routes: the exact string "PUBLISH TEMPLATE" */
+  confirmText?: string;
 }
 
 export async function POST(req: Request) {
@@ -29,17 +36,41 @@ export async function POST(req: Request) {
   if (body instanceof NextResponse) return body;
 
   const route = String(body.route ?? "");
-  const def = regionDef(route, String(body.regionKey ?? ""));
-  const page = pageByRoute(route);
-  if (!def || !page) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+  const regionKey = String(body.regionKey ?? "");
+  const isLayout = regionKey === "__layout";
+  const isNav = regionKey === "nav" && route === "__site";
+  const isTemplateRoute = route.startsWith("template:");
 
-  // load the stored draft — publish validates what is IN THE STORE, not a
-  // client payload
+  // shared-template guard: an explicit typed confirmation, checked FIRST
+  if (isTemplateRoute) {
+    if (body.confirmText !== "PUBLISH TEMPLATE") {
+      return NextResponse.json(
+        { ok: false, error: 'Publishing a shared template changes EVERY page that uses it — type "PUBLISH TEMPLATE" to confirm.' },
+        { status: 428 }
+      );
+    }
+  }
+
+  // page/custom resolution
+  let customPage: { slug: string; status: string } | null = null;
+  if (isLayout && !TEMPLATE_SECTIONS[route]) {
+    if (!/^\/[a-z0-9-]+$/.test(route)) return NextResponse.json({ ok: false, error: "Unknown layout target" }, { status: 400 });
+    const { data } = await ctx.db.from("editor_pages").select("slug, status").eq("slug", route.slice(1)).maybeSingle();
+    if (!data) return NextResponse.json({ ok: false, error: "Unknown page" }, { status: 400 });
+    customPage = data;
+  } else if (!isLayout && !isNav) {
+    const def = regionDef(route, regionKey);
+    if (!def || def.contentType === "layout" || def.contentType === "nav") {
+      return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+    }
+  }
+
+  // load the stored draft — publish validates what is IN THE STORE
   const { data: doc, error: dErr } = await ctx.db
     .from("editor_documents")
     .select("id, draft_version_id")
     .eq("route", route)
-    .eq("region_key", body.regionKey)
+    .eq("region_key", regionKey)
     .maybeSingle();
   if (dErr) {
     if (migrationMissing(dErr.message)) return migration503();
@@ -61,63 +92,88 @@ export async function POST(req: Request) {
     );
   }
 
-  // strict publication validation
-  const s = sanitizeContent(def.contentType, draft.content_json, {
-    allowImages: def.allowImages,
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    requireImageAlt: true,
-  });
-  const errors = [...s.errors, ...validateClaims(s.text)];
-  if (def.seoEditable && (draft.seo_title || draft.seo_description)) {
-    // exact-duplicate check against every OTHER published override
-    const { data: others } = await ctx.db
-      .from("editor_versions")
-      .select("seo_title, seo_description, document_id, editor_documents!inner(route, region_key, published_version_id)")
-      .eq("status", "published")
-      .not("seo_title", "is", null);
-    const rows = (others ?? []).filter((o) => {
-      const d = o.editor_documents as unknown as { route: string; region_key: string };
-      return !(d.route === route && d.region_key === body.regionKey);
+  /* ---- strict publication validation per family ---- */
+  const errors: string[] = [];
+  if (isLayout) {
+    const sections = TEMPLATE_SECTIONS[route];
+    const s = sanitizeLayout(draft.content_json, {
+      pageKind: sections ? "template" : "custom",
+      sections,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      requireImageAlt: true,
+      citySlugs: cities.map((c) => c.slug),
     });
-    errors.push(
-      ...validateSeo(draft.seo_title, draft.seo_description, {
-        titles: rows.map((o) => o.seo_title ?? "").filter(Boolean),
-        descriptions: rows.map((o) => o.seo_description ?? "").filter(Boolean),
-      })
-    );
+    errors.push(...s.errors, ...validateClaims(s.ok ? s.text : String(draft.content_text ?? "")));
+  } else if (isNav) {
+    const { data: pages } = await ctx.db.from("editor_pages").select("slug").eq("status", "published");
+    const s = sanitizeNav(draft.content_json, { publishedPageSlugs: (pages ?? []).map((p) => p.slug) });
+    errors.push(...s.errors);
+  } else {
+    const def = regionDef(route, regionKey)!;
+    const s = sanitizeContent(def.contentType, draft.content_json, {
+      allowImages: def.allowImages,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      requireImageAlt: true,
+    });
+    errors.push(...s.errors, ...validateClaims(s.text));
+    if (def.seoEditable && (draft.seo_title || draft.seo_description)) {
+      const { data: others } = await ctx.db
+        .from("editor_versions")
+        .select("seo_title, seo_description, editor_documents!inner(route, region_key)")
+        .eq("status", "published")
+        .not("seo_title", "is", null);
+      const rows = (others ?? []).filter((o) => {
+        const d = o.editor_documents as unknown as { route: string; region_key: string };
+        return !(d.route === route && d.region_key === regionKey);
+      });
+      errors.push(
+        ...validateSeo(draft.seo_title, draft.seo_description, {
+          titles: rows.map((o) => o.seo_title ?? "").filter(Boolean),
+          descriptions: rows.map((o) => o.seo_description ?? "").filter(Boolean),
+        })
+      );
+    }
   }
   if (errors.length) return NextResponse.json({ ok: false, errors }, { status: 422 });
 
-  const { data, error } = await ctx.db.rpc("editor_publish", {
-    p_route: route,
-    p_region_key: body.regionKey,
-    p_version_no: draft.version_no,
-    p_admin_email: ctx.admin.email,
-  });
-  if (error) {
-    if (migrationMissing(error.message)) return migration503();
-    const conflict = /version conflict/i.test(error.message);
-    return NextResponse.json({ ok: false, error: error.message }, { status: conflict ? 409 : 500 });
+  /* ---- atomic publish ---- */
+  let published: number | null = null;
+  if (customPage) {
+    const { data, error } = await ctx.db.rpc("editor_publish_page", {
+      p_slug: customPage.slug,
+      p_version_no: draft.version_no,
+      p_admin_email: ctx.admin.email,
+    });
+    if (error) {
+      if (migrationMissing(error.message)) return migration503();
+      return NextResponse.json({ ok: false, error: error.message }, { status: /version conflict/i.test(error.message) ? 409 : 500 });
+    }
+    published = data as number;
+  } else {
+    const { data, error } = await ctx.db.rpc("editor_publish", {
+      p_route: route,
+      p_region_key: regionKey,
+      p_version_no: draft.version_no,
+      p_admin_email: ctx.admin.email,
+    });
+    if (error) {
+      if (migrationMissing(error.message)) return migration503();
+      return NextResponse.json({ ok: false, error: error.message }, { status: /version conflict/i.test(error.message) ? 409 : 500 });
+    }
+    published = data as number;
   }
 
-  // revalidate the exact affected route(s) — failure is reported honestly
-  let revalidated = true;
-  let revalidateError: string | null = null;
-  try {
-    revalidateTag(editorTag(route));
-    for (const p of page.revalidatePaths) revalidatePath(p);
-  } catch (e) {
-    revalidated = false;
-    revalidateError = e instanceof Error ? e.message : String(e);
-  }
+  const { revalidated, revalidateError } = await revalidateEditorTarget(ctx.db, route);
 
   return NextResponse.json({
     ok: true,
-    publishedVersion: data,
+    publishedVersion: published,
     revalidated,
     revalidateError,
     note: revalidated
-      ? `v${data} is live on ${route}`
-      : `v${data} published, but revalidation FAILED — the public page may serve stale content until you run Heal`,
+      ? isTemplateRoute
+        ? `v${published} is live on EVERY page using this template`
+        : `v${published} is live on ${route === "__site" ? "the site navigation" : route}`
+      : `v${published} published, but revalidation FAILED — the public page may serve stale content until you run Heal`,
   });
 }

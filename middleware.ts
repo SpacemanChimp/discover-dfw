@@ -54,5 +54,8 @@ export const config = {
     "/land",
     "/new-builds",
     "/how-we-research",
+    // builder-created single-segment pages (draft-preview noindex header);
+    // non-session paths short-circuit before any session work
+    "/:slug",
   ],
 };

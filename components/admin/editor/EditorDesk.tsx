@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { allPages, type PageDef, type RegionDef } from "@/lib/editor/registry";
 import { SEO_TITLE_MAX, SEO_DESC_MAX, isAllowedLinkHref, type PMNode } from "@/lib/editor/doc";
 import RichEditor, { type RichEditorHandle } from "./RichEditor";
+import VisualBuilder from "./VisualBuilder";
 
 const INK = "#1D1913";
 const CREAM = "#F6F1E6";
@@ -42,7 +43,7 @@ interface DocDetail {
   versions: VersionMeta[];
 }
 
-interface MediaItem {
+export interface MediaItem {
   id: string;
   url: string;
   alt: string;
@@ -112,6 +113,7 @@ function imagesIn(doc: unknown): { src: string; alt: string; attribution: string
 }
 
 export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: string; initialRoute?: string }) {
+  const [mode, setMode] = useState<"builder" | "content">(initialRoute ? "content" : "builder");
   const pages = useMemo(() => allPages(), []);
   const groups = useMemo(() => {
     const order = ["Homepage", "Search & editorial", "Cities", "Neighborhoods", "New-build communities", "Static & research"];
@@ -368,7 +370,31 @@ export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: s
 
   const draftImages = detail?.draft ? imagesIn(detail.draft.content_json) : [];
 
+  const modeTabs = (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 14px", borderBottom: "2px solid #1D1913", background: "#1D1913" }}>
+      {(["builder", "content"] as const).map((m) => (
+        <button key={m} type="button" onClick={() => setMode(m)} className="font-mono" style={{ border: "1.5px solid " + (mode === m ? "#F6F1E6" : "rgba(246,241,230,.35)"), borderRadius: 999, padding: "7px 16px", fontSize: 10, fontWeight: 700, letterSpacing: ".14em", cursor: "pointer", background: mode === m ? "#F6F1E6" : "transparent", color: mode === m ? "#1D1913" : "rgba(246,241,230,.85)" }}>
+          {m === "builder" ? "VISUAL BUILDER" : "CONTENT / SEO"}
+        </button>
+      ))}
+      <span className="font-mono" style={{ marginLeft: "auto", fontSize: 9, letterSpacing: ".14em", color: "rgba(246,241,230,.55)" }}>
+        {mode === "builder" ? "PAGE STRUCTURE & BLOCKS" : "FOCUSED COPY, FAQS & SEO — THE 0018 DESK"}
+      </span>
+    </div>
+  );
+
+  if (mode === "builder") {
+    return (
+      <div>
+        {modeTabs}
+        <VisualBuilder adminEmail={adminEmail} />
+      </div>
+    );
+  }
+
   return (
+    <div>
+    {modeTabs}
     <div style={{ display: "grid", gridTemplateColumns: "290px 1fr 300px", gap: 0, minHeight: "calc(100vh - 46px)" }} className="ed-desk">
       {/* ------------------------------------------------ left: navigator */}
       <aside style={{ borderRight: `2px solid ${INK}`, background: CARD, overflowY: "auto", maxHeight: "calc(100vh - 46px)", position: "sticky", top: 0 }}>
@@ -402,7 +428,7 @@ export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: s
               {g.pages.map((p) => (
                 <div key={p.route} style={{ marginBottom: 2 }}>
                   <div style={{ fontSize: 12.5, fontWeight: 700, padding: "6px 8px 2px" }}>{p.title}</div>
-                  {p.regions.map((r) => {
+                  {p.regions.filter((r) => r.contentType !== "layout" && r.contentType !== "nav").map((r) => {
                     const active = route === p.route && regionKey === r.key;
                     return (
                       <button
@@ -796,6 +822,7 @@ export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: s
         </Modal>
       )}
     </div>
+    </div>
   );
 }
 
@@ -822,7 +849,7 @@ function Modal({ title, children, onClose, wide }: { title: string; children: Re
 }
 
 /* ------------------------------------------------------------------ */
-function MediaPicker({
+export function MediaPicker({
   lists,
   onPick,
   onUploaded,

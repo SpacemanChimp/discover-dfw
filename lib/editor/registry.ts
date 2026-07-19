@@ -18,7 +18,9 @@ export type PageGroup =
   | "Cities"
   | "Neighborhoods"
   | "New-build communities"
-  | "Static & research";
+  | "Static & research"
+  | "Templates"
+  | "Site";
 
 export interface RegionDef {
   key: string;
@@ -141,12 +143,67 @@ function hoodPage(c: City, h: { slug: string; name: string; newBuild?: unknown }
   };
 }
 
+/** Visual-Builder layout region — present on every builder-capable page.
+    The CONTENT desk hides it; the builder edits it. */
+const layoutRegion: RegionDef = {
+  key: "__layout",
+  label: "Page layout (Visual Builder)",
+  contentType: "layout",
+  allowImages: true,
+  seoEditable: false,
+  fallbackSource: "code-owned section order",
+};
+
+/** shared dynamic templates — one layout document drives every page using
+    the template. Publishing requires the typed confirmation. */
+const TEMPLATE_PAGES: PageDef[] = [
+  {
+    route: "template:city",
+    title: "City template — ALL 90 city reports",
+    group: "Templates",
+    revalidatePaths: ["/city/[slug]"],
+    regions: [layoutRegion],
+  },
+  {
+    route: "template:hood",
+    title: "Hood template — ALL neighborhood & community pages",
+    group: "Templates",
+    revalidatePaths: ["/city/[slug]/[hood]"],
+    regions: [layoutRegion],
+  },
+];
+
+/** the site navigation document (independently versioned + audited) */
+const SITE_NAV_PAGE: PageDef = {
+  route: "__site",
+  title: "Site navigation",
+  group: "Site",
+  revalidatePaths: ["/", "/how-we-research"],
+  regions: [
+    {
+      key: "nav",
+      label: "Navigation (displayed + hidden)",
+      contentType: "nav",
+      allowImages: false,
+      seoEditable: false,
+      fallbackSource: "components/Nav.tsx LINKS (code)",
+    },
+  ],
+};
+
 let _pages: PageDef[] | null = null;
 let _byRoute: Map<string, PageDef> | null = null;
 
 export function allPages(): PageDef[] {
   if (_pages) return _pages;
-  const out: PageDef[] = [HOME, LAND, NEW_BUILDS, HOW_WE_RESEARCH];
+  const out: PageDef[] = [
+    { ...HOME, regions: [...HOME.regions, layoutRegion] },
+    { ...LAND, regions: [...LAND.regions, layoutRegion] },
+    { ...NEW_BUILDS, regions: [...NEW_BUILDS.regions, layoutRegion] },
+    { ...HOW_WE_RESEARCH, regions: [...HOW_WE_RESEARCH.regions, layoutRegion] },
+    ...TEMPLATE_PAGES,
+    SITE_NAV_PAGE,
+  ];
   for (const c of cities) {
     out.push(cityPage(c));
     for (const h of hoodsForCity(c)) {

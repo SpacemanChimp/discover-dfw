@@ -36,6 +36,8 @@ import ConversionDuo from "@/components/convert/ConversionDuo";
 import NewBuildCTA from "@/components/convert/NewBuildCTA";
 import { leadBackendReady } from "@/lib/convert/config";
 import { getEditorState } from "@/lib/editor/overrides";
+import { applyLayout } from "@/lib/editor/blocks-render";
+import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
 import { RichDoc, textValue, faqItems, bulletTexts } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
 
@@ -149,6 +151,9 @@ export default async function HoodPage({
      content when no override exists — and to exactly that same content if
      the override store is unreachable. */
   const ed = await getEditorState(`/city/${c.slug}/${h.slug}`);
+  // shared-template layout (Visual Builder) — null = code-owned order
+  const tpl = await getEditorState("template:hood");
+  const tplLayout = (tpl.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
   const tagline = textValue(ed.regions["tagline"]) ?? content.tagline;
   const introOv = ed.regions["intro"];
   const homesOv = ed.regions["homes"];
@@ -301,6 +306,9 @@ export default async function HoodPage({
         </ol>
       </nav>
 
+      {applyLayout(tplLayout, TEMPLATE_SECTIONS["template:hood"], {
+      hero: (
+      <>
       {/* Hero */}
       <header
         style={{
@@ -494,6 +502,10 @@ export default async function HoodPage({
         </div>
       </header>
 
+      </>
+      ),
+      vibe: (
+      <>
       {/* 01 · vibe */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
         <div
@@ -566,6 +578,10 @@ export default async function HoodPage({
         </div>
       </section>
 
+      </>
+      ),
+      body: (
+      <>
       {/* 02 · new-build resources OR real-estate character */}
       {nb ? (
         <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw 72px" }}>
@@ -820,6 +836,10 @@ export default async function HoodPage({
         </section>
       )}
 
+      </>
+      ),
+      cta: (
+      <>
       {/* Standard-neighborhood CTA keeps its place here (unchanged). New-build
           communities move their CTA below the "why buyers look here" reasons
           (see NewBuildCTA after section 03) so the buyer reads the case first
@@ -836,6 +856,10 @@ export default async function HoodPage({
         </ConvertSlot>
       )}
 
+      </>
+      ),
+      highlights: (
+      <>
       {/* 03 · highlights */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
@@ -881,6 +905,10 @@ export default async function HoodPage({
           before the ask. Shared across every new-build community. */}
       {nb && leadBackendReady() && <NewBuildCTA citySlug={c.slug} community={h.slug} />}
 
+      </>
+      ),
+      schools: (
+      <>
       {/* 04 · nearby schools — proximity context ONLY (no boundary data):
           nearest rated neighborhood campus per level, measured from the city
           centroid because hoods carry no coordinates of their own. Copy must
@@ -968,6 +996,10 @@ export default async function HoodPage({
         </section>
       )}
 
+      </>
+      ),
+      faq: (
+      <>
       {/* 05 · FAQ */}
       <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
         <div data-reveal="1" style={{ marginBottom: 30 }}>
@@ -1000,6 +1032,10 @@ export default async function HoodPage({
       {/* second CTA region removed — one CTA section per page. The builder
           tour / inventory repeat both collapsed into the single ask above. */}
 
+      </>
+      ),
+      explore: (
+      <>
       {/* 05 · keep exploring */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#1D1913", color: "#F6F1E6" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
@@ -1150,6 +1186,9 @@ export default async function HoodPage({
         </div>
       </section>
 
+      </>
+      ),
+      })}
       {/* prev / next hood */}
       <section style={{ borderTop: "2px solid #1D1913" }}>
         <div

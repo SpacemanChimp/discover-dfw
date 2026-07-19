@@ -16,7 +16,13 @@ export async function GET(req: Request) {
   const route = url.searchParams.get("route") ?? "";
   const region = url.searchParams.get("region") ?? "";
   const def = regionDef(route, region);
-  if (!def) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+  if (!def) {
+    // admin-created pages carry a __layout document without a registry entry
+    const isCustomLayout = region === "__layout" && /^\/[a-z0-9-]+$/.test(route);
+    if (!isCustomLayout) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+    const { data: pg } = await ctx.db.from("editor_pages").select("slug").eq("slug", route.slice(1)).maybeSingle();
+    if (!pg) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+  }
 
   const { data: doc, error } = await ctx.db
     .from("editor_documents")

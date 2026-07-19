@@ -3,8 +3,9 @@ import { cities } from "@/lib/dfw-data";
 import { hoodsForCity, canonicalCityForHood } from "@/lib/hoods";
 import { isLiveMls } from "@/lib/mls";
 import { SITE_URL } from "@/lib/site";
+import { getPublishedPages } from "@/lib/editor/pages";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE_URL}/how-we-research`, changeFrequency: "monthly", priority: 0.3 },
@@ -39,6 +40,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: h.newBuild ? 0.7 : 0.6,
       });
     }
+  }
+  // admin-created builder pages — PUBLISHED only (drafts stay invisible)
+  for (const p of await getPublishedPages()) {
+    entries.push({ url: `${SITE_URL}/${p.slug}`, changeFrequency: "monthly", priority: 0.5 });
   }
   return entries;
 }

@@ -17,6 +17,8 @@ import LastUpdatedStamp from "@/components/compliance/LastUpdatedStamp";
 import { getEditorState, type EditorState } from "@/lib/editor/overrides";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
+import { applyLayout } from "@/lib/editor/blocks-render";
+import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
 
 /* "/new-builds" — the new-construction surface. Reuses the Map Room's rail +
    live map + toolbar (not a second engine): the filter is locked to the exact
@@ -41,24 +43,33 @@ export default async function NewBuildsRoom({
   const pagerQs = searchFiltersToQueryString(effective);
   // EDITOR-desk overrides (intro / guide) — code content is the fallback
   const ed = await getEditorState("/new-builds");
+  const roomLayout = (ed.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
 
   if (!isLiveMls) {
     const result = await provider.searchListings(effective);
     return (
-      <Shell effective={effective} asOf={result.mlsLastUpdated} ed={ed}>
-        <HomesSplit
-          initialView={view}
-          rail={
+      <Shell asOf={result.mlsLastUpdated} ed={ed}>
+        {applyLayout(roomLayout, TEMPLATE_SECTIONS["/new-builds"], {
+          intro: <RoomIntro ed={ed} />,
+          search: (
             <>
-              <ListingResultsRail result={result} statuses={effective.statuses} newBuilds />
-              <Pager total={result.total} page={result.page} pageSize={result.pageSize} basePath="/new-builds" qs={pagerQs} />
+              <SearchToolbar query={effective} propertyTypes={PROPERTY_TYPE_OPTIONS} basePath="/new-builds" lockNewBuilds />
+              <HomesSplit
+                initialView={view}
+                rail={
+                  <>
+                    <ListingResultsRail result={result} statuses={effective.statuses} newBuilds />
+                    <Pager total={result.total} page={result.page} pageSize={result.pageSize} basePath="/new-builds" qs={pagerQs} />
+                  </>
+                }
+                map={<LiveMapPanel qs={searchFiltersToQueryString(effective)} basePath="/new-builds" />}
+              />
             </>
-          }
-          map={<LiveMapPanel qs={searchFiltersToQueryString(effective)} basePath="/new-builds" />}
-        />
-        <NewBuildDirectory />
-        <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />
-        <NewBuildCTA />
+          ),
+          directory: <NewBuildDirectory />,
+          guide: <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />,
+          cta: <NewBuildCTA />,
+        })}
         <MLSComplianceFooter asOf={result.mlsLastUpdated} />
       </Shell>
     );
@@ -72,7 +83,6 @@ export default async function NewBuildsRoom({
 
   return (
     <Shell
-      effective={effective}
       ed={ed}
       freshness={
         <Suspense fallback={null}>
@@ -80,18 +90,26 @@ export default async function NewBuildsRoom({
         </Suspense>
       }
     >
-      <HomesSplit
-        initialView={view}
-        rail={
-          <Suspense fallback={<RailSkeleton />}>
-            <RailResults resultPromise={resultPromise} qs={pagerQs} statuses={effective.statuses} />
-          </Suspense>
-        }
-        map={<LiveMapPanel qs={searchFiltersToQueryString(effective)} basePath="/new-builds" />}
-      />
-      <NewBuildDirectory />
-      <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />
-      <NewBuildCTA />
+      {applyLayout(roomLayout, TEMPLATE_SECTIONS["/new-builds"], {
+        intro: <RoomIntro ed={ed} />,
+        search: (
+          <>
+            <SearchToolbar query={effective} propertyTypes={PROPERTY_TYPE_OPTIONS} basePath="/new-builds" lockNewBuilds />
+            <HomesSplit
+              initialView={view}
+              rail={
+                <Suspense fallback={<RailSkeleton />}>
+                  <RailResults resultPromise={resultPromise} qs={pagerQs} statuses={effective.statuses} />
+                </Suspense>
+              }
+              map={<LiveMapPanel qs={searchFiltersToQueryString(effective)} basePath="/new-builds" />}
+            />
+          </>
+        ),
+        directory: <NewBuildDirectory />,
+        guide: <NewBuildEducation override={ed.regions["guide"] ? <RichDoc doc={ed.regions["guide"].json} /> : undefined} />,
+        cta: <NewBuildCTA />,
+      })}
       <Suspense fallback={<MLSComplianceFooter />}>
         <ComplianceSection resultPromise={resultPromise} />
       </Suspense>
@@ -101,13 +119,11 @@ export default async function NewBuildsRoom({
 
 /* everything above the split — nav, freshness strip, concise intro, toolbar */
 function Shell({
-  effective,
   asOf,
   freshness,
   ed,
   children,
 }: {
-  effective: SearchFilters;
   asOf?: string;
   freshness?: React.ReactNode;
   ed: EditorState;
@@ -144,26 +160,28 @@ function Shell({
         </span>
       </div>
 
-      {/* concise intro — H1 + one line, kept short so listings stay near the
-          top (no giant hero). */}
-      <div style={{ padding: "18px 4vw 6px", maxWidth: 900 }}>
-        <h1 className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(22px,2.9vw,32px)", lineHeight: 1.08 }}>
-          New Construction Homes for Sale Across Dallas–Fort Worth
-        </h1>
-        {ed.regions["intro"] ? (
-          <div style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
-            <RichDoc doc={ed.regions["intro"].json} />
-          </div>
-        ) : (
-          <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
-            Search live NTREIS new-construction listings across North Texas, then browse the master-planned communities taking
-            contracts right now. Filtered to new builds only.
-          </p>
-        )}
-      </div>
-
-      <SearchToolbar query={effective} propertyTypes={PROPERTY_TYPE_OPTIONS} basePath="/new-builds" lockNewBuilds />
       {children}
+    </div>
+  );
+}
+
+/* the H1 + intro line — a layout SECTION (required: it owns the page H1) */
+function RoomIntro({ ed }: { ed: EditorState }) {
+  return (
+    <div style={{ padding: "18px 4vw 6px", maxWidth: 900 }}>
+      <h1 className="font-serif" style={{ margin: 0, fontWeight: 900, fontSize: "clamp(22px,2.9vw,32px)", lineHeight: 1.08 }}>
+        New Construction Homes for Sale Across Dallas–Fort Worth
+      </h1>
+      {ed.regions["intro"] ? (
+        <div style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
+          <RichDoc doc={ed.regions["intro"].json} />
+        </div>
+      ) : (
+        <p style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.55, color: "rgba(29,25,19,.72)", maxWidth: 720 }}>
+          Search live NTREIS new-construction listings across North Texas, then browse the master-planned communities taking
+          contracts right now. Filtered to new builds only.
+        </p>
+      )}
     </div>
   );
 }

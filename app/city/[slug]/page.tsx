@@ -27,6 +27,8 @@ import { leadBackendReady } from "@/lib/convert/config";
 import Reveals from "@/components/Reveals";
 import TrecLinks from "@/components/TrecLinks";
 import { getEditorState } from "@/lib/editor/overrides";
+import { applyLayout } from "@/lib/editor/blocks-render";
+import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
 
@@ -111,6 +113,9 @@ export default async function CityPage({
      miss or failure, so this page can never break on the CMS's account. */
   const ed = await getEditorState(`/city/${c.slug}`);
   const introOv = ed.regions["intro"];
+  // shared-template layout (Visual Builder) — null = code-owned order
+  const tpl = await getEditorState("template:city");
+  const tplLayout = (tpl.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
 
   /* Nearest cities by actual map distance — real geographic neighbors only,
      so the "compare nearby" links are useful to a human deciding between
@@ -319,6 +324,9 @@ export default async function CityPage({
       {ed.preview && <PreviewBanner route={`/city/${c.slug}`} />}
       <CityNav slug={slug} options={options} prevSlug={prev.slug} nextSlug={next.slug} />
 
+      {applyLayout(tplLayout, TEMPLATE_SECTIONS["template:city"], {
+      hero: (
+      <>
       {/* Hero */}
       <header
         style={{
@@ -499,6 +507,10 @@ export default async function CityPage({
         </div>
       </header>
 
+      </>
+      ),
+      vibe: (
+      <>
       {/* 01 · vibe */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
         <div
@@ -549,6 +561,10 @@ export default async function CityPage({
         </div>
       </section>
 
+      </>
+      ),
+      cta: (
+      <>
       {/* The city report's ONE CTA — listing-page treatment (primary +
           one smaller secondary), after the vibe and before the numbers. */}
       {leadBackendReady() && (
@@ -562,6 +578,10 @@ export default async function CityPage({
         </ConvertSlot>
       )}
 
+      </>
+      ),
+      market: (
+      <>
       {/* 02 · market */}
       <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw 72px" }}>
         <div
@@ -640,6 +660,10 @@ export default async function CityPage({
         </div>
       </section>
 
+      </>
+      ),
+      hoods: (
+      <>
       {/* 03 · neighborhoods */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
@@ -711,6 +735,10 @@ export default async function CityPage({
         </div>
       </section>
 
+      </>
+      ),
+      schools: (
+      <>
       {/* 04 · schools */}
       <section style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
         <div
@@ -781,6 +809,10 @@ export default async function CityPage({
         </div>
       </section>
 
+      </>
+      ),
+      commutes: (
+      <>
       {/* 05 · commutes */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#1D1913", color: "#F6F1E6" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "84px 4vw" }}>
@@ -848,6 +880,10 @@ export default async function CityPage({
         </div>
       </section>
 
+      </>
+      ),
+      gallery: (
+      <>
       {/* 06 · gallery — approved frames only; the section hides entirely when
           none exist (no public "DROP PHOTO" placeholders; the Photo Desk keeps
           the missing slots). Grid is auto-fit, so 1–2 frames still compose. */}
@@ -881,6 +917,10 @@ export default async function CityPage({
         </section>
       )}
 
+      </>
+      ),
+      listings: (
+      <>
       {/* 06/07 · listings — takes 06 when the gallery is hidden so the
           visible section numbering never skips */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
@@ -1126,6 +1166,10 @@ export default async function CityPage({
       {/* the curated-homes ("a cleaner list than the entire market") ask was
           removed here — one CTA per page, and nothing replaces it */}
 
+      </>
+      ),
+      nextdoor: (
+      <>
       {/* nearby cities — real geographic neighbors, for buyers comparing
           towns; every card is a full city guide, not a doorway page */}
       <section style={{ borderTop: "2px solid #1D1913", background: "#F2EBDC" }}>
@@ -1198,6 +1242,9 @@ export default async function CityPage({
         </div>
       </section>
 
+      </>
+      ),
+      })}
       {/* prev / next */}
       <section style={{ borderTop: "2px solid #1D1913" }}>
         <div

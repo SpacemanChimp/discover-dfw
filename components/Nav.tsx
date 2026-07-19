@@ -13,7 +13,30 @@ const LINKS: { id: string; label: string; href?: string }[] = [
   { id: "about", label: "ABOUT" },
 ];
 
-export default function Nav() {
+export interface NavOverrideItem {
+  key: string;
+  label: string;
+  href: string;
+  hidden: boolean;
+}
+
+/** Published navigation-doc items → the LINKS shape. System destinations are
+    immutable (the sanitizer guarantees it); anchors keep scroll-spy ids.
+    SEARCH HOMES stays the dedicated slot. Falls back to code LINKS. */
+function linksFrom(items: NavOverrideItem[] | undefined): { id: string; label: string; href?: string }[] {
+  if (!items?.length) return LINKS;
+  const out: { id: string; label: string; href?: string }[] = [];
+  for (const it of items) {
+    if (it.hidden || it.key === "search") continue;
+    const anchor = it.href.match(/^\/#([a-z0-9-]+)$/);
+    out.push(anchor ? { id: anchor[1], label: it.label } : { id: it.key, label: it.label, href: it.href });
+  }
+  return out.length ? out : LINKS;
+}
+
+export default function Nav({ navItems }: { navItems?: NavOverrideItem[] } = {}) {
+  const LINKS_ACTIVE = linksFrom(navItems);
+  const searchLabel = navItems?.find((i) => i.key === "search")?.label ?? "SEARCH HOMES";
   const [navSec, setNavSec] = useState("");
 
   useEffect(() => {
@@ -25,7 +48,7 @@ export default function Nav() {
       },
       { rootMargin: "-35% 0px -55% 0px" }
     );
-    LINKS.forEach(({ id, href }) => {
+    LINKS_ACTIVE.forEach(({ id, href }) => {
       if (href) return; // real page link, not an on-page section
       const el = document.getElementById(id);
       if (el) io.observe(el);
@@ -66,7 +89,7 @@ export default function Nav() {
           justifyContent: "center",
         }}
       >
-        {LINKS.map(({ id, label, href }) => (
+        {LINKS_ACTIVE.map(({ id, label, href }) => (
           <Link
             key={id}
             href={href ?? `/#${id}`}
@@ -95,7 +118,7 @@ export default function Nav() {
             fontWeight: 700,
           }}
         >
-          SEARCH HOMES
+          {searchLabel}
         </Link>
       </div>
 
@@ -105,7 +128,7 @@ export default function Nav() {
         <Link href="/homes" style={{ ...chip, color: "#F6F1E6", background: "#D9481F", borderColor: "#D9481F" }}>
           SEARCH
         </Link>
-        {LINKS.map(({ id, label, href }) => (
+        {LINKS_ACTIVE.map(({ id, label, href }) => (
           <Link key={id} href={href ?? `/#${id}`} style={chip}>
             {label}
           </Link>

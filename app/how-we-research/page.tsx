@@ -5,6 +5,9 @@ import Footer from "@/components/Footer";
 import { getEditorState } from "@/lib/editor/overrides";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
+import { applyLayout } from "@/lib/editor/blocks-render";
+import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
+import { getPublishedNav } from "@/lib/editor/nav";
 
 /* "How we research" — the public methodology page the homepage trust strip
    links to. Every claim here mirrors what the site already labels in place
@@ -44,14 +47,16 @@ const SOURCES: [string, string][] = [
 
 export default async function HowWeResearch() {
   /* EDITOR-desk override for the lead paragraph — code text stays the
-     fallback (and the guaranteed render if the override store is down). */
+     fallback (and the guaranteed render if the override store is down).
+     The Visual Builder layout ('__layout') reorders/hides the sections. */
   const ed = await getEditorState("/how-we-research");
   const introOv = ed.regions["intro"];
-  return (
-    <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
-      {ed.preview && <PreviewBanner route="/how-we-research" />}
-      <Nav />
-      <main style={{ maxWidth: 860, margin: "0 auto", padding: "64px 4vw 80px" }}>
+  const pageLayout = (ed.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
+  const navItems = (await getPublishedNav()) ?? undefined;
+
+  const sections: Record<string, React.ReactNode> = {
+    intro: (
+      <>
         <div className="font-mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".32em", color: "#C13E17" }}>
           THE FIELD GUIDE'S RULES
         </div>
@@ -68,18 +73,22 @@ export default async function HowWeResearch() {
             source or written by a person and labeled that way — and when we can't verify something, it doesn't run.
           </p>
         )}
-
-        <dl style={{ margin: "40px 0 0", padding: 0 }}>
-          {SOURCES.map(([term, def]) => (
-            <div key={term} style={{ borderTop: "1px solid rgba(29,25,19,.2)", padding: "20px 0" }}>
-              <dt className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".24em", color: "#C13E17" }}>
-                {term}
-              </dt>
-              <dd style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.75, color: "rgba(29,25,19,.8)" }}>{def}</dd>
-            </div>
-          ))}
-        </dl>
-
+      </>
+    ),
+    sources: (
+      <dl style={{ margin: "40px 0 0", padding: 0 }}>
+        {SOURCES.map(([term, def]) => (
+          <div key={term} style={{ borderTop: "1px solid rgba(29,25,19,.2)", padding: "20px 0" }}>
+            <dt className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".24em", color: "#C13E17" }}>
+              {term}
+            </dt>
+            <dd style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.75, color: "rgba(29,25,19,.8)" }}>{def}</dd>
+          </div>
+        ))}
+      </dl>
+    ),
+    closing: (
+      <>
         <div className="font-mono" style={{ marginTop: 36, fontSize: 9.5, letterSpacing: ".18em", lineHeight: 2, color: "rgba(29,25,19,.55)" }}>
           QUESTIONS ABOUT A SPECIFIC FIGURE? EVERY PAGE LABELS ITS SOURCE IN PLACE.
         </div>
@@ -92,6 +101,16 @@ export default async function HowWeResearch() {
             ← BACK TO THE MAP
           </Link>
         </div>
+      </>
+    ),
+  };
+
+  return (
+    <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
+      {ed.preview && <PreviewBanner route="/how-we-research" />}
+      <Nav navItems={navItems} />
+      <main style={{ maxWidth: 860, margin: "0 auto", padding: "64px 4vw 80px" }}>
+        {applyLayout(pageLayout, TEMPLATE_SECTIONS["/how-we-research"], sections)}
       </main>
       <Footer />
     </div>

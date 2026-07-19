@@ -18,6 +18,9 @@ import HumanTrust from "@/components/HumanTrust";
 import { getEditorState } from "@/lib/editor/overrides";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
+import { applyLayout } from "@/lib/editor/blocks-render";
+import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
+import { getPublishedNav } from "@/lib/editor/nav";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -84,6 +87,31 @@ export default async function Home() {
   const ed = await getEditorState("/");
   const ov = (key: string): React.ReactNode =>
     ed.regions[key] ? <RichDoc doc={ed.regions[key].json} /> : undefined;
+  // Visual Builder layout + published navigation — both null = code-owned
+  const homeLayout = (ed.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
+  const navItems = (await getPublishedNav()) ?? undefined;
+
+  const sections: Record<string, React.ReactNode> = {
+    hero: <Hero copyOverride={ov("hero-copy")} />,
+    ticker: <Ticker prices={priceBySlug} />,
+    map: (
+      <InteractiveMap
+        liveMls={isLiveMls}
+        prices={priceBySlug}
+        stats={statsBySlug}
+        pricesLive={pricesLive}
+        pricesAsOf={pricesAsOf}
+        introOverride={ov("map-intro")}
+      />
+    ),
+    picks: <EditorsPicks introOverride={ov("picks-intro")} />,
+    stats: <StatsBand prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />,
+    newbuilds: <NewBuilds liveMls={isLiveMls} introOverride={ov("newbuilds-intro")} />,
+    cityindex: <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} introOverride={ov("cities-intro")} />,
+    trust: <HumanTrust />,
+    about: <About copyOverride={ov("about-copy")} />,
+    newsletter: <Newsletter introOverride={ov("newsletter-intro")} />,
+  };
 
   return (
     <div
@@ -113,25 +141,9 @@ export default async function Home() {
       </div>
 
       {ed.preview && <PreviewBanner route="/" />}
-      <Nav />
-      <Hero copyOverride={ov("hero-copy")} />
-      <Ticker prices={priceBySlug} />
-      <InteractiveMap
-        liveMls={isLiveMls}
-        prices={priceBySlug}
-        stats={statsBySlug}
-        pricesLive={pricesLive}
-        pricesAsOf={pricesAsOf}
-        introOverride={ov("map-intro")}
-      />
-      {/* no CTA on the homepage — the map and the index are the ask */}
-      <EditorsPicks introOverride={ov("picks-intro")} />
-      <StatsBand prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />
-      <NewBuilds liveMls={isLiveMls} introOverride={ov("newbuilds-intro")} />
-      <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} introOverride={ov("cities-intro")} />
-      <HumanTrust />
-      <About copyOverride={ov("about-copy")} />
-      <Newsletter introOverride={ov("newsletter-intro")} />
+      <Nav navItems={navItems} />
+      {/* Visual Builder: code-owned order until a homepage layout publishes */}
+      {applyLayout(homeLayout, TEMPLATE_SECTIONS["/"], sections)}
       <Footer />
       <Reveals />
     </div>
