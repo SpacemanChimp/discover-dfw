@@ -178,11 +178,36 @@ export function validateDraft(draft, data, batch) {
     compact JSON.stringify-produced file). Throws on any ambiguity. */
 function spliceArrayAt(raw, keyIdxLabel, keyIdx, key, currentArr, nextArr) {
   if (keyIdx < 0) throw new Error(`${keyIdxLabel}: key ${key} not found`);
-  const valueStart = keyIdx + key.length;
-  const seg = JSON.stringify(currentArr);
+  let valueStart = keyIdx + key.length;
+  while (valueStart < raw.length && /\s/.test(raw[valueStart])) valueStart++;
+
+  /* Legacy compact form (pre-2026-07-15 file): the array serializes with no
+     whitespace. The byte-guard is unchanged. */
+  const compact = JSON.stringify(currentArr);
+  if (raw.startsWith(compact, keyIdx + key.length)) {
+    const at = keyIdx + key.length;
+    return raw.slice(0, at) + JSON.stringify(nextArr) + raw.slice(at + compact.length);
+  }
+
+  /* Pretty form: since e56b6b3 (verified city-data refresh, 2026-07-15) the
+     dataset serializes as JSON.stringify(·, null, 1) — the same convention
+     the content mode has always required of hood-content.json. The guard
+     keeps its fail-closed guarantee by REPRODUCING the file's rendering of
+     the CURRENT array first: only when that reproduction matches the file
+     byte-for-byte do we splice the extended array in the identical style.
+     Any drift (different indent, hand edits, another serializer) still
+     refuses exactly like before. */
+  const lineStart = raw.lastIndexOf("\n", keyIdx) + 1;
+  const indent = (raw.slice(lineStart, keyIdx).match(/^\s*/) ?? [""])[0];
+  const render = (arr) =>
+    JSON.stringify(arr, null, 1)
+      .split("\n")
+      .map((line, i) => (i === 0 ? line : indent + line))
+      .join("\n");
+  const seg = render(currentArr);
   if (!raw.startsWith(seg, valueStart))
     throw new Error(`${keyIdxLabel}: file segment does not match the parsed array byte-for-byte — refusing to splice`);
-  return raw.slice(0, valueStart) + JSON.stringify(nextArr) + raw.slice(valueStart + seg.length);
+  return raw.slice(0, valueStart) + render(nextArr) + raw.slice(valueStart + seg.length);
 }
 
 /** Append entries to the top-level newBuilds array. */
@@ -197,10 +222,17 @@ export function spliceNewBuilds(raw, data, entries) {
 export function spliceCityHoods(raw, data, citySlug, pairs) {
   const city = data.cities.find((c) => c.slug === citySlug);
   if (!city) throw new Error(`unknown city ${citySlug}`);
-  const marker = `"slug":${JSON.stringify(citySlug)}`;
-  const markerIdx = raw.indexOf(marker);
-  if (markerIdx < 0) throw new Error(`city marker ${marker} not found`);
-  if (raw.indexOf(marker, markerIdx + 1) >= 0) throw new Error(`city marker ${marker} is not unique in the file`);
+  // the marker must be unique across BOTH serialization forms (compact and
+  // the post-e56b6b3 pretty form with a space after the colon)
+  const markers = [`"slug":${JSON.stringify(citySlug)}`, `"slug": ${JSON.stringify(citySlug)}`];
+  const found = markers
+    .flatMap((m) => {
+      const at = raw.indexOf(m);
+      return at < 0 ? [] : [{ m, at, again: raw.indexOf(m, at + 1) }];
+    });
+  if (!found.length) throw new Error(`city marker ${markers[0]} not found`);
+  if (found.length > 1 || found[0].again >= 0) throw new Error(`city marker ${markers[0]} is not unique in the file`);
+  const markerIdx = found[0].at;
   const key = '"hoods":';
   const keyIdx = raw.indexOf(key, markerIdx);
   if (keyIdx < 0) throw new Error(`hoods key not found after city marker ${citySlug}`);
