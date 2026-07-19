@@ -3,6 +3,7 @@ import { editorGate, readJsonBody } from "@/lib/editor/api";
 import { sanitizeLayout, TEMPLATE_SECTIONS, type LayoutEntry, type BlockInstance } from "@/lib/editor/blocks.ts";
 import { resolvedBuilderBlock } from "@/lib/editor/blocks-render";
 import { cities } from "@/lib/dfw-data";
+import { sectionsForRoute } from "@/lib/editor/registry";
 
 /* Render ONE builder block to real, static HTML for the admin canvas —
    the exact server component markup the public page would produce, so an
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   if (body instanceof NextResponse) return body;
 
   const route = String(body.route ?? "");
-  const sections = TEMPLATE_SECTIONS[route];
+  const sections = sectionsForRoute(route);
   const pageKind: "custom" | "template" = sections ? "template" : "custom";
 
   const entry: LayoutEntry = { kind: "block", block: body.block as BlockInstance };

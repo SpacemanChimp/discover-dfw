@@ -10,7 +10,7 @@
    closed independently — if you change a rule HERE, change it THERE). */
 import "server-only";
 import { getSupabaseAdmin } from "@/lib/db/admin";
-import { cities, countyById, type City } from "@/lib/dfw-data";
+import { cities, countyById, bySlug, type City, type NewBuild } from "@/lib/dfw-data";
 import { hoodsForCity, type HoodRef } from "@/lib/hoods";
 import contentRaw from "@/lib/hood-content.json";
 
@@ -142,6 +142,40 @@ export function findPage(citySlug: string, hoodSlug: string): { city: City; hood
   return hood ? { city, hood } : null;
 }
 
+/** Community Studio (Amendment 5): the synthesized page context for a
+    NOT-yet-exported community draft — the SAME City + HoodRef shapes the
+    private preview renders with, so the strict lint can validate a draft
+    page's content BEFORE it exists. The dataset stays the truth for real
+    pages, and the exporters still verify page existence at export time. */
+export function draftPageContext(row: {
+  type: string;
+  name: string;
+  city_slug: string;
+  slug: string;
+  status_label?: string | null;
+  from_label?: string | null;
+  builders_count?: number | null;
+  note?: string | null;
+}): { city: City; hood: HoodRef } | null {
+  const city = bySlug[row.city_slug];
+  if (!city) return null;
+  const nb: NewBuild | undefined =
+    row.type === "new_build"
+      ? {
+          name: row.name,
+          city: row.city_slug,
+          from: row.from_label ?? "$— (not set)",
+          builders: row.builders_count ?? 0,
+          status: row.status_label ?? "STATUS NOT SET",
+          note: row.note ?? "",
+        }
+      : undefined;
+  return {
+    city,
+    hood: { slug: row.slug, name: row.name, note: row.note?.trim() || `${row.name} in ${city.name}`, citySlug: row.city_slug, newBuild: nb },
+  };
+}
+
 /* ---- lint engine ------------------------------------------------------------
    Mirrored by the exporter (change a rule there too). Errors block the
    ready toggle and fail the export closed; warnings inform only. */
@@ -239,13 +273,17 @@ function screenClaims(field: string, text: string, issues: LintIssue[]) {
 export function lintContentDraft(
   draft: Pick<ContentDraft, "citySlug" | "hoodSlug" | "seoTitle" | "seoDescription" | "tagline" | "intro" | "homesCopy" | "highlights" | "faq" | "newBuild">,
   corpus: SeoCorpusEntry[],
-  forExport: boolean
+  forExport: boolean,
+  /** Community Studio: synthesized context for an ACTIVE not-yet-exported
+      draft (draftPageContext) — every rule runs against it; without it a
+      missing page stays a hard error exactly as before */
+  draftPage?: { city: City; hood: HoodRef } | null
 ): LintResult {
   const errors: LintIssue[] = [];
   const warnings: LintIssue[] = [];
   const key = `${draft.citySlug}/${draft.hoodSlug}`;
 
-  const page = findPage(draft.citySlug, draft.hoodSlug);
+  const page = findPage(draft.citySlug, draft.hoodSlug) ?? draftPage ?? null;
   if (!page) {
     errors.push({ level: "error", field: "page", message: `${key} is not an existing page — content can only attach to a live hood/new-build page` });
     return { errors, warnings, at: new Date().toISOString() };

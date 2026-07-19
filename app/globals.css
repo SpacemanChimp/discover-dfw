@@ -749,3 +749,43 @@ body {
     display: none;
   }
 }
+
+/* ---------- visual builder locked/annotated data chips ----------
+   The data-bb-lock / data-bb-note attributes exist ONLY in builder-mode
+   renders (the admin canvas): hovering a canonical value shows where it
+   comes from and where (if anywhere) it can be edited. Public pages never
+   carry the attributes, so these rules are inert everywhere else. */
+[data-bb-lock],
+[data-bb-note] {
+  position: relative;
+}
+[data-bb-lock] {
+  cursor: not-allowed;
+}
+[data-bb-lock]:hover::after,
+[data-bb-note]:hover::after {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 6px;
+  z-index: 9500;
+  background: #1d1913;
+  color: #f6f1e6;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  padding: 6px 9px;
+  border-radius: 6px;
+  max-width: 340px;
+  width: max-content;
+  pointer-events: none;
+  white-space: normal;
+}
+[data-bb-lock]:hover::after {
+  content: "🔒 " attr(data-bb-lock);
+}
+[data-bb-note]:hover::after {
+  content: "✏ " attr(data-bb-note);
+}

@@ -54,6 +54,29 @@ export function migration503() {
   );
 }
 
+/** Community Studio: a hood-shaped route backed by an ACTIVE community
+    draft (page not exported yet) — returns the draft's id, or null. Its
+    layout/region documents are keyed to the FUTURE canonical route so they
+    survive export untouched — but they can only ever be DRAFTED here;
+    publish stays locked until the route is registry-real (post-export +
+    deploy). */
+export async function activeCommunityDraftId(db: SupabaseClient, route: string): Promise<string | null> {
+  const m = /^\/city\/([a-z0-9-]+)\/([a-z0-9-]+)$/.exec(route);
+  if (!m) return null;
+  try {
+    const { data } = await db
+      .from("community_drafts")
+      .select("id")
+      .eq("city_slug", m[1])
+      .eq("slug", m[2])
+      .neq("lifecycle", "archived")
+      .maybeSingle();
+    return (data?.id as string | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function readJsonBody<T>(req: Request): Promise<T | NextResponse> {
   const raw = await req.text();
   if (raw.length > MAX_JSON_BODY) {

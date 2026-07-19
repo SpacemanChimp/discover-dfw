@@ -7,6 +7,7 @@ import {
   collisionMessage,
   type DraftStatusLabel,
 } from "@/lib/content/community-drafts";
+import { findPage } from "@/lib/content/community-content-drafts";
 import { slugifyHood } from "@/lib/slug";
 
 /* CB-1 Community Builder actions. Admin-only (ADMIN_EMAILS gate before
@@ -231,8 +232,64 @@ export async function POST(req: Request) {
       .update({ lifecycle: "archived", ready_for_export: false, archived_at: new Date().toISOString() })
       .eq("id", draftId);
     if (error) return bad(error.message, 500);
-    const auditErr = await audit(db, "archive", draft.city_slug, draft.slug, adminUser.email, String(body.notes ?? "").trim() || null);
-    return NextResponse.json({ ok: true, auditError: auditErr });
+
+    /* Lifecycle integrity: an archived, NOT-yet-exported community must
+       leave no active workspace behind — retire every route-keyed editor
+       draft (editor_archive_draft: per-document transaction, version
+       history + audit rows append-only) and the CB-3a content draft, so a
+       future community reusing the same city/slug starts completely clean.
+       Documents of a REAL exported/live page are never touched (findPage
+       guard + published-pointer guard — an unexported route cannot have a
+       published pointer because publish is lifecycle-locked). */
+    const retired: string[] = [];
+    let retireError: string | null = null;
+    if (!findPage(draft.city_slug, draft.slug)) {
+      const route = `/city/${draft.city_slug}/${draft.slug}`;
+      const { data: docs } = await db
+        .from("editor_documents")
+        .select("region_key, draft_version_id, published_version_id")
+        .eq("route", route);
+      for (const doc of docs ?? []) {
+        if (!doc.draft_version_id || doc.published_version_id) continue;
+        const { error: rpcErr } = await db.rpc("editor_archive_draft", {
+          p_route: route,
+          p_region_key: doc.region_key,
+          p_admin_email: adminUser.email,
+        });
+        if (rpcErr) retireError = `${doc.region_key}: ${rpcErr.message}`;
+        else retired.push(doc.region_key);
+      }
+      const { data: cd } = await db
+        .from("community_content_drafts")
+        .select("id")
+        .eq("city_slug", draft.city_slug)
+        .eq("hood_slug", draft.slug)
+        .in("lifecycle", ["draft", "ready"])
+        .maybeSingle();
+      if (cd) {
+        const { error: cdErr } = await db
+          .from("community_content_drafts")
+          .update({ lifecycle: "archived", ready_for_export: false, archived_at: new Date().toISOString() })
+          .eq("id", cd.id);
+        if (cdErr) retireError = `content: ${cdErr.message}`;
+        else {
+          retired.push("content-draft");
+          await db.from("verification_events").insert({
+            entity_type: "community_content_draft",
+            entity_slug: `${draft.city_slug}/${draft.slug}`,
+            verified_by: adminUser.email,
+            verification_method: "admin_review",
+            action: "archive",
+            notes: "content draft archived with its community draft (lifecycle integrity — the slug frees clean)",
+          });
+        }
+      }
+    }
+
+    const baseNotes = String(body.notes ?? "").trim() || "archived";
+    const notes = retired.length ? `${baseNotes} · retired active drafts: ${retired.join(", ")}` : baseNotes;
+    const auditErr = await audit(db, "archive", draft.city_slug, draft.slug, adminUser.email, notes);
+    return NextResponse.json({ ok: true, auditError: auditErr, retired, retireError });
   }
 
   return bad(`Unknown action "${body.action}"`);

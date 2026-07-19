@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
-import { regionDef } from "@/lib/editor/registry";
+import { regionDef, sectionsForRoute } from "@/lib/editor/registry";
 import { TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
 import { revalidateEditorTarget } from "@/lib/editor/revalidate";
 
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const isNav = regionKey === "nav" && route === "__site";
 
   if (isLayout) {
-    if (!TEMPLATE_SECTIONS[route]) {
+    if (!sectionsForRoute(route)) {
       if (!/^\/[a-z0-9-]+$/.test(route)) return NextResponse.json({ ok: false, error: "Unknown layout target" }, { status: 400 });
       const { data } = await ctx.db.from("editor_pages").select("slug, status").eq("slug", route.slice(1)).maybeSingle();
       if (!data) return NextResponse.json({ ok: false, error: "Unknown page" }, { status: 400 });

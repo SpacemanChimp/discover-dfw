@@ -5,6 +5,7 @@ import {
   buildSeoCorpus,
   lintContentDraft,
   findPage,
+  draftPageContext,
   type ContentDraft,
   type LintResult,
 } from "@/lib/content/community-content-drafts";
@@ -141,6 +142,21 @@ export async function POST(req: Request) {
       .map((r) => ({ citySlug: r.city_slug, hoodSlug: r.hood_slug, seoTitle: r.seo_title, seoDescription: r.seo_description }));
   }
 
+  /** Community Studio: synthesized page context when the target is an
+      ACTIVE not-yet-exported community draft — null for real pages (the
+      dataset stays the truth) and unknown keys (page error stands) */
+  async function draftContextFor(citySlug: string, hoodSlug: string) {
+    if (findPage(citySlug, hoodSlug)) return null;
+    const { data } = await db!
+      .from("community_drafts")
+      .select("type, name, city_slug, slug, status_label, from_label, builders_count, note")
+      .eq("city_slug", citySlug)
+      .eq("slug", hoodSlug)
+      .neq("lifecycle", "archived")
+      .maybeSingle();
+    return data ? draftPageContext(data) : null;
+  }
+
   /* ---- lint (read-only; works on posted fields, draft need not exist) ---- */
   if (body.action === "lint") {
     const citySlug = String(body.citySlug ?? "");
@@ -151,7 +167,8 @@ export async function POST(req: Request) {
     const lint = lintContentDraft(
       { ...draftShape({ ...patch, city_slug: citySlug, hood_slug: hoodSlug }) },
       buildSeoCorpus(others),
-      body.readyForExport === true // lint at export strictness when asked
+      body.readyForExport === true, // lint at export strictness when asked
+      await draftContextFor(citySlug, hoodSlug)
     );
     return NextResponse.json({ ok: true, lint });
   }
@@ -160,7 +177,20 @@ export async function POST(req: Request) {
   if (body.action === "save") {
     const citySlug = String(body.citySlug ?? "");
     const hoodSlug = String(body.hoodSlug ?? "");
-    if (!findPage(citySlug, hoodSlug)) return bad(`${citySlug}/${hoodSlug} is not an existing page — content attaches only to live pages`, 409);
+    if (!findPage(citySlug, hoodSlug)) {
+      // Community Studio: an ACTIVE community draft may hold page content
+      // before its page exists — the CB-2/CB-3b exporters still validate
+      // page existence at export time, so nothing thin can ship early
+      const { data: activeDraft } = await db
+        .from("community_drafts")
+        .select("id")
+        .eq("city_slug", citySlug)
+        .eq("slug", hoodSlug)
+        .neq("lifecycle", "archived")
+        .maybeSingle();
+      if (!activeDraft)
+        return bad(`${citySlug}/${hoodSlug} is not an existing page or an active community draft — content attaches only to real targets`, 409);
+    }
     const patch = toRowPatch(body.fields ?? {});
     if (typeof patch === "string") return bad(patch);
 
@@ -216,7 +246,7 @@ export async function POST(req: Request) {
     if (wantReady) {
       // server-side lint at EXPORT strictness — the panel is advisory, this is not
       const others = await otherDraftsFor(draftId);
-      const lint = lintContentDraft(draftShape(row), buildSeoCorpus(others), true);
+      const lint = lintContentDraft(draftShape(row), buildSeoCorpus(others), true, await draftContextFor(row.city_slug, row.hood_slug));
       if (lint.errors.length) {
         await db.from("community_content_drafts").update({ lint_json: lint }).eq("id", draftId);
         return NextResponse.json({ ok: false, error: `lint blocks readiness: ${lint.errors.length} error(s)`, lint }, { status: 422 });

@@ -11,6 +11,7 @@
 import { cities, type City } from "@/lib/dfw-data";
 import { hoodsForCity, canonicalCityForHood } from "@/lib/hoods";
 import type { ContentType } from "./doc";
+import { TEMPLATE_SECTIONS, type SectionDef } from "./blocks.ts";
 
 export type PageGroup =
   | "Homepage"
@@ -134,6 +135,9 @@ function hoodPage(c: City, h: { slug: string; name: string; newBuild?: unknown }
   } else {
     regions.push(rich("homes", "Homes & real-estate copy", fallback));
   }
+  // Community Studio: a PAGE-SPECIFIC layout override (THIS PAGE ONLY) —
+  // the shared template:hood layout stays the default when absent
+  regions.push(layoutRegion);
   return {
     route: `/city/${c.slug}/${h.slug}`,
     title: `${h.name} · ${c.name}${nb ? " — new build" : ""}`,
@@ -141,6 +145,13 @@ function hoodPage(c: City, h: { slug: string; name: string; newBuild?: unknown }
     revalidatePaths: [`/city/${c.slug}/${h.slug}`],
     regions,
   };
+}
+
+/** hood route shapes — the Community Studio's page-specific layout targets */
+const HOOD_ROUTE_RE = /^\/city\/[a-z0-9-]+\/[a-z0-9-]+$/;
+
+export function isHoodRoute(route: string): boolean {
+  return HOOD_ROUTE_RE.test(route) && !!pageByRoute(route);
 }
 
 /** Visual-Builder layout region — present on every builder-capable page.
@@ -226,4 +237,29 @@ export function pageByRoute(route: string): PageDef | undefined {
 
 export function regionDef(route: string, regionKey: string): RegionDef | undefined {
   return pageByRoute(route)?.regions.find((r) => r.key === regionKey);
+}
+
+/** the region contract for a NOT-YET-EXPORTED community draft page — the
+    union of both hood variants (nb + regular), so a draft can hold any of
+    the standard page regions before the dataset row exists. The exporters
+    still gate what ships; these are workspace documents only. */
+const DRAFT_HOOD_REGIONS: Record<string, RegionDef> = {
+  tagline: { key: "tagline", label: "Tagline", contentType: "text", allowImages: false, seoEditable: false, fallbackSource: "contentFor() formula (code)" },
+  intro: rich("intro", "Introduction", "contentFor() formula (code)", { images: true, seo: true }),
+  faq: { key: "faq", label: "FAQs", contentType: "faq", allowImages: false, seoEditable: false, fallbackSource: "contentFor() formula (code)" },
+  homes: rich("homes", "Homes & real-estate copy", "contentFor() formula (code)"),
+  amenities: rich("amenities", "Amenities (bullet list)", "contentFor() formula (code)"),
+  "buyer-notes": rich("buyer-notes", "Buyer notes (bullet list)", "contentFor() formula (code)"),
+};
+
+export function draftHoodRegionDef(regionKey: string): RegionDef | undefined {
+  return DRAFT_HOOD_REGIONS[regionKey];
+}
+
+/** the section contract a route's __layout document is validated against:
+    the route's own template sections, or — for individual hood/community
+    pages (page-specific THIS-PAGE-ONLY overrides) — the shared hood
+    template's section set. Undefined = no layout capability. */
+export function sectionsForRoute(route: string): SectionDef[] | undefined {
+  return TEMPLATE_SECTIONS[route] ?? (isHoodRoute(route) ? TEMPLATE_SECTIONS["template:hood"] : undefined);
 }

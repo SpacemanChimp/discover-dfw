@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
-import { regionDef } from "@/lib/editor/registry";
+import { editorGate, migrationMissing, migration503, readJsonBody, activeCommunityDraftId } from "@/lib/editor/api";
+import { regionDef, sectionsForRoute, draftHoodRegionDef } from "@/lib/editor/registry";
 import { sanitizeContent } from "@/lib/editor/doc";
 import { sanitizeLayout, sanitizeNav, TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
 import { cities } from "@/lib/dfw-data";
@@ -51,11 +51,16 @@ export async function POST(req: Request) {
   if (regionKey === "__layout") {
     // Visual Builder layout: template sections when the route is a code
     // template; block-only custom pages otherwise
-    const sections = TEMPLATE_SECTIONS[route];
+    let sections = sectionsForRoute(route);
     let pageKind: "custom" | "template";
     if (sections) pageKind = "template";
     else if (await customPageExists(ctx, route)) pageKind = "custom";
-    else return NextResponse.json({ ok: false, error: "Unknown layout target" }, { status: 400 });
+    else if (await activeCommunityDraftId(ctx.db, route)) {
+      // Community Studio: a layout draft keyed to the FUTURE canonical route
+      // (workspace only — publish stays locked until the page is exported)
+      sections = TEMPLATE_SECTIONS["template:hood"];
+      pageKind = "template";
+    } else return NextResponse.json({ ok: false, error: "Unknown layout target" }, { status: 400 });
 
     const s = sanitizeLayout(body.content, {
       pageKind,
@@ -76,7 +81,10 @@ export async function POST(req: Request) {
     doc = s.doc;
     text = s.text;
   } else {
-    const def = regionDef(route, regionKey);
+    let def = regionDef(route, regionKey);
+    if (!def && (await activeCommunityDraftId(ctx.db, route))) {
+      def = draftHoodRegionDef(regionKey);
+    }
     if (!def || def.contentType === "layout" || def.contentType === "nav") {
       return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
     }

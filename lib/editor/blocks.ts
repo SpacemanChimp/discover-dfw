@@ -21,6 +21,7 @@ import {
   isAllowedImageSrc,
   type PMNode,
 } from "./doc.ts";
+import { INTENT_KEYS } from "../convert/intents.ts";
 
 /* ---------------------------------------------------------------- enums */
 export const TREATMENTS = ["parchment", "ink", "white", "orange"] as const;
@@ -70,9 +71,11 @@ export type LayoutEntry =
       key: string;
       hidden: boolean;
       visibility: (typeof VISIBILITIES)[number];
-      /** card-level settings for sections whose SectionDef declares `cards`
-          (v1: the homepage Editor's Picks lineup). Absent = code lineup. */
-      settings?: { picks?: { city: string; tagline?: string }[] };
+      /** section-level settings, only where the SectionDef declares support:
+          `cards` (homepage Editor's Picks lineup), `cta` (the hood
+          conversion-band override), or `gallery` (the hood gallery order).
+          Absent = code-owned content. */
+      settings?: { picks?: { city: string; tagline?: string }[]; cta?: HoodCtaSettings; gallery?: { order: string[] } };
     }
   | { kind: "block"; block: BlockInstance };
 
@@ -133,6 +136,11 @@ export interface SectionDef {
   description?: string;
   /** this section carries card-level settings (v1: the homepage picks) */
   cards?: "editors-picks";
+  /** this section accepts the page-specific conversion-band override */
+  cta?: boolean;
+  /** this section accepts the page-specific gallery ORDER (approved
+      Photo Desk assets only — the order never adds or approves photos) */
+  gallery?: boolean;
 }
 
 /** the code-owned homepage lineup — the fallback when no override exists */
@@ -192,10 +200,11 @@ export const TEMPLATE_SECTIONS: Record<string, SectionDef[]> = {
     { key: "hero", label: "Hood hero (H1 + locator)", required: true },
     { key: "vibe", label: "01 — The vibe" },
     { key: "body", label: "02 — Real estate / new-build resources", locked: true, description: "Carries the live NB inventory band on new-build pages." },
-    { key: "cta", label: "Conversion band" },
+    { key: "cta", label: "Conversion band", cta: true, description: "Click to edit this page's CTA: kicker, headline, copy, and button labels/destinations. New-build pages: the band renders after the reasons by default and joins this slot once customized — drag it where you want it." },
     { key: "highlights", label: "03 — Why people look here" },
     { key: "schools", label: "04 — Nearby schools", locked: true },
     { key: "faq", label: "05 — FAQ (drives FAQPage JSON-LD)" },
+    { key: "gallery", label: "Community photo gallery", gallery: true, description: "Approved Photo Desk photos of THIS community. The section hides publicly until at least one gallery photo is approved (never a placeholder); manage photos in the Studio's PHOTOS tab, reorder approved ones here — THIS PAGE ONLY." },
     { key: "explore", label: "06 — Keep exploring" },
   ],
 };
@@ -469,6 +478,131 @@ function sanitizeEditorsPicks(raw: unknown, ctx: BlockSanitizeCtx): { city: stri
   return isDefault ? null : out;
 }
 
+/* --------------------------------------------- hood conversion-band (A2) */
+
+/** The page-specific CTA override for hood/new-build pages. Every field is
+    optional; the whole object normalizes to ABSENT when nothing is set, so
+    an untouched page renders its code CTA byte-for-byte. Button
+    destinations are a closed world: a supported lead action
+    ("intent:<key>" — opens the existing ConversionSheet and the normalized
+    lead pipeline) or a validated internal path. External URLs, tracking
+    links, scripts, and admin/api routes can never enter. */
+export interface HoodCtaSettings {
+  kicker?: string;
+  heading?: string;
+  body?: string;
+  primaryLabel?: string;
+  /** "intent:<IntentKey>" or a validated internal path */
+  primaryAction?: string;
+  secondaryLabel?: string;
+  secondaryAction?: string;
+  /** drop the secondary button entirely */
+  hideSecondary?: boolean;
+}
+
+/** closed destination world for CTA buttons: lead intents + known internal
+    paths (city slugs verified against canonical data when provided; hood
+    sub-paths are shape-checked — the exporters own hood existence) */
+export function isAllowedCtaAction(action: string, citySlugs: Set<string>): boolean {
+  if (action.startsWith("intent:")) return (INTENT_KEYS as readonly string[]).includes(action.slice(7));
+  if (action === "/") return true;
+  if (/^\/#[a-z0-9-]+$/.test(action)) return true;
+  if (/^\/(homes|land|new-builds|how-we-research)$/.test(action)) return true;
+  const mHomes = /^\/homes\?city=([a-z0-9-]+)$/.exec(action);
+  if (mHomes) return citySlugs.size === 0 || citySlugs.has(mHomes[1]);
+  const mCity = /^\/city\/([a-z0-9-]+)(?:\/[a-z0-9-]+)?$/.exec(action);
+  if (mCity) return citySlugs.size === 0 || citySlugs.has(mCity[1]);
+  return false;
+}
+
+function sanitizeHoodCta(raw: unknown, ctx: BlockSanitizeCtx): HoodCtaSettings | null {
+  const src = ((raw as { cta?: unknown })?.cta ?? {}) as Record<string, unknown>;
+  const out: HoodCtaSettings = {};
+  const kicker = clean(src.kicker, 60);
+  const heading = clean(src.heading, 120);
+  const body = clean(src.body, 400);
+  const primaryLabel = clean(src.primaryLabel, 40);
+  const secondaryLabel = clean(src.secondaryLabel, 40);
+  if (kicker) out.kicker = kicker;
+  if (heading) out.heading = heading;
+  if (body) out.body = body;
+  if (primaryLabel) out.primaryLabel = primaryLabel;
+  if (secondaryLabel) out.secondaryLabel = secondaryLabel;
+  const action = (v: unknown, which: string): string | undefined => {
+    const a = String(v ?? "").trim().slice(0, 200);
+    if (!a) return undefined;
+    if (!isAllowedCtaAction(a, ctx.citySlugs)) {
+      ctx.errors.push(`cta ${which} destination "${a.slice(0, 60)}" is not allowed — use a supported lead action or a validated internal path`);
+      return undefined;
+    }
+    return a;
+  };
+  const pa = action(src.primaryAction, "primary");
+  if (pa) out.primaryAction = pa;
+  const sa = action(src.secondaryAction, "secondary");
+  if (sa) out.secondaryAction = sa;
+  if (src.hideSecondary === true) out.hideSecondary = true;
+  for (const t of [kicker, heading, body, primaryLabel, secondaryLabel]) if (t) ctx.textParts.push(t);
+  // nothing set → no override stored (the code CTA stays the truth)
+  return Object.keys(out).length ? out : null;
+}
+
+/** the CTA override a layout doc carries — null = code CTA */
+export function hoodCtaFromLayout(layout: LayoutDoc | null): HoodCtaSettings | null {
+  if (!layout || !Array.isArray(layout.blocks)) return null;
+  for (const e of layout.blocks) {
+    if (e.kind === "section" && e.key === "cta" && e.settings?.cta) return e.settings.cta;
+  }
+  return null;
+}
+
+/* ------------------------------------------------ hood photo gallery (A3) */
+
+/** slot keys follow the SEEDER'S convention exactly (city galleries use
+    gallery-0..2); community galleries allow up to six deterministic slots */
+export const HOOD_GALLERY_SLOT_RE = /^gallery-[0-9]$/;
+export const HOOD_GALLERY_MAX = 6;
+export const HOOD_GALLERY_KEYS = Array.from({ length: HOOD_GALLERY_MAX }, (_, i) => `gallery-${i}`);
+
+/** the page-specific gallery ORDER: which approved slots render, and in
+    what sequence. Ordering is ALL this stores — photos, approval, metadata,
+    and licensing live in the Photo Desk and are never bypassed. An empty
+    order normalizes to ABSENT (default order = every approved slot,
+    ascending). */
+function sanitizeHoodGallery(raw: unknown, ctx: BlockSanitizeCtx): { order: string[] } | null {
+  const src = (raw as { gallery?: { order?: unknown } })?.gallery;
+  if (!src || !Array.isArray(src.order)) {
+    ctx.errors.push("gallery settings must be { gallery: { order: [slot keys] } }");
+    return null;
+  }
+  const order: string[] = [];
+  const seen = new Set<string>();
+  for (const k of src.order.slice(0, 12)) {
+    const key = String(k ?? "");
+    if (!HOOD_GALLERY_SLOT_RE.test(key)) {
+      ctx.errors.push(`gallery order entry "${key.slice(0, 24)}" is not a valid slot key (gallery-0 … gallery-${HOOD_GALLERY_MAX - 1})`);
+      continue;
+    }
+    if (seen.has(key)) continue;
+    seen.add(key);
+    order.push(key);
+  }
+  return order.length ? { order } : null;
+}
+
+/** the gallery order a layout doc carries — null = default (all approved,
+    ascending). A HIDDEN gallery section yields null too: nothing is
+    publicly visible, so there is nothing to order or to gate publish on. */
+export function hoodGalleryFromLayout(layout: LayoutDoc | null): string[] | null {
+  if (!layout || !Array.isArray(layout.blocks)) return null;
+  for (const e of layout.blocks) {
+    if (e.kind === "section" && e.key === "gallery" && !e.hidden && e.settings?.gallery?.order?.length) {
+      return e.settings.gallery.order;
+    }
+  }
+  return null;
+}
+
 /** the working pick lineup a layout doc implies — null = code lineup */
 export function editorsPicksFromLayout(layout: LayoutDoc | null): { city: string; tagline?: string }[] | null {
   if (!layout || !Array.isArray(layout.blocks)) return null;
@@ -558,14 +692,20 @@ export function sanitizeLayout(
         hidden: hidden && !def.required && !def.locked,
         visibility: pick((entry as { visibility?: unknown }).visibility, VISIBILITIES, "all"),
       };
-      // card-level settings — only where the section CONTRACT declares them
+      // section-level settings — only where the section CONTRACT declares them
       const rawSettings = (entry as { settings?: unknown }).settings;
       if (rawSettings !== undefined && rawSettings !== null) {
-        if (def.cards !== "editors-picks") {
-          errors.push(`section "${def.label}" does not accept card settings`);
-        } else {
+        if (def.cards === "editors-picks") {
           const picks = sanitizeEditorsPicks(rawSettings, ctx);
           if (picks) clean_entry.settings = { picks };
+        } else if (def.cta) {
+          const cta = sanitizeHoodCta(rawSettings, ctx);
+          if (cta) clean_entry.settings = { cta };
+        } else if (def.gallery) {
+          const gallery = sanitizeHoodGallery(rawSettings, ctx);
+          if (gallery) clean_entry.settings = { gallery };
+        } else {
+          errors.push(`section "${def.label}" does not accept settings`);
         }
       }
       out.push(clean_entry);

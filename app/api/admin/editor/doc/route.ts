@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { editorGate, migrationMissing } from "@/lib/editor/api";
-import { regionDef } from "@/lib/editor/registry";
+import { editorGate, migrationMissing, activeCommunityDraftId } from "@/lib/editor/api";
+import { regionDef, draftHoodRegionDef } from "@/lib/editor/registry";
 
 /* Region detail for the desk: current draft + published content and the
    full version history (metadata only — content rides along for the two
@@ -17,11 +17,17 @@ export async function GET(req: Request) {
   const region = url.searchParams.get("region") ?? "";
   const def = regionDef(route, region);
   if (!def) {
-    // admin-created pages carry a __layout document without a registry entry
-    const isCustomLayout = region === "__layout" && /^\/[a-z0-9-]+$/.test(route);
-    if (!isCustomLayout) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
-    const { data: pg } = await ctx.db.from("editor_pages").select("slug").eq("slug", route.slice(1)).maybeSingle();
-    if (!pg) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+    // admin-created pages carry a __layout document without a registry entry;
+    // Community Studio drafts carry layout + hood-region documents keyed to
+    // their FUTURE canonical route (workspace only — publish stays locked)
+    const wantsDraftDoc = region === "__layout" || !!draftHoodRegionDef(region);
+    const isDraftCommunityDoc = wantsDraftDoc && !!(await activeCommunityDraftId(ctx.db, route));
+    if (!isDraftCommunityDoc) {
+      const isCustomLayout = region === "__layout" && /^\/[a-z0-9-]+$/.test(route);
+      if (!isCustomLayout) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+      const { data: pg } = await ctx.db.from("editor_pages").select("slug").eq("slug", route.slice(1)).maybeSingle();
+      if (!pg) return NextResponse.json({ ok: false, error: "Unknown region" }, { status: 400 });
+    }
   }
 
   const { data: doc, error } = await ctx.db
