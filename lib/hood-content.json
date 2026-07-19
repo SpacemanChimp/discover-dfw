@@ -7100,6 +7100,50 @@
    "description": "Solterra brings master-plan scale to Mesquite's east side — new construction from the $280s with a five-builder MLS mix and a real downtown Dallas commute."
   }
  },
+ "midlothian/bridgewater": {
+  "tagline": "New homes on Midlothian’s growing edge.",
+  "intro": [
+   "Bridgewater is one of the new-build communities reshaping Midlothian, the Ellis County town that trades big-metro density for hill-and-pasture space without giving up the commute. Multiple builders are active here at once, which means competing floor plans, competing incentives, and more room to negotiate than a one-builder subdivision usually allows.",
+   "Pricing starts in the $430s by MLS records, with dozens of active listings and a steady share already under contract. Homes here are new enough that most of the community carries builder warranties, and quick move-in candidates show up in the data alongside to-be-built contracts. As always with new construction, treat every figure as a snapshot — phases and incentives change monthly."
+  ],
+  "homes": "Expect current-generation new construction: open kitchen-living layouts, slab foundations, and energy packages that older Midlothian stock can’t match. With several builders working the same community, elevations vary street to street — walk the model row and compare finish levels before you anchor on a price per square foot.",
+  "highlights": [
+   {
+    "title": "Multiple builders",
+    "note": "Competing plans and incentives inside one community — leverage a single-builder subdivision can’t offer."
+   },
+   {
+    "title": "Quick move-in supply",
+    "note": "MLS matching shows finished and near-finished homes alongside to-be-built contracts."
+   },
+   {
+    "title": "Midlothian ISD",
+    "note": "The community feeds Midlothian ISD — verify campus assignment by address with the district."
+   }
+  ],
+  "faq": [
+   {
+    "q": "Is this the same Bridgewater as the one in Princeton?",
+    "a": "No. This page covers Bridgewater in Midlothian, on the southwest side of the metro. A separate, larger Bridgewater development exists in Princeton, northeast of Dallas — don’t mix up listings between the two."
+   },
+   {
+    "q": "What does Bridgewater pricing look like right now?",
+    "a": "MLS records put the current floor in the $430s, but new-construction pricing moves by phase. Confirm current base pricing and incentives with each builder’s sales office before you compare."
+   },
+   {
+    "q": "Can I buy a finished home here instead of building?",
+    "a": "Often, yes. Quick move-in homes appear in the MLS matching for this community regularly — completion dates still deserve confirmation with the builder before you write a timeline into a contract."
+   }
+  ],
+  "newBuild": {
+   "amenities": [],
+   "buyerNotes": []
+  },
+  "seo": {
+   "title": "Bridgewater in Midlothian, TX — Builders, Pricing & FAQs",
+   "description": "Bridgewater is a new-build community in Midlothian, TX with multiple active builders, quick move-in inventory, and Midlothian ISD schools — pricing and FAQs."
+  }
+ },
  "midlothian/lawson-farms": {
   "tagline": "Proof that a solid family neighborhood never goes out of style",
   "intro": [
