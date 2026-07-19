@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { editorGate, migrationMissing, migration503, readJsonBody } from "@/lib/editor/api";
 import { pageByRoute, regionDef } from "@/lib/editor/registry";
 import { sanitizeContent, validateClaims, validateSeo } from "@/lib/editor/doc";
-import { sanitizeLayout, sanitizeNav, TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
+import { sanitizeLayout, sanitizeNav, editorsPicksFromLayout, TEMPLATE_SECTIONS } from "@/lib/editor/blocks.ts";
 import { cities } from "@/lib/dfw-data";
 import { revalidateEditorTarget } from "@/lib/editor/revalidate";
 
@@ -104,6 +104,25 @@ export async function POST(req: Request) {
       citySlugs: cities.map((c) => c.slug),
     });
     errors.push(...s.errors, ...validateClaims(s.ok ? s.text : String(draft.content_text ?? "")));
+    // Editor's Picks gate: a lineup may DRAFT with missing photos, but it
+    // can never PUBLISH until every city has an APPROVED homepage-pick
+    // asset — no broken cards, no public placeholders from an override.
+    const lineup = s.ok && s.doc ? editorsPicksFromLayout(s.doc) : null;
+    if (lineup) {
+      const { data: approvedRows } = await ctx.db
+        .from("photo_slots")
+        .select("entity_slug, photo_assets!inner(id)")
+        .eq("entity_type", "homepage")
+        .eq("slot_key", "pick")
+        .eq("status", "approved")
+        .in("entity_slug", lineup.map((p) => p.city));
+      const approved = new Set((approvedRows ?? []).map((r) => r.entity_slug as string));
+      for (const p of lineup) {
+        if (!approved.has(p.city)) {
+          errors.push(`"${p.city}" has no APPROVED homepage-pick photo — upload/approve one in the Photo Desk before publishing this lineup`);
+        }
+      }
+    }
   } else if (isNav) {
     const { data: pages } = await ctx.db.from("editor_pages").select("slug").eq("status", "published");
     const s = sanitizeNav(draft.content_json, { publishedPageSlugs: (pages ?? []).map((p) => p.slug) });

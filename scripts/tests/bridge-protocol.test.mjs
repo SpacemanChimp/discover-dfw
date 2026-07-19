@@ -70,6 +70,18 @@ test("shell → canvas messages validate metas and payload sizes", () => {
   assert.ok(parseShellMsg({ ns: BB_NS, t: "overlays", on: false }));
 });
 
+test("card messages validate section id, index range, and order shape", () => {
+  assert.ok(parseCanvasMsg({ ns: BB_NS, t: "card", section: "s:picks", index: 2 }));
+  assert.equal(parseCanvasMsg({ ns: BB_NS, t: "card", section: "s:picks", index: 12 }), null);
+  assert.equal(parseCanvasMsg({ ns: BB_NS, t: "card", section: "not-an-id", index: 0 }), null);
+  assert.ok(parseCanvasMsg({ ns: BB_NS, t: "cardReorder", section: "s:picks", order: [2, 0, 1, 3] }));
+  assert.equal(parseCanvasMsg({ ns: BB_NS, t: "cardReorder", section: "s:picks", order: [0, "x", 2, 3] }), null);
+  assert.equal(parseCanvasMsg({ ns: BB_NS, t: "cardReorder", section: "s:picks", order: [0, 1, 2, 99] }), null);
+  assert.ok(parseShellMsg({ ns: BB_NS, t: "cardSelect", section: "s:picks", index: 1 }));
+  assert.ok(parseShellMsg({ ns: BB_NS, t: "cardSelect", section: "s:picks", index: null }));
+  assert.equal(parseShellMsg({ ns: BB_NS, t: "cardSelect", section: "s:picks", index: -1 }), null);
+});
+
 test("canvas error-state machine covers every visible failure mode", () => {
   const loading = canvasStatusNext({ s: "ready" }, { kind: "load-start" });
   assert.deepEqual(loading, { s: "loading" });

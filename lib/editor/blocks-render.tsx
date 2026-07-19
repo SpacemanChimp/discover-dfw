@@ -41,19 +41,22 @@ export function visibilityClass(v: string | undefined): string | undefined {
   return undefined;
 }
 
-function Buttons({ buttons, onInk }: { buttons: BlockButton[]; onInk: boolean }) {
+function Buttons({ buttons, onInk, bb }: { buttons: BlockButton[]; onInk: boolean; bb?: boolean }) {
   if (!buttons?.length) return null;
+  // builder-canvas static renders can't invoke next/link (client reference);
+  // a plain <a> emits the identical DOM and the canvas blocks navigation
+  const A: React.ElementType = bb ? "a" : Link;
   return (
     <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 22 }} className="bb-buttons">
       {buttons.map((b, i) =>
         b.style === "primary" ? (
-          <Link key={i} href={b.href} style={{ background: ORANGE, color: CREAM, border: `2px solid ${ORANGE}`, borderRadius: 999, padding: "13px 26px", fontWeight: 700, fontSize: 14.5, textDecoration: "none", boxShadow: "0 8px 20px rgba(217,72,31,.24)", whiteSpace: "nowrap" }}>
+          <A key={i} href={b.href} style={{ background: ORANGE, color: CREAM, border: `2px solid ${ORANGE}`, borderRadius: 999, padding: "13px 26px", fontWeight: 700, fontSize: 14.5, textDecoration: "none", boxShadow: "0 8px 20px rgba(217,72,31,.24)", whiteSpace: "nowrap" }}>
             {b.label}
-          </Link>
+          </A>
         ) : (
-          <Link key={i} href={b.href} style={{ background: "transparent", color: onInk ? CREAM : INK, border: `2px solid ${onInk ? CREAM : INK}`, borderRadius: 999, padding: "13px 26px", fontWeight: 700, fontSize: 14.5, textDecoration: "none", whiteSpace: "nowrap" }}>
+          <A key={i} href={b.href} style={{ background: "transparent", color: onInk ? CREAM : INK, border: `2px solid ${onInk ? CREAM : INK}`, borderRadius: 999, padding: "13px 26px", fontWeight: 700, fontSize: 14.5, textDecoration: "none", whiteSpace: "nowrap" }}>
             {b.label}
-          </Link>
+          </A>
         )
       )}
     </div>
@@ -105,7 +108,7 @@ async function BlockBody({ block, citySlug, bb }: { block: BlockInstance; citySl
               {String(s.sub)}
             </p>
           ) : null}
-          <Buttons buttons={(s.buttons as BlockButton[]) ?? []} onInk={onInk} />
+          <Buttons buttons={(s.buttons as BlockButton[]) ?? []} onInk={onInk} bb={bb} />
         </div>
       );
     }
@@ -167,7 +170,7 @@ async function BlockBody({ block, citySlug, bb }: { block: BlockInstance; citySl
             {s.body ? <p {...f("body")} style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.6, opacity: 0.75, maxWidth: 560 }}>{String(s.body)}</p> : null}
           </div>
           <div className="nb-cta-actions">
-            <Buttons buttons={(s.buttons as BlockButton[]) ?? []} onInk={onInk} />
+            <Buttons buttons={(s.buttons as BlockButton[]) ?? []} onInk={onInk} bb={bb} />
           </div>
         </div>
       );
@@ -322,7 +325,7 @@ async function BlockBody({ block, citySlug, bb }: { block: BlockInstance; citySl
             {s.body ? <p {...f("body")} style={{ margin: "8px 0 0", fontSize: 14.5, lineHeight: 1.6, opacity: 0.75, maxWidth: 560 }}>{String(s.body)}</p> : null}
           </div>
           <div className="nb-cta-actions">
-            <Buttons buttons={[{ label: String(s.buttonLabel ?? "Open the search"), href: String(s.target ?? "/homes"), style: "primary" }]} onInk={onInk} />
+            <Buttons buttons={[{ label: String(s.buttonLabel ?? "Open the search"), href: String(s.target ?? "/homes"), style: "primary" }]} onInk={onInk} bb={bb} />
           </div>
         </div>
       );
@@ -336,14 +339,15 @@ async function BlockBody({ block, citySlug, bb }: { block: BlockInstance; citySl
         .sort((a, b) => a.d - b.d)
         .slice(0, Number(s.count ?? 3))
         .map((e) => e.x);
+      const NA: React.ElementType = bb ? "a" : Link;
       return (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(250px,90vw),1fr))", gap: 18 }}>
           {near.map((n) => (
-            <Link key={n.slug} href={`/city/${n.slug}`} className="hood-card" style={{ border: `2px solid ${INK}`, borderRadius: 18, background: CARD, color: INK, padding: "22px 24px", textDecoration: "none", display: "block" }}>
+            <NA key={n.slug} href={`/city/${n.slug}`} className="hood-card" style={{ border: `2px solid ${INK}`, borderRadius: 18, background: CARD, color: INK, padding: "22px 24px", textDecoration: "none", display: "block" }}>
               <div className="font-mono" style={{ fontSize: 9, letterSpacing: ".2em", color: ORANGE_DARK, fontWeight: 700 }}>NEAR {c.name.toUpperCase()}</div>
               <div className="font-serif" style={{ fontWeight: 800, fontSize: 21, marginTop: 9 }}>{n.name}, TX →</div>
               <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(29,25,19,.65)", marginTop: 8 }}>{n.tagline}</div>
-            </Link>
+            </NA>
           ))}
         </div>
       );

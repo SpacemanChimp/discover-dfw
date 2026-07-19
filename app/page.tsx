@@ -20,7 +20,7 @@ import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { RichDoc } from "@/lib/editor/render";
 import PreviewBanner from "@/components/editor/PreviewBanner";
 import { applyLayout } from "@/lib/editor/blocks-render";
-import { TEMPLATE_SECTIONS, type LayoutDoc } from "@/lib/editor/blocks.ts";
+import { TEMPLATE_SECTIONS, editorsPicksFromLayout, type LayoutDoc } from "@/lib/editor/blocks.ts";
 import { getPublishedNav } from "@/lib/editor/nav";
 
 export const metadata: Metadata = {
@@ -93,6 +93,8 @@ export default async function Home() {
     ed.regions[key] ? <RichDoc doc={ed.regions[key].json} /> : undefined;
   // Visual Builder layout + published navigation — both null = code-owned
   const homeLayout = (ed.regions["__layout"]?.json as LayoutDoc | undefined) ?? null;
+  // per-card picks lineup from the layout doc (null = code lineup)
+  const pickLineup = editorsPicksFromLayout(homeLayout);
   const navItems = (await getPublishedNav()) ?? undefined;
 
   const sections: Record<string, React.ReactNode> = {
@@ -109,7 +111,7 @@ export default async function Home() {
         regionKey={rk("map-intro")}
       />
     ),
-    picks: <EditorsPicks introOverride={ov("picks-intro")} regionKey={rk("picks-intro")} />,
+    picks: <EditorsPicks introOverride={ov("picks-intro")} regionKey={rk("picks-intro")} lineup={pickLineup ?? undefined} bb={builder} />,
     stats: <StatsBand prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />,
     newbuilds: <NewBuilds liveMls={isLiveMls} introOverride={ov("newbuilds-intro")} regionKey={rk("newbuilds-intro")} />,
     cityindex: <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} introOverride={ov("cities-intro")} regionKey={rk("cities-intro")} />,

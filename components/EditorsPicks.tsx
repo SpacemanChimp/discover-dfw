@@ -10,13 +10,34 @@ const PICKS: { slug: string; photo: string }[] = [
   { slug: "dallas", photo: "THE SKYLINE" },
   { slug: "frisco", photo: "THE STAR DISTRICT" },
 ];
+const PHOTO_LABELS = new Map(PICKS.map((p) => [p.slug, p.photo]));
 
-export default async function EditorsPicks({ introOverride, regionKey }: { introOverride?: React.ReactNode; regionKey?: string } = {}) {
+export default async function EditorsPicks({
+  introOverride,
+  regionKey,
+  lineup,
+  bb,
+}: {
+  introOverride?: React.ReactNode;
+  regionKey?: string;
+  /** Visual Builder override: four {city, tagline?} cards. Absent = the
+      code lineup above. City name/county/median/URL stay canonical data. */
+  lineup?: { city: string; tagline?: string }[];
+  /** builder-canvas render: cards gain data-bb-card markers (never public) */
+  bb?: boolean;
+} = {}) {
+  const resolved: { city: string; tagline?: string }[] = (lineup?.length === 4 ? lineup : PICKS.map((p) => ({ city: p.slug }))).filter(
+    (p) => bySlug[p.city]
+  );
+  /* builder-canvas renders go through renderToStaticMarkup, where next/link
+     is an uninvokable client reference — a plain <a> renders the IDENTICAL
+     DOM (Link outputs <a href>) and the canvas blocks navigation anyway */
+  const A: React.ElementType = bb ? "a" : Link;
   /* CI-3: one query covers all four picks (composite entity_slug::slot_key
      keys — every pick shares slot_key='pick'). Empty = placeholders. */
   const photos = await getApprovedPhotos(
     "homepage",
-    PICKS.map((p) => p.slug)
+    resolved.map((p) => p.city)
   );
   return (
     <section style={{ maxWidth: 1380, margin: "0 auto", padding: "60px 4vw 90px" }}>
@@ -56,7 +77,7 @@ export default async function EditorsPicks({ introOverride, regionKey }: { intro
             Start with these four.
           </h2>
         </div>
-        <Link
+        <A
           href="#cities"
           className="link-underline"
           style={{
@@ -71,7 +92,7 @@ export default async function EditorsPicks({ introOverride, regionKey }: { intro
           }}
         >
           SEE ALL {cities.length} →
-        </Link>
+        </A>
       </div>
 
       {/* EDITOR-desk intro — this section has no code intro, so the region
@@ -90,14 +111,19 @@ export default async function EditorsPicks({ introOverride, regionKey }: { intro
           gap: 20,
         }}
       >
-        {PICKS.map(({ slug, photo }) => {
+        {resolved.map(({ city: slug, tagline }, i) => {
           const c = bySlug[slug];
           const county = countyById[c.county];
+          const photo = PHOTO_LABELS.get(slug) ?? c.name.toUpperCase();
+          const approved = photos.get(photoKey(slug, "pick"));
           return (
-            <Link
+            <A
               key={slug}
               href={`/city/${slug}`}
               className="pick-card"
+              data-bb-card={bb ? i : undefined}
+              data-bb-card-city={bb ? slug : undefined}
+              data-bb-card-label={bb ? `PICK ${i + 1} — ${c.name.toUpperCase()}` : undefined}
               style={{
                 textDecoration: "none",
                 color: "#1D1913",
@@ -109,7 +135,7 @@ export default async function EditorsPicks({ introOverride, regionKey }: { intro
               }}
             >
               <EditorialPhoto
-                photo={photos.get(photoKey(slug, "pick"))}
+                photo={approved}
                 attributionLink={false} /* inside the card's <Link> — nested anchors are invalid HTML */
                 style={{
                   aspectRatio: "4 / 2.9",
@@ -150,9 +176,17 @@ export default async function EditorsPicks({ introOverride, regionKey }: { intro
                     padding: "6px 10px",
                     borderRadius: 6,
                     border: "1px dashed rgba(29,25,19,.35)",
+                    textAlign: "center" as const,
                   }}
                 >
                   PHOTO — {photo}
+                  {bb && !approved && (
+                    /* builder-canvas only: an honest editor-facing state — a
+                       lineup with this card can DRAFT but never PUBLISH */
+                    <span style={{ display: "block", marginTop: 6, color: "#C13E17", fontWeight: 700 }}>
+                      NO APPROVED HOMEPAGE PHOTO — USE CHANGE PHOTO
+                    </span>
+                  )}
                 </span>
               </EditorialPhoto>
               <div style={{ padding: "20px 22px 22px" }}>
@@ -171,7 +205,7 @@ export default async function EditorsPicks({ introOverride, regionKey }: { intro
                     marginTop: 6,
                   }}
                 >
-                  {c.tagline}
+                  {tagline || c.tagline}
                 </div>
                 <div
                   style={{
@@ -194,7 +228,7 @@ export default async function EditorsPicks({ introOverride, regionKey }: { intro
                   </span>
                 </div>
               </div>
-            </Link>
+            </A>
           );
         })}
       </div>
