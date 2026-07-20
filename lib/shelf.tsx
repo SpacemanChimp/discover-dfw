@@ -1,4 +1,5 @@
 "use client";
+import { track } from "@/lib/analytics/track";
 /* "My Shelf" — saved homes, saved searches, and the guest→member flow.
 
    Guest mode (no session): everything lives in localStorage, exactly as the
@@ -316,7 +317,10 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(rec),
       })
-        .then((r) => !r.ok && showToast("That didn’t stick — try again."))
+        .then((r) => {
+          if (!r.ok) return showToast("That didn’t stick — try again.");
+          track("saved_search_created", { intent: "save-search", citySlug: rec.citySlug ?? undefined });
+        })
         .catch(() => showToast("That didn’t stick — try again."));
       showToast("Standing order placed — we’ll watch the market.");
     },

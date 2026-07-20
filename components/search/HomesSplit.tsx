@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { track } from "@/lib/analytics/track";
 
 /* Client shell for the map-room split. The rail/map/index arrive
    server-rendered as ReactNode slots, so the only client weight here is the
@@ -105,6 +106,7 @@ export default function HomesSplit({
     const next = view === "map" ? "list" : "map";
     setView(next);
     announce(next);
+    track("search_view_changed", { view: next, scope: "homes" });
   }
 
   const mapMode = view === "map";

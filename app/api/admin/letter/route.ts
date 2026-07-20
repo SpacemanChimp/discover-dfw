@@ -3,9 +3,19 @@ import { getAdminUser } from "@/lib/admin";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { sendEmail } from "@/lib/email/resend";
 import { LETTER_FROM, letterUnsubscribeUrl } from "@/lib/email/letter";
-import { buildLetterIssueEmail, UNSUB_PLACEHOLDER, type IssueSections } from "@/lib/email/letter-issue";
+import { buildLetterIssueEmail, UNSUB_PLACEHOLDER, type IssueSections, type IssueStats } from "@/lib/email/letter-issue";
 import { generateIssueStats, getPreviousSentIssue, lintIssue } from "@/lib/content/letter-issues";
 import { findPage } from "@/lib/content/community-content-drafts";
+import {
+  isLetterDoc,
+  sanitizeLetterDoc,
+  lintLetterDoc,
+  renderLetterEmail,
+  defaultLetterDoc,
+  letterDocFromLegacy,
+  type LetterDoc,
+} from "@/lib/email/letter-blocks";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /* The Letter — issue actions (TL-2). Admin-only (ADMIN_EMAILS gate before
    anything is read; 404 to everyone else). NO AUTO-SEND EXISTS: nothing
@@ -45,9 +55,64 @@ type Body = {
   issueId?: string;
   issueDate?: string;
   subject?: string;
-  sections?: IssueSections;
+  /** legacy flat sections OR the block document — both accepted */
+  sections?: IssueSections | LetterDoc | unknown;
   confirm?: string;
+  versionNo?: number;
 };
+
+/** shape-dispatched render: block documents get the block renderer (with
+    a plain-text alternative); legacy flat issues keep the ORIGINAL
+    renderer byte-for-byte (sent history renders exactly as it sent) */
+function renderIssue(issue: { issue_date: string; subject: string | null; sections_json: unknown; stats_json: IssueStats | null }, isTest: boolean): { subject: string; html: string; text?: string } {
+  const subject = issue.subject ?? `The Letter — ${issue.issue_date}`;
+  if (isLetterDoc(issue.sections_json)) {
+    return renderLetterEmail({ issueDate: issue.issue_date, subject, doc: issue.sections_json, stats: issue.stats_json, isTest });
+  }
+  return buildLetterIssueEmail({ issueDate: issue.issue_date, subject, sections: issue.sections_json as IssueSections, stats: issue.stats_json as IssueStats, isTest });
+}
+
+/** shape-dispatched lint: the READY/SEND gate for both formats */
+function lintAny(subject: string | null, sections: unknown): { errors: string[]; warnings: string[] } {
+  if (isLetterDoc(sections)) return lintLetterDoc(subject, sections, { supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL });
+  const l = lintIssue(subject, sections as IssueSections);
+  return { errors: l.errors ?? [], warnings: l.warnings ?? [] };
+}
+
+const LETTER_ROUTE = (issueId: string) => `__letter/${issueId}`;
+
+/** Version snapshot into the EXISTING audited editor store (0018 rails:
+    optimistic concurrency, append-only history, verification events).
+    Failure is reported, never fatal — the canonical issue row already
+    saved. */
+async function snapshotVersion(db: SupabaseClient, issueId: string, doc: LetterDoc, subject: string | null, docText: string, adminEmail: string): Promise<{ versionNo: number | null; error: string | null }> {
+  try {
+    const route = LETTER_ROUTE(issueId);
+    const { data: d } = await db.from("editor_documents").select("draft_version_id, published_version_id").eq("route", route).eq("region_key", "__blocks").maybeSingle();
+    let base = 0;
+    const ptr = d?.draft_version_id ?? d?.published_version_id;
+    if (ptr) {
+      const { data: v } = await db.from("editor_versions").select("version_no").eq("id", ptr).single();
+      base = v?.version_no ?? 0;
+    }
+    const { data, error } = await db.rpc("editor_save_draft", {
+      p_route: route,
+      p_region_key: "__blocks",
+      p_content_type: "layout",
+      p_content_json: doc,
+      p_content_text: docText.slice(0, 4000),
+      p_seo_title: (subject ?? "").slice(0, 200) || null,
+      p_seo_description: null,
+      p_base_version: base,
+      p_admin_email: adminEmail,
+    });
+    if (error) return { versionNo: null, error: error.message };
+    const row = Array.isArray(data) ? data[0] : data;
+    return { versionNo: (row as { version_no?: number } | null)?.version_no ?? null, error: null };
+  } catch (e) {
+    return { versionNo: null, error: e instanceof Error ? e.message : "snapshot failed" };
+  }
+}
 
 export async function POST(req: Request) {
   const adminUser = await getAdminUser();
@@ -88,7 +153,7 @@ export async function POST(req: Request) {
       .insert({
         issue_date: issueDate,
         subject: null,
-        sections_json: { editorsNote: "", communityOfWeek: null },
+        sections_json: defaultLetterDoc(),
         stats_json: stats,
         status: "draft",
         created_by: adminUser.email,
@@ -107,15 +172,39 @@ export async function POST(req: Request) {
 
   if (body.action === "save") {
     if (issue.status !== "draft" && issue.status !== "ready") return bad(`Issue is ${issue.status}`, 409);
-    const sections = body.sections ?? issue.sections_json;
-    // resolve + freeze the community-of-week page name server-side
+    const subject = body.subject !== undefined ? String(body.subject).slice(0, 120) : issue.subject;
+
+    /* block document (the visual editor): server-side sanitation is the
+       contract — the stored JSON is the sanitizer's output */
+    if (isLetterDoc(body.sections)) {
+      const s = sanitizeLetterDoc(body.sections, { supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL });
+      if (!s.ok || !s.doc) return NextResponse.json({ ok: false, errors: s.errors }, { status: 422 });
+      // resolve + freeze every community-spotlight page name server-side
+      for (const b of s.doc.blocks) {
+        if (b.type === "community-spotlight") {
+          const page = findPage(b.citySlug, b.hoodSlug);
+          if (!page) return bad(`community-spotlight ${b.citySlug}/${b.hoodSlug} is not an existing page`, 409);
+          b.name = page.hood.name;
+        }
+      }
+      const lint = lintLetterDoc(subject, s.doc, { supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL });
+      const { error } = await db
+        .from("letter_issues")
+        .update({ subject, sections_json: s.doc, status: "draft" }) // edits drop readiness
+        .eq("id", issueId);
+      if (error) return bad(error.message, 500);
+      const snap = await snapshotVersion(db, issueId, s.doc, subject, s.text, adminUser.email);
+      return NextResponse.json({ ok: true, lint, versionNo: snap.versionNo, versionError: snap.error });
+    }
+
+    /* legacy flat shape — unchanged behavior */
+    const sections = (body.sections as IssueSections | undefined) ?? issue.sections_json;
     if (sections?.communityOfWeek) {
       const page = findPage(sections.communityOfWeek.citySlug, sections.communityOfWeek.hoodSlug);
       if (!page) return bad("communityOfWeek is not an existing page", 409);
       sections.communityOfWeek.name = page.hood.name;
       sections.communityOfWeek.blurb = String(sections.communityOfWeek.blurb ?? "").slice(0, 400);
     }
-    const subject = body.subject !== undefined ? String(body.subject).slice(0, 120) : issue.subject;
     const lint = lintIssue(subject, sections);
     const { error } = await db
       .from("letter_issues")
@@ -125,9 +214,87 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, lint });
   }
 
+  /* ---- convert: one-way upgrade of a DRAFT/READY legacy issue to blocks
+     (sent/canceled issues keep their shape forever) ---- */
+  if (body.action === "convert") {
+    if (issue.status !== "draft" && issue.status !== "ready") return bad(`Issue is ${issue.status} — sent history keeps its original format`, 409);
+    if (isLetterDoc(issue.sections_json)) return NextResponse.json({ ok: true, doc: issue.sections_json, already: true });
+    const doc = letterDocFromLegacy(issue.sections_json as IssueSections);
+    const s = sanitizeLetterDoc(doc, { supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL });
+    if (!s.ok || !s.doc) return NextResponse.json({ ok: false, errors: s.errors }, { status: 422 });
+    const { error } = await db.from("letter_issues").update({ sections_json: s.doc, status: "draft" }).eq("id", issueId);
+    if (error) return bad(error.message, 500);
+    const snap = await snapshotVersion(db, issueId, s.doc, issue.subject, s.text, adminUser.email);
+    return NextResponse.json({ ok: true, doc: s.doc, versionNo: snap.versionNo });
+  }
+
+  /* ---- preview: rendered html + plain text for the editor canvas ---- */
+  if (body.action === "preview") {
+    if (!issue.sections_json) return bad("Write the issue first", 422);
+    const r = renderIssue(issue, true);
+    // preview carries a dead unsubscribe target — no token is minted
+    return NextResponse.json({
+      ok: true,
+      subject: r.subject,
+      html: r.html.split(UNSUB_PLACEHOLDER).join("#unsubscribe-preview"),
+      text: (r.text ?? "").split(UNSUB_PLACEHOLDER).join("(per-recipient unsubscribe link)"),
+    });
+  }
+
+  /* ---- versions: the issue's audited edit history ---- */
+  if (body.action === "versions") {
+    const { data: docRow } = await db
+      .from("editor_documents")
+      .select("id")
+      .eq("route", LETTER_ROUTE(issueId))
+      .eq("region_key", "__blocks")
+      .maybeSingle();
+    if (!docRow) return NextResponse.json({ ok: true, versions: [] });
+    const { data: versions, error } = await db
+      .from("editor_versions")
+      .select("version_no, status, seo_title, created_by, created_at")
+      .eq("document_id", docRow.id)
+      .order("version_no", { ascending: false })
+      .limit(50);
+    if (error) return bad(error.message, 500);
+    return NextResponse.json({
+      ok: true,
+      versions: (versions ?? []).map((v) => ({ versionNo: v.version_no, status: v.status, subject: v.seo_title, admin: v.created_by, at: v.created_at })),
+    });
+  }
+
+  /* ---- restore: an old version becomes a NEW draft version — send
+     history and sent issues are never rewritten ---- */
+  if (body.action === "restore") {
+    if (issue.status !== "draft" && issue.status !== "ready") return bad(`Issue is ${issue.status} — sent history is immutable`, 409);
+    const versionNo = Number(body.versionNo);
+    if (!Number.isInteger(versionNo) || versionNo < 1) return bad("Missing versionNo");
+    const { data: docRow } = await db
+      .from("editor_documents")
+      .select("id")
+      .eq("route", LETTER_ROUTE(issueId))
+      .eq("region_key", "__blocks")
+      .maybeSingle();
+    if (!docRow) return bad("No version history for this issue", 404);
+    const { data: v, error: vErr } = await db
+      .from("editor_versions")
+      .select("content_json, seo_title")
+      .eq("document_id", docRow.id)
+      .eq("version_no", versionNo)
+      .single();
+    if (vErr || !v) return bad(`Version ${versionNo} not found`, 404);
+    const s = sanitizeLetterDoc(v.content_json, { supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL });
+    if (!s.ok || !s.doc) return NextResponse.json({ ok: false, errors: s.errors }, { status: 422 });
+    const subject = (v.seo_title as string | null) ?? issue.subject;
+    const { error } = await db.from("letter_issues").update({ subject, sections_json: s.doc, status: "draft" }).eq("id", issueId);
+    if (error) return bad(error.message, 500);
+    const snap = await snapshotVersion(db, issueId, s.doc, subject, s.text, adminUser.email);
+    return NextResponse.json({ ok: true, restoredFrom: versionNo, newVersionNo: snap.versionNo, subject });
+  }
+
   if (body.action === "ready") {
     if (issue.status !== "draft" && issue.status !== "ready") return bad(`Issue is ${issue.status}`, 409);
-    const lint = lintIssue(issue.subject, issue.sections_json);
+    const lint = lintAny(issue.subject, issue.sections_json);
     if (lint.errors.length) return NextResponse.json({ ok: false, error: `lint blocks readiness: ${lint.errors.length} error(s)`, lint }, { status: 422 });
     if (!issue.stats_json) return bad("Generate the week's numbers first", 422);
     const { error } = await db.from("letter_issues").update({ status: "ready" }).eq("id", issueId);
@@ -145,19 +312,14 @@ export async function POST(req: Request) {
   /* ---- test-send: the admin's own inbox ONLY ---- */
   if (body.action === "test-send") {
     if (!issue.stats_json || !issue.sections_json) return bad("Generate + write the issue first", 422);
-    const { subject, html } = buildLetterIssueEmail({
-      issueDate: issue.issue_date,
-      subject: issue.subject ?? `The Letter — ${issue.issue_date}`,
-      sections: issue.sections_json,
-      stats: issue.stats_json,
-      isTest: true,
-    });
+    const { subject, html, text } = renderIssue(issue, true);
     // test copies carry a dead unsubscribe target on purpose — the admin
     // is not unsubscribing themselves from a test
     const sent = await sendEmail({
       to: adminUser.email,
       subject: `[TEST] ${subject}`,
       html: html.split(UNSUB_PLACEHOLDER).join(`mailto:${adminUser.email}?subject=test-copy`),
+      text: text ? text.split(UNSUB_PLACEHOLDER).join(`mailto:${adminUser.email}`) : undefined,
       from: LETTER_FROM,
     });
     if (!sent.ok) return bad(`test send failed: ${sent.error}`, 502);
@@ -169,7 +331,7 @@ export async function POST(req: Request) {
     if (issue.status !== "ready") return bad(`Issue is ${issue.status} — only 'ready' issues send`, 409);
     const expected = `SEND ${issue.issue_date}`;
     if (body.confirm !== expected) return bad(`Type the confirmation phrase exactly: ${expected}`, 428);
-    const lint = lintIssue(issue.subject, issue.sections_json);
+    const lint = lintAny(issue.subject, issue.sections_json);
     if (lint.errors.length) return bad("lint no longer passes — re-edit the issue", 422);
 
     // single-flight lock (the CI pattern): one letter send at a time, ever
@@ -195,12 +357,7 @@ export async function POST(req: Request) {
         .eq("status", "subscribed");
       if (audErr) throw new Error(audErr.message);
 
-      const rendered = buildLetterIssueEmail({
-        issueDate: issue.issue_date,
-        subject: issue.subject!,
-        sections: issue.sections_json,
-        stats: issue.stats_json,
-      });
+      const rendered = renderIssue(issue, false);
 
       for (const sub of audience ?? []) {
         // claim the (issue, subscriber) slot BEFORE any send
@@ -237,6 +394,7 @@ export async function POST(req: Request) {
           to: sub.email,
           subject: rendered.subject,
           html: personal,
+          text: rendered.text ? rendered.text.split(UNSUB_PLACEHOLDER).join(unsubUrl ?? "#") : undefined,
           from: LETTER_FROM,
           headers: unsubUrl
             ? { "List-Unsubscribe": `<${unsubUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }

@@ -14,6 +14,8 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  /** plain-text alternative (multipart) — deliverability + accessibility */
+  text?: string;
   /** Reply-To — set to the lead's address on internal notifications. */
   replyTo?: string;
   /** Extra SMTP headers — e.g. List-Unsubscribe on recurring digests. */
@@ -43,6 +45,7 @@ export async function sendEmail(opts: {
         to: [opts.to],
         subject: opts.subject,
         html: opts.html,
+        ...(opts.text ? { text: opts.text } : {}),
         ...(opts.replyTo ? { reply_to: [opts.replyTo] } : {}),
         ...(opts.headers ? { headers: opts.headers } : {}),
       }),

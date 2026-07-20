@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { track } from "@/lib/analytics/track";
 import type { Listing } from "@/lib/mls/types";
 import { useShelf } from "@/lib/shelf";
 import { getSessionId } from "@/lib/session-id";
@@ -163,8 +164,9 @@ export default function RequestShowingSheet({
           openedAt: openedAt.current,
         }),
       });
-      const data = (await res.json().catch(() => ({ ok: false }))) as { ok: boolean };
+      const data = (await res.json().catch(() => ({ ok: false }))) as { ok: boolean; leadId?: string };
       if (!res.ok || !data.ok) throw new Error();
+      track("showing_requested", { intent: "schedule-showing", leadId: data.leadId });
       setState("sent");
     } catch {
       setState("error");

@@ -77,6 +77,12 @@ const DESKS: Desk[] = [
     blurb: "Photo sourcing batches and Claude candidate scoring.",
     gateNote: "FUTURE — CLI-gated today (CI-4 / CI-5)",
   },
+  {
+    eyebrow: "08 — PULSE",
+    title: "Growth",
+    blurb: "Organic search, conversion funnel, lead attribution, and content operations — the weekly operating view.",
+    href: "/admin/growth",
+  },
 ];
 
 export default async function AdminConsolePage() {

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { INTENTS, type IntentKey } from "@/lib/convert/intents";
 import { ConversionSheet } from "./ConversionPanel";
+import { track } from "@/lib/analytics/track";
 
 /* The one CTA a public page gets, in the LISTING-PAGE treatment: a primary
    orange pill and one smaller adjacent secondary pill — not a standalone
@@ -36,6 +37,10 @@ export default function ConversionDuo({
   community?: string | null;
 }) {
   const [open, setOpen] = useState<IntentKey | null>(null);
+  const openSheet = (k: IntentKey) => {
+    track("cta_clicked", { intent: k, citySlug: citySlug ?? undefined, communitySlug: community ?? undefined });
+    setOpen(k);
+  };
   const primaryStyle: React.CSSProperties = {
     background: "#C13E17",
     color: "#F6F1E6",
@@ -71,7 +76,7 @@ export default function ConversionDuo({
         ) : (
           <button
             type="button"
-            onClick={() => setOpen(primary)}
+            onClick={() => openSheet(primary)}
             aria-haspopup="dialog"
             className="btn-primary"
             style={primaryStyle}
@@ -87,7 +92,7 @@ export default function ConversionDuo({
           secondary && (
             <button
               type="button"
-              onClick={() => setOpen(secondary)}
+              onClick={() => openSheet(secondary)}
               aria-haspopup="dialog"
               style={secondaryStyle}
             >

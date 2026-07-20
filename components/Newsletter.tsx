@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { track } from "@/lib/analytics/track";
 
 /* The Letter signup (TL-1) — real double opt-in: this form only ever
    creates a PENDING subscriber and triggers the confirmation email; the
@@ -17,6 +18,7 @@ export default function Newsletter({ introOverride, regionKey }: { introOverride
     e.preventDefault();
     setPhase("sending");
     setError(null);
+    track("letter_signup_started", { intent: "newsletter" });
     try {
       const res = await fetch("/api/letter/subscribe", {
         method: "POST",
