@@ -113,8 +113,37 @@ function imagesIn(doc: unknown): { src: string; alt: string; attribution: string
   return out;
 }
 
-export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: string; initialRoute?: string }) {
-  const [mode, setMode] = useState<"builder" | "communities" | "content">(initialRoute ? "content" : "builder");
+export default function EditorDesk({
+  adminEmail,
+  initialRoute,
+  initialMode,
+  initialCommunity,
+  initialTab,
+}: {
+  adminEmail: string;
+  initialRoute?: string;
+  /** URL-addressable desk state: ?mode=communities&community=<city/slug>&tab=<tab> */
+  initialMode?: string;
+  initialCommunity?: string;
+  initialTab?: string;
+}) {
+  const [mode, setModeState] = useState<"builder" | "communities" | "content">(
+    initialMode === "communities" || initialMode === "content" || initialMode === "builder"
+      ? initialMode
+      : initialRoute
+        ? "content"
+        : "builder"
+  );
+  /* keep the mode bookmarkable — community/tab params are owned by the
+     studio, which writes richer URLs of its own */
+  const setMode = (m: "builder" | "communities" | "content") => {
+    setModeState(m);
+    try {
+      window.history.replaceState(null, "", `/admin/editor?mode=${m}`);
+    } catch {
+      /* history unavailable — mode still switches */
+    }
+  };
   const pages = useMemo(() => allPages(), []);
   const groups = useMemo(() => {
     const order = ["Homepage", "Search & editorial", "Cities", "Neighborhoods", "New-build communities", "Static & research"];
@@ -397,7 +426,7 @@ export default function EditorDesk({ adminEmail, initialRoute }: { adminEmail: s
     return (
       <div>
         {modeTabs}
-        <CommunityStudio adminEmail={adminEmail} />
+        <CommunityStudio adminEmail={adminEmail} initialCommunity={initialCommunity} initialTab={initialTab} />
       </div>
     );
   }

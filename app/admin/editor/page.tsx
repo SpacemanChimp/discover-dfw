@@ -24,12 +24,18 @@ export default async function AdminEditorPage({
   const adminUser = await getAdminUser();
   if (!adminUser) notFound();
   const params = await searchParams;
-  const route = typeof params.route === "string" ? params.route : undefined;
+  const str = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 
   return (
     <div style={{ minHeight: "100vh", background: "#F6F1E6", color: "#1D1913" }}>
       <AdminNav current="editor" />
-      <EditorDesk adminEmail={adminUser.email} initialRoute={route} />
+      <EditorDesk
+        adminEmail={adminUser.email}
+        initialRoute={str(params.route)}
+        initialMode={str(params.mode)}
+        initialCommunity={str(params.community)}
+        initialTab={str(params.tab)}
+      />
     </div>
   );
 }
