@@ -8,6 +8,16 @@ import { SCHOOL_SOURCE_NOTE } from "@/lib/compliance";
 import { searchFiltersToQueryString, SLUG_BY_STATUS, STATUS_BY_SLUG } from "@/lib/mls/url";
 import SaveSearchButton from "./SaveSearchButton";
 import SearchTypeahead from "./SearchTypeahead";
+import { track } from "@/lib/analytics/track";
+
+/** filter keys → the closed analytics category set (values never leave) */
+const FILTER_CAT: Record<string, string> = {
+  minPrice: "price", maxPrice: "price", beds: "beds", baths: "baths",
+  minSqft: "sqft", maxSqft: "sqft", minAcres: "lot", maxAcres: "lot",
+  yearMin: "year", yearMax: "year", propertyType: "type", status: "status",
+  school: "schools", district: "schools", citySlug: "city",
+  newBuildsOnly: "new-build", q: "keywords",
+};
 
 const PRICE_BANDS: { label: string; min?: number; max?: number }[] = [
   { label: "ANY PRICE" },
@@ -207,6 +217,17 @@ export default function SearchToolbar({
   const router = useRouter();
 
   const navigate = (patch: Partial<SearchFilters>) => {
+    // first-party funnel: the first filter interaction on this surface is
+    // "search started" (fire-and-forget; never blocks navigation)
+    track(
+      "search_started",
+      {
+        scope: basePath === "/land" ? "land" : basePath === "/new-builds" ? "new-builds" : citySlug ? "city-homes" : "homes",
+        citySlug: citySlug ?? undefined,
+        filterCategories: [...new Set(Object.keys(patch).map((k) => FILTER_CAT[k]).filter(Boolean))],
+      },
+      basePath ?? citySlug ?? "homes"
+    );
     const q = { ...query, ...patch };
     if (lockNewBuilds) q.newBuildsOnly = true; // the surface's premise never toggles off
     // In the Map Room (/homes) every change stays in the Map Room — the

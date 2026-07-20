@@ -59,6 +59,16 @@ export async function GET(req: Request) {
     .eq("id", sub.id);
   if (updErr) return html(page("Something hiccuped.", "Give the link another try in a minute."), 500);
 
+  // first-party funnel: the confirmed opt-in is the conversion (server-side
+  // — the click arrives from an email, so there is no browser session).
+  // Fire-and-forget: analytics failures never affect the subscriber.
+  try {
+    await db.from("site_events").upsert(
+      { event_id: crypto.randomUUID(), event: "letter_subscribed", session_id: ("srv-" + sub.id).slice(0, 36), path: "/letter/confirm", page_type: "letter", intent: "newsletter", lead_id: null },
+      { onConflict: "event_id", ignoreDuplicates: true }
+    );
+  } catch { /* never blocks the confirmation */ }
+
   // welcome — marketing-class from send #1: postal footer + unsubscribe +
   // RFC 8058 one-click headers
   const unsubUrl = letterUnsubscribeUrl(sub.id);

@@ -122,11 +122,12 @@ export async function POST(req: Request) {
     message: (body.message || "").trim().slice(0, 2000) || null,
   };
 
-  const { error } = await admin.from("showing_requests").insert(row);
+  const { data: insertedShowing, error } = await admin.from("showing_requests").insert(row).select("id").single();
   if (error) {
     console.error("[showing-request] insert failed:", error.message, JSON.stringify(row));
     return NextResponse.json({ ok: false, error: "Couldn't save that — try once more" }, { status: 500 });
   }
+  const showingId = (insertedShowing?.id as string) ?? null;
 
   await recordLeadEvent(admin, {
     userId,
@@ -175,5 +176,5 @@ export async function POST(req: Request) {
     dateSource,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ...(showingId ? { leadId: showingId } : {}) }); // id ties the client funnel event to this request
 }

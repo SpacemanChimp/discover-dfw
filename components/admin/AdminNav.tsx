@@ -15,6 +15,7 @@ const TABS: { key: string; label: string; href: string }[] = [
   { key: "content", label: "SEO CONTENT", href: "/admin/communities?view=content" },
   { key: "newbuilds", label: "NEW BUILDS", href: "/admin/newbuilds" },
   { key: "letter", label: "THE LETTER", href: "/admin/letter" },
+  { key: "growth", label: "GROWTH", href: "/admin/growth" },
 ];
 
 export default function AdminNav({ current }: { current: string }) {

@@ -15,6 +15,7 @@
      states; keyboard-operable modal (focus trap, Esc, restore); collects
      nothing beyond what's shown; no analytics calls */
 import { useEffect, useRef, useState } from "react";
+import { track } from "@/lib/analytics/track";
 import { INTENTS, TIMELINE_OPTIONS, buildLeadBody, validateStep1, type IntentKey } from "@/lib/convert/intents";
 import { useShelf } from "@/lib/shelf";
 import { getSessionId } from "@/lib/session-id";
@@ -177,6 +178,11 @@ export function ConversionSheet({
   const [phase, setPhase] = useState<"idle" | "sending" | "sent">("idle");
   const [hp, setHp] = useState("");
   const openedAt = useRef(Date.now());
+  // first-party funnel: the sheet opening IS the form starting
+  useEffect(() => {
+    track("lead_form_started", { intent, citySlug: citySlug ?? undefined, communitySlug: community ?? undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogA11y({ open: true, onClose, panelRef });
 
@@ -223,12 +229,13 @@ export function ConversionSheet({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = (await res.json()) as { ok: boolean; error?: string };
+      const data = (await res.json()) as { ok: boolean; error?: string; leadId?: string };
       if (!data.ok) {
         setNetError(data.error ?? "That didn't go through — try once more.");
         setPhase("idle");
         return;
       }
+      track("lead_submitted", { intent, citySlug: citySlug ?? undefined, communitySlug: community ?? undefined, leadId: data.leadId });
       setPhase("sent"); // only a confirmed backend success flips to done
     } catch {
       setNetError("That didn't go through — try once more.");

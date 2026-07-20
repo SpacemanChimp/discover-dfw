@@ -10,6 +10,7 @@ import { getCityMarketMetricSet } from "@/lib/market/metrics";
 import NearbyListings from "@/components/listing/NearbyListings";
 import SearchNav from "@/components/search/SearchNav";
 import MLSComplianceFooter from "@/components/search/MLSComplianceFooter";
+import TrackEvent from "@/components/analytics/TrackEvent";
 
 /* Live mode: tens of thousands of listings — render on demand, refresh
    every 15 minutes (well inside the 12-hour IDX staleness ceiling). */
@@ -64,6 +65,7 @@ export default async function ListingPage({
 
   return (
     <div style={{ background: "#F6F1E6", color: "#1D1913", minHeight: "100vh" }}>
+      <TrackEvent event="listing_viewed" ctx={{ listingKey, citySlug: listing.citySlug }} />
       <SearchNav />
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "16px 4vw 0" }}>
         <Link

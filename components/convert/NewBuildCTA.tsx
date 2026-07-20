@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ConversionSheet } from "./ConversionPanel";
+import { track } from "@/lib/analytics/track";
 import type { IntentKey } from "@/lib/convert/intents";
 
 /* The new-build page's single conversion moment — a compact, full-width
@@ -77,7 +78,7 @@ export default function NewBuildCTA({
   const [open, setOpen] = useState<IntentKey | null>(null);
   const action = (b: CtaBandButton, style: React.CSSProperties) =>
     b.intent ? (
-      <button type="button" onClick={() => setOpen(b.intent!)} aria-haspopup="dialog" style={style}>
+      <button type="button" onClick={() => { track("cta_clicked", { intent: b.intent, citySlug: citySlug ?? undefined, communitySlug: community ?? undefined }); setOpen(b.intent!); }} aria-haspopup="dialog" style={style}>
         {b.label}
       </button>
     ) : (

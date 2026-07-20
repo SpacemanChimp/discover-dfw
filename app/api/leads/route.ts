@@ -164,16 +164,23 @@ export async function POST(req: Request) {
   } catch {
     /* no session — guest lead */
   }
+  let leadId: string | null = null;
   if (admin) {
-    const { error } = await admin.from("leads").insert({
-      user_id: userId,
-      type: lead.type,
-      listing_key: lead.listingKey,
-      payload: lead,
-    });
+    const { data: inserted, error } = await admin
+      .from("leads")
+      .insert({
+        user_id: userId,
+        type: lead.type,
+        listing_key: lead.listingKey,
+        payload: lead,
+      })
+      .select("id")
+      .single();
     if (error) {
       console.error("[lead] db insert failed, logging instead:", error.message);
       console.log("[lead]", JSON.stringify(lead));
+    } else {
+      leadId = (inserted?.id as string) ?? null;
     }
     if (lead.type === "guide") {
       await recordLeadEvent(admin, {
@@ -232,5 +239,5 @@ export async function POST(req: Request) {
 
   return isForm
     ? NextResponse.redirect(new URL(`${referer}#request-sent`, referer), 303)
-    : NextResponse.json({ ok: true });
+    : NextResponse.json({ ok: true, ...(leadId ? { leadId } : {}) }); // id lets the client tie its funnel event to this lead
 }

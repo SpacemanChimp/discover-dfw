@@ -6,6 +6,7 @@ import type { SearchFilters, SearchResult } from "@/lib/mls/types";
 import { SCHOOL_SOURCE_NOTE } from "@/lib/compliance";
 import { searchFiltersToQueryString } from "@/lib/mls/url";
 import SearchNav from "./SearchNav";
+import TrackEvent from "@/components/analytics/TrackEvent";
 import SearchToolbar from "./SearchToolbar";
 import Pager from "./Pager";
 import ListingResultsRail from "./ListingResultsRail";
@@ -116,6 +117,7 @@ export default async function MapRoom({
 
   return (
     <Shell effective={effective} citySlug={citySlug} authFailed={authFailed}>
+      <TrackEvent event="search_results_viewed" ctx={{ scope: citySlug ? "city-homes" : "homes", citySlug: citySlug ?? undefined }} />
       <HomesSplit
         initialView={view}
         railDesktopOnly={!city}
