@@ -2782,10 +2782,20 @@ function PickCardPanel({
   );
 }
 
-/** CHANGE PHOTO — the Photo Desk data for one city's homepage-pick slot:
-    the approved asset with its full metadata, or an honest empty state.
-    Uploads ride the EXISTING CI-7 manual pipeline and only ever create a
-    PENDING candidate — approval stays the Photo Desk's explicit action. */
+/** CHANGE PHOTO — the Photo Desk data for one slot: the approved asset
+    with its full metadata, or an honest empty state.
+
+    Homepage picks: uploads ride the EXISTING CI-7 manual pipeline and only
+    ever create a PENDING candidate — approval stays the Photo Desk's
+    explicit action.
+
+    Community Studio (entity=neighborhood): ONE-ACTION upload + approve —
+    the same CI-7 processing composed with the same audited CI-6 approval
+    RPC server-side (/api/admin/editor/upload-approve), so a studio upload
+    no longer needs a Photo Desk visit. Alt text becomes REQUIRED (the
+    photo publishes immediately). Sourced candidates (Wikimedia/Openverse/
+    provider) still go through the Photo Desk — the one-action endpoint can
+    only approve the manual upload it just created. */
 export function PickPhotoModal({
   city,
   info,
@@ -2809,8 +2819,10 @@ export function PickPhotoModal({
   const shown = displayName ?? c?.name ?? city;
   const galleryIdx = slotKey?.startsWith("gallery-") ? Number(slotKey.slice(8)) : null;
   const slotWord = entity === "neighborhood" ? (galleryIdx !== null ? `GALLERY ${galleryIdx + 1}` : "HERO") : "HOMEPAGE-PICK";
+  const oneAction = entity === "neighborhood"; // studio: upload + audited approval in one request
   const [showUpload, setShowUpload] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [altText, setAltText] = useState("");
   const [attr, setAttr] = useState("PHOTO: DISCOVER DFW");
   const [caption, setCaption] = useState("");
   const [rights, setRights] = useState(false);
@@ -2819,6 +2831,7 @@ export function PickPhotoModal({
 
   const upload = async () => {
     if (!file) return setNote({ kind: "error", text: "Choose an image file first." });
+    if (oneAction && !altText.trim()) return setNote({ kind: "error", text: "Alt text is required — describe the photo for screen readers." });
     if (!attr.trim()) return setNote({ kind: "error", text: "Attribution is required." });
     if (!rights) return setNote({ kind: "error", text: "Confirm you have the right to use this photo." });
     setBusy(true);
@@ -2836,12 +2849,19 @@ export function PickPhotoModal({
       fd.set("attributionText", attr.trim());
       fd.set("caption", caption.trim());
       fd.set("rightsConfirmed", "true");
-      const res = await fetch("/api/admin/photos/upload", { method: "POST", body: fd });
+      if (oneAction) fd.set("altText", altText.trim());
+      const res = await fetch(oneAction ? "/api/admin/editor/upload-approve" : "/api/admin/photos/upload", { method: "POST", body: fd });
       const j = await res.json();
       if (!j.ok) throw new Error(String(j.error ?? "Upload failed"));
-      setNote({ kind: "ok", text: "Uploaded as a PENDING candidate — APPROVE it in the Photo Desk to make it publishable. Nothing on the site changes until then." });
+      setNote({
+        kind: "ok",
+        text: oneAction
+          ? String(j.note ?? "PHOTO IS APPROVED AND READY.")
+          : "Uploaded as a PENDING candidate — APPROVE it in the Photo Desk to make it publishable. Nothing on the site changes until then.",
+      });
       setShowUpload(false);
       setFile(null);
+      setAltText("");
       onRefresh();
     } catch (e) {
       setNote({ kind: "error", text: e instanceof Error ? e.message : "Upload failed" });
@@ -2883,7 +2903,19 @@ export function PickPhotoModal({
           ) : (
             <div className="font-mono" style={{ fontSize: 11, lineHeight: 1.9, background: "rgba(193,62,23,.08)", border: `1.5px solid ${ORANGE_DARK}`, borderRadius: 10, padding: "12px 14px", color: ORANGE_DARK }}>
               NO APPROVED {slotWord} PHOTO FOR {shown.toUpperCase()}.
-              <br />Upload one below (it becomes a PENDING candidate) or research/approve in the Photo Desk. A lineup with this city can be drafted but never published until an asset is approved.
+              {oneAction ? (
+                <>
+                  <br />
+                  {galleryIdx !== null
+                    ? "OPTIONAL — the gallery renders only approved frames and hides publicly at zero."
+                    : "REQUIRED FOR PUBLICATION — the community cannot PREPARE FOR EXPORT without it."}{" "}
+                  Upload your own photo below and it approves in one step, or research/source one in the Photo Desk.
+                </>
+              ) : (
+                <>
+                  <br />Upload one below (it becomes a PENDING candidate) or research/approve in the Photo Desk. A lineup with this city can be drafted but never published until an asset is approved.
+                </>
+              )}
             </div>
           )}
 
@@ -2907,11 +2939,18 @@ export function PickPhotoModal({
           {showUpload && (
             <div style={{ border: "1.5px solid rgba(29,25,19,.3)", borderRadius: 10, padding: "10px 12px", marginTop: 10 }}>
               <div className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.8, color: "rgba(29,25,19,.6)" }}>
-                Same rules as the Photo Desk uploader: JPEG/PNG/WebP, ≥1200px wide, landscape, ≤4MB. The upload creates a PENDING candidate — publishing it stays the Photo Desk&rsquo;s explicit APPROVE action.
+                {oneAction
+                  ? "Same processing as the Photo Desk uploader: JPEG/PNG/WebP, ≥1200px wide, landscape, ≤4MB, EXIF stripped. Submitting uploads AND approves in one audited step — the photo publishes to this community's page immediately."
+                  : "Same rules as the Photo Desk uploader: JPEG/PNG/WebP, ≥1200px wide, landscape, ≤4MB. The upload creates a PENDING candidate — publishing it stays the Photo Desk's explicit APPROVE action."}
               </div>
               <Field label="IMAGE FILE">
                 <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} style={{ fontSize: 12 }} />
               </Field>
+              {oneAction && (
+                <Field label="ALT TEXT (REQUIRED — DESCRIBE THE PHOTO)">
+                  <input value={altText} maxLength={300} placeholder="e.g. New two-story homes along a Bridgewater street at dusk" onChange={(e) => setAltText(e.target.value)} style={inputStyle} />
+                </Field>
+              )}
               <Field label="ATTRIBUTION (SHOWN ON THE CARD)">
                 <input value={attr} onChange={(e) => setAttr(e.target.value)} style={inputStyle} />
               </Field>
@@ -2920,10 +2959,16 @@ export function PickPhotoModal({
               </Field>
               <label className="font-mono" style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 10, marginTop: 10, cursor: "pointer" }}>
                 <input type="checkbox" checked={rights} onChange={(e) => setRights(e.target.checked)} style={{ marginTop: 2 }} />
-                I confirm Discover DFW has the right to use this photo publicly.
+                I confirm I own this image or have documented permission to publish it on DiscoverDFW.com.
               </label>
               <button type="button" className="font-mono" onClick={upload} disabled={busy} style={{ ...btn(true), marginTop: 10 }}>
-                {busy ? "UPLOADING…" : "UPLOAD AS PENDING CANDIDATE"}
+                {busy
+                  ? "UPLOADING…"
+                  : oneAction
+                    ? galleryIdx !== null
+                      ? "UPLOAD & ADD TO GALLERY"
+                      : "UPLOAD & USE AS HERO"
+                    : "UPLOAD AS PENDING CANDIDATE"}
               </button>
             </div>
           )}

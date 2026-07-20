@@ -156,8 +156,27 @@ async function post(path: string, body: unknown) {
   return res.json();
 }
 
+/** valid detail tabs — anything else in a shared URL falls back to the
+    kind's default */
+const KNOWN_TABS = new Set(["canvas", "identity", "facts", "content", "photos", "status", "arrange", "preview"]);
+
+/** the studio's bookmarkable URL for a community + tab */
+const studioHref = (key: string | null, tab?: string) =>
+  key
+    ? `/admin/editor?mode=communities&community=${encodeURIComponent(key)}${tab ? `&tab=${encodeURIComponent(tab)}` : ""}`
+    : "/admin/editor?mode=communities";
+
 /* ============================================================== studio */
-export default function CommunityStudio({ adminEmail }: { adminEmail: string }) {
+export default function CommunityStudio({
+  adminEmail,
+  initialCommunity,
+  initialTab,
+}: {
+  adminEmail: string;
+  /** deep link: reopen this community/tab on load (?community=&tab=) */
+  initialCommunity?: string;
+  initialTab?: string;
+}) {
   const [items, setItems] = useState<StudioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -222,7 +241,7 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
   }, [loadInventory]);
 
   const select = useCallback(
-    (key: string | null, initialTab?: string) => {
+    (key: string | null, initialTab?: string, opts?: { writeUrl?: boolean }) => {
       setSelectedKey(key);
       setLookup(null);
       setPhotoInfo(null);
@@ -230,16 +249,64 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
       setFacts(null);
       setContent(EMPTY_CONTENT);
       setContentLint(null);
+      let resolvedTab: string | undefined;
       if (key) {
         const item = items.find((i) => i.key === key);
-        setTab(initialTab ?? (item?.kind === "draft" ? "identity" : "canvas"));
+        resolvedTab = initialTab && KNOWN_TABS.has(initialTab) ? initialTab : item?.kind === "draft" ? "identity" : "canvas";
+        setTab(resolvedTab);
         void loadInventory(key);
         void loadPhoto(key);
+      }
+      /* the URL is bookmarkable/sharable — reloading, Back, or opening the
+         link reopens the same community and tab */
+      if (opts?.writeUrl !== false) {
+        try {
+          window.history.pushState(null, "", studioHref(key, resolvedTab));
+        } catch {
+          /* history unavailable — selection still works */
+        }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [items, loadInventory]
   );
+
+  /* keep tab changes in the URL too (each is a history entry, so Back
+     retraces the editing path exactly) */
+  const selectedKeyRef = useRef(selectedKey);
+  selectedKeyRef.current = selectedKey;
+  const goTab = useCallback((t: string) => {
+    setTab(t);
+    try {
+      window.history.pushState(null, "", studioHref(selectedKeyRef.current, t));
+    } catch {
+      /* history unavailable — tab still switches */
+    }
+  }, []);
+
+  /* deep link on load + Back/Forward: adopt the URL's community/tab */
+  const selectRef = useRef(select);
+  selectRef.current = select;
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  const bootedRef = useRef(false);
+  useEffect(() => {
+    if (!bootedRef.current) {
+      bootedRef.current = true;
+      if (initialCommunity) selectRef.current(initialCommunity, initialTab, { writeUrl: false });
+    }
+    const onPop = () => {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("mode") !== "communities") return; // another desk mode owns this entry
+      const community = sp.get("community");
+      const urlTab = sp.get("tab") ?? undefined;
+      if (community !== selectedKeyRef.current) selectRef.current(community, urlTab, { writeUrl: false });
+      else if (urlTab && KNOWN_TABS.has(urlTab) && urlTab !== tabRef.current) setTab(urlTab);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadPhoto = useCallback(async (key: string) => {
     try {
@@ -361,25 +428,45 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
           <div key={cityName} style={{ marginTop: 12 }}>
             <div className="font-mono" style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".2em", color: "rgba(29,25,19,.5)" }}>{cityName.toUpperCase()}</div>
             {list.map((i) => (
-              <button
-                key={i.key + i.kind}
-                type="button"
-                onClick={() => select(i.key)}
-                style={{ display: "block", width: "100%", textAlign: "left", border: "none", background: selectedKey === i.key ? INK : "transparent", color: selectedKey === i.key ? CREAM : INK, borderRadius: 8, padding: "7px 9px", marginTop: 3, cursor: "pointer", fontFamily: "inherit" }}
-              >
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ flex: 1, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.name}</span>
-                  {i.warnings.length > 0 && <TriangleAlert size={12} color={selectedKey === i.key ? "#F1A08A" : ORANGE_DARK} aria-label={i.warnings.join("; ")} />}
-                </div>
-                <div className="font-mono" style={{ display: "flex", gap: 5, fontSize: 8, letterSpacing: ".06em", marginTop: 3, flexWrap: "wrap", opacity: 0.85 }}>
-                  <span style={{ border: "1px solid currentColor", borderRadius: 4, padding: "1px 4px" }}>{i.type === "new_build" ? "NEW BUILD" : "NEIGHBORHOOD"}</span>
-                  <span style={{ border: "1px solid currentColor", borderRadius: 4, padding: "1px 4px", color: i.lifecycle === "live" ? (selectedKey === i.key ? "#9fd8b5" : GREEN) : undefined }}>{i.lifecycle.toUpperCase()}</span>
-                  {i.hasCustomContent && <span title="Custom page content">✎ CONTENT</span>}
-                  {i.heroApproved ? <span title="Approved hero photo">📷 HERO</span> : null}
-                  {i.mlsMatched && <span title="MLS evidence on file">MLS ✓</span>}
-                  {i.hasPageLayout && <span title="Published page-specific layout override">LAYOUT*</span>}
-                </div>
-              </button>
+              <div key={i.key + i.kind} style={{ display: "flex", gap: 3, alignItems: "stretch", marginTop: 3 }}>
+                {/* real links: bookmark/middle-click friendly; plain clicks stay in-app */}
+                <a
+                  href={studioHref(i.key)}
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                    e.preventDefault();
+                    select(i.key);
+                  }}
+                  style={{ display: "block", flex: 1, minWidth: 0, textAlign: "left", textDecoration: "none", background: selectedKey === i.key ? INK : "transparent", color: selectedKey === i.key ? CREAM : INK, borderRadius: 8, padding: "7px 9px", cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.name}</span>
+                    {i.warnings.length > 0 && <TriangleAlert size={12} color={selectedKey === i.key ? "#F1A08A" : ORANGE_DARK} aria-label={i.warnings.join("; ")} />}
+                  </div>
+                  <div className="font-mono" style={{ display: "flex", gap: 5, fontSize: 8, letterSpacing: ".06em", marginTop: 3, flexWrap: "wrap", opacity: 0.85 }}>
+                    <span style={{ border: "1px solid currentColor", borderRadius: 4, padding: "1px 4px" }}>{i.type === "new_build" ? "NEW BUILD" : "NEIGHBORHOOD"}</span>
+                    <span style={{ border: "1px solid currentColor", borderRadius: 4, padding: "1px 4px", color: i.lifecycle === "live" ? (selectedKey === i.key ? "#9fd8b5" : GREEN) : undefined }}>{i.lifecycle.toUpperCase()}</span>
+                    {i.hasCustomContent && <span title="Custom page content">✎ CONTENT</span>}
+                    {i.heroApproved ? <span title="Approved hero photo">📷 HERO</span> : null}
+                    {i.mlsMatched && <span title="MLS evidence on file">MLS ✓</span>}
+                    {i.hasPageLayout && <span title="Published page-specific layout override">LAYOUT*</span>}
+                  </div>
+                </a>
+                <a
+                  href={studioHref(i.key, "photos")}
+                  title={`EDIT PHOTOS — ${i.name}`}
+                  aria-label={`Edit photos for ${i.name}`}
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                    e.preventDefault();
+                    select(i.key, "photos");
+                  }}
+                  className="font-mono"
+                  style={{ display: "flex", alignItems: "center", padding: "0 6px", borderRadius: 8, textDecoration: "none", fontSize: 11, color: selectedKey === i.key ? CREAM : "rgba(29,25,19,.55)", background: selectedKey === i.key ? INK : "transparent" }}
+                >
+                  📷
+                </a>
+              </div>
             ))}
           </div>
         ))}
@@ -430,7 +517,7 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
                     ["preview", "6 · PREVIEW & LIFECYCLE"],
                   ]
               ).map(([k, label]) => (
-                <button key={k} type="button" onClick={() => setTab(k)} className="font-mono" style={{ border: "none", borderBottom: tab === k ? `3px solid ${ORANGE}` : "3px solid transparent", background: "transparent", padding: "8px 12px", fontSize: 10, fontWeight: 700, letterSpacing: ".08em", cursor: "pointer", color: tab === k ? INK : "rgba(29,25,19,.55)" }}>
+                <button key={k} type="button" onClick={() => goTab(k)} className="font-mono" style={{ border: "none", borderBottom: tab === k ? `3px solid ${ORANGE}` : "3px solid transparent", background: "transparent", padding: "8px 12px", fontSize: 10, fontWeight: 700, letterSpacing: ".08em", cursor: "pointer", color: tab === k ? INK : "rgba(29,25,19,.55)" }}>
                   {label}
                 </button>
               ))}
@@ -519,7 +606,7 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
               )}
 
               {tab === "status" && selected.kind === "live-page" && (
-                <ChecklistPanel item={selected} lint={detailLint} onGoto={(t) => setTab(t)} />
+                <ChecklistPanel item={selected} lint={detailLint} onGoto={(t) => goTab(t)} />
               )}
 
               {tab === "preview" && selected.kind === "draft" && (
@@ -527,7 +614,7 @@ export default function CommunityStudio({ adminEmail }: { adminEmail: string }) 
                   item={selected}
                   facts={facts}
                   lint={detailLint}
-                  onGoto={(t) => setTab(t)}
+                  onGoto={(t) => goTab(t)}
                   onPrepared={() => void loadInventory(selected.key)}
                   onReadyToggle={async (ready) => {
                     // studio gate: unverified new-build claims block READY
@@ -889,9 +976,13 @@ function ContentPanel({
 function PhotoPanel({ item, info, onOpen, onRefresh }: { item: StudioItem; info: PickPhotoInfo | null; onOpen: (slotKey: string) => void; onRefresh: () => void }) {
   return (
     <div>
-      <div className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em" }}>HERO SLOT — VIA THE PHOTO DESK</div>
+      <div className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em" }}>
+        HERO PHOTO — <span style={{ color: ORANGE_DARK }}>REQUIRED FOR PUBLICATION</span>
+      </div>
       <p className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.8, color: "rgba(29,25,19,.6)" }}>
-        The page renders its hero column ONLY when an approved asset exists. Uploads become PENDING candidates; approval, unpublish, and replacement stay the Photo Desk&rsquo;s audited actions.
+        PREPARE FOR EXPORT refuses without an approved hero. Upload your own photo and it approves in ONE step
+        (audited, alt text + attribution + rights required); sourced photos and unpublish/replacement stay the Photo
+        Desk&rsquo;s audited actions.
       </p>
       {!info ? (
         <div className="font-mono" style={{ fontSize: 10 }}>CHECKING THE PHOTO DESK…</div>
@@ -918,7 +1009,7 @@ function PhotoPanel({ item, info, onOpen, onRefresh }: { item: StudioItem; info:
         </div>
       )}
       <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-        <button type="button" className="font-mono" style={btn(true)} onClick={() => onOpen("hero")}><Camera size={14} /> CHANGE PHOTO…</button>
+        <button type="button" className="font-mono" style={btn(true)} onClick={() => onOpen("hero")}><Camera size={14} /> {info?.asset ? "CHANGE PHOTO…" : "UPLOAD & USE AS HERO…"}</button>
         <a href="/admin/photos" target="_blank" rel="noreferrer" className="font-mono" style={{ ...btn(), textDecoration: "none" }}><ExternalLink size={13} /> OPEN PHOTO DESK</a>
         <button type="button" className="font-mono" style={btn()} onClick={onRefresh}><RefreshCw size={13} /> REFRESH</button>
       </div>
@@ -928,9 +1019,11 @@ function PhotoPanel({ item, info, onOpen, onRefresh }: { item: StudioItem; info:
           licensing stay Photo Desk actions; the page hides the section
           publicly until at least one photo is approved. */}
       <div style={{ borderTop: "1.5px solid rgba(29,25,19,.25)", marginTop: 20, paddingTop: 14 }}>
-        <div className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em" }}>COMMUNITY GALLERY — OPTIONAL, VIA THE PHOTO DESK</div>
+        <div className="font-mono" style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".12em" }}>COMMUNITY GALLERY — OPTIONAL</div>
         <p className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.8, color: "rgba(29,25,19,.6)" }}>
-          Up to six frames. The section renders publicly ONLY with approved photos (never a placeholder); reorder approved frames from the page canvas&rsquo;s gallery section. Uploads become PENDING candidates — approval stays in the Photo Desk.
+          Up to six frames. The section renders publicly ONLY with approved photos (never a placeholder); reorder
+          approved frames from the page canvas&rsquo;s gallery section. Your own uploads approve in ONE step; sourced
+          photos still go through the Photo Desk.
         </p>
         {!info ? (
           <div className="font-mono" style={{ fontSize: 10 }}>CHECKING THE PHOTO DESK…</div>
