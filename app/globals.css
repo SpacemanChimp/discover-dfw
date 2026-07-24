@@ -789,3 +789,68 @@ body {
 [data-bb-note]:hover::after {
   content: "✏ " attr(data-bb-note);
 }
+
+/* ---- Popular home searches (homepage editorial index, PopularSearches.tsx) --
+   Unframed ledger grid: 4×2 on wide desktop, 2 columns on phones, 1 column
+   under ~340px. Thin ink rules; ≥44px touch targets; visible focus. */
+.pop-search-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(24px, 4vw, 60px);
+  row-gap: 0;
+}
+@media (min-width: 1024px) {
+  .pop-search-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 339px) {
+  .pop-search-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.pop-search-link {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  min-height: 44px;
+  padding: 15px 2px 15px 0;
+  border-top: 1px solid rgba(29, 25, 19, 0.28);
+  text-decoration: none;
+  color: #1d1913;
+}
+.pop-search-num {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #c13e17;
+}
+.pop-search-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 700;
+  font-size: clamp(16px, 1.45vw, 19.5px);
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  transition: color 0.16s ease;
+}
+.pop-search-arrow {
+  flex: none;
+  font-size: 15px;
+  color: rgba(29, 25, 19, 0.42);
+  transition: color 0.16s ease, transform 0.16s ease;
+}
+.pop-search-link:hover .pop-search-name,
+.pop-search-link:focus-visible .pop-search-name {
+  color: #c13e17;
+}
+.pop-search-link:hover .pop-search-arrow,
+.pop-search-link:focus-visible .pop-search-arrow {
+  color: #c13e17;
+  transform: translateX(4px);
+}
+.pop-search-link:focus-visible {
+  outline: 2px solid #d9481f;
+  outline-offset: 3px;
+}
