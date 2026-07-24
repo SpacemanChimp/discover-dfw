@@ -755,6 +755,30 @@ export default function VisualBuilder({
     }
   }, []);
 
+  /* a pick PHOTO changed (lineup unchanged, so the diff-driven effect won't
+     fire) → force the real section to re-render into the canvas so the card
+     shows the new live asset immediately. Reads refs, never captured state. */
+  const rerenderPicks = useCallback(async () => {
+    if (targetRef.current.route !== "/" || !canvasSt.current.ready) return;
+    try {
+      const p = picksOf(entriesRef.current);
+      const res = await fetch("/api/admin/editor/render-picks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ picks: isDefaultPicks(p) ? null : p }),
+      });
+      const j = await res.json();
+      if (j.ok && j.html) {
+        canvasApi.current?.send({ ns: BB_NS, t: "replace", id: PICKS_ID, html: j.html });
+        setMissingPhotos((j.missingPhotos as string[]) ?? []);
+        const sc = selectedCardRef.current;
+        if (sc !== null) canvasApi.current?.send({ ns: BB_NS, t: "cardSelect", section: PICKS_ID, index: sc });
+      }
+    } catch {
+      /* canvas keeps the previous render — reopening the modal shows truth */
+    }
+  }, []);
+
   const addBlockAt = (type: string, index: number | null) => {
     const b: LayoutEntry = { kind: "block", block: newBlock(type) };
     const idx = index ?? (selected ? entries.findIndex((e) => entryId(e) === selectedId) + 1 : entries.length);
@@ -1721,6 +1745,7 @@ export default function VisualBuilder({
           info={pickPhotos[photoModalCity] ?? null}
           onClose={() => setPhotoModalCity(null)}
           onRefresh={() => loadPickInfo(photoModalCity, true)}
+          onPhotoChanged={rerenderPicks}
         />
       )}
 
@@ -2785,22 +2810,24 @@ function PickCardPanel({
 /** CHANGE PHOTO — the Photo Desk data for one slot: the approved asset
     with its full metadata, or an honest empty state.
 
-    Homepage picks: uploads ride the EXISTING CI-7 manual pipeline and only
-    ever create a PENDING candidate — approval stays the Photo Desk's
-    explicit action.
+    Every path here is ONE-ACTION upload + audited publication — the same
+    CI-7 processing composed with the audited CI-6 RPCs server-side
+    (/api/admin/editor/upload-approve), so an upload never needs a
+    separate Photo Desk visit. Alt text is REQUIRED (the photo publishes
+    immediately). Sourced candidates (Wikimedia/Openverse/provider) still
+    go through the Photo Desk — the one-action endpoint can only publish
+    the manual upload it just created.
 
-    Community Studio (entity=neighborhood): ONE-ACTION upload + approve —
-    the same CI-7 processing composed with the same audited CI-6 approval
-    RPC server-side (/api/admin/editor/upload-approve), so a studio upload
-    no longer needs a Photo Desk visit. Alt text becomes REQUIRED (the
-    photo publishes immediately). Sourced candidates (Wikimedia/Openverse/
-    provider) still go through the Photo Desk — the one-action endpoint can
-    only approve the manual upload it just created. */
+    Homepage picks with a LIVE photo: the button becomes
+    UPLOAD & REPLACE LIVE PHOTO with an inline confirm step, and the
+    server swaps the asset atomically (0022) — the old photo returns to
+    the review queue as a pending candidate, never a blank card. */
 export function PickPhotoModal({
   city,
   info,
   onClose,
   onRefresh,
+  onPhotoChanged,
   entity = "homepage",
   displayName,
   slotKey,
@@ -2810,6 +2837,8 @@ export function PickPhotoModal({
   info: PickPhotoInfo | null;
   onClose: () => void;
   onRefresh: () => void;
+  /** fires after a successful publish/replace, so the canvas can re-render */
+  onPhotoChanged?: () => void;
   entity?: "homepage" | "neighborhood";
   displayName?: string;
   /** neighborhood only: "hero" (default) or a "gallery-<i>" slot */
@@ -2819,21 +2848,31 @@ export function PickPhotoModal({
   const shown = displayName ?? c?.name ?? city;
   const galleryIdx = slotKey?.startsWith("gallery-") ? Number(slotKey.slice(8)) : null;
   const slotWord = entity === "neighborhood" ? (galleryIdx !== null ? `GALLERY ${galleryIdx + 1}` : "HERO") : "HOMEPAGE-PICK";
-  const oneAction = entity === "neighborhood"; // studio: upload + audited approval in one request
+  // homepage replaces its LIVE photo atomically; community flows keep their
+  // existing semantics (empty-slot approve; a live hero is unusual there)
+  const isReplace = entity === "homepage" && Boolean(info?.asset);
   const [showUpload, setShowUpload] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [altText, setAltText] = useState("");
   const [attr, setAttr] = useState("PHOTO: DISCOVER DFW");
   const [caption, setCaption] = useState("");
   const [rights, setRights] = useState(false);
+  const [confirmReplace, setConfirmReplace] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
   const upload = async () => {
     if (!file) return setNote({ kind: "error", text: "Choose an image file first." });
-    if (oneAction && !altText.trim()) return setNote({ kind: "error", text: "Alt text is required — describe the photo for screen readers." });
+    if (!altText.trim()) return setNote({ kind: "error", text: "Alt text is required — describe the photo for screen readers." });
     if (!attr.trim()) return setNote({ kind: "error", text: "Attribution is required." });
     if (!rights) return setNote({ kind: "error", text: "Confirm you have the right to use this photo." });
+    // replacing a live photo takes an explicit second click — the first
+    // arms the confirmation so nothing publishes on a single stray click
+    if (isReplace && !confirmReplace) {
+      setConfirmReplace(true);
+      setNote({ kind: "error", text: `Confirm the swap: the current live photo for ${shown} comes off the homepage the moment this publishes (it returns to the review queue as a pending candidate). Click again to replace it.` });
+      return;
+    }
     setBusy(true);
     setNote(null);
     try {
@@ -2849,22 +2888,21 @@ export function PickPhotoModal({
       fd.set("attributionText", attr.trim());
       fd.set("caption", caption.trim());
       fd.set("rightsConfirmed", "true");
-      if (oneAction) fd.set("altText", altText.trim());
-      const res = await fetch(oneAction ? "/api/admin/editor/upload-approve" : "/api/admin/photos/upload", { method: "POST", body: fd });
+      fd.set("altText", altText.trim());
+      if (isReplace) fd.set("replaceExisting", "true");
+      const res = await fetch("/api/admin/editor/upload-approve", { method: "POST", body: fd });
       const j = await res.json();
       if (!j.ok) throw new Error(String(j.error ?? "Upload failed"));
-      setNote({
-        kind: "ok",
-        text: oneAction
-          ? String(j.note ?? "PHOTO IS APPROVED AND READY.")
-          : "Uploaded as a PENDING candidate — APPROVE it in the Photo Desk to make it publishable. Nothing on the site changes until then.",
-      });
+      setNote({ kind: "ok", text: String(j.note ?? (j.replaced ? "PHOTO REPLACED AND LIVE." : "PHOTO APPROVED AND LIVE.")) });
       setShowUpload(false);
       setFile(null);
       setAltText("");
+      setConfirmReplace(false);
       onRefresh();
+      onPhotoChanged?.();
     } catch (e) {
       setNote({ kind: "error", text: e instanceof Error ? e.message : "Upload failed" });
+      setConfirmReplace(false);
     } finally {
       setBusy(false);
     }
@@ -2881,7 +2919,9 @@ export function PickPhotoModal({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={info.asset.public_image_url} alt={info.asset.alt_text} style={{ width: "100%", borderRadius: 10, border: `2px solid ${INK}` }} />
               <div className="font-mono" style={{ fontSize: 10.5, lineHeight: 2 }}>
-                <div style={{ fontWeight: 700, color: ORANGE_DARK }}>APPROVED ASSET — THE CARD USES THIS AUTOMATICALLY</div>
+                <div style={{ fontWeight: 700, color: ORANGE_DARK }}>
+                  {entity === "homepage" ? "LIVE PHOTO — THE HOMEPAGE CARD USES THIS NOW" : "APPROVED ASSET — THE CARD USES THIS AUTOMATICALLY"}
+                </div>
                 <div>ATTRIBUTION: {info.asset.attribution_text}</div>
                 <div>LICENSE: {info.asset.license}</div>
                 <div>
@@ -2903,7 +2943,7 @@ export function PickPhotoModal({
           ) : (
             <div className="font-mono" style={{ fontSize: 11, lineHeight: 1.9, background: "rgba(193,62,23,.08)", border: `1.5px solid ${ORANGE_DARK}`, borderRadius: 10, padding: "12px 14px", color: ORANGE_DARK }}>
               NO APPROVED {slotWord} PHOTO FOR {shown.toUpperCase()}.
-              {oneAction ? (
+              {entity === "neighborhood" ? (
                 <>
                   <br />
                   {galleryIdx !== null
@@ -2913,7 +2953,7 @@ export function PickPhotoModal({
                 </>
               ) : (
                 <>
-                  <br />Upload one below (it becomes a PENDING candidate) or research/approve in the Photo Desk. A lineup with this city can be drafted but never published until an asset is approved.
+                  <br />Upload your own photo below and it publishes to the homepage card in one audited step, or research/source one in the Photo Desk. A lineup with this city can be drafted but never published until a photo is live.
                 </>
               )}
             </div>
@@ -2921,13 +2961,22 @@ export function PickPhotoModal({
 
           {info.pendingCandidates > 0 && (
             <div className="font-mono" style={{ fontSize: 10, marginTop: 10, color: "#8a6d1a" }}>
-              {info.pendingCandidates} PENDING CANDIDATE{info.pendingCandidates === 1 ? "" : "S"} already awaiting review for this slot.
+              {info.pendingCandidates} PENDING CANDIDATE{info.pendingCandidates === 1 ? "" : "S"} already awaiting review for this slot — review them in the Photo Desk
+              {info.asset ? ", where a rights-confirmed manual upload can also REPLACE the live photo directly" : ""}.
             </div>
           )}
 
           <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-            <button type="button" className="font-mono" onClick={() => setShowUpload((v) => !v)} style={btn(!showUpload)}>
-              {showUpload ? "CANCEL UPLOAD" : info.asset ? "UPLOAD REPLACEMENT…" : "UPLOAD PHOTO…"}
+            <button
+              type="button"
+              className="font-mono"
+              onClick={() => {
+                setShowUpload((v) => !v);
+                setConfirmReplace(false);
+              }}
+              style={btn(!showUpload)}
+            >
+              {showUpload ? "CANCEL UPLOAD" : isReplace ? "REPLACE LIVE PHOTO…" : info.asset ? "UPLOAD REPLACEMENT…" : "UPLOAD PHOTO…"}
             </button>
             <a href="/admin/photos" target="_blank" rel="noreferrer" className="font-mono" style={{ ...btn(), textDecoration: "none" }}>
               OPEN PHOTO DESK ↗
@@ -2939,18 +2988,23 @@ export function PickPhotoModal({
           {showUpload && (
             <div style={{ border: "1.5px solid rgba(29,25,19,.3)", borderRadius: 10, padding: "10px 12px", marginTop: 10 }}>
               <div className="font-mono" style={{ fontSize: 9.5, lineHeight: 1.8, color: "rgba(29,25,19,.6)" }}>
-                {oneAction
+                {entity === "neighborhood"
                   ? "Same processing as the Photo Desk uploader: JPEG/PNG/WebP, ≥1200px wide, landscape, ≤4MB, EXIF stripped. Submitting uploads AND approves in one audited step — the photo publishes to this community's page immediately."
-                  : "Same rules as the Photo Desk uploader: JPEG/PNG/WebP, ≥1200px wide, landscape, ≤4MB. The upload creates a PENDING candidate — publishing it stays the Photo Desk's explicit APPROVE action."}
+                  : isReplace
+                    ? "Same processing as the Photo Desk uploader: JPEG/PNG/WebP, ≥1200px wide, landscape, ≤4MB, EXIF stripped. Submitting REPLACES the live homepage photo in one audited step — the swap is atomic (no blank card), and the current photo returns to the review queue as a pending candidate."
+                    : "Same processing as the Photo Desk uploader: JPEG/PNG/WebP, ≥1200px wide, landscape, ≤4MB, EXIF stripped. Submitting uploads AND publishes in one audited step — the photo goes live on the homepage card immediately."}
               </div>
-              <Field label="IMAGE FILE">
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} style={{ fontSize: 12 }} />
-              </Field>
-              {oneAction && (
-                <Field label="ALT TEXT (REQUIRED — DESCRIBE THE PHOTO)">
-                  <input value={altText} maxLength={300} placeholder="e.g. New two-story homes along a Bridgewater street at dusk" onChange={(e) => setAltText(e.target.value)} style={inputStyle} />
-                </Field>
+              {isReplace && (
+                <div className="font-mono" style={{ fontSize: 10, lineHeight: 1.8, marginTop: 8, background: "rgba(193,62,23,.08)", border: `1.5px solid ${ORANGE_DARK}`, borderRadius: 8, padding: "8px 10px", color: ORANGE_DARK }}>
+                  REPLACING THE LIVE PHOTO FOR {shown.toUpperCase()} — the current photo leaves the homepage the moment this publishes. It is not deleted: its file, evidence, and history stay in the Photo Desk as a pending candidate.
+                </div>
               )}
+              <Field label="IMAGE FILE">
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setConfirmReplace(false); }} style={{ fontSize: 12 }} />
+              </Field>
+              <Field label="ALT TEXT (REQUIRED — DESCRIBE THE PHOTO)">
+                <input value={altText} maxLength={300} placeholder={entity === "neighborhood" ? "e.g. New two-story homes along a Bridgewater street at dusk" : "e.g. Historic downtown streetscape with the water tower above brick storefronts"} onChange={(e) => setAltText(e.target.value)} style={inputStyle} />
+              </Field>
               <Field label="ATTRIBUTION (SHOWN ON THE CARD)">
                 <input value={attr} onChange={(e) => setAttr(e.target.value)} style={inputStyle} />
               </Field>
@@ -2961,14 +3015,18 @@ export function PickPhotoModal({
                 <input type="checkbox" checked={rights} onChange={(e) => setRights(e.target.checked)} style={{ marginTop: 2 }} />
                 I confirm I own this image or have documented permission to publish it on DiscoverDFW.com.
               </label>
-              <button type="button" className="font-mono" onClick={upload} disabled={busy} style={{ ...btn(true), marginTop: 10 }}>
+              <button type="button" className="font-mono" onClick={upload} disabled={busy} style={{ ...btn(true), marginTop: 10, ...(isReplace && confirmReplace ? { background: ORANGE_DARK, borderColor: ORANGE_DARK } : {}) }}>
                 {busy
                   ? "UPLOADING…"
-                  : oneAction
+                  : entity === "neighborhood"
                     ? galleryIdx !== null
                       ? "UPLOAD & ADD TO GALLERY"
                       : "UPLOAD & USE AS HERO"
-                    : "UPLOAD AS PENDING CANDIDATE"}
+                    : isReplace
+                      ? confirmReplace
+                        ? "CONFIRM — REPLACE THE LIVE PHOTO NOW"
+                        : "UPLOAD & REPLACE LIVE PHOTO"
+                      : "UPLOAD & USE AS HOMEPAGE PHOTO"}
               </button>
             </div>
           )}

@@ -5,7 +5,13 @@
    friction by design) and shows the attribution that will publish.
    Candidates from sources whose publish obligations aren't implemented
    (pexels/unsplash) render with APPROVE disabled. Thumbnails load from
-   provider CDNs in THIS browser only — the server never calls providers. */
+   provider CDNs in THIS browser only — the server never calls providers.
+
+   Slots with a LIVE photo: a pending rights-confirmed MANUAL upload can
+   REPLACE it directly (0022 atomic swap — the old photo returns to this
+   queue as a pending candidate, the public page never shows a blank).
+   Provider-sourced candidates keep the deliberate two-step: unpublish,
+   then the reviewed approve. */
 
 import { useMemo, useState } from "react";
 import type { ReviewSlot, ReviewCandidate } from "@/lib/content/admin-photos";
@@ -28,6 +34,7 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
   const [showEmpty, setShowEmpty] = useState(false);
   const [dialog, setDialog] = useState<
     | { kind: "approve"; slot: ReviewSlot; candidate: ReviewCandidate; altText: string; caption: string; attributionText: string }
+    | { kind: "replace"; slot: ReviewSlot; candidate: ReviewCandidate; altText: string; caption: string; attributionText: string }
     | { kind: "reject"; slot: ReviewSlot; candidate: ReviewCandidate; reason: string; detail: string }
     | { kind: "unpublish"; slot: ReviewSlot; notes: string }
     | { kind: "upload"; slot: ReviewSlot; file: File | null; attributionText: string; caption: string; rightsConfirmed: boolean }
@@ -101,6 +108,37 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
     setDialog(null);
   }
 
+  async function submitReplace() {
+    if (!dialog || dialog.kind !== "replace") return;
+    const { slot, candidate, altText, caption, attributionText } = dialog;
+    const r = await post(
+      { action: "replace", candidateId: candidate.id, slotId: slot.id, altText, caption, attributionText },
+      candidate.id
+    );
+    if (!r.ok) {
+      setBanner(`REPLACE FAILED — ${r.error}`);
+      return;
+    }
+    removeCandidate(slot.id, candidate.id, {
+      status: "approved",
+      asset: {
+        id: "replaced",
+        publicImageUrl: candidate.imageUrl,
+        altText,
+        attributionText,
+        license: candidate.license ?? "",
+        approvedBy: adminEmail,
+        approvedAt: new Date().toISOString(),
+      },
+    });
+    setBanner(
+      r.revalidated
+        ? `REPLACED ${slot.entitySlug}/${slot.slotKey} — the previous photo is back in this queue as a pending candidate (reload to see it) — revalidated ${r.paths?.join(", ")}${r.consistent ? "" : " ⚠ CONSISTENCY CHECK FAILED — investigate"}`
+        : `REPLACED ${slot.entitySlug}/${slot.slotKey} — ⚠ REVALIDATION FAILED (${r.error}); the public page may serve the old photo. Use REVALIDATE to retry.`
+    );
+    setDialog(null);
+  }
+
   async function submitReject() {
     if (!dialog || dialog.kind !== "reject") return;
     const { slot, candidate, reason, detail } = dialog;
@@ -168,7 +206,11 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
         rejectedReason: null,
       };
       setSlots((prev) => prev.map((s) => (s.id === slot.id ? { ...s, candidates: [newCandidate, ...s.candidates] } : s)));
-      setBanner(`UPLOADED to ${slot.entitySlug}/${slot.slotKey} as a PENDING candidate — publish via APPROVE when ready.`);
+      setBanner(
+        slot.asset
+          ? `UPLOADED to ${slot.entitySlug}/${slot.slotKey} as a PENDING candidate — this slot has a LIVE photo, so publish it via REPLACE LIVE PHOTO when ready.`
+          : `UPLOADED to ${slot.entitySlug}/${slot.slotKey} as a PENDING candidate — publish via APPROVE when ready.`
+      );
       setDialog(null);
     } finally {
       setBusy(null);
@@ -274,6 +316,16 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
                   <button
                     style={btn(true)}
                     disabled={busy !== null}
+                    title="Upload your own photo as a pending candidate — REPLACE LIVE PHOTO then swaps it in without a blank-card window"
+                    onClick={() =>
+                      setDialog({ kind: "upload", slot, file: null, attributionText: "PHOTO: DISCOVER DFW", caption: "", rightsConfirmed: false })
+                    }
+                  >
+                    UPLOAD…
+                  </button>
+                  <button
+                    style={btn(true)}
+                    disabled={busy !== null}
                     onClick={() => setDialog({ kind: "unpublish", slot, notes: "" })}
                   >
                     UNPUBLISH
@@ -338,29 +390,49 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
                       </a>
                     )}
                     <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-                      <button
-                        style={{ ...btn(), opacity: c.approvable && !slot.asset ? 1 : 0.35 }}
-                        disabled={!c.approvable || Boolean(slot.asset) || busy !== null}
-                        title={
-                          !c.approvable
-                            ? "This source's publish obligations aren't implemented yet"
-                            : slot.asset
-                              ? "Slot already has a live asset — unpublish first"
-                              : "Approve and publish this photo"
-                        }
-                        onClick={() =>
-                          setDialog({
-                            kind: "approve",
-                            slot,
-                            candidate: c,
-                            altText: slot.label,
-                            caption: "",
-                            attributionText: c.attributionText ?? "",
-                          })
-                        }
-                      >
-                        APPROVE…
-                      </button>
+                      {slot.asset && c.approvable && c.source === "manual_upload" && c.status === "pending" ? (
+                        <button
+                          style={btn()}
+                          disabled={busy !== null}
+                          title="Swap the live photo for this upload in one step — the current photo returns to this queue as a pending candidate"
+                          onClick={() =>
+                            setDialog({
+                              kind: "replace",
+                              slot,
+                              candidate: c,
+                              altText: slot.label,
+                              caption: "",
+                              attributionText: c.attributionText ?? "",
+                            })
+                          }
+                        >
+                          REPLACE LIVE PHOTO…
+                        </button>
+                      ) : (
+                        <button
+                          style={{ ...btn(), opacity: c.approvable && !slot.asset ? 1 : 0.35 }}
+                          disabled={!c.approvable || Boolean(slot.asset) || busy !== null}
+                          title={
+                            !c.approvable
+                              ? "This source's publish obligations aren't implemented yet"
+                              : slot.asset
+                                ? "Slot already has a live photo — REPLACE is for rights-confirmed manual uploads only; for sourced candidates, unpublish first"
+                                : "Approve and publish this photo"
+                          }
+                          onClick={() =>
+                            setDialog({
+                              kind: "approve",
+                              slot,
+                              candidate: c,
+                              altText: slot.label,
+                              caption: "",
+                              attributionText: c.attributionText ?? "",
+                            })
+                          }
+                        >
+                          APPROVE…
+                        </button>
+                      )}
                       <button
                         style={btn(true)}
                         disabled={busy !== null}
@@ -436,6 +508,47 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
                   </div>
                 </>
               )}
+              {dialog.kind === "replace" && (
+                <>
+                  <div style={{ ...mono, color: ORANGE, marginBottom: 10 }}>
+                    REPLACE LIVE PHOTO — {dialog.slot.entitySlug}/{dialog.slot.slotKey}
+                  </div>
+                  <p style={{ fontSize: 12.5, lineHeight: 1.7, marginTop: 0 }}>
+                    One atomic swap: the live photo comes off the page the moment this publishes and returns to this queue
+                    as a pending candidate (file, evidence, and history kept). The page never shows a blank card.
+                  </p>
+                  <label style={{ ...mono, display: "block", marginBottom: 4 }}>ALT TEXT (REQUIRED)</label>
+                  <input
+                    value={dialog.altText}
+                    onChange={(e) => setDialog({ ...dialog, altText: e.target.value })}
+                    style={{ width: "100%", padding: 8, border: `2px solid ${INK}`, borderRadius: 8, marginBottom: 10, fontSize: 13 }}
+                  />
+                  <label style={{ ...mono, display: "block", marginBottom: 4 }}>CAPTION (OPTIONAL)</label>
+                  <input
+                    value={dialog.caption}
+                    onChange={(e) => setDialog({ ...dialog, caption: e.target.value })}
+                    style={{ width: "100%", padding: 8, border: `2px solid ${INK}`, borderRadius: 8, marginBottom: 10, fontSize: 13 }}
+                  />
+                  <label style={{ ...mono, display: "block", marginBottom: 4 }}>ATTRIBUTION (PUBLISHES WITH THE PHOTO)</label>
+                  <input
+                    value={dialog.attributionText}
+                    onChange={(e) => setDialog({ ...dialog, attributionText: e.target.value })}
+                    style={{ width: "100%", padding: 8, border: `2px solid ${INK}`, borderRadius: 8, marginBottom: 14, fontSize: 13 }}
+                  />
+                  <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button style={btn(true)} disabled={busy !== null} onClick={() => setDialog(null)}>
+                      CANCEL
+                    </button>
+                    <button
+                      style={{ ...btn(), opacity: dialog.altText.trim() && dialog.attributionText.trim() ? 1 : 0.4 }}
+                      disabled={!dialog.altText.trim() || !dialog.attributionText.trim() || busy !== null}
+                      onClick={submitReplace}
+                    >
+                      {busy ? "REPLACING…" : "CONFIRM — REPLACE LIVE PHOTO NOW"}
+                    </button>
+                  </div>
+                </>
+              )}
               {dialog.kind === "reject" && (
                 <>
                   <div style={{ ...mono, color: ORANGE, marginBottom: 10 }}>REJECT CANDIDATE</div>
@@ -473,7 +586,8 @@ export default function PhotoReviewQueue({ adminEmail, slots: initial }: { admin
                   </div>
                   <p style={{ fontSize: 12.5, lineHeight: 1.7, marginTop: 0 }}>
                     JPEG/PNG/WebP · max 4 MB · min 1200px wide · landscape. The file is re-encoded web-ready (EXIF/GPS
-                    stripped) and becomes a PENDING candidate — publishing stays a separate APPROVE step.
+                    stripped) and becomes a PENDING candidate — publishing stays a separate step:{" "}
+                    {dialog.slot.asset ? "this slot has a LIVE photo, so use REPLACE LIVE PHOTO on the candidate." : "APPROVE the candidate when ready."}
                   </p>
                   <input
                     type="file"
