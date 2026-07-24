@@ -156,6 +156,7 @@ export interface EditorsPickCard {
 export const TEMPLATE_SECTIONS: Record<string, SectionDef[]> = {
   "/": [
     { key: "hero", label: "Hero (H1 + search)", required: true, description: "Owns the page H1 and hero search." },
+    { key: "popsearches", label: "Popular home searches", description: "Editorial index of the eight feature searches — links are code-owned." },
     { key: "ticker", label: "City price ticker", locked: true, description: "Live NTREIS medians — data locked." },
     { key: "map", label: "Interactive metro map", locked: true },
     { key: "picks", label: "Editor's Picks", cards: "editors-picks", description: "Four city pick cards — click a card to edit its city, tagline, and photo." },

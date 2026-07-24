@@ -4,6 +4,7 @@ import { isLiveMls } from "@/lib/mls";
 import { getAllCityMarketMetricSets } from "@/lib/market/metrics";
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
+import PopularSearches from "@/components/PopularSearches";
 import Ticker from "@/components/Ticker";
 import InteractiveMap from "@/components/InteractiveMap";
 import EditorsPicks from "@/components/EditorsPicks";
@@ -99,6 +100,7 @@ export default async function Home() {
 
   const sections: Record<string, React.ReactNode> = {
     hero: <Hero copyOverride={ov("hero-copy")} regionKey={rk("hero-copy")} />,
+    popsearches: <PopularSearches />,
     ticker: <Ticker prices={priceBySlug} />,
     map: (
       <InteractiveMap
