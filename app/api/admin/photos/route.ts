@@ -3,18 +3,19 @@ import { revalidatePath } from "next/cache";
 import { getAdminUser } from "@/lib/admin";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { pathsForSlot } from "@/lib/content/admin-photos";
+import { replacePreflight, type ReplaceCandidateRow } from "@/lib/content/photo-replace";
 
 /* CI-6 photo review actions. Admin-only (env allowlist, checked on every
    request); the service-role client is used strictly AFTER the gate.
-   Every multi-write action is a 0010 plpgsql RPC — atomic at the database,
-   so photo_assets can never disagree with candidate/slot/events. Exactly
-   ONE candidate per request: arrays are rejected, there is no bulk path,
-   and nothing here runs without a human admin POST. Revalidation is
+   Every multi-write action is a 0010/0022 plpgsql RPC — atomic at the
+   database, so photo_assets can never disagree with candidate/slot/events.
+   Exactly ONE candidate per request: arrays are rejected, there is no bulk
+   path, and nothing here runs without a human admin POST. Revalidation is
    best-effort but observable: the 'publish' audit event is written ONLY
    after revalidatePath succeeds, and failures are reported in the
    response instead of being masked. */
 
-const ACTIONS = new Set(["approve", "reject", "needs_research", "unpublish", "revalidate"]);
+const ACTIONS = new Set(["approve", "reject", "needs_research", "unpublish", "revalidate", "replace"]);
 
 type Body = {
   action?: string;
@@ -129,6 +130,74 @@ export async function POST(req: Request) {
       ? await revalidateSlot(slotId, true)
       : { revalidated: false, paths: [], error: "slot id unavailable for revalidation" };
 
+    return NextResponse.json({ ok: true, assetId, consistent, ...revalidation });
+  }
+
+  /* replace: swap a slot's LIVE asset for a pending manual_upload candidate
+     in ONE transaction (0022 RPC) — no unpublish window, no blank card.
+     Requires BOTH ids: the RPC cross-checks that the candidate belongs to
+     the given slot. Provider-sourced candidates are refused at preflight
+     AND inside the RPC — the reviewed unpublish→approve two-step remains
+     their only path. */
+  if (body.action === "replace") {
+    const candidateId = asId(body.candidateId);
+    const slotId = asId(body.slotId);
+    if (!candidateId || !slotId)
+      return NextResponse.json({ ok: false, error: "Missing candidateId or slotId" }, { status: 400 });
+
+    // preflight for precise errors — the RPC re-checks everything under locks
+    const [{ data: cand }, { data: liveAsset }] = await Promise.all([
+      db
+        .from("photo_candidates")
+        .select("id, photo_slot_id, source, status, license, raw_api_response")
+        .eq("id", candidateId)
+        .maybeSingle(),
+      db.from("photo_assets").select("id, photo_slot_id, selected_candidate_id").eq("photo_slot_id", slotId).maybeSingle(),
+    ]);
+    const pre = replacePreflight(cand as ReplaceCandidateRow | null, slotId, liveAsset ?? null, {
+      altText: asText(body.altText),
+      attributionText: asText(body.attributionText),
+    });
+    if (!pre.ok) return NextResponse.json({ ok: false, error: pre.reason }, { status: 400 });
+
+    const { data: assetId, error } = await db.rpc("replace_photo_asset", {
+      p_candidate_id: candidateId,
+      p_slot_id: slotId,
+      p_alt_text: asText(body.altText),
+      p_caption: asText(body.caption),
+      p_attribution_text: asText(body.attributionText),
+      p_admin_email: adminUser.email,
+    });
+    if (error) {
+      const missing = /function .* does not exist/i.test(error.message);
+      return NextResponse.json(
+        {
+          ok: false,
+          error: missing
+            ? "Replace RPC unavailable — has migration 0022_photo_replace.sql been applied?"
+            : error.message,
+        },
+        { status: missing ? 503 : 400 }
+      );
+    }
+
+    // post-write consistency: new candidate live, old candidate back in the
+    // queue, still exactly one asset row for the slot
+    const [{ data: after }, { count: assetCount }, { data: newCand }] = await Promise.all([
+      db.from("photo_assets").select("photo_slot_id, selected_candidate_id, attribution_text, license").eq("id", assetId).single(),
+      db.from("photo_assets").select("id", { count: "exact", head: true }).eq("photo_slot_id", slotId),
+      db.from("photo_candidates").select("status, license_verified").eq("id", candidateId).single(),
+    ]);
+    const consistent =
+      after?.photo_slot_id === slotId &&
+      after?.selected_candidate_id === candidateId &&
+      assetCount === 1 &&
+      newCand?.status === "approved" &&
+      newCand?.license_verified === true &&
+      Boolean(after?.attribution_text) &&
+      Boolean(after?.license);
+
+    const revalidation = await revalidateSlot(slotId, true);
     return NextResponse.json({ ok: true, assetId, consistent, ...revalidation });
   }
 
