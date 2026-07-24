@@ -9,6 +9,7 @@ import { searchFiltersToQueryString, SLUG_BY_STATUS, STATUS_BY_SLUG } from "@/li
 import SaveSearchButton from "./SaveSearchButton";
 import SearchTypeahead from "./SearchTypeahead";
 import { track } from "@/lib/analytics/track";
+import { applyFeaturePremise } from "@/lib/mls/feature-search";
 
 /** filter keys → the closed analytics category set (values never leave) */
 const FILTER_CAT: Record<string, string> = {
@@ -201,6 +202,8 @@ export default function SearchToolbar({
   propertyTypes,
   basePath = "/homes",
   lockNewBuilds = false,
+  lockFilters,
+  lockLabel,
 }: {
   query: SearchFilters;
   /** When set, we're on /city/[slug]/homes and city is fixed by the path. */
@@ -213,6 +216,11 @@ export default function SearchToolbar({
       through every change (incl. Clear) and show it as a static active chip
       instead of a toggle. */
   lockNewBuilds?: boolean;
+  /** Feature pages (/homes/<feature>): the page's premise filters — re-applied
+      on every change (incl. Clear) exactly like lockNewBuilds, with the
+      static chip labeled `lockLabel`. The server route re-forces them too. */
+  lockFilters?: Partial<SearchFilters>;
+  lockLabel?: string;
 }) {
   const router = useRouter();
 
@@ -230,6 +238,7 @@ export default function SearchToolbar({
     );
     const q = { ...query, ...patch };
     if (lockNewBuilds) q.newBuildsOnly = true; // the surface's premise never toggles off
+    if (lockFilters) applyFeaturePremise(q, lockFilters); // feature premise: booleans forced, numerics floored
     // In the Map Room (/homes) every change stays in the Map Room — the
     // map is the point. Only the dedicated /city/[slug]/homes pages keep
     // their path form (and switching city there moves to the new city).
@@ -722,6 +731,25 @@ export default function SearchToolbar({
         <option value="price-desc">PRICE — HIGH TO LOW</option>
         <option value="sqft-desc">LARGEST FIRST</option>
       </select>
+
+      {lockFilters && lockLabel && (
+        // the feature-page premise — active, not a toggle
+        <span
+          className="font-mono"
+          aria-label={`Filtered to ${lockLabel.toLowerCase()}`}
+          style={{
+            ...pill,
+            cursor: "default",
+            fontSize: 11,
+            letterSpacing: ".1em",
+            background: "#1D1913",
+            color: "#F6F1E6",
+            borderColor: "#1D1913",
+          }}
+        >
+          ✳ {lockLabel}
+        </span>
+      )}
 
       {lockNewBuilds ? (
         // the /new-builds surface premise — active, not a toggle

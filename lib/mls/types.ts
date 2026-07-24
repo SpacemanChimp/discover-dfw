@@ -171,6 +171,21 @@ export interface SearchFilters {
       listing matching in several fields is returned once. Canonical
       MLS-reported value (e.g. "Denton ISD"). Not a zoning claim. */
   district?: string;
+  /* ---- feature search (/homes/<feature>, migration 0023) ---- */
+  /** Private pool only — matches the 0023 generated `has_private_pool`
+      column (token-audited PoolFeatures enums; community-pool-only and
+      "None" listings excluded). */
+  pool?: boolean;
+  /** Minimum authoritative GarageSpaces count (0023 `garage_spaces`). */
+  garageMin?: number;
+  /** Single-story only — MLS Levels field exactly 'One' (0023 `levels`). */
+  singleStory?: boolean;
+  /** Residential PropertyType only. The acreage search sets this WITH
+      minAcres so vacant land (PropertyType='Land') can never appear. */
+  residentialOnly?: boolean;
+  /** Only listings with a FUTURE structured open-house event (live
+      OpenHouse resource, cached — never remarks text). */
+  openHousesOnly?: boolean;
   /* ---- land search (/land) ---- */
   /** Restrict to genuine land listings (PropertyType='Land'). Set by the
       /land route; metro-wide (8-county), never the 90-city browse scope. */

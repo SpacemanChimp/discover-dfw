@@ -13,6 +13,7 @@ import ListingResultsRail from "./ListingResultsRail";
 import SearchMapPanel from "./SearchMapPanel";
 import LiveMapPanel from "./LiveMapPanel";
 import MobileCitySearchIndex from "./MobileCitySearchIndex";
+import FeatureChips from "./FeatureChips";
 import MLSComplianceFooter from "./MLSComplianceFooter";
 import SearchHelpSlot from "@/components/convert/SearchHelpSlot";
 import HomesSplit from "./HomesSplit";
@@ -201,6 +202,11 @@ function Shell({
       </div>
 
       <SearchToolbar query={effective} citySlug={citySlug} propertyTypes={PROPERTY_TYPE_OPTIONS} />
+
+      {/* popular feature searches — horizontally scrollable, crawlable links */}
+      <div style={{ padding: "8px 4vw 2px" }}>
+        <FeatureChips label="POPULAR SEARCHES" />
+      </div>
 
       {authFailed && (
         <div

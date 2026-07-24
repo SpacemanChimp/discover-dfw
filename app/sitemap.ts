@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { cities } from "@/lib/dfw-data";
 import { hoodsForCity, canonicalCityForHood } from "@/lib/hoods";
 import { isLiveMls } from "@/lib/mls";
+import { featureSitemapPaths } from "@/lib/mls/feature-search";
 import { SITE_URL } from "@/lib/site";
 import { getPublishedPages } from "@/lib/editor/pages";
 
@@ -16,6 +17,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push({ url: `${SITE_URL}/homes`, changeFrequency: "daily", priority: 0.9 });
     entries.push({ url: `${SITE_URL}/land`, changeFrequency: "daily", priority: 0.7 });
     entries.push({ url: `${SITE_URL}/new-builds`, changeFrequency: "daily", priority: 0.8 });
+    // feature searches: the hub, six metro pages, and ONLY registry-approved
+    // city-feature pages (lib/mls/feature-search.ts) — never every combination
+    for (const p of featureSitemapPaths()) {
+      entries.push({ url: `${SITE_URL}${p}`, changeFrequency: "daily", priority: p === "/homes/features" ? 0.6 : p.split("/").length > 3 ? 0.6 : 0.7 });
+    }
   }
   for (const c of cities) {
     entries.push({

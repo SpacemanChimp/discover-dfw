@@ -13,6 +13,8 @@ import {
   pts,
 } from "@/lib/dfw-data";
 import { hoodsForCity } from "@/lib/hoods";
+import { publishedFeaturesForCity } from "@/lib/mls/feature-search";
+import FeatureChips from "@/components/search/FeatureChips";
 import { getMlsProvider, isLiveMls } from "@/lib/mls";
 import { getAllCityMarketMetricSets, fmtMetricValue, fmtPrice, provenanceLabel } from "@/lib/market/metrics";
 import type { Listing } from "@/lib/mls/types";
@@ -975,6 +977,11 @@ export default async function CityPage({
               </Link>
             </div>
           </div>
+          {publishedFeaturesForCity(c.slug).length > 0 && (
+            <div data-reveal="1" style={{ margin: "14px 0 4px" }}>
+              <FeatureChips label={`${c.name.toUpperCase()} SEARCHES`} citySlug={c.slug} cityName={c.name} />
+            </div>
+          )}
           {isLiveMls && livePicks.length === 0 ? (
             <div
               data-reveal="1"

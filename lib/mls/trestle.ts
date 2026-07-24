@@ -15,6 +15,7 @@ import "server-only";
 // Compliance copy — single source of truth, PENDING BROKER/NTREIS/LEGAL REVIEW
 import { attributionLine, DEEMED_RELIABLE_DISCLAIMER, MLS_SOURCE } from "@/lib/compliance";
 import type { MlsProvider } from "./provider";
+import { indexOpenHouseEvents, type OpenHouseEventRow } from "./feature-search";
 import type {
   Listing,
   ListingBadge,
@@ -346,6 +347,42 @@ const fmtPeriod = (d: Date) =>
   new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: true, timeZone: "America/Chicago" })
     .formatToParts(d)
     .find((x) => x.type === "dayPeriod")?.value ?? "";
+
+/** Metro open-house index for /homes/open-houses (feature search): every
+    FUTURE structured OpenHouse event inside the horizon, paged from the
+    OpenHouse resource and deduped to one next-event per listing. Same
+    structured resource the detail views use — never remarks text. Callers
+    wrap this in unstable_cache; the odata() fetch itself also revalidates.
+    The keys are intersected with the REPLICA's on-market rows afterwards,
+    so canceled/off-market listings can never appear from here alone. */
+export async function getFutureOpenHouseIndex(horizonDays = 45): Promise<{
+  keys: string[];
+  nextByKey: Record<string, OpenHouse>;
+}> {
+  const today = new Date().toISOString().slice(0, 10);
+  const horizon = new Date(Date.now() + horizonDays * 86_400_000).toISOString().slice(0, 10);
+  const filter = `OpenHouseDate ge ${today} and OpenHouseDate le ${horizon}`;
+  const rows: OpenHouseEventRow[] = [];
+  try {
+    // page the window; NTREIS holds a few thousand future events, cap 12k
+    for (let skip = 0; skip < 12_000; skip += 1000) {
+      const j = await odata(
+        `OpenHouse?$filter=${encodeURIComponent(filter)}` +
+          `&$select=ListingKey,OpenHouseDate,OpenHouseStartTime,OpenHouseEndTime,OpenHouseStatus` +
+          `&$orderby=OpenHouseStartTime asc&$top=1000&$skip=${skip}`,
+        REVALIDATE_SNAPSHOT
+      );
+      const page = (j.value as OpenHouseEventRow[]) ?? [];
+      rows.push(...page);
+      if (page.length < 1000) break;
+    }
+  } catch {
+    // feed hiccup: an empty index renders an honest zero-result page rather
+    // than failing the route; the cache retries on the next revalidation
+  }
+  // the pure, tested core decides future/canceled/soonest-per-listing
+  return indexOpenHouseEvents(rows, Date.now());
+}
 
 /** Exported for the local provider — open houses aren't replicated, so
     detail views fetch them live regardless of the serving provider. */

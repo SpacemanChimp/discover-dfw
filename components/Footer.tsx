@@ -21,6 +21,17 @@ const EXPLORE = [
   ["/#newsletter", "The newsletter"],
 ];
 
+/* the six structured-field feature searches (Feature Search SEO v1) */
+const POPULAR_SEARCHES = [
+  ["/homes/with-pool", "Homes with pools"],
+  ["/homes/on-acreage", "Homes on acreage"],
+  ["/homes/3-car-garage", "3-car garages"],
+  ["/homes/single-story", "Single-story homes"],
+  ["/homes/5-plus-bedrooms", "5+ bedrooms"],
+  ["/homes/open-houses", "Open houses"],
+  ["/homes/features", "All feature searches"],
+];
+
 export default function Footer() {
   return (
     <footer style={{ background: "#1D1913", color: "#F6F1E6" }}>
@@ -68,6 +79,14 @@ export default function Footer() {
             {MOST_READ.map(([slug, name]) => (
               <Link key={slug} href={`/city/${slug}`} className="foot-link" style={footLink}>
                 {name}
+              </Link>
+            ))}
+          </FooterCol>
+
+          <FooterCol title="POPULAR SEARCHES">
+            {POPULAR_SEARCHES.map(([href, label]) => (
+              <Link key={href} href={href} className="foot-link" style={footLink}>
+                {label}
               </Link>
             ))}
           </FooterCol>

@@ -23,9 +23,10 @@ import type {
 import { dfwCities, cityBySlug, cityMarketSnapshot, dfwCountyNames } from "@/data/dfw-cities";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { boundingBox, milesBetween, pointInPolygon, polygonBounds, type LonLat } from "./geo";
-import { getOpenHouses, openHouseBadge } from "./trestle";
+import { getOpenHouses, openHouseBadge, getFutureOpenHouseIndex } from "./trestle";
 import { schoolsFromReso, schoolMatchToken } from "./school-fields";
 import { subtypesForCategory } from "@/lib/land/land";
+import { unstable_cache } from "next/cache";
 
 const DEFAULT_PAGE_SIZE = 24;
 const DEFAULT_STATUSES: ListingStatus[] = ["Active", "ActiveUnderContract", "ComingSoon", "Pending"];
@@ -131,6 +132,20 @@ function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean 
   if (f.minSqft != null) query = query.gte("living_area", f.minSqft);
   if (f.maxSqft != null) query = query.lte("living_area", f.maxSqft);
   if (f.newBuildsOnly) query = query.gte("year_built", 2024);
+  // FEATURE search (/homes/<feature>) — 0023 generated columns from the
+  // structured feed fields, never remarks matching. Each rides its own
+  // partial/btree index. openHousesOnly is NOT here: it has no column and
+  // is applied as a key-set intersection in search()/searchMapPins().
+  if (f.pool) query = query.eq("has_private_pool", true);
+  if (f.garageMin != null) query = query.gte("garage_spaces", f.garageMin);
+  if (f.singleStory) query = query.eq("levels", "One");
+  if (f.residentialOnly) query = query.eq("property_type", "Residential");
+  // acreage bounds OUTSIDE land mode (on-acreage HOMES ride the same
+  // lot_size/LotSizeAcres column; /land keeps its own clause below)
+  if (!f.land) {
+    if (f.minAcres != null) query = query.gte("lot_size", f.minAcres);
+    if (f.maxAcres != null) query = query.lte("lot_size", f.maxAcres);
+  }
   if (f.q) {
     // full-text search over the generated search_tsv column (0008) —
     // the old 3-column ilike detoasted every row's remarks and rode the
@@ -296,11 +311,100 @@ async function geoSlimSearch(
   return { data, count: hits.length };
 }
 
+/* ---- open-house feature search (/homes/open-houses) --------------------
+   No open-house column exists in the replica (events are a separate live
+   resource), so the predicate is a KEY-SET INTERSECTION: the cached index
+   of future structured events × the replica's on-market rows with every
+   other filter applied. Counts are exact (the full intersection is
+   assembled, then paged in JS). */
+
+const cachedOpenHouseIndex = unstable_cache(
+  () => getFutureOpenHouseIndex(),
+  ["open-house-index"],
+  { revalidate: 3600 }
+);
+
+const OH_CHUNK = 150;
+
+function compareRows(sort: SortKey | undefined) {
+  const num = (v: unknown) => (v == null ? null : Number(v));
+  return (a: any, b: any): number => {
+    if (sort === "price-asc" || sort === "price-desc") {
+      const pa = num(a.list_price);
+      const pb = num(b.list_price);
+      if (pa == null) return 1;
+      if (pb == null) return -1;
+      return sort === "price-asc" ? pa - pb : pb - pa;
+    }
+    if (sort === "sqft-desc") {
+      const sa = num(a.living_area);
+      const sb = num(b.living_area);
+      if (sa == null) return 1;
+      if (sb == null) return -1;
+      return sb - sa;
+    }
+    // newest: days_on_market asc nulls last, then modification_timestamp desc
+    const da = num(a.days_on_market);
+    const dbb = num(b.days_on_market);
+    if (da != null || dbb != null) {
+      if (da == null) return 1;
+      if (dbb == null) return -1;
+      if (da !== dbb) return da - dbb;
+    }
+    return String(b.modification_timestamp ?? "").localeCompare(String(a.modification_timestamp ?? ""));
+  };
+}
+
+async function openHouseSearch(db: any, filters: SearchFilters, page: number, pageSize: number): Promise<SearchResult> {
+  const idx = await cachedOpenHouseIndex();
+  if (!idx.keys.length)
+    return { listings: [], total: 0, page, pageSize, mlsLastUpdated: new Date().toISOString() };
+
+  // chunked PK lookups (PostgREST .in has URL limits) with every OTHER
+  // filter applied server-side — city/status/price/etc. still hold
+  const chunks: string[][] = [];
+  for (let i = 0; i < idx.keys.length; i += OH_CHUNK) chunks.push(idx.keys.slice(i, i + OH_CHUNK));
+  const rows: any[] = [];
+  const PARALLEL = 6;
+  for (let i = 0; i < chunks.length; i += PARALLEL) {
+    const batch = await Promise.all(
+      chunks.slice(i, i + PARALLEL).map((chunk) => {
+        let q = db.from("listings").select(SELECT);
+        q = applyFilters(q, filters);
+        return q.in("listing_key", chunk);
+      })
+    );
+    for (const res of batch) {
+      if (res.error) throw new Error(`local provider (open houses): ${res.error.message}`);
+      rows.push(...(res.data ?? []));
+    }
+  }
+
+  rows.sort(compareRows(filters.sort));
+  const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
+  const listings = pageRows.map((r) => {
+    const l = toListing(r);
+    const next = idx.nextByKey[r.listing_key];
+    if (next) l.openHouses = [next]; // soonest event — cards can show the window
+    return l;
+  });
+  return {
+    listings,
+    total: rows.length, // exact: the full intersection was assembled above
+    page,
+    pageSize,
+    mlsLastUpdated:
+      rows.map((r) => r.modification_timestamp).sort().at(-1) ?? new Date().toISOString(),
+  };
+}
+
 async function search(filters: SearchFilters): Promise<SearchResult> {
   const db = getSupabaseAdmin();
   if (!db) return { listings: [], total: 0, page: 1, pageSize: DEFAULT_PAGE_SIZE, mlsLastUpdated: new Date().toISOString() };
   const pageSize = filters.pageSize && filters.pageSize > 0 ? filters.pageSize : DEFAULT_PAGE_SIZE;
   const page = filters.page && filters.page > 0 ? filters.page : 1;
+
+  if (filters.openHousesOnly) return openHouseSearch(db, filters, page, pageSize);
 
   let data: any[] | null;
   let count: number | null;
@@ -515,7 +619,7 @@ export async function searchMapPins(
 
   /* JS refine: exact shape membership on the box candidates (order is
      preserved, so no re-sort needed). */
-  const refined = polygon
+  let refined = polygon
     ? rows.filter(
         (r: any) =>
           r.latitude != null && r.longitude != null && pointInPolygon([r.longitude, r.latitude], polygon)
@@ -527,11 +631,19 @@ export async function searchMapPins(
         )
       : rows;
 
+  /* Open-house pages: intersect with the cached future-event key set (no
+     column exists — same predicate the rail uses, so map and rail agree). */
+  if (filters.openHousesOnly) {
+    const idx = await cachedOpenHouseIndex();
+    const ohKeys = new Set(idx.keys);
+    refined = refined.filter((r: any) => ohKeys.has(r.listing_key));
+  }
+
   const pins = refined.slice(0, MAP_PIN_CAP).map(toPin);
 
   /* A short page means the parallel fetch saw the whole box — the refined
      length IS the exact total. */
-  if (sawEnd) return { pins, total: refined.length };
+  if (sawEnd || filters.openHousesOnly) return { pins, total: refined.length };
 
   /* Truncated at 5,000 candidates: head-count the box instead. For polygon
      and radius this is the BOX count — an upper-bound approximation of the

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PinSvg } from "./Logo";
 import HeroSearch from "./HeroSearch";
+import FeatureChips from "./search/FeatureChips";
 
 const LETTERS_1 = ["D", "I", "S", "C"];
 const LETTERS_2 = ["V", "E", "R"];
@@ -260,6 +261,12 @@ export default function Hero({ copyOverride, regionKey }: { copyOverride?: React
         >
           Browse the index
         </Link>
+      </div>
+
+      {/* compact discovery band — the six structured feature searches plus
+          the two standing searches; scrolls horizontally on phones */}
+      <div style={{ maxWidth: 860, margin: "26px auto 0", padding: "0 4vw", display: "flex", justifyContent: "center" }}>
+        <FeatureChips label="SEARCH BY WHAT MATTERS" />
       </div>
     </header>
   );

@@ -60,6 +60,12 @@ const SELECT = [
   // then detail pages supplement live via trestle getListingSchools().
   "ElementarySchool", "ElementarySchoolDistrict", "MiddleOrJuniorSchool",
   "MiddleOrJuniorSchoolDistrict", "HighSchool", "HighSchoolDistrict",
+  // Feature-search fields (0023 generated columns read these from `raw`).
+  // PoolFeatures/Levels are 100% populated structured enums in NTREIS;
+  // GarageSpaces ~88%. PoolPrivateYN (1.8%) and StoriesTotal (2.7%) were
+  // audited and rejected — kept out on purpose. Rows synced before this
+  // line need the ?full=1&nomedia=1 repair walk.
+  "PoolFeatures", "GarageSpaces", "Levels",
 ].join(",");
 
 const q = (s: string) => `'${s.replace(/'/g, "''")}'`;
