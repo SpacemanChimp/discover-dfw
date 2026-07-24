@@ -170,7 +170,44 @@ export function isFeatureSlug(s: string): s is FeatureSlug {
    indexing. Keep entries sorted by feature then city.
 --------------------------------------------------------------------------- */
 export const CITY_FEATURE_REGISTRY: ReadonlyArray<{ feature: FeatureSlug; city: string }> = [
-  // filled by the FS2 inventory audit — see scripts/tests/feature-search.test.mjs
+  // with-pool (audit counts 2026-07-24: 142–1,364 on-market matches)
+  { feature: "with-pool", city: "allen" },
+  { feature: "with-pool", city: "arlington" },
+  { feature: "with-pool", city: "dallas" },
+  { feature: "with-pool", city: "flower-mound" },
+  { feature: "with-pool", city: "fort-worth" },
+  { feature: "with-pool", city: "frisco" },
+  { feature: "with-pool", city: "mckinney" },
+  { feature: "with-pool", city: "plano" },
+  // on-acreage (55–212; rural-intent cities, residential 1+ acre)
+  { feature: "on-acreage", city: "argyle" },
+  { feature: "on-acreage", city: "decatur" },
+  { feature: "on-acreage", city: "lucas" },
+  { feature: "on-acreage", city: "midlothian" },
+  { feature: "on-acreage", city: "waxahachie" },
+  // 3-car-garage (123–459)
+  { feature: "3-car-garage", city: "celina" },
+  { feature: "3-car-garage", city: "flower-mound" },
+  { feature: "3-car-garage", city: "frisco" },
+  { feature: "3-car-garage", city: "northlake" },
+  { feature: "3-car-garage", city: "prosper" },
+  { feature: "3-car-garage", city: "rockwall" },
+  { feature: "3-car-garage", city: "southlake" },
+  // single-story (366–3,234)
+  { feature: "single-story", city: "denton" },
+  { feature: "single-story", city: "fort-worth" },
+  { feature: "single-story", city: "frisco" },
+  { feature: "single-story", city: "mckinney" },
+  { feature: "single-story", city: "plano" },
+  // 5-plus-bedrooms (222–425)
+  { feature: "5-plus-bedrooms", city: "celina" },
+  { feature: "5-plus-bedrooms", city: "frisco" },
+  { feature: "5-plus-bedrooms", city: "mckinney" },
+  { feature: "5-plus-bedrooms", city: "prosper" },
+  // open-houses (249–549 listings with future events at audit time)
+  { feature: "open-houses", city: "dallas" },
+  { feature: "open-houses", city: "fort-worth" },
+  { feature: "open-houses", city: "frisco" },
 ];
 
 const registryKey = (feature: string, city: string) => `${feature}:${city}`;
@@ -196,6 +233,23 @@ export function featurePath(feature: FeatureSlug, citySlug?: string): string {
   return citySlug ? `/homes/${feature}/${citySlug}` : `/homes/${feature}`;
 }
 
+/** Apply a feature's premise ON TOP of user filters. Boolean premises are
+    forced; numeric premises act as a FLOOR, so a stricter user value (six
+    bedrooms on the 5+ page, ten acres on the acreage page) still narrows
+    the search and a looser or missing value snaps back to the premise.
+    Used identically by the server route and the toolbar so a page can
+    never render inventory outside its advertised filter. */
+export function applyFeaturePremise(q: Partial<SearchFilters>, premise: Partial<SearchFilters>): void {
+  for (const [k, v] of Object.entries(premise) as [keyof SearchFilters, unknown][]) {
+    if (typeof v === "number") {
+      const cur = q[k];
+      (q as Record<string, unknown>)[k] = typeof cur === "number" && cur > v ? cur : v;
+    } else {
+      (q as Record<string, unknown>)[k] = v;
+    }
+  }
+}
+
 /** Sitemap entries for this v1: the hub, the six metro pages, and ONLY
     registry-approved city pages. Nothing else ever enters the sitemap. */
 export function featureSitemapPaths(): string[] {
@@ -214,4 +268,53 @@ export function featureIndexable(feature: string, citySlug?: string): boolean {
   if (!isFeatureSlug(feature)) return false;
   if (!citySlug) return true;
   return cityFeaturePublished(feature, citySlug);
+}
+
+/* ------------------------------------------------------------------------
+   Open-house event indexing — the PURE core of getFutureOpenHouseIndex
+   (lib/mls/trestle.ts feeds it raw OpenHouse resource rows). Only
+   FUTURE, non-canceled structured events survive; one soonest event is
+   kept per listing. Exactly this function decides "has an open house".
+------------------------------------------------------------------------ */
+
+export interface OpenHouseEventRow {
+  ListingKey?: unknown;
+  OpenHouseDate?: unknown;
+  OpenHouseStartTime?: unknown;
+  OpenHouseEndTime?: unknown;
+  OpenHouseStatus?: unknown;
+}
+
+const fmtHour = (d: Date) =>
+  new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: true, timeZone: "America/Chicago" })
+    .formatToParts(d)
+    .find((x) => x.type === "hour")?.value ?? "";
+const fmtPeriod = (d: Date) =>
+  new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: true, timeZone: "America/Chicago" })
+    .formatToParts(d)
+    .find((x) => x.type === "dayPeriod")?.value ?? "";
+
+export function indexOpenHouseEvents(
+  rows: OpenHouseEventRow[],
+  nowMs: number
+): { keys: string[]; nextByKey: Record<string, { date: string; window: string }> } {
+  const nextByKey: Record<string, { date: string; window: string }> = {};
+  const starts: Record<string, number> = {};
+  for (const o of rows) {
+    if (!o.ListingKey || !o.OpenHouseStartTime || !o.OpenHouseEndTime) continue;
+    if (o.OpenHouseStatus === "Canceled") continue;
+    const start = new Date(String(o.OpenHouseStartTime));
+    // events already underway stay for a short grace window; past ones drop
+    if (!Number.isFinite(start.getTime()) || start.getTime() < nowMs - 6 * 3_600_000) continue;
+    const key = String(o.ListingKey);
+    const t = start.getTime();
+    if (starts[key] != null && starts[key] <= t) continue; // keep the SOONEST
+    starts[key] = t;
+    const end = new Date(String(o.OpenHouseEndTime));
+    nextByKey[key] = {
+      date: String(o.OpenHouseDate ?? o.OpenHouseStartTime).slice(0, 10),
+      window: `${fmtHour(start)}–${fmtHour(end)} ${fmtPeriod(end)}`,
+    };
+  }
+  return { keys: Object.keys(nextByKey), nextByKey };
 }

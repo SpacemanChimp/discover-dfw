@@ -15,6 +15,7 @@ import "server-only";
 // Compliance copy — single source of truth, PENDING BROKER/NTREIS/LEGAL REVIEW
 import { attributionLine, DEEMED_RELIABLE_DISCLAIMER, MLS_SOURCE } from "@/lib/compliance";
 import type { MlsProvider } from "./provider";
+import { indexOpenHouseEvents, type OpenHouseEventRow } from "./feature-search";
 import type {
   Listing,
   ListingBadge,
@@ -361,8 +362,7 @@ export async function getFutureOpenHouseIndex(horizonDays = 45): Promise<{
   const today = new Date().toISOString().slice(0, 10);
   const horizon = new Date(Date.now() + horizonDays * 86_400_000).toISOString().slice(0, 10);
   const filter = `OpenHouseDate ge ${today} and OpenHouseDate le ${horizon}`;
-  const nextByKey: Record<string, OpenHouse> = {};
-  const starts: Record<string, number> = {};
+  const rows: OpenHouseEventRow[] = [];
   try {
     // page the window; NTREIS holds a few thousand future events, cap 12k
     for (let skip = 0; skip < 12_000; skip += 1000) {
@@ -372,29 +372,16 @@ export async function getFutureOpenHouseIndex(horizonDays = 45): Promise<{
           `&$orderby=OpenHouseStartTime asc&$top=1000&$skip=${skip}`,
         REVALIDATE_SNAPSHOT
       );
-      const rows = (j.value as any[]) ?? [];
-      for (const o of rows) {
-        if (!o.ListingKey || !o.OpenHouseStartTime || !o.OpenHouseEndTime) continue;
-        if (o.OpenHouseStatus === "Canceled") continue;
-        const start = new Date(o.OpenHouseStartTime);
-        if (!Number.isFinite(start.getTime()) || start.getTime() < Date.now() - 6 * 3_600_000) continue;
-        const key = String(o.ListingKey);
-        const t = start.getTime();
-        if (starts[key] != null && starts[key] <= t) continue; // keep the SOONEST event
-        starts[key] = t;
-        const end = new Date(o.OpenHouseEndTime);
-        nextByKey[key] = {
-          date: String(o.OpenHouseDate ?? o.OpenHouseStartTime).slice(0, 10),
-          window: `${fmtHour(start)}–${fmtHour(end)} ${fmtPeriod(end)}`,
-        };
-      }
-      if (rows.length < 1000) break;
+      const page = (j.value as OpenHouseEventRow[]) ?? [];
+      rows.push(...page);
+      if (page.length < 1000) break;
     }
   } catch {
     // feed hiccup: an empty index renders an honest zero-result page rather
     // than failing the route; the cache retries on the next revalidation
   }
-  return { keys: Object.keys(nextByKey), nextByKey };
+  // the pure, tested core decides future/canceled/soonest-per-listing
+  return indexOpenHouseEvents(rows, Date.now());
 }
 
 /** Exported for the local provider — open houses aren't replicated, so
