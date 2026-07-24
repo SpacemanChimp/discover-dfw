@@ -347,6 +347,56 @@ const fmtPeriod = (d: Date) =>
     .formatToParts(d)
     .find((x) => x.type === "dayPeriod")?.value ?? "";
 
+/** Metro open-house index for /homes/open-houses (feature search): every
+    FUTURE structured OpenHouse event inside the horizon, paged from the
+    OpenHouse resource and deduped to one next-event per listing. Same
+    structured resource the detail views use — never remarks text. Callers
+    wrap this in unstable_cache; the odata() fetch itself also revalidates.
+    The keys are intersected with the REPLICA's on-market rows afterwards,
+    so canceled/off-market listings can never appear from here alone. */
+export async function getFutureOpenHouseIndex(horizonDays = 45): Promise<{
+  keys: string[];
+  nextByKey: Record<string, OpenHouse>;
+}> {
+  const today = new Date().toISOString().slice(0, 10);
+  const horizon = new Date(Date.now() + horizonDays * 86_400_000).toISOString().slice(0, 10);
+  const filter = `OpenHouseDate ge ${today} and OpenHouseDate le ${horizon}`;
+  const nextByKey: Record<string, OpenHouse> = {};
+  const starts: Record<string, number> = {};
+  try {
+    // page the window; NTREIS holds a few thousand future events, cap 12k
+    for (let skip = 0; skip < 12_000; skip += 1000) {
+      const j = await odata(
+        `OpenHouse?$filter=${encodeURIComponent(filter)}` +
+          `&$select=ListingKey,OpenHouseDate,OpenHouseStartTime,OpenHouseEndTime,OpenHouseStatus` +
+          `&$orderby=OpenHouseStartTime asc&$top=1000&$skip=${skip}`,
+        REVALIDATE_SNAPSHOT
+      );
+      const rows = (j.value as any[]) ?? [];
+      for (const o of rows) {
+        if (!o.ListingKey || !o.OpenHouseStartTime || !o.OpenHouseEndTime) continue;
+        if (o.OpenHouseStatus === "Canceled") continue;
+        const start = new Date(o.OpenHouseStartTime);
+        if (!Number.isFinite(start.getTime()) || start.getTime() < Date.now() - 6 * 3_600_000) continue;
+        const key = String(o.ListingKey);
+        const t = start.getTime();
+        if (starts[key] != null && starts[key] <= t) continue; // keep the SOONEST event
+        starts[key] = t;
+        const end = new Date(o.OpenHouseEndTime);
+        nextByKey[key] = {
+          date: String(o.OpenHouseDate ?? o.OpenHouseStartTime).slice(0, 10),
+          window: `${fmtHour(start)}–${fmtHour(end)} ${fmtPeriod(end)}`,
+        };
+      }
+      if (rows.length < 1000) break;
+    }
+  } catch {
+    // feed hiccup: an empty index renders an honest zero-result page rather
+    // than failing the route; the cache retries on the next revalidation
+  }
+  return { keys: Object.keys(nextByKey), nextByKey };
+}
+
 /** Exported for the local provider — open houses aren't replicated, so
     detail views fetch them live regardless of the serving provider. */
 export async function getOpenHouses(listingKey: string): Promise<OpenHouse[]> {

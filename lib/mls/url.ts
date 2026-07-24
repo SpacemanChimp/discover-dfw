@@ -69,6 +69,12 @@ export function parseSearchFilters(
     // District is a standalone, city-independent filter (0017): matches the
     // MLS-reported school district across any of the three district fields.
     district: (one("district") || "").trim().slice(0, 120) || undefined,
+    // feature search (/homes/<feature>): structured-field filters (0023)
+    pool: one("pool") === "1" || undefined,
+    garageMin: num("garage"),
+    singleStory: one("story") === "1" || undefined,
+    residentialOnly: one("res") === "1" || undefined,
+    openHousesOnly: one("oh") === "1" || undefined,
     // land search (/land): land flag + acreage/category/county
     land: one("land") === "1" || undefined,
     landCategory: isLandCategory(one("cat")) ? (one("cat") as SearchFilters["landCategory"]) : undefined,
@@ -104,6 +110,12 @@ export function searchFiltersToQueryString(f: SearchFilters, omitCity = false): 
   }
   // district (0017) — city-independent, serializes on its own
   if (f.district) params.set("district", f.district);
+  // feature search params (0023)
+  if (f.pool) params.set("pool", "1");
+  if (f.garageMin) params.set("garage", String(f.garageMin));
+  if (f.singleStory) params.set("story", "1");
+  if (f.residentialOnly) params.set("res", "1");
+  if (f.openHousesOnly) params.set("oh", "1");
   // land search params
   if (f.land) params.set("land", "1");
   if (f.landCategory) params.set("cat", f.landCategory);
@@ -142,6 +154,11 @@ export function searchFiltersLabel(f: SearchFilters, cityName?: string): string 
   if (f.propertyType) parts.push(f.propertyType);
   if (f.statuses?.[0]) parts.push(f.statuses[0].replace(/([A-Z])/g, " $1").trim().toLowerCase());
   if (f.newBuildsOnly) parts.push("new construction");
+  if (f.pool) parts.push("private pool");
+  if (f.garageMin) parts.push(`${f.garageMin}+ garage spaces`);
+  if (f.singleStory) parts.push("single story");
+  if (f.minAcres && !f.land) parts.push(`${f.minAcres}+ acres`);
+  if (f.openHousesOnly) parts.push("upcoming open house");
   if (f.school) parts.push(`served by ${f.school}`);
   if (f.district) parts.push(`in ${f.district}`);
   if (f.q) parts.push(`“${f.q}”`);
