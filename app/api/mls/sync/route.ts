@@ -444,12 +444,19 @@ export async function GET(req: Request) {
         // First residential-only rows land on the NEXT daily sync.
         const rows: any[] = [];
         for (let from = 0; ; from += 1000) {
+          // ORDERED pagination is load-bearing: .range() without .order()
+          // has no stable row order across requests, so multi-page cities
+          // (Dallas needs 5 pages) could overlap/skip rows page-to-page —
+          // THE long-standing "Dallas median instability" ($300K one day,
+          // $399K the next, against a ~$425K reality). listing_key is the
+          // primary key: deterministic, index-backed, duplicate-free.
           const { data: page, error: pageErr } = await db
             .from("listings")
-            .select("list_price, living_area, dom:raw->CumulativeDaysOnMarket")
+            .select("listing_key, list_price, living_area, dom:raw->CumulativeDaysOnMarket")
             .eq("city", c.name)
             .eq("standard_status", "Active")
             .in("property_type", [...RESIDENTIAL_PROPERTY_TYPES])
+            .order("listing_key", { ascending: true })
             .range(from, from + 999);
           if (pageErr) {
             await logError("snapshot", pageErr.message, c.slug);
