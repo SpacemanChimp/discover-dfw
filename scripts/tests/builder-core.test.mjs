@@ -233,8 +233,8 @@ test("editor's picks card settings: 4 canonical distinct cities, tagline capped,
   const wrongSection = {
     type: "layout",
     blocks: homeSections.map((s) =>
-      s.key === "trust"
-        ? { kind: "section", key: "trust", hidden: false, visibility: "all", settings: { picks: [{ city: "plano" }, { city: "fort-worth" }, { city: "dallas" }, { city: "frisco" }] } }
+      s.key === "about"
+        ? { kind: "section", key: "about", hidden: false, visibility: "all", settings: { picks: [{ city: "plano" }, { city: "fort-worth" }, { city: "dallas" }, { city: "frisco" }] } }
         : { kind: "section", key: s.key, hidden: false, visibility: "all" }
     ),
   };

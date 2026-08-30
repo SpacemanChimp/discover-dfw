@@ -16,7 +16,6 @@ import About from "@/components/About";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 import Reveals from "@/components/Reveals";
-import HumanTrust from "@/components/HumanTrust";
 import { getEditorState } from "@/lib/editor/overrides";
 import { isBuilderMode } from "@/lib/editor/builder-mode";
 import { RichDoc } from "@/lib/editor/render";
@@ -130,7 +129,6 @@ export default async function Home() {
     stats: <StatsBand prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} />,
     newbuilds: <NewBuilds liveMls={isLiveMls} introOverride={ov("newbuilds-intro")} regionKey={rk("newbuilds-intro")} />,
     cityindex: <CityIndex prices={priceBySlug} pricesLive={pricesLive} pricesAsOf={pricesAsOf} introOverride={ov("cities-intro")} regionKey={rk("cities-intro")} />,
-    trust: <HumanTrust />,
     about: <About copyOverride={ov("about-copy")} regionKey={rk("about-copy")} />,
     newsletter: <Newsletter introOverride={ov("newsletter-intro")} regionKey={rk("newsletter-intro")} />,
   };
