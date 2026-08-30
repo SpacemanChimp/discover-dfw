@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/Logo";
 import { useShelf } from "@/lib/shelf";
+import { track } from "@/lib/analytics/track";
 
 /* Sticky nav for the search surfaces: wordmark, section links, and the
    MY SHELF pill with a live count. `active` underlines the current surface
@@ -58,7 +59,10 @@ export default function SearchNav({ active = "homes" }: { active?: "homes" | "la
         {!shelf.account && (
           <button
             type="button"
-            onClick={shelf.openAuth}
+            onClick={() => {
+              track("signup_modal_open", { intent: "header-signin" });
+              shelf.openAuth();
+            }}
             className="font-mono city-back"
             style={{
               fontSize: 10.5,

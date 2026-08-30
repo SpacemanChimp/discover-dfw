@@ -233,6 +233,24 @@ export function featurePath(feature: FeatureSlug, citySlug?: string): string {
   return citySlug ? `/homes/${feature}/${citySlug}` : `/homes/${feature}`;
 }
 
+/** The property types a HOME search returns by default. Audited against
+    the replicated NTREIS inventory (2026-08-05): the browse scope holds
+    exactly three PropertyTypes — Residential 37,271 (incl. sub-types
+    SingleFamilyResidence, Townhouse, Condominium, ManufacturedHome,
+    MobileHome, and Farm-with-residence — RESO files a farm under
+    Residential only when it includes a home), ResidentialIncome 423
+    (duplex/multi-family), and Land 3,793. A "homes" search must never
+    default to vacant land: 0-bed/0-bath tracts belong on /land.
+
+    Returns the residential type list to require, or null when the caller
+    has its own authoritative type clause (the /land scope, or an explicit
+    Land pick from the toolbar's type filter). */
+export function defaultPropertyTypes(f: Partial<SearchFilters>): string[] | null {
+  if (f.land) return null; // /land owns its property_type = 'Land' clause
+  if (f.propertyType === "Land") return null; // explicit user pick wins
+  return ["Residential", "ResidentialIncome"];
+}
+
 /** Apply a feature's premise ON TOP of user filters. Boolean premises are
     forced; numeric premises act as a FLOOR, so a stricter user value (six
     bedrooms on the 5+ page, ten acres on the acreage page) still narrows

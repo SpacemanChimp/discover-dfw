@@ -24,6 +24,7 @@ import { dfwCities, cityBySlug, cityMarketSnapshot, dfwCountyNames } from "@/dat
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { boundingBox, milesBetween, pointInPolygon, polygonBounds, type LonLat } from "./geo";
 import { getOpenHouses, openHouseBadge, getFutureOpenHouseIndex } from "./trestle";
+import { defaultPropertyTypes } from "./feature-search";
 import { schoolsFromReso, schoolMatchToken } from "./school-fields";
 import { subtypesForCategory } from "@/lib/land/land";
 import { unstable_cache } from "next/cache";
@@ -108,6 +109,15 @@ function toListing(r: any): Listing {
 function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean }) {
   const statuses = f.statuses?.length ? f.statuses : DEFAULT_STATUSES;
   query = query.in("standard_status", statuses);
+
+  // HOME searches default to residential property types — vacant land
+  // (PropertyType='Land', the 0-bed/0-bath tracts) never appears unless
+  // the visitor is on /land or explicitly picks the Land type filter.
+  // Farms WITH a residence are PropertyType='Residential' in RESO and
+  // stay in; house-less ranchland is 'Land' and stays out. Pure decision
+  // in lib/mls/feature-search.ts (tested).
+  const homeTypes = defaultPropertyTypes(f);
+  if (homeTypes) query = query.in("property_type", homeTypes);
 
   if (opts?.skipCity) {
     // radius mode: the bounding box replaces the city clause on purpose —

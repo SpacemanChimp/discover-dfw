@@ -57,6 +57,8 @@ interface ShelfContextValue extends ShelfState {
   /** Local-stub mode only (no env): the Phase-1 fake account. */
   createLocalAccount(email: string): void;
   gateOpen: boolean;
+  /** What opened the gate — copy must match the triggering action. */
+  gateContext: "save-search" | "save-home" | null;
   openGate(): void;
   closeGate(): void;
   authOpen: boolean;
@@ -97,6 +99,10 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
   });
   const [ready, setReady] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  // WHY the gate/auth modal opened — the modal copy must match the action
+  // that triggered it (a save-search ask leads with alerts, a saved-home
+  // ask leads with the shelf). Also the signup_modal_open analytics intent.
+  const [gateContext, setGateContext] = useState<"save-search" | "save-home" | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -212,6 +218,11 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
         await loadAccountShelf(user.email, user.user_metadata?.full_name);
         setAuthOpen(false);
         setGateOpen(false);
+        // a BRAND-NEW account completing its first sign-in (magic link or
+        // Google) — returning sign-ins stay untracked. No identity payload.
+        if (user.created_at && Date.now() - Date.parse(user.created_at) < 15 * 60_000) {
+          track("signup_complete", {});
+        }
         showToast("Welcome — your shelf now travels with you.");
       }
       if (event === "SIGNED_OUT") {
@@ -260,6 +271,7 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
             lastSeenPrice: priceAtSave,
           };
           saved[listingKey] = rec;
+          track("save_home_click", { listingKey }); // the heart, save direction only
           firstGuestSave = !userId && !prev.account && !prev.gateShown;
           next = { ...prev, saved, gateShown: prev.gateShown || firstGuestSave };
           if (userId) {
@@ -288,7 +300,9 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
         if (gateTimer.current) clearTimeout(gateTimer.current);
         gateTimer.current = setTimeout(() => {
           setToast(null);
+          setGateContext("save-home");
           setGateOpen(true);
+          track("signup_modal_open", { intent: "save-home" });
         }, 1100);
       }
     },
@@ -299,8 +313,11 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
     (s: Omit<SavedSearchFilter, "id" | "createdAt">) => {
       const userId = sessionUserId.current;
       if (!userId) {
-        // standing orders need an account — send guests to the gate
+        // standing orders need an account — send guests to the gate, with
+        // copy that leads with THIS action (save the search + its alerts)
+        setGateContext("save-search");
         setGateOpen(true);
+        track("signup_modal_open", { intent: "save-search" });
         return;
       }
       const rec: SavedSearchFilter = {
@@ -418,6 +435,7 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
       updateLocal((prev) => ({ ...prev, account: { email } }));
       setAuthOpen(false);
       setGateOpen(false);
+      track("signup_complete", {}); // count only — the address never reaches analytics
       showToast("Welcome — your shelf now travels with you.");
       recordSignupLead(email);
     },
@@ -439,9 +457,15 @@ export function ShelfProvider({ children }: { children: React.ReactNode }) {
     signOut,
     createLocalAccount,
     gateOpen,
+    gateContext,
     openGate: () => setGateOpen(true),
-    closeGate: () => setGateOpen(false),
+    closeGate: () => {
+      setGateOpen(false);
+      setGateContext(null);
+    },
     authOpen,
+    // signup_modal_open is tracked at each call SITE (header button,
+    // account CTA, gate) so the intent names the real trigger exactly once
     openAuth: () => {
       setGateOpen(false);
       setAuthOpen(true);

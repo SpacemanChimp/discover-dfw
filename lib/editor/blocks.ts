@@ -159,11 +159,14 @@ export const TEMPLATE_SECTIONS: Record<string, SectionDef[]> = {
     { key: "popsearches", label: "Popular home searches", description: "Editorial index of the eight feature searches — links are code-owned." },
     { key: "ticker", label: "City price ticker", locked: true, description: "Live NTREIS medians — data locked." },
     { key: "map", label: "Interactive metro map", locked: true },
+    { key: "letterinline", label: "The Letter — inline signup", description: "Compact newsletter signup after the map. Subscription plumbing is code-owned." },
     { key: "picks", label: "Editor's Picks", cards: "editors-picks", description: "Four city pick cards — click a card to edit its city, tagline, and photo." },
     { key: "stats", label: "Stats band", locked: true, description: "Canonical market figures." },
     { key: "newbuilds", label: "New Builds preview" },
-    { key: "cityindex", label: "City Index", locked: true },
+    // trust sits BEFORE the giant city index on purpose: the visitor meets
+    // the humans behind the data before the longest scroll on the page
     { key: "trust", label: "Human trust strip" },
+    { key: "cityindex", label: "City Index", locked: true },
     { key: "about", label: "About / research" },
     { key: "newsletter", label: "Newsletter signup", locked: true, description: "Subscription plumbing locked." },
   ],

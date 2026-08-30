@@ -90,7 +90,7 @@ export async function generateMetadata({
       type: "website",
       locale: "en_US",
     },
-    twitter: { card: "summary", title, description },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

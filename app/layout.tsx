@@ -34,8 +34,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
   },
-  twitter: { card: "summary" },
+  // app/opengraph-image.tsx + twitter-image.tsx supply the branded default
+  // card image site-wide; per-route files override it (city/hood/feature)
+  twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
+  // Google Search Console HTML-tag ownership verification — env-driven,
+  // never hardcoded; omitted entirely when the variable is absent
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 };
 
 export default function RootLayout({

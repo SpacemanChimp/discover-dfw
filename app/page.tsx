@@ -5,6 +5,7 @@ import { getAllCityMarketMetricSets } from "@/lib/market/metrics";
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import PopularSearches from "@/components/PopularSearches";
+import LetterInline from "@/components/LetterInline";
 import Ticker from "@/components/Ticker";
 import InteractiveMap from "@/components/InteractiveMap";
 import EditorsPicks from "@/components/EditorsPicks";
@@ -55,6 +56,17 @@ const jsonLd = [
     url: SITE_URL,
     description: "An editorial field guide to Dallas–Fort Worth real estate.",
     areaServed: "Dallas–Fort Worth metroplex, Texas",
+    // operator identity — VERIFIED against the served TREC IABS notice
+    // (public/trec/information-about-brokerage-services.pdf): sales agent
+    // Matthew Davis, TX license 0733604, sponsored by House Brokerage LLC
+    // (license 9008104). Nothing here is decorative: no ratings, reviews,
+    // awards, or sales figures, ever.
+    founder: {
+      "@type": "Person",
+      name: "Matthew Davis",
+      jobTitle: "Texas real estate sales agent, license 0733604",
+      worksFor: { "@type": "Organization", name: "House Brokerage LLC" },
+    },
   },
 ];
 
@@ -101,6 +113,7 @@ export default async function Home() {
   const sections: Record<string, React.ReactNode> = {
     hero: <Hero copyOverride={ov("hero-copy")} regionKey={rk("hero-copy")} />,
     popsearches: <PopularSearches />,
+    letterinline: <LetterInline />,
     ticker: <Ticker prices={priceBySlug} />,
     map: (
       <InteractiveMap

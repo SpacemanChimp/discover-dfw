@@ -854,3 +854,23 @@ body {
   outline: 2px solid #d9481f;
   outline-offset: 3px;
 }
+
+/* ---- Reduced motion (remediation): the hero letter-rise, pin drop, fade
+   sequence, caret, and scroll reveals all become instant. Content is in
+   the server HTML already; animation is presentation only and must never
+   gate visibility. The marquee keeps its own gentler reduced-motion rule
+   above (slowed, not stopped) — excluded here so that choice stands. */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.marquee),
+  *:not(.marquee)::before,
+  *:not(.marquee)::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-reveal].reveal-hidden {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
