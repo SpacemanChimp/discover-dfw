@@ -245,10 +245,12 @@ export function featurePath(feature: FeatureSlug, citySlug?: string): string {
     Returns the residential type list to require, or null when the caller
     has its own authoritative type clause (the /land scope, or an explicit
     Land pick from the toolbar's type filter). */
+export const RESIDENTIAL_PROPERTY_TYPES = ["Residential", "ResidentialIncome"] as const;
+
 export function defaultPropertyTypes(f: Partial<SearchFilters>): string[] | null {
   if (f.land) return null; // /land owns its property_type = 'Land' clause
   if (f.propertyType === "Land") return null; // explicit user pick wins
-  return ["Residential", "ResidentialIncome"];
+  return [...RESIDENTIAL_PROPERTY_TYPES];
 }
 
 /** Apply a feature's premise ON TOP of user filters. Boolean premises are

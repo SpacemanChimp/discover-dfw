@@ -13,6 +13,7 @@
 import "server-only";
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { cities } from "@/lib/dfw-data";
+import { RESIDENTIAL_PROPERTY_TYPES } from "@/lib/mls/feature-search";
 import { RISKY_CLAIM_PATTERNS } from "@/lib/content/community-content-drafts";
 import type { IssueStats, IssueSections, IssueCityStat } from "@/lib/email/letter-issue";
 
@@ -134,10 +135,13 @@ export async function generateIssueStats(prev: IssueStats | null): Promise<Issue
   // history fills in when no issue exists yet
   const prevMedian = new Map((prev?.cities ?? []).map((c) => [c.slug, c.median]));
 
+  // residential definition (matches snapshots + the default home search):
+  // The Letter's actives/new-listing figures describe HOMES, never land
   const { count: metroNew, error: metroErr } = await db
     .from("listings")
     .select("*", { count: "exact", head: true })
     .eq("standard_status", "Active")
+    .in("property_type", [...RESIDENTIAL_PROPERTY_TYPES])
     .lte("days_on_market", 7);
   if (metroErr) return { error: `metro count: ${metroErr.message}` };
 
@@ -151,6 +155,7 @@ export async function generateIssueStats(prev: IssueStats | null): Promise<Issue
       .from("listings")
       .select("*", { count: "exact", head: true })
       .eq("standard_status", "Active")
+      .in("property_type", [...RESIDENTIAL_PROPERTY_TYPES])
       .eq("city", name) // listings.city holds the NAME, not the slug
       .lte("days_on_market", 7);
     cityStats.push({

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/db/admin";
+import { RESIDENTIAL_PROPERTY_TYPES } from "@/lib/mls/feature-search";
 import { dfwCities, dfwCountyNames } from "@/data/dfw-cities";
 import {
   TRESTLE_ODATA_BASE_URL as API_BASE,
@@ -433,6 +434,14 @@ export async function GET(req: Request) {
         // .limit(2000) silently floored big-city counts at 1,000 AND
         // computed medians over an arbitrary 1,000-row sample (Dallas
         // snapshot median read $145K against a ~$400K reality).
+        //
+        // RESIDENTIAL DEFINITION (launch hardening, 2026-08-30): snapshot
+        // medians/ppsf/dom/counts cover Residential + ResidentialIncome
+        // ONLY — the same inventory the default home search returns.
+        // Vacant land (PropertyType='Land') skewed the blend materially
+        // (Dallas all-property $399K vs residential $425K, +6.5%); land
+        // stats live on /land's own live queries, never mixed in here.
+        // First residential-only rows land on the NEXT daily sync.
         const rows: any[] = [];
         for (let from = 0; ; from += 1000) {
           const { data: page, error: pageErr } = await db
@@ -440,6 +449,7 @@ export async function GET(req: Request) {
             .select("list_price, living_area, dom:raw->CumulativeDaysOnMarket")
             .eq("city", c.name)
             .eq("standard_status", "Active")
+            .in("property_type", [...RESIDENTIAL_PROPERTY_TYPES])
             .range(from, from + 999);
           if (pageErr) {
             await logError("snapshot", pageErr.message, c.slug);

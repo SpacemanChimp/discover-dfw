@@ -33,44 +33,116 @@ function editorialSet(slug: string): CityMarketMetricSet | null {
   return c ? metricsFromEditorial(c) : null;
 }
 
-/** Latest snapshot row per city, plus (when present) the row closest to one
-    year before it — a single query serves both. */
-async function readSnapshotRows(
-  slugs: string[]
-): Promise<Map<string, { latest: SnapshotRow; prevYear: SnapshotRow | null }>> {
+/* ---------------------------------------------------------------------------
+   Snapshot reads — ONE consistent, retried read per server process.
+
+   The launch audit caught two defects here (hardening, 2026-08-30):
+   1. NON-DETERMINISTIC BUILDS: every statically prerendered city page made
+      its own single-city query; under the ~90-page build fan-out a handful
+      of those reads failed and fell back to editorial values, so the SAME
+      city could show different medians on different surfaces of one build
+      (the audit's 16 "median differs across surfaces" findings). Fix: all
+      callers share one memoized all-cities read with bounded retries —
+      one build, one snapshot, every surface agrees. If every retry fails
+      the WHOLE read fails closed to the labeled editorial set uniformly;
+      an editorial value is never mixed with replica values in one build.
+   2. SILENT 1,000-ROW CAP: the old read trusted .limit(20000), but
+      PostgREST caps every response at 1,000 rows, so bulk reads never saw
+      the year-old rows and homepage YoY silently vanished. Fix: two
+      BOUNDED window queries (latest week, plus the 350–380-day-old band),
+      each paged under the cap.
+--------------------------------------------------------------------------- */
+
+const RETRIES = 3;
+const RETRY_DELAY_MS = 350;
+const MEMO_TTL_MS = 5 * 60_000;
+
+let snapshotMemo: { at: number; promise: Promise<Map<string, { latest: SnapshotRow; prevYear: SnapshotRow | null }>> } | null = null;
+
+const SNAPSHOT_SELECT =
+  "city_slug, as_of, active_listings, median_list_price, price_per_sqft, median_days_on_market, created_at";
+
+type SlugSnapshotRow = SnapshotRow & { city_slug: string };
+
+async function pagedWindow(
+  db: NonNullable<ReturnType<typeof getSupabaseAdmin>>,
+  fromISO: string,
+  toISO: string
+): Promise<SlugSnapshotRow[]> {
+  const rows: SlugSnapshotRow[] = [];
+  for (let from = 0; from < 10_000; from += 1000) {
+    const { data, error } = await db
+      .from("city_market_snapshots")
+      .select(SNAPSHOT_SELECT)
+      .gte("as_of", fromISO)
+      .lte("as_of", toISO)
+      .order("as_of", { ascending: false })
+      .range(from, from + 999);
+    if (error) throw new Error(error.message);
+    rows.push(...((data ?? []) as SlugSnapshotRow[]));
+    if ((data ?? []).length < 1000) break;
+  }
+  return rows;
+}
+
+async function readAllSnapshotRows(): Promise<Map<string, { latest: SnapshotRow; prevYear: SnapshotRow | null }>> {
   const out = new Map<string, { latest: SnapshotRow; prevYear: SnapshotRow | null }>();
   const db = getSupabaseAdmin();
   if (!db) return out;
-  const { data, error } = await db
-    .from("city_market_snapshots")
-    .select("city_slug, as_of, active_listings, median_list_price, price_per_sqft, median_days_on_market, created_at")
-    .in("city_slug", slugs)
-    .order("as_of", { ascending: false })
-    .limit(20000);
-  if (error || !data) return out;
-  const bySlugRows = new Map<string, SnapshotRow[]>();
-  for (const r of data) {
-    const list = bySlugRows.get(r.city_slug) ?? [];
+  const day = 86_400_000;
+  const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
+  const now = Date.now();
+  // latest = newest row per city within the last 14 days (sync is daily);
+  // prevYear = the row closest to 365 days before that, from a ±15d band
+  const recent = await pagedWindow(db, iso(now - 14 * day), iso(now + day));
+  const yearBand = await pagedWindow(db, iso(now - 381 * day), iso(now - 349 * day));
+  const oldBySlug = new Map<string, SlugSnapshotRow[]>();
+  for (const r of yearBand) {
+    const list = oldBySlug.get(r.city_slug) ?? [];
     list.push(r);
-    bySlugRows.set(r.city_slug, list);
+    oldBySlug.set(r.city_slug, list);
   }
-  for (const [slug, rows] of bySlugRows) {
-    const latest = rows[0];
-    const target = Date.parse(latest.as_of) - 365 * 86_400_000;
+  for (const r of recent) {
+    if (out.has(r.city_slug)) continue; // newest-first: first row wins
+    const target = Date.parse(r.as_of) - 365 * day;
     let prevYear: SnapshotRow | null = null;
     let bestDelta = Infinity;
-    for (const r of rows) {
-      const delta = Math.abs(Date.parse(r.as_of) - target);
+    for (const old of oldBySlug.get(r.city_slug) ?? []) {
+      const delta = Math.abs(Date.parse(old.as_of) - target);
       if (delta < bestDelta) {
         bestDelta = delta;
-        prevYear = r;
+        prevYear = old;
       }
     }
     // only comparable when genuinely ~a year apart (core re-validates too)
-    if (prevYear && bestDelta > 15 * 86_400_000) prevYear = null;
-    out.set(slug, { latest, prevYear });
+    if (prevYear && bestDelta > 15 * day) prevYear = null;
+    out.set(r.city_slug, { latest: r, prevYear });
   }
   return out;
+}
+
+function allSnapshotRows(): Promise<Map<string, { latest: SnapshotRow; prevYear: SnapshotRow | null }>> {
+  if (snapshotMemo && Date.now() - snapshotMemo.at < MEMO_TTL_MS) return snapshotMemo.promise;
+  const at = Date.now();
+  const promise = (async () => {
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < RETRIES; attempt++) {
+      try {
+        return await readAllSnapshotRows();
+      } catch (e) {
+        lastErr = e;
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+      }
+    }
+    // total failure: drop the memo so the next caller retries, and fail
+    // closed — an EMPTY map sends every surface to the labeled editorial
+    // set together (uniform), never a per-city mix
+    snapshotMemo = null;
+    console.warn(`[market-metrics] snapshot read failed after ${RETRIES} attempts: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`);
+    return new Map<string, { latest: SnapshotRow; prevYear: SnapshotRow | null }>();
+  })();
+  snapshotMemo = { at, promise };
+  return promise;
 }
 
 /** Canonical metric set for one city. */
@@ -79,7 +151,7 @@ export async function getCityMarketMetricSet(citySlug: string): Promise<CityMark
   if (!c) return null;
   try {
     if (REPLICA_MODE) {
-      const rows = await readSnapshotRows([citySlug]);
+      const rows = await allSnapshotRows();
       const hit = rows.get(citySlug);
       if (hit) return metricsFromSnapshotRow(c, hit.latest, hit.prevYear);
       return editorialSet(citySlug);
@@ -112,7 +184,7 @@ export async function getAllCityMarketMetricSets(): Promise<Record<string, CityM
   let rows = new Map<string, { latest: SnapshotRow; prevYear: SnapshotRow | null }>();
   if (REPLICA_MODE) {
     try {
-      rows = await readSnapshotRows(cities.map((c) => c.slug));
+      rows = await allSnapshotRows();
     } catch {
       rows = new Map();
     }

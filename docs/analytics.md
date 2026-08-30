@@ -90,6 +90,25 @@ The audit's requested names map as: `home_search_view` →
   existing Supabase server credentials).
 - **Migration `0024_analytics_events.sql` must be applied** (dashboard SQL
   editor, byte-exact procedure) before the six new event names store rows;
-  until then they are refused quietly and nothing breaks.
+  until then they are refused quietly and nothing breaks. Apply it
+  SCHEMA-FIRST (before the app deploy) together with
+  `0025_residential_school_facets.sql`.
 - Optional: `NEXT_PUBLIC_SITE_URL` keeps referrer self-detection exact in
   non-production environments.
+
+## Observability and environments (2026-08 hardening)
+
+- Refused events and database-dropped events are **logged server-side**:
+  `[events] refused event="…" reason="…"` and
+  `[events] insert dropped event="…" db="…"` — the sanitized event name
+  and reason only, never the payload. Watch the Vercel function logs for
+  `/api/events` when validating a rollout; an HTTP 200 with
+  `dropped: true` is NOT persistence.
+- **Preview deployments never write analytics**: when `VERCEL_ENV` is set
+  and not `production`, `/api/events` answers `dropped: true` before
+  touching the database (previews share the production database — their
+  traffic is test traffic). Local dev (`VERCEL_ENV` unset) still stores,
+  which is how events are hand-tested; delete your own session's rows
+  afterwards (`delete from site_events where session_id = '<your ddfw.sid.v1>'`).
+- Persistence check after a deploy:
+  `select event, count(*) from site_events where created_at > now() - interval '1 hour' group by 1 order by 2 desc;`

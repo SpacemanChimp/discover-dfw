@@ -108,3 +108,43 @@ metrics, no-YoY-without-history (plus the with-history path), editorial
 fallback honesty, formatter stability, cross-surface formatting identity,
 and the median-of-city-medians aggregate. The publication audit adds the
 rendered cross-surface check against a running build.
+
+## Residential market definition (2026-08 hardening)
+
+Every public "home" figure — snapshot medians, price-per-sqft, days on
+market, active counts, city status counts, The Letter's actives and
+new-in-7-days figures, and the default home-search inventory — covers
+PropertyType `Residential` and `ResidentialIncome` ONLY. Vacant land
+(`Land`) is never blended into a home-price statistic; land figures live
+on /land's own queries. The single source of truth for the type list is
+`RESIDENTIAL_PROPERTY_TYPES` in `lib/mls/feature-search.ts` — every query
+imports it, and `scripts/tests/feature-search.test.mjs` locks its meaning.
+
+Why it matters: at the 2026-08-30 audit the all-property blend was
+materially misleading in mixed markets (Dallas all-property median $399K
+vs residential $425K, +6.5%; Denton −2.4% the other way because rural
+land lists high). Farms WITH a residence remain included — RESO files
+them under `Residential` (sub-type `Farm`); house-less ranchland is
+`Land` and stays out.
+
+Transition note: snapshot rows written BEFORE this change blend land.
+The first residential-only rows land on the next daily sync after
+deployment (or an immediate manual sync). Year-over-year deltas compare
+against year-old blended rows until the definition has a year of
+history; land is a small share of most cities, and the ±15-day
+comparability rule is unchanged.
+
+## Snapshot reads are one consistent, retried read (2026-08 hardening)
+
+`lib/market/metrics.ts` reads city_market_snapshots ONCE per server
+process (5-minute memo, 3 bounded retries): two paged windows — the last
+14 days for current rows, and the 349–381-day band for year-ago rows —
+each paged under PostgREST's hard 1,000-row response cap. This fixed two
+audit findings: (1) statically prerendered city pages no longer make ~90
+independent fragile reads, so one build can never show two different
+medians for the same city (the "median differs across surfaces" class);
+(2) the old single-query read silently lost year-old rows to the row cap,
+so homepage YoY never attached. If every retry fails, the read fails
+CLOSED to the labeled editorial set for every surface together — an
+editorial number is never mixed into a replica-sourced build, and the
+on-page provenance label always says which source is rendering.

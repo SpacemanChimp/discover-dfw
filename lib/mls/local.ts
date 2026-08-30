@@ -24,7 +24,7 @@ import { dfwCities, cityBySlug, cityMarketSnapshot, dfwCountyNames } from "@/dat
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { boundingBox, milesBetween, pointInPolygon, polygonBounds, type LonLat } from "./geo";
 import { getOpenHouses, openHouseBadge, getFutureOpenHouseIndex } from "./trestle";
-import { defaultPropertyTypes } from "./feature-search";
+import { defaultPropertyTypes, RESIDENTIAL_PROPERTY_TYPES } from "./feature-search";
 import { schoolsFromReso, schoolMatchToken } from "./school-fields";
 import { subtypesForCategory } from "@/lib/land/land";
 import { unstable_cache } from "next/cache";
@@ -724,12 +724,14 @@ export const localProvider: MlsProvider = {
     // on-market status counts (never sold data) — two cheap head-counts,
     // ISR caches the page so these don't run per visitor
     const cityName = cityBySlug[citySlug].name;
+    // residential definition — status counts describe the HOME market
     const countOf = async (status: string) => {
       const { count: n } = await db
         .from("listings")
         .select("listing_key", { count: "exact", head: true })
         .eq("city", cityName)
-        .eq("standard_status", status);
+        .eq("standard_status", status)
+        .in("property_type", [...RESIDENTIAL_PROPERTY_TYPES]);
       return n ?? 0;
     };
     const [auc, pending] = await Promise.all([countOf("ActiveUnderContract"), countOf("Pending")]);
@@ -765,11 +767,14 @@ export const localProvider: MlsProvider = {
     }
     for (const c of dfwCities) {
       if (!(c.slug in out)) {
+        // residential definition — matches the snapshot writer and the
+        // default home search (never counts vacant land as "homes")
         const { count } = await db
           .from("listings")
           .select("listing_key", { count: "exact", head: true })
           .eq("city", c.name)
-          .eq("standard_status", "Active");
+          .eq("standard_status", "Active")
+          .in("property_type", [...RESIDENTIAL_PROPERTY_TYPES]);
         out[c.slug] = count ?? 0;
       }
     }
