@@ -88,9 +88,12 @@ for (const slug of CITY_SLUGS) {
     assert.equal(searchBand, listingChip);
 
     // the label says what the median measures and from where — and, per the
-    // 2026-07 owner decision, carries NO retrieval date
+    // 2026-07 owner decision, carries NO retrieval date. Since the 2026-08
+    // hardening the definition is RESIDENTIAL (Residential +
+    // ResidentialIncome, matching the default home search) — land is
+    // never blended into a home-price figure, and the label says so.
     const label = provenanceLabel(set);
-    assert.match(label, /ACTIVE LISTINGS/);
+    assert.match(label, /ACTIVE RESIDENTIAL LISTINGS/);
     assert.match(label, /MEDIANS OF LIST PRICES/);
     assert.match(label, /SOURCE: NTREIS/);
     assert.doesNotMatch(label, /\d{4}/, "no year/date in the market-stat label");

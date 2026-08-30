@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { track } from "@/lib/analytics/track";
+import { useLetterFormView } from "@/components/analytics/useLetterFormView";
 
 /* The Letter signup (TL-1) — real double opt-in: this form only ever
    creates a PENDING subscriber and triggers the confirmation email; the
@@ -13,6 +14,7 @@ export default function Newsletter({ introOverride, regionKey }: { introOverride
   const [openedAt] = useState(() => Date.now());
   const [phase, setPhase] = useState<"idle" | "sending" | "confirm_sent" | "already">("idle");
   const [error, setError] = useState<string | null>(null);
+  const viewRef = useLetterFormView("newsletter-bottom");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,12 +29,14 @@ export default function Newsletter({ introOverride, regionKey }: { introOverride
       });
       const data = (await res.json()) as { ok: boolean; state?: string; error?: string };
       if (!data.ok) {
+        track("newsletter_error", { intent: "newsletter" }); // count only — never the address
         setError(data.error ?? "Something hiccuped — try again.");
         setPhase("idle");
         return;
       }
       setPhase(data.state === "already" ? "already" : "confirm_sent");
     } catch {
+      track("newsletter_error", { intent: "newsletter" });
       setError("Something hiccuped — try again.");
       setPhase("idle");
     }
@@ -41,6 +45,7 @@ export default function Newsletter({ introOverride, regionKey }: { introOverride
   return (
     <section
       id="newsletter"
+      ref={viewRef as React.RefObject<HTMLElement>}
       style={{ background: "#D9481F", borderTop: "2px solid #1D1913" }}
     >
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "88px 4vw", textAlign: "center" }}>

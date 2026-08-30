@@ -19,6 +19,14 @@ export const EVENT_NAMES = [
   "saved_search_created",
   "letter_signup_started",
   "letter_subscribed",
+  // remediation additions (migration 0024 widens the DB allowlist; until
+  // it is applied the server refuses these quietly — nothing breaks)
+  "city_guide_view",
+  "save_home_click",
+  "signup_modal_open",
+  "signup_complete",
+  "newsletter_view",
+  "newsletter_error",
 ] as const;
 export type EventName = (typeof EVENT_NAMES)[number];
 const EVENT_SET = new Set<string>(EVENT_NAMES);
@@ -42,6 +50,9 @@ export const EVENT_INTENTS = [
   "build-my-shortlist", "compare-this-city", "curated-homes", "new-build-incentives",
   "plan-builder-tour", "homeowner-equity-plan", "human-search-help", "ask-a-question",
   "build-land-shortlist", "schedule-showing", "save-search", "newsletter",
+  // signup-modal triggers (which action opened the account modal — a
+  // category, never a value)
+  "save-home", "header-signin", "account-cta",
 ] as const;
 const INTENT_SET = new Set<string>(EVENT_INTENTS);
 

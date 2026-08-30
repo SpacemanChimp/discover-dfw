@@ -24,6 +24,7 @@ import { dfwCities, cityBySlug, cityMarketSnapshot, dfwCountyNames } from "@/dat
 import { getSupabaseAdmin } from "@/lib/db/admin";
 import { boundingBox, milesBetween, pointInPolygon, polygonBounds, type LonLat } from "./geo";
 import { getOpenHouses, openHouseBadge, getFutureOpenHouseIndex } from "./trestle";
+import { defaultPropertyTypes, RESIDENTIAL_PROPERTY_TYPES } from "./feature-search";
 import { schoolsFromReso, schoolMatchToken } from "./school-fields";
 import { subtypesForCategory } from "@/lib/land/land";
 import { unstable_cache } from "next/cache";
@@ -108,6 +109,15 @@ function toListing(r: any): Listing {
 function applyFilters(query: any, f: SearchFilters, opts?: { skipCity?: boolean }) {
   const statuses = f.statuses?.length ? f.statuses : DEFAULT_STATUSES;
   query = query.in("standard_status", statuses);
+
+  // HOME searches default to residential property types — vacant land
+  // (PropertyType='Land', the 0-bed/0-bath tracts) never appears unless
+  // the visitor is on /land or explicitly picks the Land type filter.
+  // Farms WITH a residence are PropertyType='Residential' in RESO and
+  // stay in; house-less ranchland is 'Land' and stays out. Pure decision
+  // in lib/mls/feature-search.ts (tested).
+  const homeTypes = defaultPropertyTypes(f);
+  if (homeTypes) query = query.in("property_type", homeTypes);
 
   if (opts?.skipCity) {
     // radius mode: the bounding box replaces the city clause on purpose —
@@ -714,12 +724,14 @@ export const localProvider: MlsProvider = {
     // on-market status counts (never sold data) — two cheap head-counts,
     // ISR caches the page so these don't run per visitor
     const cityName = cityBySlug[citySlug].name;
+    // residential definition — status counts describe the HOME market
     const countOf = async (status: string) => {
       const { count: n } = await db
         .from("listings")
         .select("listing_key", { count: "exact", head: true })
         .eq("city", cityName)
-        .eq("standard_status", status);
+        .eq("standard_status", status)
+        .in("property_type", [...RESIDENTIAL_PROPERTY_TYPES]);
       return n ?? 0;
     };
     const [auc, pending] = await Promise.all([countOf("ActiveUnderContract"), countOf("Pending")]);
@@ -755,11 +767,14 @@ export const localProvider: MlsProvider = {
     }
     for (const c of dfwCities) {
       if (!(c.slug in out)) {
+        // residential definition — matches the snapshot writer and the
+        // default home search (never counts vacant land as "homes")
         const { count } = await db
           .from("listings")
           .select("listing_key", { count: "exact", head: true })
           .eq("city", c.name)
-          .eq("standard_status", "Active");
+          .eq("standard_status", "Active")
+          .in("property_type", [...RESIDENTIAL_PROPERTY_TYPES]);
         out[c.slug] = count ?? 0;
       }
     }

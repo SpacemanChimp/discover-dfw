@@ -12,8 +12,11 @@ const base = () => ({
   path: "/listing/ABC123",
 });
 
-test("only the 12 allowlisted event names pass; everything else refuses", () => {
-  assert.equal(EVENT_NAMES.length, 12);
+test("only the 18 allowlisted event names pass; everything else refuses", () => {
+  assert.equal(EVENT_NAMES.length, 18); // 12 launch names + 6 remediation names (0024)
+  for (const name of ["city_guide_view", "save_home_click", "signup_modal_open", "signup_complete", "newsletter_view", "newsletter_error"]) {
+    assert.ok(EVENT_NAMES.includes(name), `${name} is in the contract`);
+  }
   for (const event of EVENT_NAMES) {
     const r = cleanEvent({ ...base(), event });
     assert.equal(r.ok, true, `${event} should pass`);

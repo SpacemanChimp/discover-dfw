@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AccountCta from "./AccountCta";
 
 /* Popular home searches — full-width editorial navigation right after the
    hero. An unframed ledger grid in the field-guide voice: thin ink rules,
@@ -76,6 +77,9 @@ export default function PopularSearches() {
             </li>
           ))}
         </ul>
+
+        {/* the account benefit, right where the browsing starts */}
+        <AccountCta />
       </div>
     </section>
   );

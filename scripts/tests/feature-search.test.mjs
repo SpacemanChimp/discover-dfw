@@ -20,6 +20,8 @@ import {
   isFeatureSlug,
   indexOpenHouseEvents,
   applyFeaturePremise,
+  defaultPropertyTypes,
+  RESIDENTIAL_PROPERTY_TYPES,
 } from "../../lib/mls/feature-search.ts";
 
 test("every feature predicate rides its audited structured field", () => {
@@ -30,6 +32,30 @@ test("every feature predicate rides its audited structured field", () => {
   assert.deepEqual(FEATURES["5-plus-bedrooms"].filters, { minBeds: 5 });
   assert.deepEqual(FEATURES["open-houses"].filters, { openHousesOnly: true });
   assert.equal(FEATURE_SLUGS.length, 6);
+});
+
+test("ONE residential definition everywhere: search default = the shared constant", () => {
+  // the snapshot writer, Letter figures, city counts, and the default home
+  // search all import RESIDENTIAL_PROPERTY_TYPES — this locks its meaning
+  assert.deepEqual([...RESIDENTIAL_PROPERTY_TYPES], ["Residential", "ResidentialIncome"]);
+  assert.deepEqual(defaultPropertyTypes({}), [...RESIDENTIAL_PROPERTY_TYPES]);
+  assert.ok(!RESIDENTIAL_PROPERTY_TYPES.includes("Land"), "land is never a home");
+});
+
+test("home searches default to residential property types (land never leaks)", () => {
+  // the default browse, city searches, school/district searches, and every
+  // feature page all pass a filter object WITHOUT land/type picks
+  assert.deepEqual(defaultPropertyTypes({}), ["Residential", "ResidentialIncome"]);
+  assert.deepEqual(defaultPropertyTypes({ citySlug: "frisco", minBeds: 3 }), ["Residential", "ResidentialIncome"]);
+  assert.deepEqual(defaultPropertyTypes({ school: "Guyer" }), ["Residential", "ResidentialIncome"]);
+  // condos/townhomes/multi-family picks stay inside the residential scope
+  assert.deepEqual(defaultPropertyTypes({ propertyType: "Condo" }), ["Residential", "ResidentialIncome"]);
+  assert.deepEqual(defaultPropertyTypes({ propertyType: "Multi-family" }), ["Residential", "ResidentialIncome"]);
+  // /land and an explicit Land type pick own their type clause — no override
+  assert.equal(defaultPropertyTypes({ land: true }), null);
+  assert.equal(defaultPropertyTypes({ propertyType: "Land" }), null);
+  // acreage pages compose: residentialOnly narrows WITHIN the default scope
+  assert.deepEqual(defaultPropertyTypes({ residentialOnly: true, minAcres: 1 }), ["Residential", "ResidentialIncome"]);
 });
 
 test("acreage search can never include vacant land", () => {

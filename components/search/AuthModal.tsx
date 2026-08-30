@@ -272,7 +272,7 @@ export default function AuthModal() {
               className="font-mono"
               style={{ textAlign: "center", fontSize: 8, letterSpacing: ".16em", color: "rgba(29,25,19,.62)", marginTop: 14 }}
             >
-              NO PASSWORDS · UNSUBSCRIBE ANYTIME · WE NEVER SELL YOUR NUMBER
+              NO PASSWORDS · UNSUBSCRIBE ANYTIME · WE NEVER SELL YOUR INFORMATION
             </div>
           </>
         )}

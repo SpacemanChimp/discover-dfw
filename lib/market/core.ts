@@ -230,7 +230,10 @@ export function fmtAsOf(iso: string): string {
     element and is unaffected by this.) */
 export function provenanceLabel(set: CityMarketMetricSet): string {
   if (set.sourceType === "mls_replica") {
-    return "ACTIVE LISTINGS (HOMES, INCOME & LAND) · MEDIANS OF LIST PRICES · SOURCE: NTREIS";
+    // residential definition (2026-08 hardening): snapshot figures cover
+    // Residential + ResidentialIncome — the same inventory the home
+    // search returns. Land is never blended into a "home price" median.
+    return "ACTIVE RESIDENTIAL LISTINGS · MEDIANS OF LIST PRICES · SOURCE: NTREIS";
   }
   return "EDITORIAL FIGURES · SEEDED FROM NTREIS SNAPSHOT MEDIANS";
 }

@@ -47,9 +47,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
   }
-  // admin-created builder pages — PUBLISHED only (drafts stay invisible)
+  // admin-created builder pages — PUBLISHED only (drafts stay invisible).
+  // lastModified is set ONLY here, from the real publish timestamp: no
+  // other route family has a truthful per-URL source-update date, and a
+  // build-time "today" on every URL would be a lie crawlers learn to
+  // ignore — so everything else deliberately omits the field.
   for (const p of await getPublishedPages()) {
-    entries.push({ url: `${SITE_URL}/${p.slug}`, changeFrequency: "monthly", priority: 0.5 });
+    entries.push({
+      url: `${SITE_URL}/${p.slug}`,
+      changeFrequency: "monthly",
+      priority: 0.5,
+      ...(p.published_at ? { lastModified: new Date(p.published_at) } : {}),
+    });
   }
   return entries;
 }

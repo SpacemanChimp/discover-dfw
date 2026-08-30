@@ -47,6 +47,14 @@ export async function POST(req: Request) {
     /* no draft-mode context */
   }
 
+  // preview deployments share the production database — their traffic is
+  // test traffic and must never land in production analytics. Local dev
+  // (VERCEL_ENV unset) still stores, which is how events are hand-tested.
+  const vercelEnv = process.env.VERCEL_ENV;
+  if (vercelEnv && vercelEnv !== "production") {
+    return NextResponse.json({ ok: true, dropped: true, reason: "non-production deployment" });
+  }
+
   const selfHost = (() => {
     try {
       return new URL(SITE_URL).hostname.replace(/^www\./, "");
@@ -55,15 +63,27 @@ export async function POST(req: Request) {
     }
   })();
   const cleaned = cleanEvent(raw, { selfHost });
-  if (!cleaned.ok) return NextResponse.json({ ok: false, error: cleaned.reason }, { status: 400 });
+  if (!cleaned.ok) {
+    // OBSERVABLE refusal (hardening): the event NAME (sanitized to a safe
+    // token — never the payload, never anything PII-shaped) plus the
+    // sanitizer's reason, so silent drops show up in server logs
+    const name =
+      typeof (raw as { event?: unknown })?.event === "string" && /^[a-z0-9_]{1,40}$/.test((raw as { event: string }).event)
+        ? (raw as { event: string }).event
+        : "invalid-name";
+    console.warn(`[events] refused event="${name}" reason="${cleaned.reason}"`);
+    return NextResponse.json({ ok: false, error: cleaned.reason }, { status: 400 });
+  }
 
   const db = getSupabaseAdmin();
   if (!db) return NextResponse.json({ ok: true, dropped: true }); // analytics never breaks a workflow
 
   const { error } = await db.from("site_events").upsert(cleaned.row, { onConflict: "event_id", ignoreDuplicates: true });
   if (error) {
-    // migration not applied / transient DB issue — still a quiet 200:
-    // the visitor's workflow must never observe analytics failures
+    // migration not applied / transient DB issue — still a quiet 200 for
+    // the visitor, but LOUD in the logs: event name + db message only
+    // (cleaned.row carries no PII by construction, and we log none of it)
+    console.warn(`[events] insert dropped event="${cleaned.row.event}" db="${error.message}"`);
     return NextResponse.json({ ok: true, dropped: true });
   }
   return NextResponse.json({ ok: true });

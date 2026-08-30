@@ -15,6 +15,7 @@ import {
 import { hoodsForCity } from "@/lib/hoods";
 import { publishedFeaturesForCity } from "@/lib/mls/feature-search";
 import FeatureChips from "@/components/search/FeatureChips";
+import TrackEvent from "@/components/analytics/TrackEvent";
 import { getMlsProvider, isLiveMls } from "@/lib/mls";
 import { getAllCityMarketMetricSets, fmtMetricValue, fmtPrice, provenanceLabel } from "@/lib/market/metrics";
 import type { Listing } from "@/lib/mls/types";
@@ -83,7 +84,7 @@ export async function generateMetadata({
       type: "website",
       locale: "en_US",
     },
-    twitter: { card: "summary", title: `${c.name}, TX`, description },
+    twitter: { card: "summary_large_image", title: `${c.name}, TX`, description },
   };
 }
 
@@ -325,6 +326,7 @@ export default async function CityPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <TrackEvent event="city_guide_view" ctx={{ citySlug: c.slug }} />
       {ed.preview && !builder && <PreviewBanner route={`/city/${c.slug}`} />}
       <CityNav slug={slug} options={options} prevSlug={prev.slug} nextSlug={next.slug} />
 

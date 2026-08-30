@@ -551,11 +551,24 @@ export default function LiveMapPanel({
         home ? [home[1], home[0]] : [32.9, -97.04], // ll is [lon, lat]
         home ? 11 : 9
       );
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        maxZoom: 19,
-      }).addTo(map);
+      /* Basemap: MapTiler when NEXT_PUBLIC_MAPTILER_KEY is configured
+         (build-time inlined; restrict the key by domain in the MapTiler
+         dashboard). Without a key we fall back to OpenStreetMap's standard
+         raster tiles with their required attribution — a licensed, never-
+         watermarked fallback. The old keyless CARTO rastertiles endpoint
+         now serves "API KEY REQUIRED" watermark tiles and must not return. */
+      const maptilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+      L.tileLayer(
+        maptilerKey
+          ? `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${maptilerKey}`
+          : "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: maptilerKey
+            ? '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+        }
+      ).addTo(map);
       canvasRef.current = L.canvas({ padding: 0.3 });
 
       // moveend + zoomend both fire per zoom step; coalesce them into one

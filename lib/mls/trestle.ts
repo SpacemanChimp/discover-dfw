@@ -506,7 +506,8 @@ export const trestleProvider: MlsProvider = {
   async getCityMarketSnapshot(citySlug: string) {
     const city = cityBySlug[citySlug];
     if (!city) return null;
-    const filter = `PropertyType eq 'Residential' and StandardStatus eq 'Active' and City eq ${q(city.name)}`;
+    // residential definition — matches the replica snapshot writer
+    const filter = `(PropertyType eq 'Residential' or PropertyType eq 'ResidentialIncome') and StandardStatus eq 'Active' and City eq ${q(city.name)}`;
     const j = await odata(
       `Property?$filter=${encodeURIComponent(filter)}` +
         `&$select=ListPrice,LivingArea,CumulativeDaysOnMarket&$top=1000&$count=true`,

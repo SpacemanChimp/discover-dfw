@@ -19,13 +19,18 @@ const CLIP: React.CSSProperties = {
 };
 
 function TypedNext() {
-  const [typed, setTyped] = useState("");
+  // server-render the first city so the line is NEVER blank pre-hydration
+  // (and stays populated entirely without JS); the typewriter is an
+  // enhancement that takes over on the client. Reduced-motion visitors
+  // keep the static name — no typing loop.
+  const [typed, setTyped] = useState("Frisco");
   useEffect(() => {
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const names = [
       "Frisco", "McKinney", "Fort Worth", "Decatur", "Southlake",
       "Rockwall", "Grapevine", "Prosper", "Wylie", "Celina", "Heath",
     ];
-    let i = 0, pos = 0, dir = 1, hold = 6;
+    let i = 0, pos = 6, dir = -1, hold = 16;
     const iv = setInterval(() => {
       if (hold > 0) { hold--; return; }
       const w = names[i];
@@ -109,7 +114,7 @@ export default function Hero({ copyOverride, regionKey }: { copyOverride?: React
         <span
           style={{
             display: "inline-block",
-            animation: "pinDrop 1s cubic-bezier(.34,1.4,.64,1) .6s both",
+            animation: "pinDrop .8s cubic-bezier(.34,1.4,.64,1) .35s both",
           }}
         >
           <PinSvg
@@ -145,7 +150,7 @@ export default function Hero({ copyOverride, regionKey }: { copyOverride?: React
         style={{
           width: "min(760px,86vw)",
           marginTop: 26,
-          animation: "fadeUp .8s ease .45s both",
+          animation: "fadeUp .6s ease .22s both",
         }}
       >
         <div style={{ height: 3, background: "#1D1913" }} />
@@ -164,7 +169,7 @@ export default function Hero({ copyOverride, regionKey }: { copyOverride?: React
             fontSize: "clamp(18px,2.3vw,24px)",
             lineHeight: 1.5,
             color: "rgba(29,25,19,.85)",
-            animation: "fadeUp .8s ease .6s both",
+            animation: "fadeUp .6s ease .3s both",
           }}
         >
           {copyOverride}
@@ -181,7 +186,7 @@ export default function Hero({ copyOverride, regionKey }: { copyOverride?: React
             fontSize: "clamp(18px,2.3vw,24px)",
             lineHeight: 1.5,
             color: "rgba(29,25,19,.85)",
-            animation: "fadeUp .8s ease .6s both",
+            animation: "fadeUp .6s ease .3s both",
           }}
         >
           A living atlas of Dallas–Fort Worth real estate — every city, every
@@ -198,7 +203,7 @@ export default function Hero({ copyOverride, regionKey }: { copyOverride?: React
           fontSize: 12.5,
           letterSpacing: ".2em",
           color: "rgba(29,25,19,.6)",
-          animation: "fadeUp .8s ease .78s both",
+          animation: "fadeUp .6s ease .38s both",
         }}
       >
         WHERE TO NEXT: <TypedNext />
@@ -211,7 +216,7 @@ export default function Hero({ copyOverride, regionKey }: { copyOverride?: React
           flexWrap: "wrap",
           justifyContent: "center",
           marginTop: 34,
-          animation: "fadeUp .8s ease .85s both",
+          animation: "fadeUp .6s ease .45s both",
         }}
       >
         <Link
