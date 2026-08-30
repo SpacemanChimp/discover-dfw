@@ -163,9 +163,6 @@ export const TEMPLATE_SECTIONS: Record<string, SectionDef[]> = {
     { key: "picks", label: "Editor's Picks", cards: "editors-picks", description: "Four city pick cards — click a card to edit its city, tagline, and photo." },
     { key: "stats", label: "Stats band", locked: true, description: "Canonical market figures." },
     { key: "newbuilds", label: "New Builds preview" },
-    // trust sits BEFORE the giant city index on purpose: the visitor meets
-    // the humans behind the data before the longest scroll on the page
-    { key: "trust", label: "Human trust strip" },
     { key: "cityindex", label: "City Index", locked: true },
     { key: "about", label: "About / research" },
     { key: "newsletter", label: "Newsletter signup", locked: true, description: "Subscription plumbing locked." },
